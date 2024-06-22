@@ -5,7 +5,7 @@ workspace "MinGE"
     configurations { "Debug", "Release" }
     architecture "x64"
 
-project "HelloWorld"
+project "MinimalistGameEngine"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++20"

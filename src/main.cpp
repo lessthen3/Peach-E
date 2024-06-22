@@ -1,8 +1,11 @@
 #include <iostream>
-#include <spdlog/spdlog.h>
+#include "MinGE-core/Managers/LogManager.h"
 
 int main()
 {
+    LogManager::Logger().init("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE");
     std::cout << "Hello World!\n";
-    spdlog::warn("NEW ENGINE ON THE BLOCK MY SLIME");
+    LogManager::Logger().warn("NEW ENGINE ON THE BLOCK MY SLIME", "MinGE");
+
+    ;
 }
