@@ -6,10 +6,16 @@
 #include <memory>
 #include "Plugin.h"
 
+#include <filesystem>
+#include <iostream>
+#include <string>
+#include "LogManager.h"
+
+
 #if defined(_WIN32) || defined(_WIN64)
     #include <windows.h>
     #define DYNLIB_HANDLE HINSTANCE
-    #define DYNLIB_LOAD LoadLibraryA
+    #define DYNLIB_LOAD LoadLibrary
     #define DYNLIB_GETSYM GetProcAddress
     #define DYNLIB_UNLOAD FreeLibrary
 #else
@@ -39,7 +45,7 @@ private:
     PluginManager(const PluginManager&) = delete;
     PluginManager& operator=(const PluginManager&) = delete;
 
-    std::vector<std::unique_ptr<Plugin>> plugins;
-    std::vector<DYNLIB_HANDLE> pluginHandles;
+    std::vector<std::unique_ptr<Plugin>> Plugins;
+    std::vector<DYNLIB_HANDLE> PluginHandles;
 };
 

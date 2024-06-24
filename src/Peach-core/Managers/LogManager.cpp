@@ -1,7 +1,7 @@
 #include "LogManager.h"
 #include <fstream>
 
-void LogManager::init(const std::string& logDirectory) {
+void LogManager::Init(const std::string& logDirectory) {
     std::lock_guard<std::mutex> lock(logMutex);
 
     // Ensure log directory exists
@@ -10,7 +10,7 @@ void LogManager::init(const std::string& logDirectory) {
     }
 
     // Create log files if they don't exist
-    createLogFiles(logDirectory);
+    CreateLogFiles(logDirectory);
 
     // Define sinks
     std::vector<spdlog::sink_ptr> sinks;
@@ -35,37 +35,37 @@ void LogManager::init(const std::string& logDirectory) {
     spdlog::register_logger(logger);  // Register the logger with spdlog
 }
 
-void LogManager::trace(const std::string& message, const std::string& className) {
+void LogManager::Trace(const std::string& message, const std::string& className) {
     std::lock_guard<std::mutex> lock(logMutex);
     logger->trace("[{}] {}", className, message);
 }
 
-void LogManager::debug(const std::string& message, const std::string& className) {
+void LogManager::Debug(const std::string& message, const std::string& className) {
     std::lock_guard<std::mutex> lock(logMutex);
     logger->debug("[{}] {}", className, message);
 }
 
-void LogManager::info(const std::string& message, const std::string& className) {
+void LogManager::Info(const std::string& message, const std::string& className) {
     std::lock_guard<std::mutex> lock(logMutex);
     logger->info("[{}] {}", className, message);
 }
 
-void LogManager::warn(const std::string& message, const std::string& className) {
+void LogManager::Warn(const std::string& message, const std::string& className) {
     std::lock_guard<std::mutex> lock(logMutex);
     logger->warn("[{}] {}", className, message);
 }
 
-void LogManager::error(const std::string& message, const std::string& className) {
+void LogManager::Error(const std::string& message, const std::string& className) {
     std::lock_guard<std::mutex> lock(logMutex);
     logger->error("[{}] {}", className, message);
 }
 
-void LogManager::fatal(const std::string& message, const std::string& className) {
+void LogManager::Fatal(const std::string& message, const std::string& className) {
     std::lock_guard<std::mutex> lock(logMutex);
     logger->critical("[{}] {}", className, message);
 }
 
-void LogManager::createLogFiles(const std::string& logDirectory) {
+void LogManager::CreateLogFiles(const std::string& logDirectory) {
     std::vector<std::string> logFiles = {
         "trace.log",
         "debug.log",

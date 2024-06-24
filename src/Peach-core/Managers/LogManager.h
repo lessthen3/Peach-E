@@ -15,14 +15,14 @@ public:
         return instance;
     }
 
-    void init(const std::string& logDirectory);
+    void Init(const std::string& logDirectory);
 
-    void trace(const std::string& message, const std::string& className);
-    void debug(const std::string& message, const std::string& className);
-    void info(const std::string& message, const std::string& className);
-    void warn(const std::string& message, const std::string& className);
-    void error(const std::string& message, const std::string& className);
-    void fatal(const std::string& message, const std::string& className);
+    void Trace(const std::string& message, const std::string& className);
+    void Debug(const std::string& message, const std::string& className);
+    void Info(const std::string& message, const std::string& className);
+    void Warn(const std::string& message, const std::string& className);
+    void Error(const std::string& message, const std::string& className);
+    void Fatal(const std::string& message, const std::string& className);
 
 private:
     LogManager() = default;
@@ -34,5 +34,5 @@ private:
     std::shared_ptr<spdlog::logger> logger;
     std::mutex logMutex;
 
-    void createLogFiles(const std::string& logDirectory);
+    void CreateLogFiles(const std::string& logDirectory);
 };
