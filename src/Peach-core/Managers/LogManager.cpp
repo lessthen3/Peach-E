@@ -1,8 +1,18 @@
 #include "LogManager.h"
 #include <fstream>
 
-void LogManager::Init(const std::string& logDirectory) {
+void LogManager::Initialize(const std::string& logDirectory) {
     std::lock_guard<std::mutex> lock(logMutex);
+
+    if (hasBeenInitialized)
+    {
+        LogManager::Logger().Warn("LogManager has already been initialized, LogManager is only allowed to initialize once per run", "LogManager");
+        return;
+    }
+    else
+    {
+        hasBeenInitialized = true;
+    }
 
     // Ensure log directory exists
     if (!std::filesystem::exists(logDirectory)) {

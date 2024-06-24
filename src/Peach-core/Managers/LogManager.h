@@ -15,7 +15,7 @@ public:
         return instance;
     }
 
-    void Init(const std::string& logDirectory);
+    void Initialize(const std::string& logDirectory);
 
     void Trace(const std::string& message, const std::string& className);
     void Debug(const std::string& message, const std::string& className);
@@ -35,4 +35,7 @@ private:
     std::mutex logMutex;
 
     void CreateLogFiles(const std::string& logDirectory);
+
+private:
+    bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
 };

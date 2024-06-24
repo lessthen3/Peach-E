@@ -13,9 +13,11 @@
 
 
 #if defined(_WIN32) || defined(_WIN64)
+    #define WIN32_LEAN_AND_MEAN
+    #define NOMINMAX
     #include <windows.h>
     #define DYNLIB_HANDLE HINSTANCE
-    #define DYNLIB_LOAD LoadLibrary
+    #define DYNLIB_LOAD LoadLibraryA
     #define DYNLIB_GETSYM GetProcAddress
     #define DYNLIB_UNLOAD FreeLibrary
 #else
@@ -35,8 +37,8 @@ public:
 
     void LoadPlugin(const std::string& path);
     void InitializePlugins();
-    void UpdatePlugins(float TimeSinceLastFrame);
-    void ConstantUpdatePlugins(float TimeSinceLastFrame);
+    void UpdatePlugins(float fp_TimeSinceLastFrame);
+    void ConstantUpdatePlugins(float fp_TimeSinceLastFrame);
     void ShutdownPlugins();
 
 private:

@@ -1,7 +1,7 @@
 include "dependencies/conandeps.premake5.lua"
 
 -- premake5.lua
-workspace "PeachE"
+workspace "Peach-E"
     configurations { "Debug", "Release" }
     architecture "x64"
 

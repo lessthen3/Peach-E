@@ -27,4 +27,10 @@ private:
     void UnloadCurrentScene();
     Scene LoadDesiredScene(const std::string& fp_FilePathToDesiredScene) const;
 
+private:
+    SceneTreeManager() = default;
+    ~SceneTreeManager() = default;
+    SceneTreeManager(const SceneTreeManager&) = delete;
+    SceneTreeManager& operator=(const SceneTreeManager&) = delete;
+
 };

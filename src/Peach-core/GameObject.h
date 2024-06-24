@@ -4,9 +4,10 @@ public:
 	GameObject();
 	virtual ~GameObject();
 
-	void Initialize();
-	void Update(float timeSinceLastFrame);
-	void ConstantUpdate(float timeSinceLastFrame);
-	void OnSceneTreeExit();
+	virtual void Initialize();
+	virtual void Update(float fp_TimeSinceLastFrame);
+	virtual void ConstantUpdate(float fp_TimeSinceLastFrame);
+	//virtual void HalfConstantUpdate(float fp_TimeSinceLastFrame);
+	virtual void OnSceneTreeExit();
 
 };
