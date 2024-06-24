@@ -18,7 +18,7 @@ void LogManager::init(const std::string& logDirectory) {
     // Add console sink
     sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
 
-    // Add file sinks
+    // Add file sinks for every debug level plus an extra sink that contains all log levels in one file
     sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(logDirectory + "/trace.log", true));
     sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(logDirectory + "/debug.log", true));
     sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(logDirectory + "/info.log", true));

@@ -1,11 +1,11 @@
 include "dependencies/conandeps.premake5.lua"
 
 -- premake5.lua
-workspace "MinGE"
+workspace "PeachE"
     configurations { "Debug", "Release" }
     architecture "x64"
 
-project "MinimalistGameEngine"
+project "Peach Engine"
     kind "ConsoleApp"
     language "C++"
     cppdialect "C++20"
