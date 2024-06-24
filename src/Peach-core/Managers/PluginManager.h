@@ -22,13 +22,12 @@
 
 class PluginManager {
 public:
-    static PluginManager& getInstance() {
+    static PluginManager& ManagePlugins() {
         static PluginManager instance;
         return instance;
     }
 
     void LoadPlugin(const std::string& path);
-    void UnloadPlugin(const std::string& path);
     void InitializePlugins();
     void UpdatePlugins(float TimeSinceLastFrame);
     void ConstantUpdatePlugins(float TimeSinceLastFrame);
