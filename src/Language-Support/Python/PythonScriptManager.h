@@ -3,11 +3,11 @@
 #include <pybind11/embed.h>
 #include <string>
 
-#include "../ScriptComponent.h"
+#include "../PythonScriptComponent.h"
 
 namespace PeachCore {
 
-    struct PythonScriptManager: public ScriptComponent
+    struct PythonScriptManager
     {
     public:
         static PythonScriptManager& PythonScript() {

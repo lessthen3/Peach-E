@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../Peach-core/Managers/Managers.h"
+#include "../Language-Support/Visual-Peach/Parsers/PythonScriptParser.h"
 #include "SFML/Graphics.hpp"
 
 static void LoadPluginsFromConfigs(const std::vector<std::string>& fp_ListOfPluginsToLoad)
@@ -21,6 +22,8 @@ static void SetupRenderer()
 
 int main()
 {
+    VisualPeach::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule();
+
     std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/SimplePlugin.dll" };
     std::vector<std::string> ListOfUnixPluginsToLoad = { };
 
@@ -73,6 +76,7 @@ int main()
             if (event.type == sf::Event::Closed) {
                 m_CurrentRenderWindow.close();
             }
+            break;
         }
 
         PeachCore::RenderingManager::Renderer().BeginFrame();
@@ -87,7 +91,8 @@ int main()
         PeachCore::RenderingManager::Renderer().DrawTextToScreen("Hello, Peach Engine!", font, 24, sf::Vector2f(100, 200), sf::Color::White);
 
         PeachCore::RenderingManager::Renderer().EndFrame();
+        break;
     }
-
+    std::cout << "Exit_Success!" << "\n";
     return EXIT_SUCCESS;
 }

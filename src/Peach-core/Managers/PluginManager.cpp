@@ -96,11 +96,13 @@ namespace PeachCore {
             plugin->Shutdown();
         }
 
-        for (auto f_Handle : PluginHandles) {
-            DYNLIB_UNLOAD(f_Handle);
-        }
-
         Plugins.clear();
         PluginHandles.clear();
+
+        for (auto f_Handle : PluginHandles) {
+            if (f_Handle != nullptr) {
+                DYNLIB_UNLOAD(f_Handle);
+            }
+        }
     }
 }
