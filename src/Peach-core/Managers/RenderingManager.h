@@ -3,48 +3,52 @@
 #include "LogManager.h"
 #include "SFML/Graphics.hpp"
 
-class RenderingManager {
-public:
-    static RenderingManager& Renderer() {
-        static RenderingManager instance;
-        return instance;
-    }
+namespace PeachCore {
 
-public:
-    void Initialize(std::string p_RendererType, const std::string& title = "Peach Engine", int width = 800, int height = 600);
-    void ResideWindow();
-    std::string GetRendererType() const;
+    class RenderingManager {
+    public:
+        static RenderingManager& Renderer() {
+            static RenderingManager instance;
+            return instance;
+        }
 
-    void BeginFrame();
-    void EndFrame();
-    void Clear(const sf::Color& fp_Color = sf::Color::Black);
+    public:
+        void Initialize(const std::string fp_RendererType, const std::string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
+        void ResizeWindow();
+        std::string GetRendererType() const;
 
-    void Draw(const sf::Drawable& fp_Drawable);
-    void DrawText(const std::string& fp_Text, const sf::Font& sp_Font, unsigned int sp_Size, const sf::Vector2f& fp_Position, const sf::Color& fp_Color = sf::Color::White);
+        void BeginFrame();
+        void EndFrame();
+        void Clear(const sf::Color& fp_Color = sf::Color::Black);
 
-    sf::RenderWindow& GetWindow() const;
+        void Draw(const sf::Drawable& fp_Drawable);
+        void DrawTextToScreen(const std::string& fp_Text, const sf::Font& fp_Font, unsigned int fp_Size, const sf::Vector2f& fp_Position, const sf::Color& fp_Color = sf::Color::White);
 
-    void SetFramerateLimit(unsigned int fp_Limit);
-    unsigned int GetFrameLimit() const;
+        sf::RenderWindow& GetRenderWindow();
+        unsigned int GetFrameRateLimit() const;
 
-    void SetVSync(bool fp_IsEnabled);
-    bool IsVSyncEnabled() const;
+        void SetFrameRateLimit(unsigned int fp_Limit);
+        void SetVSync(const bool fp_IsEnabled);
+
+        bool IsVSyncEnabled() const;
+
+        //(const std::string fp_RendererType, const std::string& fp_Title = "Peach Engine", const int fp_Width = 800 , const int fp_Height = 600);
+    private:
+        RenderingManager() = default;
+        ~RenderingManager() = default;
+
+        RenderingManager(const RenderingManager&) = delete;
+        RenderingManager& operator=(const RenderingManager&) = delete;
 
 
-private:
-    RenderingManager() = default;
-    ~RenderingManager() = default;
+    private:
+        bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
+        std::string pm_RendererType = "None";
 
-    RenderingManager(const RenderingManager&) = delete;
-    RenderingManager& operator=(const RenderingManager&) = delete;
+        sf::RenderWindow pm_CurrentRenderWindow;
 
+        unsigned int pm_FrameRateLimit = 60;
+        bool pm_IsVSyncEnabled = false;
+    };
 
-private:
-    bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
-    std::string pm_RendererType = "None";
-
-    sf::RenderWindow window;
-
-    unsigned int framerateLimit = 60;
-    bool vsyncEnabled = false;
-};
+}

@@ -6,24 +6,26 @@
 #include <sstream>
 #include "PeachEObject.h"
 
-struct PeachEConsole: public PeachEObject {
-public:
-    PeachEConsole() {
-        Clear();
-    }
+namespace PeachEngine {
 
-    void Clear();
+    struct PeachEConsole : public PeachEObject {
+    public:
+        PeachEConsole() {
+            Clear();
+        }
 
-    void AddLog(const std::string& message);
+        void Clear();
 
-    void Draw(const char* title, bool* p_open = NULL);
+        void AddLog(const std::string& message);
 
-    void SetScrollToBottom() { scrollToBottom = true; }
+        void Draw(const char* title, bool* p_open = NULL);
 
-private:
-    ImGuiTextBuffer buffer;
-    ImGuiTextFilter filter;
-    ImVector<int> lineOffsets;
-    bool scrollToBottom = false;
-};
+        void SetScrollToBottom() { scrollToBottom = true; }
 
+    private:
+        ImGuiTextBuffer buffer;
+        ImGuiTextFilter filter;
+        ImVector<int> lineOffsets;
+        bool scrollToBottom = false;
+    };
+}

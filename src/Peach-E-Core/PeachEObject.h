@@ -1,5 +1,9 @@
 #pragma once
-struct PeachEObject
-{
 
-};
+namespace PeachEngine {
+
+	struct PeachEObject
+	{
+
+	};
+}

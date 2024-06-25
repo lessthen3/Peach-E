@@ -1,5 +1,10 @@
 #pragma once
-class Sprite2D
-{
-};
 
+#include "../PeachComponent.h"
+namespace PeachCore {
+
+
+	struct Sprite2D : public PeachComponent
+	{
+	};
+}

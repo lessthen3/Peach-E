@@ -1,5 +1,11 @@
 #pragma once
-class PerlinNoise2D
-{
-};
 
+#include "../PeachComponent.h"
+#include <vector>
+
+namespace PeachCore {
+
+	struct PerlinNoise2D: public PeachComponent
+	{
+	};
+}

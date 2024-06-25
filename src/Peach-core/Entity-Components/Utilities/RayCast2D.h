@@ -1,5 +1,12 @@
 #pragma once
-class RayCast2D
-{
-};
+
+#include "../PeachComponent.h"
+
+namespace PeachCore {
+
+	struct RayCast2D: PeachComponent
+	{
+	};
+
+}
 

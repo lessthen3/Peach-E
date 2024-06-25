@@ -1,48 +1,51 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include "PeachEObject.h"
+#include "../PeachComponent.h"
 
-struct Transform2D: public MinGEObject {
-private:
-    sf::Vector2f position;
-    float rotation;
-    sf::Vector2f Scale;
-    sf::Transform Transform;
+namespace PeachCore {
 
-public:
-    Transform2D()
-        : position(sf::Vector2f(0.0f, 0.0f)), rotation(0.0f), Scale(sf::Vector2f(1.0f, 1.0f)) {}
+    struct Transform2D : public PeachComponent {
+    private:
+        sf::Vector2f pm_Position;
+        float pm_Rotation;
+        sf::Vector2f pm_Scale;
+        sf::Transform pm_Transform;
 
-    Transform2D(const sf::Vector2f& pos, float rot, const sf::Vector2f& scl)
-        : position(pos), rotation(rot), Scale(scl) {}
+    public:
+        Transform2D()
+            : pm_Position(sf::Vector2f(0.0f, 0.0f)), pm_Rotation(0.0f), pm_Scale(sf::Vector2f(1.0f, 1.0f)) {}
 
-    // Getters
-    const sf::Vector2f& GetPosition() const { return position; }
-    const float GetRotation() const { return rotation; }
-    const sf::Vector2f& GetScale() const { return Scale; }
-    const sf::Transform& GetTransform() const { return Transform; }
+        Transform2D(const sf::Vector2f& fp_Position, float fp_Rotation, const sf::Vector2f& fp_Scale)
+            : pm_Position(fp_Position), pm_Rotation(fp_Rotation), pm_Scale(fp_Scale) {}
 
-    // Setters
-    void SetPosition(const sf::Vector2f& pos) { position = pos; }
-    void SetRotation(const float rot) { rotation = rot; }
-    void SetScale(const sf::Vector2f& scl) { Scale = scl; }
-    void SetTransform(const sf::Transform& fp_transform) { Transform = fp_transform; }
+        // Getters
+        const sf::Vector2f& GetPosition() const { return pm_Position; }
+        const float GetRotation() const { return pm_Rotation; }
+        const sf::Vector2f& GetScale() const { return pm_Scale; }
+        const sf::Transform& GetTransform() const { return pm_Transform; }
 
-    // Translate (move) by an offset
-    void Translate(const sf::Vector2f& offset) { position += offset; }
+        // Setters
+        void SetPosition(const sf::Vector2f& fp_Position) { pm_Position = fp_Position; }
+        void SetRotation(const float fp_Rotation) { pm_Rotation = fp_Rotation; }
+        void SetScale(const sf::Vector2f& fp_Scale) { pm_Scale = fp_Scale; }
+        void SetTransform(const sf::Transform& fp_Transform) { pm_Transform = fp_Transform; }
 
-    // Rotate by an angle (in degrees)
-    void Rotate(const float& angle) { rotation += angle; }
+        // Translate (move) by an offset
+        void Translate(const sf::Vector2f& fp_Offset) { pm_Position += fp_Offset; }
 
-    // Scale uniformly or non-uniformly
-    void ScaleBy(const sf::Vector2f& factor) { Scale.x *= factor.x; Scale.y *= factor.y; }
+        // Rotate by an angle (in degrees)
+        void Rotate(const float& fp_Angle) { pm_Rotation += fp_Angle; }
 
-    // Apply the transform to a point
-    sf::Vector2f TransformPoint(const sf::Vector2f& point) {
-        Transform.translate(position);
-        Transform.rotate(rotation);
-        Transform.scale(Scale);
-        return Transform.transformPoint(point);
-    }
-};
+        // pm_Scale uniformly or non-uniformly
+        void ScaleBy(const sf::Vector2f& fp_Factor) { pm_Scale.x *= fp_Factor.x; pm_Scale.y *= fp_Factor.y; }
+
+        // Apply the transform to a point
+        sf::Vector2f TransformPoint(const sf::Vector2f& fp_Point) {
+            pm_Transform.translate(pm_Position);
+            pm_Transform.rotate(pm_Rotation);
+            pm_Transform.scale(pm_Scale);
+            return pm_Transform.transformPoint(fp_Point);
+        }
+    };
+}

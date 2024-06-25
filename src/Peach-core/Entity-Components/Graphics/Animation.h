@@ -1,5 +1,11 @@
 #pragma once
-class Animation
-{
-};
 
+#include "../PeachComponent.h"
+
+namespace PeachCore {
+
+
+	struct Animation : public PeachComponent
+	{
+	};
+}

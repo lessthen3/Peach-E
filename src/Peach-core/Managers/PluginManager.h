@@ -28,26 +28,28 @@
     #define DYNLIB_UNLOAD dlclose
 #endif
 
-class PluginManager {
-public:
-    static PluginManager& ManagePlugins() {
-        static PluginManager instance;
-        return instance;
-    }
+namespace PeachCore {
 
-    void LoadPlugin(const std::string& path);
-    void InitializePlugins();
-    void UpdatePlugins(float fp_TimeSinceLastFrame);
-    void ConstantUpdatePlugins(float fp_TimeSinceLastFrame);
-    void ShutdownPlugins();
+    class PluginManager {
+    public:
+        static PluginManager& ManagePlugins() {
+            static PluginManager instance;
+            return instance;
+        }
 
-private:
-    PluginManager() = default;
-    ~PluginManager() = default;
-    PluginManager(const PluginManager&) = delete;
-    PluginManager& operator=(const PluginManager&) = delete;
+        void LoadPlugin(const std::string& path);
+        void InitializePlugins();
+        void UpdatePlugins(float fp_TimeSinceLastFrame);
+        void ConstantUpdatePlugins(float fp_TimeSinceLastFrame);
+        void ShutdownPlugins();
 
-    std::vector<std::unique_ptr<Plugin>> Plugins;
-    std::vector<DYNLIB_HANDLE> PluginHandles;
-};
+    private:
+        PluginManager() = default;
+        ~PluginManager() = default;
+        PluginManager(const PluginManager&) = delete;
+        PluginManager& operator=(const PluginManager&) = delete;
 
+        std::vector<std::unique_ptr<Plugin>> Plugins;
+        std::vector<DYNLIB_HANDLE> PluginHandles;
+    };
+}

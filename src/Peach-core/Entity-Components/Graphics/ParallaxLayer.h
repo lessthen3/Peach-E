@@ -1,5 +1,11 @@
 #pragma once
-class ParallaxLayer
-{
-};
+
+#include "../PeachComponent.h"
+
+namespace PeachCore {
+
+	struct ParallaxLayer : public PeachComponent
+	{
+	};
+}
 

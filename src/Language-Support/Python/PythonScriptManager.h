@@ -3,21 +3,25 @@
 #include <pybind11/embed.h>
 #include <string>
 
-class PythonScriptManager
-{
-public:
-    static PythonScriptManager& PythonScript() {
-        static PythonScriptManager instance;
-        return instance;
-    }
-    void RunPythonScript(const std::string& script);
+#include "../ScriptComponent.h"
 
-private:
-    PythonScriptManager() = default;
-    ~PythonScriptManager() = default;
+namespace PeachCore {
 
-    PythonScriptManager(const PythonScriptManager&) = delete;
-    PythonScriptManager& operator=(const PythonScriptManager&) = delete;
+    struct PythonScriptManager: public ScriptComponent
+    {
+    public:
+        static PythonScriptManager& PythonScript() {
+            static PythonScriptManager instance;
+            return instance;
+        }
+        void RunPythonScript(const std::string& script);
 
-};
+    private:
+        PythonScriptManager() = default;
+        ~PythonScriptManager() = default;
 
+        PythonScriptManager(const PythonScriptManager&) = delete;
+        PythonScriptManager& operator=(const PythonScriptManager&) = delete;
+
+    };
+}

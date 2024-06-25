@@ -1,5 +1,10 @@
 #pragma once
-class ParallaxBackgroundPlayer
-{
-};
 
+#include "../PeachComponent.h"
+
+namespace PeachCore {
+
+	struct ParallaxBackgroundPlayer : public PeachComponent
+	{
+	};
+}

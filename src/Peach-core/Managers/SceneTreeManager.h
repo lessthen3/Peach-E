@@ -2,35 +2,38 @@
 
 #include <vector>
 #include <string>
-#include "../GameObject.h"
+#include "../Entity-Components/PeachComponent.h"
 
-struct Scene {
-    std::string Name;
-    std::vector<GameObject> ListOfEntities;
-};
+namespace PeachCore {
 
-class SceneTreeManager {
-public:
-    static SceneTreeManager& SceneTree() {
-        static SceneTreeManager instance;
-        return instance;
-    }
+    struct Scene {
+        std::string Name;
+        std::vector<PeachComponent> ListOfEntities;
+    };
 
-    void ChangeScene(const std::string& fp_FilePathToDesiredScene);
+    class SceneTreeManager {
+    public:
+        static SceneTreeManager& SceneTree() {
+            static SceneTreeManager instance;
+            return instance;
+        }
 
-    void AddEntityToCurrentSceneTree(GameObject fp_Entity);
+        void ChangeScene(const std::string& fp_FilePathToDesiredScene);
 
-public:
-    Scene currentScene;
+        void AddEntityToCurrentSceneTree(PeachComponent fp_Entity);
 
-private:
-    void UnloadCurrentScene();
-    Scene LoadDesiredScene(const std::string& fp_FilePathToDesiredScene) const;
+    public:
+        Scene currentScene;
 
-private:
-    SceneTreeManager() = default;
-    ~SceneTreeManager() = default;
-    SceneTreeManager(const SceneTreeManager&) = delete;
-    SceneTreeManager& operator=(const SceneTreeManager&) = delete;
+    private:
+        void UnloadCurrentScene();
+        Scene LoadDesiredScene(const std::string& fp_FilePathToDesiredScene) const;
 
-};
+    private:
+        SceneTreeManager() = default;
+        ~SceneTreeManager() = default;
+        SceneTreeManager(const SceneTreeManager&) = delete;
+        SceneTreeManager& operator=(const SceneTreeManager&) = delete;
+
+    };
+}

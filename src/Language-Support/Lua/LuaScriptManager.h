@@ -3,22 +3,24 @@
 #include <sol/sol.hpp>
 #include "../../Peach-core/Managers/LogManager.h"
 
-class LuaScriptManager
-{
-public:
-    static LuaScriptManager& LuaScript() {
-        static LuaScriptManager instance;
-        return instance;
-    }
+namespace PeachCore {
 
-    //sol::state Lua;
-    auto RunLuaScript(const std::string& script, const std::string& fp_ScriptName);
+    class LuaScriptManager
+    {
+    public:
+        static LuaScriptManager& LuaScript() {
+            static LuaScriptManager instance;
+            return instance;
+        }
 
-private:
-    LuaScriptManager() = default;
-    ~LuaScriptManager() = default;
+        //sol::state Lua;
+        auto RunLuaScript(const std::string& script, const std::string& fp_ScriptName);
 
-    LuaScriptManager(const LuaScriptManager&) = delete;
-    LuaScriptManager& operator=(const LuaScriptManager&) = delete;
-};
+    private:
+        LuaScriptManager() = default;
+        ~LuaScriptManager() = default;
 
+        LuaScriptManager(const LuaScriptManager&) = delete;
+        LuaScriptManager& operator=(const LuaScriptManager&) = delete;
+    };
+}

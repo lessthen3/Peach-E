@@ -8,34 +8,37 @@
 #include <mutex>
 #include <string>
 
-class LogManager {
-public:
-    static LogManager& Logger() {
-        static LogManager instance;
-        return instance;
-    }
+namespace PeachCore {
 
-    void Initialize(const std::string& logDirectory);
+    class LogManager {
+    public:
+        static LogManager& Logger() {
+            static LogManager instance;
+            return instance;
+        }
 
-    void Trace(const std::string& message, const std::string& className);
-    void Debug(const std::string& message, const std::string& className);
-    void Info(const std::string& message, const std::string& className);
-    void Warn(const std::string& message, const std::string& className);
-    void Error(const std::string& message, const std::string& className);
-    void Fatal(const std::string& message, const std::string& className);
+        void Initialize(const std::string& logDirectory);
 
-private:
-    LogManager() = default;
-    ~LogManager() = default;
+        void Trace(const std::string& message, const std::string& className);
+        void Debug(const std::string& message, const std::string& className);
+        void Info(const std::string& message, const std::string& className);
+        void Warn(const std::string& message, const std::string& className);
+        void Error(const std::string& message, const std::string& className);
+        void Fatal(const std::string& message, const std::string& className);
 
-    LogManager(const LogManager&) = delete;
-    LogManager& operator=(const LogManager&) = delete;
+    private:
+        LogManager() = default;
+        ~LogManager() = default;
 
-    std::shared_ptr<spdlog::logger> logger;
-    std::mutex logMutex;
+        LogManager(const LogManager&) = delete;
+        LogManager& operator=(const LogManager&) = delete;
 
-    void CreateLogFiles(const std::string& logDirectory);
+        std::shared_ptr<spdlog::logger> logger;
+        std::mutex logMutex;
 
-private:
-    bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
-};
+        void CreateLogFiles(const std::string& logDirectory);
+
+    private:
+        bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
+    };
+}

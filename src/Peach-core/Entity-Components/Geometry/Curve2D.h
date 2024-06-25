@@ -1,5 +1,12 @@
 #pragma once
-class Curve2D
-{
-};
 
+#include "../PeachComponent.h"
+
+namespace PeachCore {
+
+	struct Curve2D : public PeachComponent
+	{
+
+	};
+
+}
