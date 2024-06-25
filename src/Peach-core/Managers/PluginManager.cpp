@@ -5,25 +5,6 @@ namespace PeachCore {
 
     namespace fs = std::filesystem;
 
-    typedef Plugin* (*CreatePluginFunc)();
-    typedef void (*DestroyPluginFunc)(Plugin*);
-
-
-    std::wstring StringToWString(const std::string& fp_String) {
-        int f_SizeNeeded = MultiByteToWideChar(CP_UTF8, 0, &fp_String[0], (int)fp_String.size(), NULL, 0);
-        std::wstring f_WstrTo(f_SizeNeeded, 0);
-        MultiByteToWideChar(CP_UTF8, 0, &fp_String[0], (int)fp_String.size(), &f_WstrTo[0], f_SizeNeeded);
-        return f_WstrTo;
-    }
-
-    DYNLIB_HANDLE loadLibrary(const std::string& fp_Path)
-    {
-        std::wstring f_WidePath = StringToWString(fp_Path);
-        return LoadLibrary(f_WidePath.c_str());
-    }
-
-
-
     void PluginManager::LoadPlugin(const std::string& fp_Path)
     {
         DYNLIB_HANDLE f_Handle;
@@ -64,27 +45,29 @@ namespace PeachCore {
             LogManager::Logger().Debug("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager");
         }
 
-        Plugins.emplace_back(f_CreateFunc());
-        PluginHandles.push_back(f_Handle);
+        std::unique_ptr<Plugin, DestroyPluginFunc> plugin(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;
+        pm_PluginInstances.emplace_back(std::move(plugin));
+
+        pm_PluginHandles.push_back(f_Handle);
     }
 
     void PluginManager::InitializePlugins()
     {
-        for (auto& plugin : Plugins) {
+        for (auto& plugin : pm_PluginInstances) {
             plugin->Initialize();
         }
     }
 
     void PluginManager::UpdatePlugins(float fp_TimeSinceLastFrame)
     {
-        for (auto& plugin : Plugins) {
+        for (auto& plugin : pm_PluginInstances) {
             plugin->Update(fp_TimeSinceLastFrame);
         }
     }
 
     void PluginManager::ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
     {
-        for (auto& plugin : Plugins) {
+        for (auto& plugin : pm_PluginInstances) {
             plugin->ConstantUpdate(fp_TimeSinceLastFrame);
         }
     }
@@ -92,14 +75,14 @@ namespace PeachCore {
     void PluginManager::ShutdownPlugins()
     {
 
-        for (auto& plugin : Plugins) {
+        for (auto& plugin : pm_PluginInstances) {
             plugin->Shutdown();
         }
 
-        Plugins.clear();
-        PluginHandles.clear();
+        pm_PluginInstances.clear();
+        pm_PluginHandles.clear();
 
-        for (auto f_Handle : PluginHandles) {
+        for (auto f_Handle : pm_PluginHandles) {
             if (f_Handle != nullptr) {
                 DYNLIB_UNLOAD(f_Handle);
             }

@@ -24,7 +24,8 @@ int main()
 {
     VisualPeach::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule();
 
-    std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/SimplePlugin.dll" };
+    std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/SimplePlugin.dll",
+                                                                                             "D:/Game Development/Peach-E/src/Peach-E-Core/SimplePlugin2.dll" };
     std::vector<std::string> ListOfUnixPluginsToLoad = { };
 
     PeachCore::LogManager::Logger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE");
@@ -93,6 +94,6 @@ int main()
         PeachCore::RenderingManager::Renderer().EndFrame();
         break;
     }
-    std::cout << "Exit_Success!" << "\n";
+    PeachCore::LogManager::Logger().Debug("Exit_Success!", "Peach-E");
     return EXIT_SUCCESS;
 }

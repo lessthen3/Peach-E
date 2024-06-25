@@ -30,6 +30,9 @@
 
 namespace PeachCore {
 
+    typedef Plugin* (*CreatePluginFunc)();
+    typedef void (*DestroyPluginFunc)(Plugin*);
+
     class PluginManager {
     public:
         static PluginManager& ManagePlugins() {
@@ -49,7 +52,7 @@ namespace PeachCore {
         PluginManager(const PluginManager&) = delete;
         PluginManager& operator=(const PluginManager&) = delete;
 
-        std::vector<std::unique_ptr<Plugin>> Plugins;
-        std::vector<DYNLIB_HANDLE> PluginHandles;
+        std::vector<std::unique_ptr<Plugin, DestroyPluginFunc>> pm_PluginInstances;
+        std::vector<DYNLIB_HANDLE> pm_PluginHandles;
     };
 }
