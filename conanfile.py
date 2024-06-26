@@ -15,3 +15,8 @@ class PeachEBuilder(ConanFile):
         self.requires("sol2/3.3.1")
 
         self.requires("nlohmann_json/3.11.3")
+
+        self.requires("sdl/2.30.4")
+        self.requires("bgfx/cci.20230216")
+        self.requires("sdl_mixer/2.8.0")
+        self.requires("stb/cci.20240213")
