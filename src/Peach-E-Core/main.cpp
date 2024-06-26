@@ -22,7 +22,7 @@ static void SetupRenderer()
 
 int main()
 {
-    VisualPeach::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule();
+    Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule();
 
     std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/SimplePlugin.dll",
                                                                                              "D:/Game Development/Peach-E/src/Peach-E-Core/SimplePlugin2.dll" };
@@ -77,7 +77,7 @@ int main()
             if (event.type == sf::Event::Closed) {
                 m_CurrentRenderWindow.close();
             }
-            break;
+            //break;
         }
 
         PeachCore::RenderingManager::Renderer().BeginFrame();
@@ -92,8 +92,8 @@ int main()
         PeachCore::RenderingManager::Renderer().DrawTextToScreen("Hello, Peach Engine!", font, 24, sf::Vector2f(100, 200), sf::Color::White);
 
         PeachCore::RenderingManager::Renderer().EndFrame();
-        break;
+        //break;
     }
-    PeachCore::LogManager::Logger().Debug("Exit_Success!", "Peach-E");
+    PeachCore::LogManager::Logger().Debug("Exit Success!", "Peach-E");
     return EXIT_SUCCESS;
 }

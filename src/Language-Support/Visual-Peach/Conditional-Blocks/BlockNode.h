@@ -2,7 +2,7 @@
 
 namespace Princess {
 
-	class StringParser
+	struct BlockNode
 	{
 	};
 }

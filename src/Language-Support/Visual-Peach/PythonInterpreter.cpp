@@ -1,5 +1,5 @@
 #include "PythonInterpreter.h"
 
-namespace VisualPeach {
+namespace Princess {
 
 }

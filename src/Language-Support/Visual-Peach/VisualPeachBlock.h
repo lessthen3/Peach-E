@@ -2,7 +2,8 @@
 
 namespace Princess {
 
-	class StringParser
+	class VisualPeachBlock
 	{
 	};
+
 }

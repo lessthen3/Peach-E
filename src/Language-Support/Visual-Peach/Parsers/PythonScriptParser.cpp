@@ -1,6 +1,6 @@
 #include "PythonScriptParser.h"
 
-namespace VisualPeach {
+namespace Princess {
     
     namespace py = pybind11;
 
@@ -12,7 +12,7 @@ namespace VisualPeach {
 
         auto inspector_module = py::module_::import("FunctionInspector");
         //auto test_module = py::module_::import("Test-Function-Read");
-        auto inspector = inspector_module.attr("FunctionInspector")(py::module_::import("math"));
+        auto inspector = inspector_module.attr("FunctionInspector")(py::module_::import("Test-Function-Read"));
         auto functions_info = inspector.attr("get_functions")();
 
         // Convert Python dictionary to C++ map or simply iterate in Python context

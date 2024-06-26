@@ -21,6 +21,7 @@ namespace PeachCore {
         void ChangeScene(const std::string& fp_FilePathToDesiredScene);
 
         void AddEntityToCurrentSceneTree(PeachComponent fp_Entity);
+        void PauseAllEntities();
 
     public:
         Scene currentScene;

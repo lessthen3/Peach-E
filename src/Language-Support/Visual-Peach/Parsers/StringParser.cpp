@@ -1,5 +1,5 @@
 #include "StringParser.h"
 
-namespace VisualPeach {
+namespace Princess {
 
 }

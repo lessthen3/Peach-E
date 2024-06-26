@@ -13,7 +13,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/embed.h>
 
-namespace VisualPeach {
+namespace Princess {
 
 	class PythonScriptParser//PeachCore::PythonScriptComponent fp_Script
 	{

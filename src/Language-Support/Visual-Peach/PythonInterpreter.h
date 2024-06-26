@@ -1,6 +1,6 @@
 #pragma once
 
-namespace VisualPeach {
+namespace Princess {
 
 	class PythonInterpreter
 	{
