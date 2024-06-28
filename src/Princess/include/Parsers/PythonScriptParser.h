@@ -33,6 +33,8 @@ namespace Princess {
 	public:
 		void ExtractFunctionInformationFromPythonModule(const std::string& fp_DesiredModuleImport);
 
+		void ExecutePythonScript(std::string fp_PythonScript);
+
 		std::vector<PythonFunctionInfo> m_ListOfPythonFunctionsToAutoPopulate = {};
 
 	private:

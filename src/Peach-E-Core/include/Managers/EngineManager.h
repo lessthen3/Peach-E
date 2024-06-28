@@ -1,5 +1,5 @@
 #pragma once
-#include "SceneTreeManager.h"
+#include "../../../Peach-core/include/Managers/SceneTreeManager.h"
 #include <map>
 
 namespace PeachCore {

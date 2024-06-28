@@ -7,11 +7,11 @@
 */
 
 namespace Princess {
-    
+
     namespace py = pybind11;
 
     void PythonScriptParser::ExtractFunctionInformationFromPythonModule(const std::string& fp_DesiredModuleImport) 
-{
+    {
         py::scoped_interpreter guard{}; // Start the Python interpreter
 
         auto sys = py::module_::import("sys");

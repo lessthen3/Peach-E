@@ -3,7 +3,7 @@
 */
 
 #include <iostream>
-#include "../Peach-core/include/Managers/Managers.h"
+#include "../Peach-core/include/Managers.h"
 #include "../Princess/include/Parsers/PythonScriptParser.h"
 
 

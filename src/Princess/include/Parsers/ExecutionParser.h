@@ -1,19 +1,21 @@
+////////////////////////////////////////////////////////
+/***                             [Princess]                                     ***/
+////////////////////////////////////////////////////////
+/***                            [Version 0.0.01]                             ***/
+////////////////////////////////////////////////////////
+/***  Copyright(c) 2024-present Ranyodh Singh Mandur  ***/
+/***                               MIT License                                ***/
+/*** Documentation:TBD                                                   ***/
+/*** GitHub: https://github.com/iLoveJohnFish/Peach-E ***/
+/////////////////////////////////////////////////////////
 #pragma once
-
-/*
-    This class is used to
-    Copyright(c) 2024-present Ranyodh Singh Mandur.
-
-*/
-
-
 #include <vector>
 #include "../BlockNode.h"
 
 namespace Princess {
 
+    struct ExecutionParser {
 
-    class ExecutionParser {
     public:
         static ExecutionParser& Parser() {
             static ExecutionParser instance;
@@ -21,7 +23,20 @@ namespace Princess {
         }
 
     public:
-        std::vector<BlockNode>& GetBlockExecutionOrder();
+        std::vector<std::unique_ptr<BlockNode>>& GetRootLevelBlockNodeExecutionOrder();
+
+        void FindAndRemoveBlockNode(BlockNode* fp_NodeToBeRemoved);
+
+        void FlagBlockNodeForRootLevelExecution(const unsigned int fp_BlockNodeID);
+        void RemoveFlagFromBlockNodeForRootLevelExecution(const unsigned int fp_BlockNodeID);
+
+        void ReparentBlockNode();
+
+
+        std::string GenerateScript(const BlockNode* fp_StartingBlockNode) const;
+
+    public:
+        //std::unordered_set<BlockNode*> pm_Visited;
 
     private:
         ExecutionParser() = default;
@@ -29,9 +44,16 @@ namespace Princess {
 
         ExecutionParser(const ExecutionParser&) = delete;
         ExecutionParser& operator=(const ExecutionParser&) = delete;
-	
-	private:
-		std::vector<BlockNode> pm_BlockExecutionOrder = {}; //stores all the blocks that are to be executed for when they're glued back together into a plain old .py file and their branches 
 
-	};
+    private:
+        void DFS(const BlockNode* fp_Node, unsigned int fp_Depth, std::string& fp_Script) const;
+        BlockNode* DFSFindBlockNodeReferenceInTree(const unsigned int fp_BlockNodeID, const bool fp_IsLookingForRoot = true);
+        BlockNode* DFSReturnSpecificBlockNodePointerReference(BlockNode* fp_BlockNode, const unsigned int fp_BlockNodeID);
+
+        void ReorderAndMovePointerReferencesToExecutionList();
+
+	private:
+		std::vector<std::unique_ptr<BlockNode>> pm_RootLevelBlockNodeExecutionOrder = {}; //stores all the blocks that are to be executed for when they're glued back together into a plain old .py file and their branches 
+        std::vector<std::unique_ptr<BlockNode>> pm_AllCurrentlyPlacedBlockNodes = {};
+    };
 }
