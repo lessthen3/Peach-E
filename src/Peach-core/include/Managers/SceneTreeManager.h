@@ -2,13 +2,13 @@
 
 #include <vector>
 #include <string>
-#include "../Entity-Components/PeachComponent.h"
+#include "../Peach-Prefabs/PeachEntity.h"
 
 namespace PeachCore {
 
     struct Scene {
         std::string Name;
-        std::vector<PeachComponent> ListOfEntities;
+        std::vector<PeachEntity> ListOfEntities;
     };
 
     class SceneTreeManager {
@@ -20,7 +20,7 @@ namespace PeachCore {
 
         void ChangeScene(const std::string& fp_FilePathToDesiredScene);
 
-        void AddEntityToCurrentSceneTree(PeachComponent fp_Entity);
+        void AddEntityToCurrentSceneTree(PeachEntity fp_Entity);
         void PauseAllEntities();
 
     public:

@@ -15,7 +15,7 @@ namespace Princess {
 
 		std::string ToScript(unsigned int depth = 0) const override {
 			std::string indent(depth * 4, ' '); // 4 spaces per indent level
-			return indent + "break";
+			return indent + "break" + "\n";
 		}
 	};
 }

@@ -60,7 +60,6 @@ namespace Princess {
     }
 
 
-
     void ExecutionParser::FindAndRemoveBlockNode(BlockNode* fp_NodeToBeRemoved)
     {
         if (!fp_NodeToBeRemoved) {
@@ -86,10 +85,59 @@ namespace Princess {
     }
 
 
-    std::vector<std::unique_ptr<BlockNode>>& ExecutionParser::GetRootLevelBlockNodeExecutionOrder() {
-        return pm_RootLevelBlockNodeExecutionOrder;
+    void ExecutionParser::ExecuteScript()
+    {
+        MovePointerReferencesToRootLevelBlockNodeExecutionOrder();
+        SortRootLevelBlockNodeExecutionOrder();
+
+        // Execute Script
+        RunPythonScript();
+
+        MovePointerReferencesBackToAllCurrentlyPlacedBlockNodes();
     }
 
+
+    void ExecutionParser::MovePointerReferencesToRootLevelBlockNodeExecutionOrder()
+    {
+        for (int i = pm_AllCurrentlyPlacedBlockNodes.size() - 1; i >= 0; --i) {
+            if (pm_AllCurrentlyPlacedBlockNodes[i]->m_IsRootExecutable) {
+                pm_RootLevelBlockNodeExecutionOrder.push_back(std::move(pm_AllCurrentlyPlacedBlockNodes[i]));
+                pm_AllCurrentlyPlacedBlockNodes.erase(pm_AllCurrentlyPlacedBlockNodes.begin() + i);
+            }
+        }
+    }
+
+
+    void ExecutionParser::SortRootLevelBlockNodeExecutionOrder()
+    {
+        std::sort(pm_RootLevelBlockNodeExecutionOrder.begin(), pm_RootLevelBlockNodeExecutionOrder.end(),
+            [](const std::unique_ptr<BlockNode>& a, const std::unique_ptr<BlockNode>& b) {
+                return a->m_InputLineNumber < b->m_InputLineNumber;
+            });
+    }
+
+
+    bool ExecutionParser::CheckIfSorted()
+    {
+        for (int i = 0; i < (pm_AllCurrentlyPlacedBlockNodes.size() - 1) - 1; i++) // -1 again so that we dont go out of bounds for index checking with i + 1
+        {
+            if(pm_RootLevelBlockNodeExecutionOrder[i]->m_InputLineNumber > pm_RootLevelBlockNodeExecutionOrder[i + 1]->m_InputLineNumber) //if sorted, index i should be equal to the m_InputLineNumber up to a constant
+                {return false;}
+        }
+        return true;
+    }
+
+
+    void ExecutionParser::MovePointerReferencesBackToAllCurrentlyPlacedBlockNodes()
+    {
+
+    }
+
+
+    void ExecutionParser::RunPythonScript()
+    {
+
+    }
 }
 
 
@@ -97,4 +145,8 @@ namespace Princess {
 //for (const auto& l_Child : l_BlockNode->m_Children) {
 //    f_TempBlockNodeReference = DFSReturnPointerReferenceOfDesiredBlockNodeID(l_Child->m_ID);
 //    if ()
+//}
+
+//std::vector<std::unique_ptr<BlockNode>>& ExecutionParser::GetRootLevelBlockNodeExecutionOrder() {
+//    return pm_RootLevelBlockNodeExecutionOrder;
 //}

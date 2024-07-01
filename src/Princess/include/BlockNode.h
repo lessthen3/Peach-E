@@ -19,7 +19,7 @@ namespace Princess {
 		std::string m_Name;
 		std::string m_CodeSnippet;
 		int m_LineNumber = -1;
-		unsigned int m_InputLineNumber;
+		unsigned int m_InputLineNumber; //will start at lineNumber 0 originating from the "Program Enter" node, dictates order
 		const unsigned int m_ID;
 		int m_ParentID = -1; //initialize to -1 to indicate no parent , id's are strictly positive
 		bool m_IsRootExecutable = false;

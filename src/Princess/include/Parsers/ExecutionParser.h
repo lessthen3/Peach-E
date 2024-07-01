@@ -32,11 +32,9 @@ namespace Princess {
 
         void ReparentBlockNode();
 
-
-        std::string GenerateScript(const BlockNode* fp_StartingBlockNode) const;
+        void ExecuteScript();
 
     public:
-        //std::unordered_set<BlockNode*> pm_Visited;
 
     private:
         ExecutionParser() = default;
@@ -50,10 +48,21 @@ namespace Princess {
         BlockNode* DFSFindBlockNodeReferenceInTree(const unsigned int fp_BlockNodeID, const bool fp_IsLookingForRoot = true);
         BlockNode* DFSReturnSpecificBlockNodePointerReference(BlockNode* fp_BlockNode, const unsigned int fp_BlockNodeID);
 
-        void ReorderAndMovePointerReferencesToExecutionList();
+        void MovePointerReferencesToRootLevelBlockNodeExecutionOrder();
+
+        void SortRootLevelBlockNodeExecutionOrder();
+        bool CheckIfSorted();
+
+        void MovePointerReferencesBackToAllCurrentlyPlacedBlockNodes();
+
+        void RunPythonScript();
+
+        std::string GenerateScript(const BlockNode* fp_StartingBlockNode) const;
 
 	private:
 		std::vector<std::unique_ptr<BlockNode>> pm_RootLevelBlockNodeExecutionOrder = {}; //stores all the blocks that are to be executed for when they're glued back together into a plain old .py file and their branches 
         std::vector<std::unique_ptr<BlockNode>> pm_AllCurrentlyPlacedBlockNodes = {};
+
+        std::string pm_CurrentScript;
     };
 }

@@ -5,24 +5,23 @@
 
 namespace PeachCore {
 
-    struct RegistryManager
-    {
+    class RegistryManager {
     public:
         static RegistryManager& Registry() {
             static RegistryManager instance;
             return instance;
         }
 
+        entt::registry& GetRegistry() {
+            return registry;
+        }
+
     private:
         RegistryManager() = default;
-        ~RegistryManager() = default;
-
         RegistryManager(const RegistryManager&) = delete;
         RegistryManager& operator=(const RegistryManager&) = delete;
 
-    public:
-        void AddPeachComponent();
-        void RemovePeachComponent();
-        void GetPeachComponent();
+        entt::registry registry;
     };
-}
+
+} 

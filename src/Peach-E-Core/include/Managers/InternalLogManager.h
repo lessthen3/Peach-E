@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../PeachEObject.h"
+#include "../Peach-E Objects/PeachEObject.h"
 
 namespace PeachEngine {
 

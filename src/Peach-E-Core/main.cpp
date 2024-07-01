@@ -1,10 +1,16 @@
 /*
     Copyright(c) 2024-present Ranyodh Singh Mandur.
 */
-
+#include "angelscript.h"
 #include <iostream>
-#include "../Peach-core/include/Managers.h"
+#include <string>
+#include "../Peach-core/Peach-core.hpp"
 #include "../Princess/include/Parsers/PythonScriptParser.h"
+#include <pybind11/pybind11.h>
+
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
+
 
 
 static void LoadPluginsFromConfigs(const std::vector<std::string>& fp_ListOfPluginsToLoad)
@@ -20,12 +26,45 @@ static void SetupRenderer()
 
 }
 
+void test()
+{
+
+}
+
+//PYBIND11_MODULE(peach_engine, fp_Module)
+//{
+//    PeachCore::PythonScriptManager::Python().InitializePythonBindingsForPeachCore(fp_Module);
+//}
+
+
 //////////////////////////////////////////////
 // MAIN FUNCTION BABY
 //////////////////////////////////////////////
 
-int main()
+int main(int argc, char* argv[])
 {
+    try {
+        asIScriptEngine* engine = PeachCore::ScriptEngineManager::ScriptEngine().CreateScriptEngine();
+
+        const char* const script = R"(
+            void main() {
+                print("Hello from AngelScript!");
+                string s = "Test string";
+                print(s);
+                int x = 26;
+                print(x);
+                float m = 132.342326246;
+                print(m);
+            }
+        )";
+
+        PeachCore::ScriptEngineManager::ScriptEngine().ExecuteScript(engine, script);
+    }
+    catch (const std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
+
     Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule("Test-Function-Read");
 
     std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin.dll",
@@ -41,9 +80,9 @@ int main()
 
     PeachCore::LogManager::Logger().Trace("Success! This Built Correctly", "Peach-E");
 
-    ////////////////////////////////////////////////
-    //// Plugin Loader Step
-    ////////////////////////////////////////////////
+    //////////////////////////////////////////////////
+    ////// Plugin Loader Step
+    //////////////////////////////////////////////////
 
     #if defined(_WIN32) || defined(_WIN64)
         LoadPluginsFromConfigs(ListOfWindowsPluginsToLoad); // Windows
@@ -75,32 +114,56 @@ int main()
    // }
 
 
-   // while (m_CurrentRenderWindow.isOpen()) {
-   //     sf::Event event;
-   //     while (m_CurrentRenderWindow.pollEvent(event)) {
-   //         if (event.type == sf::Event::Closed) {
-   //             m_CurrentRenderWindow.close();
-   //         }
-   //         //break;
-   //     }
+   // Initialize SDL
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+        return 1;
+    }
 
-   //     PeachCore::RenderingManager::Renderer().BeginFrame();
-   //     PeachCore::RenderingManager::Renderer().Clear();
+    // Create a window
+    SDL_Window* window = SDL_CreateWindow("SDL Tutorial",
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        640, 480,
+        SDL_WINDOW_SHOWN);
+    if (window == nullptr) {
+        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+        SDL_Quit();
+        return 1;
+    }
 
-   //     // Example drawing calls
-   //     sf::CircleShape shape(50);
-   //     shape.setFillColor(sf::Color::Green);
-   //     shape.setPosition(100, 100);
-   //     PeachCore::RenderingManager::Renderer().Draw(shape);
+    bool quit = false;
+    SDL_Event e;
 
-   //     PeachCore::RenderingManager::Renderer().DrawTextToScreen("Hello, Peach Engine!", font, 24, sf::Vector2f(100, 200), sf::Color::White);
+    // Main loop
+    while (!quit) {
+        // Event handling
+        while (SDL_PollEvent(&e) != 0) {
+            if (e.type == SDL_QUIT) {
+                quit = true;
+            }
+            else if (e.type == SDL_KEYDOWN) {
+                if (e.key.keysym.sym == SDLK_SPACE) {
+                    quit = true;
+                }
+            }
+        }
 
-   //     PeachCore::RenderingManager::Renderer().EndFrame();
-   //     //break;
-   // }
+        // Clear screen (optional)
+        SDL_SetRenderDrawColor(SDL_GetRenderer(window), 0x00, 0x00, 0x00, 0xFF);
+        SDL_RenderClear(SDL_GetRenderer(window));
+
+        // Render stuff here (if any)
+
+        // Update screen
+        SDL_RenderPresent(SDL_GetRenderer(window));
+    }
+
+    // Destroy window and quit SDL
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 
     PeachCore::LogManager::Logger().Debug("Exit Success!", "Peach-E");
-
 
     return EXIT_SUCCESS;
 }

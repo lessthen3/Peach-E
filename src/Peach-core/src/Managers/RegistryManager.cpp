@@ -2,5 +2,9 @@
 
 namespace PeachCore
 {
+	//void RegistryManager::GetActiveRegistry()
+	//{
+
+	//}
 
 }
