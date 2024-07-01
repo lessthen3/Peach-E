@@ -31,6 +31,16 @@ void test()
 
 }
 
+void PlayerSystem(entt::registry& registry, float deltaTime) {
+    // Your system logic here
+    std::cout << "Running Player System" << std::endl;
+}
+
+void EnemySystem(entt::registry& registry, float deltaTime) {
+    // Your system logic here
+    std::cout << "Running Enemy System" << std::endl;
+}
+
 //PYBIND11_MODULE(peach_engine, fp_Module)
 //{
 //    PeachCore::PythonScriptManager::Python().InitializePythonBindingsForPeachCore(fp_Module);
@@ -64,6 +74,39 @@ int main(int argc, char* argv[])
         std::cerr << "Exception: " << e.what() << std::endl;
         return EXIT_FAILURE;
     }
+
+    // Create entities
+    entt::entity player = PeachCore::RegistryManager::Registry().CreateEntity(1);  // SYSTEM_ID 1
+    entt::entity enemy = PeachCore::RegistryManager::Registry().CreateEntity(2);   // SYSTEM_ID 2
+
+    // Add components
+    struct Position { float x, y; };
+    PeachCore::RegistryManager::Registry().AddComponent<Position>(player, 1, 10.0f, 20.0f);
+    PeachCore::RegistryManager::Registry().AddComponent<Position>(enemy, 2, 30.0f, 40.0f);
+
+    // Add systems
+    PeachCore::ScheduleManager::Schedule().AddContinuousSystem(PlayerSystem, 1, 1);
+    PeachCore::ScheduleManager::Schedule().AddStaticSystem(EnemySystem, 2, 2);
+
+    // Update systems
+    PeachCore::ScheduleManager::Schedule().UpdateContinuousSystems(PeachCore::RegistryManager::Registry().GetRegistry(), 0.016f);
+
+    // Run a specific static system
+    PeachCore::ScheduleManager::Schedule().RunStaticSystemNow(2, PeachCore::RegistryManager::Registry().GetRegistry(), 0.016f);
+
+    // Set a continuous system to inactive
+    PeachCore::ScheduleManager::Schedule().SetContinuousSystemActivity(1, false);
+
+    // Update systems again to see the effect of the inactive system
+    PeachCore::ScheduleManager::Schedule().UpdateContinuousSystems(PeachCore::RegistryManager::Registry().GetRegistry(), 0.016f);
+
+    // Remove a system
+    PeachCore::ScheduleManager::Schedule().RemoveContinuousSystem(1);
+
+
+
+
+
 
     Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule("Test-Function-Read");
 
@@ -121,7 +164,7 @@ int main(int argc, char* argv[])
     }
 
     // Create a window
-    SDL_Window* window = SDL_CreateWindow("SDL Tutorial",
+    SDL_Window* window = SDL_CreateWindow("SDL Window",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
         640, 480,
