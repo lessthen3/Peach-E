@@ -13,7 +13,7 @@ namespace PeachCore {
     struct EventQueueManager {
 
     public:
-        static EventQueueManager& instance() {
+        static EventQueueManager& EventQueue() {
             static EventQueueManager<Event> instance;
             return instance;
         }

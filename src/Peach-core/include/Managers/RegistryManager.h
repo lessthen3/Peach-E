@@ -18,23 +18,25 @@ namespace PeachCore {
         entt::registry& GetRegistry();
 
         entt::entity CreateEntity(int systemID);
+        void DestroyEntity(const entt::entity& fp_Entity, int fp_CurrentSystemID);
 
-        void DestroyEntity(const entt::entity& fp_Entity);
+        void TransferOwnership(const entt::entity& fp_Entity, int fp_CurrentOwnerID, int fp_FutureOwnerID);
+        void ReleaseEntity(const entt::entity& fp_Entity, int fp_CurrentOwnerID);
 
         template<typename T, typename... Args>
-        T& PatchComponent(const entt::entity& entity, int systemID, Args&&... args);
+        T& PatchComponent(const entt::entity& fp_Entity, int fp_SystemID, Args&&... args);
 
         template<typename T, typename... Args>
-        T& AddComponent(const entt::entity& entity, int systemID, Args&&... args);
+        T& AddComponent(const entt::entity& fp_Entity, int fp_SystemID, Args&&... args);
 
         template<typename T>
-        void RemoveComponent(const entt::entity& entity, int systemID);
+        void RemoveComponent(const entt::entity& fp_Entity, int fp_SystemID);
 
         template<typename T>
-        T& GetComponent(const entt::entity& entity, int systemID);
+        T& GetComponent(const entt::entity& fp_Entity, int fp_SystemID);
 
         template<typename T>
-        const T& GetComponentReadOnly(const entt::entity& entity) const;
+        const T& GetComponentReadOnly(const entt::entity& fp_Entity) const;
 
     private:
         RegistryManager() = default;
@@ -42,50 +44,51 @@ namespace PeachCore {
         RegistryManager(const RegistryManager&) = delete;
         RegistryManager& operator=(const RegistryManager&) = delete;
 
-        entt::registry registry;
-        std::unordered_map<entt::entity, int> entitySystemMap;  // Map to store entity SYSTEM_IDs
+        entt::registry pm_Registry;
+        std::unordered_map<entt::entity, int> pm_EntitySystemMap;  // Map to store entity SYSTEM_IDs
+        std::vector<entt::entity> pm_FreeEntities;
     };
 
     // Component management
     template<typename T, typename... Args>
-    T& RegistryManager::AddComponent(const entt::entity& entity, int systemID, Args&&... args) {
-        if (entitySystemMap.at(entity) != systemID) {
+    T& RegistryManager::AddComponent(const entt::entity& fp_Entity, int fp_SystemID, Args&&... args) {
+        if (pm_EntitySystemMap.at(fp_Entity) != fp_SystemID) {
             throw std::runtime_error("System ID mismatch when adding component.");
         }
-        return registry.emplace<T>(entity, std::forward<Args>(args)...);
+        return pm_Registry.emplace<T>(fp_Entity, std::forward<Args>(args)...);
     }
 
     template<typename T>
-    const T& RegistryManager::GetComponentReadOnly(const entt::entity& entity) const {
-        return registry.get<T>(entity);
+    const T& RegistryManager::GetComponentReadOnly(const entt::entity& fp_Entity) const {
+        return pm_Registry.get<T>(fp_Entity);
     }
 
     template<typename T>
-    T& RegistryManager::GetComponent(const entt::entity& entity, int systemID) {
-        if (entitySystemMap.at(entity) != systemID) {
+    T& RegistryManager::GetComponent(const entt::entity& fp_Entity, int fp_SystemID) {
+        if (pm_EntitySystemMap.at(fp_Entity) != fp_SystemID) {
             throw std::runtime_error("System ID mismatch when accessing component.");
 
         }
-        return registry.get<T>(entity);
+        return pm_Registry.get<T>(fp_Entity);
     }
 
     template<typename T>
-    void RegistryManager::RemoveComponent(const entt::entity& entity, int systemID) {
-        if (entitySystemMap.at(entity) != systemID) {
+    void RegistryManager::RemoveComponent(const entt::entity& fp_Entity, int fp_SystemID) {
+        if (pm_EntitySystemMap.at(fp_Entity) != fp_SystemID) {
             throw std::runtime_error("System ID mismatch when removing component.");
         }
-        registry.remove<T>(entity);
+        pm_Registry.remove<T>(fp_Entity);
     }
 
     // Patch a component
     template<typename T, typename... Args>
-    T& RegistryManager::PatchComponent(const entt::entity& entity, int systemID, Args&&... args) {
-        if (entitySystemMap.at(entity) != systemID) {
+    T& RegistryManager::PatchComponent(const entt::entity& fp_Entity, int fp_SystemID, Args&&... args) {
+        if (pm_EntitySystemMap.at(fp_Entity) != fp_SystemID) {
             throw std::runtime_error("System ID mismatch when patching component.");
         }
-        if (!registry.any_of<T>(entity)) {
-            return registry.emplace<T>(entity, std::forward<Args>(args)...);
+        if (!pm_Registry.any_of<T>(fp_Entity)) {
+            return pm_Registry.emplace<T>(fp_Entity, std::forward<Args>(args)...);
         }
-        return registry.replace<T>(entity, std::forward<Args>(args)...);
+        return pm_Registry.replace<T>(fp_Entity, std::forward<Args>(args)...);
     }
 }

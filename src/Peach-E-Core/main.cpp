@@ -31,14 +31,55 @@ void test()
 
 }
 
+// Component definitions
+struct Position { float x, y; };
+struct Velocity { float vx, vy; };
+struct Health { int hp; };
+struct MoveEvent {
+    entt::entity entity;
+    float x, y;
+};
+
+// System definitions
 void PlayerSystem(entt::registry& registry, float deltaTime) {
-    // Your system logic here
-    std::cout << "Running Player System" << std::endl;
+    auto view = registry.view<Position, Velocity>();
+    for (auto entity : view) {
+        auto& pos = view.get<Position>(entity);
+        auto& vel = view.get<Velocity>(entity);
+        pos.x += vel.vx * deltaTime;
+        pos.y += vel.vy * deltaTime;
+        std::cout << "Player position: (" << pos.x << ", " << pos.y << ")\n";
+    }
 }
 
 void EnemySystem(entt::registry& registry, float deltaTime) {
-    // Your system logic here
-    std::cout << "Running Enemy System" << std::endl;
+    auto view = registry.view<Position, Health>();
+    for (auto entity : view) {
+        auto& pos = view.get<Position>(entity);
+        auto& health = view.get<Health>(entity);
+        std::cout << "Enemy position: (" << pos.x << ", " << pos.y << ") with HP: " << health.hp << "\n";
+    }
+}
+
+void MovementSystem(entt::registry& registry, float deltaTime) {
+    auto view = registry.view<Position, Velocity>();
+    for (auto entity : view) {
+        auto& pos = view.get<Position>(entity);
+        auto& vel = view.get<Velocity>(entity);
+        pos.x += vel.vx * deltaTime;
+        pos.y += vel.vy * deltaTime;
+    }
+}
+
+void HealthSystem(entt::registry& registry, float deltaTime) {
+    auto view = registry.view<Health>();
+    for (auto entity : view) {
+        auto& health = view.get<Health>(entity);
+        if (health.hp <= 0) {
+            std::cout << "Entity " << entt::to_integral(entity) << " has died.\n";
+            registry.destroy(entity);
+        }
+    }
 }
 
 //PYBIND11_MODULE(peach_engine, fp_Module)
@@ -88,27 +129,35 @@ int main(int argc, char* argv[])
     PeachCore::ScheduleManager::Schedule().AddContinuousSystem(PlayerSystem, 1, 1);
     PeachCore::ScheduleManager::Schedule().AddStaticSystem(EnemySystem, 2, 2);
 
+    // Subscribe to MoveEvent
+    PeachCore::EventQueueManager<MoveEvent>::EventQueue().Subscribe<MoveEvent>([](const MoveEvent& event) {
+        auto& registry = PeachCore::RegistryManager::Registry().GetRegistry();
+        if (registry.valid(event.entity)) {
+            auto& pos = registry.get<Position>(event.entity);
+            pos.x += event.x;
+            pos.y += event.y;
+            std::cout << "Entity " << (int)event.entity << " moved to (" << pos.x << ", " << pos.y << ")\n";
+        }
+        });
+
+    // Post events
+    PeachCore::EventQueueManager<MoveEvent>::EventQueue().PostEvent(MoveEvent{ player, 5.0f, 0.0f });
+    PeachCore::EventQueueManager<MoveEvent>::EventQueue().PostEvent(MoveEvent{ enemy, -5.0f, -10.0f });
+    PeachCore::EventQueueManager<MoveEvent>::EventQueue().IncrementFrame();
+    // Process events
+    PeachCore::EventQueueManager<MoveEvent>::EventQueue().ProcessEvents();
+    
+
     // Update systems
     PeachCore::ScheduleManager::Schedule().UpdateContinuousSystems(PeachCore::RegistryManager::Registry().GetRegistry(), 0.016f);
-
-    // Run a specific static system
     PeachCore::ScheduleManager::Schedule().RunStaticSystemNow(2, PeachCore::RegistryManager::Registry().GetRegistry(), 0.016f);
 
-    // Set a continuous system to inactive
-    PeachCore::ScheduleManager::Schedule().SetContinuousSystemActivity(1, false);
-
-    // Update systems again to see the effect of the inactive system
-    PeachCore::ScheduleManager::Schedule().UpdateContinuousSystems(PeachCore::RegistryManager::Registry().GetRegistry(), 0.016f);
-
-    // Remove a system
-    PeachCore::ScheduleManager::Schedule().RemoveContinuousSystem(1);
 
 
 
 
 
-
-    Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule("Test-Function-Read");
+    //Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule("Test-Function-Read");
 
     std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin.dll",
                                                                                              "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin2.dll" };
