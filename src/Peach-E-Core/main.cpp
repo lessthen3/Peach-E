@@ -8,6 +8,9 @@
 #include "../Princess/include/Parsers/PythonScriptParser.h"
 #include <pybind11/pybind11.h>
 
+#include <chrono>
+#include <thread>
+
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 
@@ -82,6 +85,75 @@ void HealthSystem(entt::registry& registry, float deltaTime) {
     }
 }
 
+void PrintMessage(const std::string& msg, int duration = 0) {
+    std::cout << msg << std::endl;
+    if (duration > 0) {
+        std::this_thread::sleep_for(std::chrono::seconds(duration));
+    }
+}
+
+void TestEventTasks() {
+    std::cout << "Starting Test: TestEventTasks" << std::endl;
+
+    // Enqueue event tasks
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueEventBatch({
+        []() { PrintMessage("Event Task 1", 2); },
+        []() { PrintMessage("Event Task 2"); }
+        });
+
+    // Enqueue user tasks with different priorities
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueOneTime([]() { PrintMessage("User Task 1 - Priority 1"); }, 1);
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueOneTime([]() { PrintMessage("User Task 2 - Priority 2"); }, 2);
+
+    // Start processing tasks
+    PeachCore::ThreadPoolManager::ThreadPool().ProcessTasks();
+
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::cout << "Finished Test: TestEventTasks" << std::endl;
+}
+
+void TestHardEventSync() {
+    std::cout << "Starting Test: TestHardEventSync" << std::endl;
+
+    PeachCore::ThreadPoolManager::ThreadPool().SetEnforceHardEventSync(true);
+
+    // Enqueue event tasks
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueEventBatch({
+        []() { PrintMessage("Event Task 1", 2); },
+        []() { PrintMessage("Event Task 2"); }
+        });
+
+    // Enqueue user tasks with different priorities
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueOneTime([]() { PrintMessage("User Task 1 - Priority 1"); }, 1);
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueOneTime([]() { PrintMessage("User Task 2 - Priority 2"); }, 2);
+
+    // Start processing tasks
+    PeachCore::ThreadPoolManager::ThreadPool().ProcessTasks();
+
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    std::cout << "Finished Test: TestHardEventSync" << std::endl;
+
+    PeachCore::ThreadPoolManager::ThreadPool().SetEnforceHardEventSync(false);
+}
+
+void TestContinuousTasks() {
+    std::cout << "Starting Test: TestContinuousTasks" << std::endl;
+
+    // Enqueue continuous tasks
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueContinuous([]() { PrintMessage("Continuous Task 1 - Priority 0"); }, 0);
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueContinuous([]() { PrintMessage("Continuous Task 2 - Priority 1"); }, 1);
+
+    // Enqueue user tasks with different priorities
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueOneTime([]() { PrintMessage("User Task 1 - Priority 1"); }, 1);
+    PeachCore::ThreadPoolManager::ThreadPool().EnqueueOneTime([]() { PrintMessage("User Task 2 - Priority 2"); }, 2);
+
+    // Start processing tasks
+    PeachCore::ThreadPoolManager::ThreadPool().ProcessTasks();
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::cout << "Finished Test: TestContinuousTasks" << std::endl;
+}
+
 //PYBIND11_MODULE(peach_engine, fp_Module)
 //{
 //    PeachCore::PythonScriptManager::Python().InitializePythonBindingsForPeachCore(fp_Module);
@@ -116,75 +188,44 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Create entities
-    entt::entity player = PeachCore::RegistryManager::Registry().CreateEntity(1);  // SYSTEM_ID 1
-    entt::entity enemy = PeachCore::RegistryManager::Registry().CreateEntity(2);   // SYSTEM_ID 2
+    TestEventTasks();
+    TestHardEventSync();
+    TestContinuousTasks();
 
-    // Add components
-    struct Position { float x, y; };
-    PeachCore::RegistryManager::Registry().AddComponent<Position>(player, 1, 10.0f, 20.0f);
-    PeachCore::RegistryManager::Registry().AddComponent<Position>(enemy, 2, 30.0f, 40.0f);
-
-    // Add systems
-    PeachCore::ScheduleManager::Schedule().AddContinuousSystem(PlayerSystem, 1, 1);
-    PeachCore::ScheduleManager::Schedule().AddStaticSystem(EnemySystem, 2, 2);
-
-    // Subscribe to MoveEvent
-    PeachCore::EventQueueManager<MoveEvent>::EventQueue().Subscribe<MoveEvent>([](const MoveEvent& event) {
-        auto& registry = PeachCore::RegistryManager::Registry().GetRegistry();
-        if (registry.valid(event.entity)) {
-            auto& pos = registry.get<Position>(event.entity);
-            pos.x += event.x;
-            pos.y += event.y;
-            std::cout << "Entity " << (int)event.entity << " moved to (" << pos.x << ", " << pos.y << ")\n";
-        }
-        });
-
-    // Post events
-    PeachCore::EventQueueManager<MoveEvent>::EventQueue().PostEvent(MoveEvent{ player, 5.0f, 0.0f });
-    PeachCore::EventQueueManager<MoveEvent>::EventQueue().PostEvent(MoveEvent{ enemy, -5.0f, -10.0f });
-    PeachCore::EventQueueManager<MoveEvent>::EventQueue().IncrementFrame();
-    // Process events
-    PeachCore::EventQueueManager<MoveEvent>::EventQueue().ProcessEvents();
-    
-
-    // Update systems
-    PeachCore::ScheduleManager::Schedule().UpdateContinuousSystems(PeachCore::RegistryManager::Registry().GetRegistry(), 0.016f);
-    PeachCore::ScheduleManager::Schedule().RunStaticSystemNow(2, PeachCore::RegistryManager::Registry().GetRegistry(), 0.016f);
-
-
+    // Clean up
+    PeachCore::ThreadPoolManager::ThreadPool().Shutdown();
 
 
 
 
     //Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule("Test-Function-Read");
 
-    std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin.dll",
-                                                                                             "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin2.dll" };
-    std::vector<std::string> ListOfUnixPluginsToLoad = { };
+    //std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin.dll",
+    //                                                                                         "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin2.dll" };
+    //std::vector<std::string> ListOfUnixPluginsToLoad = { };
 
-    PeachCore::LogManager::Logger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE");
-    PeachCore::LogManager::Logger().Initialize("D:/Game Development/Random Junk I Like to Keep/Bigga");
+    //PeachCore::LogManager::Logger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE");
+    //PeachCore::LogManager::Logger().Initialize("D:/Game Development/Random Junk I Like to Keep/Bigga");
 
-    PeachCore::LogManager::Logger().Debug("LogManager successfully initialized", "LogManager");
-    std::cout << "Hello World!\n";
-    PeachCore::LogManager::Logger().Warn("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
+    //PeachCore::LogManager::Logger().Debug("LogManager successfully initialized", "LogManager");
+    //std::cout << "Hello World!\n";
+    //PeachCore::LogManager::Logger().Warn("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
 
-    PeachCore::LogManager::Logger().Trace("Success! This Built Correctly", "Peach-E");
+    //PeachCore::LogManager::Logger().Trace("Success! This Built Correctly", "Peach-E");
 
-    //////////////////////////////////////////////////
-    ////// Plugin Loader Step
-    //////////////////////////////////////////////////
+    ////////////////////////////////////////////////////
+    //////// Plugin Loader Step
+    ////////////////////////////////////////////////////
 
-    #if defined(_WIN32) || defined(_WIN64)
-        LoadPluginsFromConfigs(ListOfWindowsPluginsToLoad); // Windows
-    #else
-        LoadPluginsFromConfigs(ListOfUnixPluginsToLoad); // Linux/Unix
-    #endif
+    //#if defined(_WIN32) || defined(_WIN64)
+    //    LoadPluginsFromConfigs(ListOfWindowsPluginsToLoad); // Windows
+    //#else
+    //    LoadPluginsFromConfigs(ListOfUnixPluginsToLoad); // Linux/Unix
+    //#endif
 
-    PeachCore::PluginManager::ManagePlugins().InitializePlugins();
-    PeachCore::PluginManager::ManagePlugins().UpdatePlugins(0.1f);
-    PeachCore::PluginManager::ManagePlugins().ShutdownPlugins();
+    //PeachCore::PluginManager::ManagePlugins().InitializePlugins();
+    //PeachCore::PluginManager::ManagePlugins().UpdatePlugins(0.1f);
+    //PeachCore::PluginManager::ManagePlugins().ShutdownPlugins();
 
     ////////////////////////////////////////////////
     //// Setting Up Renderer For Engine
