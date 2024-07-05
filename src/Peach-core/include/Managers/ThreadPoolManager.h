@@ -28,14 +28,21 @@ namespace PeachCore {
         }
 
     private:
-        ThreadPoolManager(size_t fp_MaxThreads = 4) : m_Stop(false), m_MaxThreads(fp_MaxThreads) {
+        ThreadPoolManager() = default;
+
+    public:
+
+        void Initialize(size_t fp_MaxThreads = 4)
+        {
+            m_Stop = false;
+            m_MaxThreads = fp_MaxThreads;
+
             m_Workers.reserve(m_MaxThreads);
             for (size_t i = 0; i < m_MaxThreads; ++i) {
                 m_Workers.emplace_back(&ThreadPoolManager::Worker, this);
             }
         }
 
-    public:
         void EnqueueEventBatch(const std::vector<std::function<void()>>& fp_Tasks) {
             std::lock_guard<std::mutex> lock(m_QueueMutex);
             std::cout << "Enqueueing Event Batch of size: " << fp_Tasks.size() << std::endl;
