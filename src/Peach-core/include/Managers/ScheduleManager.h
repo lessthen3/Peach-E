@@ -3,7 +3,6 @@
 #include <functional>
 #include <map>
 #include <tuple>
-#include <entt/entt.hpp>
 
 namespace PeachCore {
 
@@ -15,7 +14,7 @@ namespace PeachCore {
         }
 
         // Adding a continuous system with a priority and SYSTEM_ID
-        void AddContinuousSystem(std::function<void(entt::registry&, float)> system, int priority, int systemID) {
+        void AddContinuousSystem(std::function<void(std::string&, float)> system, int priority, int systemID) {
             m_ContinuousSystems.emplace_back(priority, system, systemID, true);
             std::sort(m_ContinuousSystems.begin(), m_ContinuousSystems.end(), [](const auto& a, const auto& b) {
                 return std::get<0>(a) < std::get<0>(b);
@@ -23,7 +22,7 @@ namespace PeachCore {
         }
 
         // Adding a static system with a priority and SYSTEM_ID
-        void AddStaticSystem(std::function<void(entt::registry&, float)> system, int priority, int systemID) {
+        void AddStaticSystem(std::function<void(std::string&, float)> system, int priority, int systemID) {
             m_StaticSystems.emplace_back(priority, system, systemID);
             std::sort(m_StaticSystems.begin(), m_StaticSystems.end(), [](const auto& a, const auto& b) {
                 return std::get<0>(a) < std::get<0>(b);
@@ -31,7 +30,7 @@ namespace PeachCore {
         }
 
         // Executing all continuous systems
-        void UpdateContinuousSystems(entt::registry& registry, float deltaTime) {
+        void UpdateContinuousSystems(std::string& registry, float deltaTime) {
             for (auto& [priority, system, systemID, isActive] : m_ContinuousSystems) {
                 if (isActive) {
                     system(registry, deltaTime);
@@ -40,7 +39,7 @@ namespace PeachCore {
         }
 
         // Executing all static systems
-        void UpdateStaticSystems(entt::registry& registry, float deltaTime) {
+        void UpdateStaticSystems(std::string& registry, float deltaTime) {
             for (const auto& [priority, system, systemID] : m_StaticSystems) {
                 system(registry, deltaTime);
             }
@@ -57,7 +56,7 @@ namespace PeachCore {
         }
 
         // Run a specific static system on demand
-        void RunStaticSystemNow(int systemID, entt::registry& registry, float deltaTime) {
+        void RunStaticSystemNow(int systemID, std::string& registry, float deltaTime) {
             for (const auto& [priority, system, id] : m_StaticSystems) {
                 if (id == systemID) {
                     system(registry, deltaTime);
@@ -86,8 +85,8 @@ namespace PeachCore {
     private:
         ScheduleManager() = default;
 
-        std::vector<std::tuple<int, std::function<void(entt::registry&, float)>, int, bool>> m_ContinuousSystems; // priority, system, systemID, isActive
-        std::vector<std::tuple<int, std::function<void(entt::registry&, float)>, int>> m_StaticSystems; // priority, system, systemID
+        std::vector<std::tuple<int, std::function<void(std::string&, float)>, int, bool>> m_ContinuousSystems; // priority, system, systemID, isActive
+        std::vector<std::tuple<int, std::function<void(std::string&, float)>, int>> m_StaticSystems; // priority, system, systemID
     };
 
 }

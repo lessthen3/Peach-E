@@ -9,6 +9,8 @@
 #include <functional>
 #include <atomic>
 #include <iostream>
+#include <tbb/tbb.h>
+#include "ScriptEngineManager.h"
 
 namespace PeachCore {
 
@@ -28,14 +30,24 @@ namespace PeachCore {
         }
 
     private:
-        ThreadPoolManager(size_t fp_MaxThreads = 4) : m_Stop(false), m_MaxThreads(fp_MaxThreads) {
+        ThreadPoolManager() = default;
+
+    public:
+
+        void Initialize(size_t fp_MaxThreads = 4)
+        {
+            m_MaxThreads = fp_MaxThreads;
+            m_Stop = false;
+
+            // Initialize the script engine manager
+            m_ScriptEngine = ScriptEngineManager::ScriptEngine().CreateScriptEngine(); //lifecycle of scriptengine is the entire program so no need to clean up explicitly
+
             m_Workers.reserve(m_MaxThreads);
             for (size_t i = 0; i < m_MaxThreads; ++i) {
                 m_Workers.emplace_back(&ThreadPoolManager::Worker, this);
             }
         }
 
-    public:
         void EnqueueEventBatch(const std::vector<std::function<void()>>& fp_Tasks) {
             std::lock_guard<std::mutex> lock(m_QueueMutex);
             std::cout << "Enqueueing Event Batch of size: " << fp_Tasks.size() << std::endl;
@@ -194,6 +206,7 @@ namespace PeachCore {
         std::atomic<bool> enforceHardEventSync{ false };
         std::atomic<size_t> m_IdleThreadCount{ 0 };
         int currentPriority = 0;
+        asIScriptEngine* m_ScriptEngine;
     };
 
 }

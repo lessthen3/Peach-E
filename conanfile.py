@@ -7,7 +7,7 @@ class PeachEBuilder(ConanFile):
     def requirements(self):
         # just chillin
         self.requires("spdlog/1.14.1")
-        self.requires("entt/3.13.0")
+        self.requires("onetbb/2021.12.0")
 
         # physics
         self.requires("box2d/2.4.1")

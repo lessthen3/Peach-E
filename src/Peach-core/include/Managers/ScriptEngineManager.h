@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 #include <stdexcept>
+#include <atomic>
 
 #include "../../include/AngelScript/scriptstdstring/scriptstdstring.h"
 
@@ -27,6 +28,12 @@ namespace PeachCore {
         asIScriptEngine* CreateScriptEngine();
 
         void ExecuteScript(asIScriptEngine* engine, const std::string& scriptCode);
+
+        // Add function declarations for registering atomic types
+        void RegisterAtomicTypes(asIScriptEngine* engine);
+
+
+        void RegisterPrintFunction(asIScriptEngine* engine);
 
         ~ScriptEngineManager();
 

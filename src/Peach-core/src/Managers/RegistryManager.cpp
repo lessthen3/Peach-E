@@ -3,7 +3,7 @@
 
 namespace PeachCore
 {
-    entt::registry& RegistryManager::GetRegistry() {
+    entt::registry& RegistryManager::GetRegistry() const {
         return pm_Registry;
     }
 

@@ -39,8 +39,8 @@ struct Position { float x, y; };
 struct Velocity { float vx, vy; };
 struct Health { int hp; };
 struct MoveEvent {
-    entt::entity entity;
-    float x, y;
+    int entityID;
+    float dx, dy;
 };
 
 // System definitions
@@ -83,6 +83,20 @@ void HealthSystem(entt::registry& registry, float deltaTime) {
             registry.destroy(entity);
         }
     }
+}
+
+// Event handler
+void HandleMoveEvent(const MoveEvent& event, std::atomic<int>& counter) {
+    //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::cout << "Handled MoveEvent for entity: " << event.entityID << " Move: (" << event.dx << ", " << event.dy << ")\n";
+    counter++;
+}
+
+// System function
+void SystemFunction(int systemID, std::atomic<int>& counter) {
+    //std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    std::cout << "Executed System: " << systemID << "\n";
+    counter++;
 }
 
 void PrintMessage(const std::string& msg, int duration = 0) {
@@ -130,7 +144,7 @@ void TestHardEventSync() {
     // Start processing tasks
     PeachCore::ThreadPoolManager::ThreadPool().ProcessTasks();
 
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    //std::this_thread::sleep_for(std::chrono::seconds(3));
     std::cout << "Finished Test: TestHardEventSync" << std::endl;
 
     PeachCore::ThreadPoolManager::ThreadPool().SetEnforceHardEventSync(false);
@@ -152,6 +166,43 @@ void TestContinuousTasks() {
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
     std::cout << "Finished Test: TestContinuousTasks" << std::endl;
+}
+
+void TestExtremeEventSystemExecution() {
+    std::atomic<int> eventCounter(0);
+    std::atomic<int> systemCounter(0);
+
+    // Create EventQueueManager and ThreadPoolManager instances
+    auto& eventQueueManager = PeachCore::EventQueueManager<MoveEvent>::EventQueue();
+    auto& threadPoolManager = PeachCore::ThreadPoolManager::ThreadPool();
+
+    // Subscribe to the MoveEvent
+    eventQueueManager.Subscribe<MoveEvent>([&](const MoveEvent& event) {
+        HandleMoveEvent(event, eventCounter);
+        });
+
+    // Enqueue events
+    for (int i = 0; i < 10000; ++i) {
+        eventQueueManager.PostEvent(MoveEvent{ i, float(i) * 0.1f, float(i) * 0.1f });
+    }
+
+    // Enqueue systems
+    for (int i = 0; i < 10000; ++i) {
+        threadPoolManager.EnqueueContinuous([i, &systemCounter]() {
+            SystemFunction(i, systemCounter);
+            }, i % 10); // Prioritize systems in groups of 10
+    }
+
+    // Process events and tasks
+    eventQueueManager.ProcessEvents();
+    threadPoolManager.ProcessTasks();
+
+    // Wait for a while to let systems and events complete
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    // Check if all events and systems were executed
+    std::cout << "Total events handled: " << eventCounter.load() << "\n";
+    std::cout << "Total systems executed: " << systemCounter.load() << "\n";
 }
 
 //PYBIND11_MODULE(peach_engine, fp_Module)
@@ -188,9 +239,7 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    TestEventTasks();
-    TestHardEventSync();
-    TestContinuousTasks();
+    TestExtremeEventSystemExecution();
 
     // Clean up
     PeachCore::ThreadPoolManager::ThreadPool().Shutdown();
