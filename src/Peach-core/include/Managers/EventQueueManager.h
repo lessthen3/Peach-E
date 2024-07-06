@@ -59,7 +59,8 @@ namespace PeachCore {
                     }
                 }
                 if (!eventBatch.empty()) {
-                    PeachCore::ThreadPoolManager::ThreadPool().EnqueueEventBatch(eventBatch);
+                    //
+                    //
                 }
             }
         }

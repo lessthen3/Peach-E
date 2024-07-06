@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fstream>
 #include <iostream>
 #include <thread>
 #include <shared_mutex>
@@ -7,6 +8,8 @@
 #include <vector>
 #include <AL/al.h>
 #include <AL/alc.h>
+
+#include "LogManager.h"
 
 namespace PeachCore {
 
@@ -24,7 +27,7 @@ namespace PeachCore {
         void SetCurrentTrack(const std::string& track);
 
     private:
-        AudioManager() : device(nullptr), context(nullptr) {}
+        AudioManager() : m_Device(nullptr), m_Context(nullptr) {}
         ~AudioManager() {
             Shutdown();
         }
@@ -35,11 +38,11 @@ namespace PeachCore {
 
         bool LoadWAVFile(const std::string& filename, ALuint buffer);
 
-        ALCdevice* device;
-        ALCcontext* context;
+        ALCdevice* m_Device;
+        ALCcontext* m_Context;
         mutable std::shared_mutex mutex_;
-        std::string currentTrack_;
-        std::vector<ALuint> sources;
+        std::string m_CurrentTrack;
+        std::vector<ALuint> m_Sources;
 	};
 
 

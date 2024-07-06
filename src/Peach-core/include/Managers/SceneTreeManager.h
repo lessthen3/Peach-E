@@ -2,14 +2,15 @@
 
 #include <vector>
 #include <string>
-#include "../Peach-Prefabs/PeachEntity.h"
+#include <memory>
+#include <unordered_map>
+
+#include <iostream>
+
+#include "../Unsorted/Scene.h"
 
 namespace PeachCore {
 
-    struct Scene {
-        std::string Name;
-        std::vector<PeachEntity> ListOfEntities;
-    };
 
     class SceneTreeManager {
     public:
@@ -18,23 +19,37 @@ namespace PeachCore {
             return instance;
         }
 
-        void ChangeScene(const std::string& fp_FilePathToDesiredScene);
+        ~SceneTreeManager() = default;
 
-        void AddEntityToCurrentSceneTree(PeachEntity fp_Entity);
+        //void ChangeScene(const std::string& fp_FilePathToDesiredScene);
+
+        void AddEntityToCurrentSceneTree(PeachNode fp_Entity);
         void PauseAllEntities();
 
     public:
-        Scene currentScene;
+        //Scene m_CurrentScene;
 
-    private:
+        void ChangeScene(const std::string& sceneName);
+        void AddScene(const std::shared_ptr<Scene>& scene);
+        void RemoveScene(const std::string& sceneName);
+
+        void Update(float fp_TimeSinceLastFrame);
+        void Draw();
+
+        void PauseCurrentScene();
+        void ResumeCurrentScene();
+
         void UnloadCurrentScene();
-        Scene LoadDesiredScene(const std::string& fp_FilePathToDesiredScene) const;
+        Scene* LoadDesiredScene(const std::string& fp_FilePathToDesiredScene) const;
 
     private:
-        SceneTreeManager() = default;
-        ~SceneTreeManager() = default;
+        SceneTreeManager();
+
         SceneTreeManager(const SceneTreeManager&) = delete;
         SceneTreeManager& operator=(const SceneTreeManager&) = delete;
+
+        std::unordered_map<std::string, std::shared_ptr<Scene>> pm_Scenes;
+        std::shared_ptr<Scene> m_CurrentScene;
 
     };
 }

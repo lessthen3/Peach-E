@@ -1,7 +1,6 @@
 /*
     Copyright(c) 2024-present Ranyodh Singh Mandur.
 */
-#include "angelscript.h"
 #include <iostream>
 #include <string>
 #include "../Peach-core/Peach-core.hpp"
@@ -197,43 +196,22 @@ static void SetupLogManager()
 
 int main(int argc, char* argv[])
 {
-    try {
-        asIScriptEngine* engine = PeachCore::ScriptEngineManager::ScriptEngine().CreateScriptEngine();
 
-        const char* const script = R"(
-            void main() {
-                print("Hello from AngelScript!");
-                string s = "Test string";
-                print(s);
-                int x = 26;
-                print(x);
-                float m = 132.342326246;
-                print(m);
-            }
-        )";
-
-        PeachCore::ScriptEngineManager::ScriptEngine().ExecuteScript(engine, script);
-    }
-    catch (const std::exception& e) {
-        std::cerr << "Exception: " << e.what() << std::endl;
-        return EXIT_FAILURE;
-    }
-
-    std::thread gameLogic(GameLogicThread);
-    std::thread render(RenderThread);
-    std::thread audio(AudioThread);
-    std::thread resourceLoading(ResourceLoadingThread);
-    std::thread network(NetworkThread);
+    std::thread T_GameLogic(GameLogicThread);
+    std::thread T_Render(RenderThread);
+    std::thread T_Audio(AudioThread);
+    std::thread T_ResourceLoading(ResourceLoadingThread);
+    std::thread T_Network(NetworkThread);
 
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
     running = false;
 
-    gameLogic.join();
-    render.join();
-    audio.join();
-    resourceLoading.join();
-    network.join();
+    T_GameLogic.join();
+    T_Render.join();
+    T_Audio.join();
+    T_ResourceLoading.join();
+    T_Network.join();
 
     CreateSDLWindow();
     SetupRenderer();
