@@ -7,6 +7,15 @@
 
 namespace PeachCore {
 
+
+    RenderingManager::~RenderingManager() {
+        delete pm_Renderer2D;
+        if (pm_CurrentWindow) {
+            SDL_DestroyWindow(pm_CurrentWindow);
+            SDL_Quit();
+        }
+    } 
+
     void RenderingManager::Initialize(const std::string fp_RendererType, const std::string& fp_Title, const int fp_Width, const int fp_Height)
     {
         if (hasBeenInitialized)
@@ -27,20 +36,40 @@ namespace PeachCore {
         
     }
 
- /*   void RenderingManager::DrawTextToScreen(const std::string& fp_Text, const sf::Font& fp_Font, unsigned int fp_Size, const sf::Vector2f& fp_Position, const sf::Color& fp_Color) {
-        sf::Text sfText;
-        sfText.setFont(fp_Font);
-        sfText.setString(fp_Text);
-        sfText.setCharacterSize(fp_Size);
-        sfText.setFillColor(fp_Color);
-        sfText.setPosition(fp_Position);
-        pm_CurrentRenderWindow.draw(sfText);
+    void RenderingManager::SetRendererType(bgfx::RendererType::Enum type) {
+        pm_PreferredType = type;
     }
 
-    void RenderingManager::Draw(const sf::Drawable& fp_Drawable)
-    {
-        pm_CurrentRenderWindow.draw(fp_Drawable);
-    }*/
+    void RenderingManager::CreateSDLWindow(const char* title, int width, int height) {
+        if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+            std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
+            throw std::runtime_error("Failed to initialize SDL.");
+        }
+
+        pm_CurrentWindow = SDL_CreateWindow(title,
+            SDL_WINDOWPOS_UNDEFINED,
+            SDL_WINDOWPOS_UNDEFINED,
+            width, height,
+            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+        if (!pm_CurrentWindow) {
+            std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
+            SDL_Quit();
+            throw std::runtime_error("Failed to create window.");
+        }
+    }
+
+    void RenderingManager::CreateRenderer2D() {
+        if (!pm_CurrentWindow) {
+            throw std::runtime_error("Window not created before building renderer.");
+        }
+        pm_Renderer2D = new Renderer2D(pm_CurrentWindow, pm_PreferredType);
+    }
+
+    void RenderingManager::renderFrame() {
+        if (pm_Renderer2D) {
+            pm_Renderer2D->renderFrame();
+        }
+    }
 
     void RenderingManager::Clear()
     {
@@ -68,7 +97,7 @@ namespace PeachCore {
         return pm_RendererType;
     }
 
-    void RenderingManager::GetRenderWindow()
+    void RenderingManager::GetCurrentViewPort()
     {
       
     }

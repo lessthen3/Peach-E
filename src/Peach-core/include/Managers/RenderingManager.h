@@ -12,6 +12,10 @@
 #pragma once
 #include <string>
 #include "LogManager.h"
+#include "../Peach-Core2D/Rendering2D/Renderer2D.h"
+
+//#define SDL_MAIN_HANDLED
+//#include <SDL2/SDL.h>
 
 
 namespace PeachCore {
@@ -22,20 +26,42 @@ namespace PeachCore {
             static RenderingManager instance;
             return instance;
         }
+        ~RenderingManager();
+
+    private:
+        RenderingManager() = default;// Private constructor for singleton
+
+        SDL_Window* pm_CurrentWindow = nullptr;
+        Renderer2D* pm_Renderer2D = nullptr;
+        bgfx::RendererType::Enum pm_PreferredType = bgfx::RendererType::Count; // Default to auto-selection
+
+        bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
+        std::string pm_RendererType = "None";
+
+        unsigned int pm_FrameRateLimit = 60;
+        bool pm_IsVSyncEnabled = false;
+
 
     public:
+        void SetRendererType(bgfx::RendererType::Enum type);
+        void CreateSDLWindow(const char* title, int width, int height);
+
+        void CreateRenderer2D();
+
         void Initialize(const std::string fp_RendererType, const std::string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
         void ResizeWindow();
         std::string GetRendererType() const;
 
+        void renderFrame();
         void BeginFrame();
         void EndFrame();
         void Clear();
 
+        void GetCurrentViewPort();
+
         //void Draw(const sf::Drawable& fp_Drawable);
         //void DrawTextToScreen(const std::string& fp_Text, const sf::Font& fp_Font, unsigned int fp_Size, const sf::Vector2f& fp_Position, const sf::Color& fp_Color = sf::Color::White);
 
-        void GetRenderWindow();
         unsigned int GetFrameRateLimit() const;
 
         void SetFrameRateLimit(unsigned int fp_Limit);
@@ -45,21 +71,10 @@ namespace PeachCore {
 
         //(const std::string fp_RendererType, const std::string& fp_Title = "Peach Engine", const int fp_Width = 800 , const int fp_Height = 600);
     private:
-        RenderingManager() = default;
-        ~RenderingManager() = default;
 
         RenderingManager(const RenderingManager&) = delete;
         RenderingManager& operator=(const RenderingManager&) = delete;
 
-
-    private:
-        bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
-        std::string pm_RendererType = "None";
-
-        //sf::RenderWindow pm_CurrentRenderWindow;
-
-        unsigned int pm_FrameRateLimit = 60;
-        bool pm_IsVSyncEnabled = false;
     };
 
 }

@@ -1,4 +1,4 @@
-#include "../../../include/Peach-GameObjects/Geometry/Path2D.h"
+#include "../../../../include/Peach-Core2D/SceneTreeItems2D/Geometry2D/Path2D.h"
 
 namespace PeachCore {
 

@@ -1,4 +1,4 @@
-#include "../../../include/Peach-GameObjects/Geometry/Curve2D.h"
+#include "../../../../include/Peach-Core2D/SceneTreeItems2D/Geometry2D/Curve2D.h"
 namespace PeachCore {
 
    /*float sin(float stretch, float horizontalShift, float x, float power)
