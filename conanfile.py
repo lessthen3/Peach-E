@@ -9,6 +9,10 @@ class PeachEBuilder(ConanFile):
         self.requires("spdlog/1.14.1")
         self.requires("onetbb/2021.12.0")
 
+        # geometry
+        self.requires("cgal/5.6.1")
+        self.requires("clipper2/1.3.0")
+
         # physics
         self.requires("box2d/2.4.1")
         self.requires("bullet3/3.25")
@@ -20,6 +24,7 @@ class PeachEBuilder(ConanFile):
 
         # saving 
         self.requires("nlohmann_json/3.11.3")
+        #binary serialization?
 
         # media controllers
         self.requires("sdl/2.30.4")

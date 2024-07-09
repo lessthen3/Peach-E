@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../PeachComponent.h"
+#include "../../PeachNode2D.h"
 
 #include <vector>
 #include <string>
@@ -12,7 +12,11 @@ namespace PeachCore {
 		float duration;
 	};
 
-	class AnimationPlayer2D
+	struct Animation {
+
+	};
+
+	class AnimationPlayer2D: public PeachNode
 	{
 		std::vector<Frame> frames;
 		float m_TotalLength;

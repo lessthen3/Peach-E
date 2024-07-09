@@ -19,7 +19,7 @@ std::atomic<bool> m_Running(true);
 
 const float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
 const float USER_DEFINED_UPDATE_FPS = 60.0f;
-const float DESIRED_RENDER_FPS = 120.0f;
+float USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game
 
 static void RenderFrame() {
 
@@ -68,7 +68,7 @@ static void GameLoop()
 {
     const float f_PhysicsDeltaTime = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;  // Fixed physics update rate 
     const float f_UserDefinedDeltaTime = 1.0f / USER_DEFINED_UPDATE_FPS;  // User-defined Update() rate
-    const float f_RenderDeltaTime = 1.0f / DESIRED_RENDER_FPS;
+    float f_RenderDeltaTime = 1.0f / USER_DEFINED_RENDER_FPS;  // Should be variable to allow dynamic adjustment in-game
 
     float f_PhysicsAccumulator = 0.0f;
     float f_GeneralUpdateAccumulator = 0.0f;
@@ -83,9 +83,7 @@ static void GameLoop()
 
         // Prevent spiral of death by clamping frameTime
         if (f_FrameTime > 0.25)
-        {
-            f_FrameTime = 0.25;
-        }
+            {f_FrameTime = 0.25;}
 
         f_PhysicsAccumulator += f_FrameTime;
         f_GeneralUpdateAccumulator += f_FrameTime;

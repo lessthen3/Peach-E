@@ -1,10 +1,10 @@
 #pragma once
 
-//#include "../PeachComponent.h"
+#include "../Geometry2D/Grid2D.h"
 
 namespace PeachCore {
 
-	struct TileMap
+	class TileMap: public Grid2D
 	{
 
 	};

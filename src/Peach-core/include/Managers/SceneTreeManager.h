@@ -42,6 +42,8 @@ namespace PeachCore {
         void UnloadCurrentScene();
         Scene* LoadDesiredScene(const std::string& fp_FilePathToDesiredScene) const;
 
+        void AddChild();
+
     private:
         SceneTreeManager();
 

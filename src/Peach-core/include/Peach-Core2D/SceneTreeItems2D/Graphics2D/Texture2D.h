@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../../../Managers/LogManager.h"
+
 #include <bgfx/bgfx.h>
 #include <stb_image.h>
 #include <iostream>
@@ -13,20 +15,27 @@ namespace PeachCore {
         Texture2D(const char* imagePath);
         ~Texture2D();
 
-        void bind(uint8_t slot = 0) const;
-        void unbind() const;
+        void Bind(const uint8_t slot = 0) const;
+        void Unbind() const;
 
         // Define tile size and calculate UVs for spritesheets
-        void defineTileSize(int tileWidth, int tileHeight);
-        std::tuple<float, float, float, float> getTileUV(int tileIndex) const;
+        void DefineTileSize(const int tileWidth, const int tileHeight);
+        std::tuple<float, float, float, float> GetTileUV(const int tileIndex) const;
+
+        int GetTileCount() const;
+        void CalculateTileUVs();
+        bool LoadTexture(const char* imagePath);
+        bool IsValid() const;
+
+        std::vector<std::tuple<float, float, float, float>> m_TileUVs; // UV coordinates for each tile
 
     private:
         bgfx::TextureHandle bgfxTexture;
-        int width, height;
-        int m_tileWidth, m_tileHeight;
-        std::vector<std::tuple<float, float, float, float>> tileUVs; // UV coordinates for each tile
+        int pm_Width, pm_Height;
+        int m_TileWidth, m_TileHeight;
+        bool pm_IsValid = false; //used for tracking whether LoadTexture() was successful
+        
 
-        void calculateTileUVs();
-        bool loadTexture(const char* imagePath);
     };
 }
+//then i Want a TileMap that takes the TileSet, and has lists for holding data about currently placed tiles from the tile map.Im not
