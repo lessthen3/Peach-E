@@ -2,7 +2,7 @@
 
 #include "../../../Managers/LogManager.h"
 #include "../../../Unsorted/PeachNode.h"
-#include "Texture2D.h"
+#include "../../Rendering2D/Texture2D.h"
 
 #include <vector>
 #include <tuple>
@@ -41,7 +41,7 @@ namespace PeachCore {
     public:
         Tile GetTile(int index) const;
         void DefinePhysicsForTile(int index, b2World& world, float metersPerPixel); //int index, b2World& world, const b2BodyDef& bodyDef, const b2FixtureDef& fixtureDef
-        void LoadTexture(const char* fp_ImagePath);
+        void LoadTexture(const std::string fp_Name, const std::string& fp_ImagePath);
         void SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight);
 
         void CreateTilesFromTexture2D();
@@ -49,7 +49,7 @@ namespace PeachCore {
         std::vector<Tile> m_Tiles;
         
     private:
-        Texture2D pm_Texture = NULL; //null on construction so that the texture can be validated to have a value
+        Texture2D pm_Texture;
         int pm_TileWidth;
         int pm_TileHeight;
         

@@ -19,23 +19,23 @@ namespace PeachCore {
         if (fs::exists(fp_Path) && fs::is_regular_file(fp_Path))
         {
             f_Handle = DYNLIB_LOAD(fp_Path.c_str());
-            LogManager::Logger().Debug("Successfully located DLL at: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().Debug("Successfully located DLL at: " + fp_Path, "PluginManager");
         }
 
         else
         {
-            LogManager::Logger().Error("Failed to locate DLL at: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().Error("Failed to locate DLL at: " + fp_Path, "PluginManager");
             return;
         }
 
         if (!f_Handle)
         {
-            LogManager::Logger().Error("Failed to load plugin at path: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().Error("Failed to load plugin at path: " + fp_Path, "PluginManager");
             return;
         }
         else
         {
-            LogManager::Logger().Debug("Successfully loaded plugin at: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().Debug("Successfully loaded plugin at: " + fp_Path, "PluginManager");
         }
 
         auto f_CreateFunc = (CreatePluginFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
@@ -43,13 +43,13 @@ namespace PeachCore {
 
         if (!f_CreateFunc || !f_DestroyFunc)
         {
-            LogManager::Logger().Error("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().Error("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager");
             DYNLIB_UNLOAD(f_Handle);
             return;
         }
         else
         {
-            LogManager::Logger().Debug("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().Debug("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager");
         }
 
         std::unique_ptr<Plugin, DestroyPluginFunc> plugin(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;

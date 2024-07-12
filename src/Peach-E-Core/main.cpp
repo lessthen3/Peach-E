@@ -19,7 +19,7 @@ std::atomic<bool> m_Running(true);
 
 const float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
 const float USER_DEFINED_UPDATE_FPS = 60.0f;
-float USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game
+float USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game so no const >w<
 
 static void RenderFrame() {
 
@@ -81,7 +81,7 @@ static void GameLoop()
         float f_FrameTime = std::chrono::duration<float>(f_NewTime - f_CurrentTime).count();
         f_CurrentTime = f_NewTime;
 
-        // Prevent spiral of death by clamping frameTime
+        // Prevent spiral of death by clamping frame time, frames will be skipped, but if you're already this behind then thats the least of your problems lmao
         if (f_FrameTime > 0.25)
             {f_FrameTime = 0.25;}
 
@@ -127,17 +127,17 @@ void test()
 
 }
 
-void GameLogicThread() {
+static void RenderThread()
+{
     while (m_Running) {
-        // Process user input
-        // Update game state
-        // Handle physics, AI, etc.
-        std::cout << "Updating game logic...\n";
+        // Play audio
+        std::cout << "Playing ur mom LOL...\n";
         std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Simulate work
     }
 }
 
-void AudioThread() {
+static void AudioThread()
+{
     while (m_Running) {
         // Play audio
         std::cout << "Playing audio...\n";
@@ -145,7 +145,8 @@ void AudioThread() {
     }
 }
 
-void ResourceLoadingThread() {
+static void ResourceLoadingThread() 
+{
     while (m_Running) {
         // Load resources
         std::cout << "Loading resources...\n";
@@ -153,7 +154,8 @@ void ResourceLoadingThread() {
     }
 }
 
-static void NetworkThread() {
+static void NetworkThread() 
+{
     while (m_Running) {
         // Handle network communication
         std::cout << "Handling network...\n";
@@ -200,17 +202,26 @@ static void RunPlugins()
 // Setting Up and Setting Output Directory
 //////////////////////////////////////////////
 
-static void SetupLogManager()
+static void SetupLogManagers()
 {
-    PeachCore::LogManager::Logger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE");
 
-    PeachCore::LogManager::Logger().Debug("LogManager successfully initialized", "LogManager");
+    PeachCore::LogManager::MainLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "MainLogger");
+    PeachCore::LogManager::AudioLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "AudioLogger");
+    PeachCore::LogManager::RenderingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "RenderingLogger");
+    PeachCore::LogManager::ResourceLoadingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "ResourceLoadingLogger");
+    PeachCore::LogManager::NetworkLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "NetworkLogger");
+   
+    PeachCore::LogManager::MainLogger().Debug("MainLogger successfully initialized", "Peach-E");
+    PeachCore::LogManager::AudioLogger().Debug("AudioLogger successfully initialized", "Peach-E");
+    PeachCore::LogManager::RenderingLogger().Debug("RenderingLogger successfully initialized", "Peach-E");
+    PeachCore::LogManager::ResourceLoadingLogger().Debug("ResourceLoadingLogger successfully initialized", "Peach-E");
+    PeachCore::LogManager::NetworkLogger().Debug("NetworkLogger successfully initialized", "Peach-E");
 
-    std::cout << "Hello World!\n";
+    std::cout << "Hello World!\n"; //>w<
 
-    PeachCore::LogManager::Logger().Warn("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
+    PeachCore::LogManager::MainLogger().Warn("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
 
-    PeachCore::LogManager::Logger().Trace("Success! This Built Correctly", "Peach-E");
+    PeachCore::LogManager::MainLogger().Trace("Success! This Built Correctly", "Peach-E");
 }
 
 //PYBIND11_MODULE(peach_engine, fp_Module)
@@ -226,28 +237,104 @@ static void SetupLogManager()
 int main(int argc, char* argv[])
 {
     SDL_SetMainReady();  // Tell SDL that the main function is handled and ready
-    //SDL_Init(SDL_INIT_VIDEO);  // Initialize SDL as usual
+    SetupLogManagers();
 
-    std::thread T_Render;
+    int f_WindowWidth = 800;
+    int f_WindowHeight = 600;
 
-    std::thread T_GameLogic(GameLogicThread);
-    std::thread T_Audio(AudioThread);
+    /*std::thread T_Audio(AudioThread);
     std::thread T_ResourceLoading(ResourceLoadingThread);
-    std::thread T_Network(NetworkThread);
+    std::thread T_Network(NetworkThread);*/
 
-    try {
-        
-        PeachCore::RenderingManager::Renderer().SetRendererType(bgfx::RendererType::OpenGL); // Example to force OpenGL
-        PeachCore::RenderingManager::Renderer().CreateSDLWindow("SDL Window", 800, 600);
+    //////////////////////////////////////////////
+    // Setup Renderer for 2D
+    //////////////////////////////////////////////
+
+    try 
+    {
+        //PeachCore::RenderingManager::Renderer().SetRendererType(bgfx::RendererType::Vulkan); // Example to force OpenGL
+        PeachCore::RenderingManager::Renderer().CreateSDLWindow("SDL Window", f_WindowWidth, f_WindowHeight);
         PeachCore::RenderingManager::Renderer().CreateRenderer2D();
-
-        //std::thread T_Render(RenderThread);
-
     }
     catch (const std::exception& ex) {
         std::cerr << "An error occurred: " << ex.what() << std::endl;
-        //return EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
+
+    //////////////////// Camera Setup ////////////////////
+
+    PeachCore::Camera2D camera(f_WindowWidth, f_WindowHeight);
+    //bgfx::setViewTransform(0, camera.GetViewMatrix(), nullptr); // No projection matrix set here, assuming it's handled in Camera2D
+
+    //////////////////// Texture Setup ////////////////////
+
+    //PeachCore::Texture2D m_FirstTexture = PeachCore::Texture2D("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/owo.jpg");
+    //m_FirstTexture = PeachCore::Texture2D("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/spooktacular.png");
+
+    //////////////////// Vertex and Index Buffer Setup ////////////////////
+
+    // Assuming you have these already defined somewhere
+    struct Vertex {
+        float x, y;
+        float u, v;
+    };
+
+    // Vertex data for a full-screen quad
+    Vertex vertices[] = {
+        {-1.0f, -1.0f, 0.0f, 1.0f},
+        {1.0f, -1.0f, 1.0f, 1.0f},
+        {1.0f, 1.0f, 1.0f, 0.0f},
+        {-1.0f, 1.0f, 0.0f, 0.0f}
+    };
+    const uint16_t indices[] = { 0, 1, 2, 2, 3, 0 };
+
+    //bgfx::VertexLayout f_VertexLayout;
+
+    //f_VertexLayout.begin()
+    //    .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float) // 2D position (x, y)
+    //    .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float) // Texture coordinates (u, v)
+    //    .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Float)
+    //    .end();
+
+    //auto vertexBuffer = bgfx::createVertexBuffer(
+    //    bgfx::makeRef(vertices, sizeof(vertices)),
+    //    f_VertexLayout
+    //);
+    //auto indexBuffer = bgfx::createIndexBuffer(
+    //    bgfx::makeRef(indices, sizeof(indices))
+    //);
+
+    //bgfx::setVertexBuffer(0, vertexBuffer);
+    //bgfx::setIndexBuffer(indexBuffer);
+
+    //bgfx::UniformHandle f_TextureUniform = bgfx::createUniform("s_texture", bgfx::UniformType::Sampler);
+
+
+    //// Bind texture
+    //bgfx::setTexture(0, f_TextureUniform, m_FirstTexture.GetTextureHandle());
+
+    //////////////////// Basic Shader Setup ////////////////////
+
+    //PeachCore::ShaderProgram f_ShaderProgram;
+
+    // Load and compile the vertex shader
+    //if (!f_ShaderProgram.LoadAndCompileShaders("D:/Game Development/Random Junk I Like to Keep/VertexShaderTest.glsl", "D:/Game Development/Random Junk I Like to Keep/FragmentShaderTest.glsl")) {
+    //    std::cerr << "Failed to compile the shaders." << std::endl;
+    //    return EXIT_FAILURE;
+    //}
+
+    //// Finalize and create the shader program
+    //if (!f_ShaderProgram.FinalizeProgram()) {
+    //    std::cerr << "Failed to create the shader program." << std::endl;
+    //    return EXIT_FAILURE;
+    //}
+
+    // Draw call
+    //bgfx::submit(0, f_ShaderProgram.GetProgram());
+
+    //bgfx::frame();
+
+
 
     std::this_thread::sleep_for(std::chrono::seconds(5));
 
@@ -255,15 +342,11 @@ int main(int argc, char* argv[])
 
     //GameLoop();
 
-    T_GameLogic.join();
-    //T_Render.join();
-    T_Audio.join();
+    
+   /* T_Audio.join();
     T_ResourceLoading.join();
-    T_Network.join();
-
-    //CreateSDLWindow();
-    //SetupRenderer();
-    SetupLogManager();
+    T_Network.join();*/
+    
 
 
 
@@ -290,7 +373,7 @@ int main(int argc, char* argv[])
 
     RunPlugins();
   
-    PeachCore::LogManager::Logger().Debug("Exit Success!", "Peach-E");
+    PeachCore::LogManager::MainLogger().Debug("Exit Success!", "Peach-E");
 
     return EXIT_SUCCESS;
 }

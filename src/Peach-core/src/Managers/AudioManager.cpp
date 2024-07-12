@@ -9,7 +9,7 @@ namespace PeachCore {
         
         if (!m_Device)
         {
-            LogManager::Logger().Error("Failed to open audio device", "AudioManager");
+            LogManager::AudioLogger().Error("Failed to open audio device", "AudioManager");
             return false;
         }
         
@@ -17,7 +17,7 @@ namespace PeachCore {
         
         if (!m_Context || !alcMakeContextCurrent(m_Context))
         {
-            LogManager::Logger().Error("Failed to create or set audio context", "AudioManager");
+            LogManager::AudioLogger().Error("Failed to create or set audio context", "AudioManager");
             if (m_Context) {alcDestroyContext(m_Context);}
             alcCloseDevice(m_Device);
             return false;
@@ -43,7 +43,7 @@ namespace PeachCore {
         // Load WAV file into buffer
         // Assuming LoadWAVFile is a function that loads a WAV file into an OpenAL buffer
         if (!LoadWAVFile(fp_SoundFile, f_Buffer)) {
-            LogManager::Logger().Error("Failed to load sound: " + fp_SoundFile, "AudioManager");
+            LogManager::AudioLogger().Error("Failed to load sound: " + fp_SoundFile, "AudioManager");
             return;
         }
 

@@ -9,7 +9,7 @@ namespace PeachCore {
 
 
     RenderingManager::~RenderingManager() {
-        delete pm_Renderer2D;
+        delete pm_OpenGLRenderer;
         if (pm_CurrentWindow) {
             SDL_DestroyWindow(pm_CurrentWindow);
             SDL_Quit();
@@ -20,7 +20,7 @@ namespace PeachCore {
     {
         if (hasBeenInitialized)
         {
-            LogManager::Logger().Warn("RenderingManager has already been initialized, RenderingManager is only allowed to initialize once per run", "RenderingManager");
+            LogManager::MainLogger().Warn("RenderingManager has already been initialized, RenderingManager is only allowed to initialize once per run", "RenderingManager");
             return;
         }
         else
@@ -36,9 +36,9 @@ namespace PeachCore {
         
     }
 
-    void RenderingManager::SetRendererType(bgfx::RendererType::Enum type) {
-        pm_PreferredType = type;
-    }
+    //void RenderingManager::SetRendererType(bgfx::RendererType::Enum type) {
+    //    pm_PreferredType = type;
+    //}
 
     void RenderingManager::CreateSDLWindow(const char* title, int width, int height) {
         if (SDL_Init(SDL_INIT_VIDEO) < 0) {
@@ -62,12 +62,12 @@ namespace PeachCore {
         if (!pm_CurrentWindow) {
             throw std::runtime_error("Window not created before building renderer.");
         }
-        pm_Renderer2D = new Renderer2D(pm_CurrentWindow, pm_PreferredType);
+        pm_OpenGLRenderer = new OpenGLRenderer(pm_CurrentWindow, false);
     }
 
-    void RenderingManager::renderFrame() {
-        if (pm_Renderer2D) {
-            pm_Renderer2D->renderFrame();
+    void RenderingManager::RenderFrame() {
+        if (pm_OpenGLRenderer) {
+            pm_OpenGLRenderer->RenderFrame();
         }
     }
 
@@ -96,22 +96,18 @@ namespace PeachCore {
     {
         return pm_RendererType;
     }
-
     void RenderingManager::GetCurrentViewPort()
     {
       
     }
-
     unsigned int RenderingManager::GetFrameRateLimit() const
     {
         return pm_FrameRateLimit;
     }
-
     bool RenderingManager::IsVSyncEnabled() const
     {
         return pm_IsVSyncEnabled;
     }
-
     void RenderingManager::SetVSync(const bool fp_IsEnabled)
     {
         if (fp_IsEnabled)
@@ -119,7 +115,6 @@ namespace PeachCore {
             pm_IsVSyncEnabled = fp_IsEnabled;
         }
     }
-
     void RenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
     {
         pm_FrameRateLimit = fp_Limit;

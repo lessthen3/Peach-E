@@ -3,7 +3,6 @@
 #include <vector>
 #include <queue>
 #include <memory>
-#include <mutex>
 #include <typeindex>
 #include <functional>
 
@@ -23,13 +22,11 @@ namespace PeachCore {
         template<typename EventType>
         void PostEvent(const EventType& event) {
             static_assert(std::is_base_of<Event, EventType>::value, "EventType must derive from Event");
-            std::lock_guard<std::mutex> lock(mutex);
             m_Events[typeid(EventType)].push({ std::make_shared<EventType>(event), m_CurrentFrame });
         }
 
         template<typename EventType, typename Func>
         void Subscribe(Func&& func) {
-            std::lock_guard<std::mutex> lock(mutex);
             handlers[typeid(EventType)].push_back([func = std::forward<Func>(func)](std::shared_ptr<Event> evt) {
                 func(*evt);
                 });
@@ -37,7 +34,6 @@ namespace PeachCore {
 
         template<typename EventType, typename Func>
         void Unsubscribe(Func&& func) {
-            std::lock_guard<std::mutex> lock(mutex);
             auto& handlersList = handlers[typeid(EventType)];
             handlersList.erase(std::remove_if(handlersList.begin(), handlersList.end(),
                 [&func](const std::function<void(std::shared_ptr<Event>)>& handler) {
@@ -48,7 +44,6 @@ namespace PeachCore {
         }
 
         void ProcessEvents() {
-            std::unique_lock<std::mutex> lock(mutex);
             for (auto& [type, queue] : m_Events) {
                 std::vector<std::function<void()>> eventBatch;
                 while (!queue.empty() && queue.front().frameQueued < m_CurrentFrame) {
@@ -66,7 +61,6 @@ namespace PeachCore {
         }
 
         void IncrementFrame() {
-            std::lock_guard<std::mutex> lock(mutex);
             m_CurrentFrame++;
         }
 
@@ -78,7 +72,6 @@ namespace PeachCore {
 
         std::map<std::type_index, std::queue<TimedEvent>> m_Events;
         std::map<std::type_index, std::vector<std::function<void(std::shared_ptr<Event>)>>> handlers;
-        std::mutex mutex;
         unsigned long int m_CurrentFrame = 0; // Tracks global frame count for 'game' runtime
     };
 

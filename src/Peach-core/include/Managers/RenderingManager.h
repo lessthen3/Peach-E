@@ -12,7 +12,7 @@
 #pragma once
 #include <string>
 #include "LogManager.h"
-#include "../Peach-Core2D/Rendering2D/Renderer2D.h"
+#include "../Unsorted/OpenGLRenderer.h"
 
 //#define SDL_MAIN_HANDLED
 //#include <SDL2/SDL.h>
@@ -32,8 +32,8 @@ namespace PeachCore {
         RenderingManager() = default;// Private constructor for singleton
 
         SDL_Window* pm_CurrentWindow = nullptr;
-        Renderer2D* pm_Renderer2D = nullptr;
-        bgfx::RendererType::Enum pm_PreferredType = bgfx::RendererType::Count; // Default to auto-selection
+        OpenGLRenderer* pm_OpenGLRenderer = nullptr;
+        //bgfx::RendererType::Enum pm_PreferredType = bgfx::RendererType::Count; // Default to auto-selection
 
         bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
         std::string pm_RendererType = "None";
@@ -41,9 +41,11 @@ namespace PeachCore {
         unsigned int pm_FrameRateLimit = 60;
         bool pm_IsVSyncEnabled = false;
 
+    public:
+        unsigned long int m_CurrentFrame = 0;
 
     public:
-        void SetRendererType(bgfx::RendererType::Enum type);
+        //void SetRendererType(Enum type);
         void CreateSDLWindow(const char* title, int width, int height);
 
         void CreateRenderer2D();
@@ -52,7 +54,7 @@ namespace PeachCore {
         void ResizeWindow();
         std::string GetRendererType() const;
 
-        void renderFrame();
+        void RenderFrame();
         void BeginFrame();
         void EndFrame();
         void Clear();
