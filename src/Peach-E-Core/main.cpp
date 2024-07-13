@@ -1,6 +1,8 @@
 /*
     Copyright(c) 2024-present Ranyodh Singh Mandur.
 */
+#define STB_IMAGE_IMPLEMENTATION //BLACK MAGIC KEEP HERE IMPORTANT DOOOO NOT MOVE THIS FUCKING HEADER
+
 
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
@@ -14,6 +16,7 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
+
 
 std::atomic<bool> m_Running(true);
 

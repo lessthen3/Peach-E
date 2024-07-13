@@ -1,19 +1,16 @@
 #pragma once
 
-#include <vector>
-#include <iostream>
 
-#include <Windows.h>
 
 #include <SDL2/SDL.h>
 #include <GL/glew.h>
-#include <GL/GL.h>
-
+#include<GL/GL.h>
 #include <glm/glm.hpp>
-#include "../Peach-Core2D/Rendering2D/Texture2D.h"
-#include "../Managers/ResourceLoadingManager.h"
+
 #include "../Unsorted/ShaderProgram.h"
 
+#include <vector>
+#include <iostream>
 
 namespace PeachCore
 {
@@ -105,7 +102,7 @@ namespace PeachCore
             }
         }
 
-        void DrawTexture(const Texture2D& texture, const glm::vec2& position, const glm::vec2& size, const glm::vec2& uv0, const glm::vec2& uv1) 
+        void DrawTexture(const GLuint& fp_TextureID, const glm::vec2& position, const glm::vec2& size, const glm::vec2& uv0, const glm::vec2& uv1) 
         {
             GLuint f_ShaderProgramID = pm_ShaderPrograms.at("INSERT PROGRAM NAME HERE").GetProgramID();
             // Assuming shaderProgram is active and configured
@@ -114,7 +111,7 @@ namespace PeachCore
 
             // Bind the texture
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, texture.ID);
+            glBindTexture(GL_TEXTURE_2D, fp_TextureID);
 
             glUniform1i(glGetUniformLocation(f_ShaderProgramID, "TextureSampler"), 0);
 
@@ -146,12 +143,12 @@ namespace PeachCore
             glUseProgram(0);
         }
 
-        void BatchDrawTexture(const Texture2D& texture, const std::vector<glm::vec2>& positions, const glm::vec2& size) 
+        void BatchDrawTexture(const GLuint& fp_TextureID, const std::vector<glm::vec2>& positions, const glm::vec2& size)
         {
-            glBindTexture(GL_TEXTURE_2D, texture.ID);
+            glBindTexture(GL_TEXTURE_2D, fp_TextureID);
 
             for (const auto& pos : positions) {
-                DrawTexture(texture, pos, size, glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 1.0f)); //NOT EFFICIENT NEED TO CHANGE TO REDUCE CALL OVERHEAD
+                DrawTexture(fp_TextureID, pos, size, glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 1.0f)); //NOT EFFICIENT NEED TO CHANGE TO REDUCE CALL OVERHEAD
             }                                                                                                                          //THIS IS LITERALLY THE WHOLE POINT OF BATCHING
 
             glBindTexture(GL_TEXTURE_2D, 0);

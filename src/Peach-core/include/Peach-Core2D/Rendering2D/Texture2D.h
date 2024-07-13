@@ -3,7 +3,8 @@
 #include "../../Managers/LogManager.h"
 #include "../../Managers/ResourceLoadingManager.h"
 
-#include <stb_image.h>
+
+
 #include <iostream>
 #include <filesystem>
 #include <vector>
@@ -16,7 +17,7 @@ namespace PeachCore {
 
     class Texture2D {
     public:
-        Texture2D(const std::string& fp_Name ,const std::string& fp_ImagePath);
+        Texture2D(const std::string& fp_Name ,const std::string& fp_ImagePath, OpenGLRenderer* fp_CurrentRenderer);
         ~Texture2D();
 
         Texture2D(const Texture2D& other);

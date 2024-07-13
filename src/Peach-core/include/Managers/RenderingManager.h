@@ -60,7 +60,15 @@ namespace PeachCore {
         void Clear();
 
         void GetCurrentViewPort();
-
+        OpenGLRenderer* GetOpenGLRenderer()
+        {
+            if (!pm_OpenGLRenderer)
+            {
+                LogManager::RenderingLogger().Warn("Attempted to get a reference to OpenGL backend when reference has not been set", "RenderingManager");
+                return nullptr;
+            }
+            return pm_OpenGLRenderer;
+        }
         //void Draw(const sf::Drawable& fp_Drawable);
         //void DrawTextToScreen(const std::string& fp_Text, const sf::Font& fp_Font, unsigned int fp_Size, const sf::Vector2f& fp_Position, const sf::Color& fp_Color = sf::Color::White);
 

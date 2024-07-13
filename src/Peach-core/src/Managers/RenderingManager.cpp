@@ -8,9 +8,13 @@
 namespace PeachCore {
 
 
-    RenderingManager::~RenderingManager() {
-        delete pm_OpenGLRenderer;
-        if (pm_CurrentWindow) {
+    RenderingManager::~RenderingManager() 
+    {
+        if (pm_OpenGLRenderer)
+            {delete pm_OpenGLRenderer;}
+
+        if (pm_CurrentWindow)
+        {
             SDL_DestroyWindow(pm_CurrentWindow);
             SDL_Quit();
         }

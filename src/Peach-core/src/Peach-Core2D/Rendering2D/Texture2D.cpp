@@ -1,8 +1,9 @@
 #include "../../../include/Peach-Core2D/Rendering2D/Texture2D.h"
+//#include "../../../include/Managers/ResourceLoadingManager.h"
 
 namespace PeachCore {
 
-    Texture2D::Texture2D(const std::string& fp_Name, const std::string& fp_ImagePath)
+    Texture2D::Texture2D(const std::string& fp_Name, const std::string& fp_ImagePath, OpenGLRenderer* fp_CurrentRenderer)
     {
         m_Name = fp_Name;
         //if (!LoadTexture(imagePath)) {
@@ -10,7 +11,7 @@ namespace PeachCore {
         //    throw std::runtime_error("Failed to load texture");
         //}
 
-        //ID = ResourceLoadingManager::ResourceLoader().LoadTextureData(fp_ImagePath); //retrieve texture id when ready if this fails it will return the default texture
+        ID = ResourceLoadingManager::ResourceLoader().LoadTextureData(fp_ImagePath, fp_CurrentRenderer); //retrieve texture id when ready if this fails it will return the default texture
 
     }
 
@@ -49,7 +50,7 @@ namespace PeachCore {
     }
 
     void Texture2D::Unbind() const {
-        // Generally, you do not need to unbind textures in BGFX explicitly
+        // I WILL FUCK U UP BKRADZIC U BX MOTHERFUCKER
     }
 
     void Texture2D::DefineTileSize(const int tileWidth, const int tileHeight) {
