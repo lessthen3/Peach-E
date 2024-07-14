@@ -1,12 +1,11 @@
 #pragma once
 
+#include "../Managers/LogManager.h"
 
 #include <iostream>
 #include <fstream>
 #include <map>
 #include <vector>
-
-#include <Windows.h>
 
 #include <GL/glew.h>
 #include <GL/GL.h>
@@ -20,8 +19,6 @@ namespace PeachCore {
         ShaderProgram()
         {
             pm_ProgramID = glCreateProgram();
-
-
         }
 
         ~ShaderProgram() {
@@ -32,12 +29,12 @@ namespace PeachCore {
         //SHADER CREATOR FOR FRAGMENT AND VERTEX SHADERS
         ////////////////////////////////////////////////////////////
 
-        void CreateVertexShader(std::string fp_ShaderCode)
+        void CreateVertexShader(const std::string& fp_ShaderCode)
         {
             pm_Shaders.insert({"VertexShader", CreateShader(fp_ShaderCode, GL_VERTEX_SHADER) });
         }
 
-        void CreateFragmentShader(std::string fp_ShaderCode)
+        void CreateFragmentShader(const std::string& fp_ShaderCode)
         {
             pm_Shaders.insert({"FragmentShader", CreateShader(fp_ShaderCode, GL_FRAGMENT_SHADER) });
         }
@@ -45,6 +42,7 @@ namespace PeachCore {
         GLuint CreateShader(std::string fp_ShaderSourceCode, GLuint fp_ShaderType) //creates, compiles and attaches desired shader type to current shaderprogram
             const
         {
+            glUseProgram(pm_ProgramID);
             GLuint f_ShaderID = glCreateShader(fp_ShaderType);
 
             if (f_ShaderID == 0) 
@@ -55,11 +53,19 @@ namespace PeachCore {
             glShaderSource(f_ShaderID, 1, &f_Cstr, NULL);
             glCompileShader(f_ShaderID);
 
-            //if (glGetShaderi(shaderId, GL_COMPILE_STATUS) == 0) {
-            //    throw new Exception("Error compiling Shader code: " + glGetShaderInfoLog(shaderId, 1024));
-            //}
+            GLint success;
+            GLchar infoLog[512];
 
-            glAttachShader(pm_ProgramID, f_ShaderID);
+            // After glCompileShader(f_ShaderID);
+            glGetShaderiv(f_ShaderID, GL_COMPILE_STATUS, &success);
+            if (!success)
+            {
+                glGetShaderInfoLog(f_ShaderID, 512, NULL, infoLog);
+                std::cerr << "Shader compilation error: " << infoLog << std::endl;
+                return 0; // Or handle the error appropriately
+            }
+
+            //glAttachShader(pm_ProgramID, f_ShaderID);
 
             return f_ShaderID;
         }
@@ -68,30 +74,45 @@ namespace PeachCore {
         //GENERIC UNIFORM SETTERS AND CREATOR
         ///////////////////////////////////////////////
 
-        void CreateUniform(std::string fp_UniformName) 
+        void CreateUniform(const char* fp_UniformName) 
         {
-            int uniformLocation = glGetUniformLocation(pm_ProgramID, (fp_UniformName).c_str());
-            //if (uniformLocation < 0) { throw new Exception("Could not find uniform: " + uniformName); }
-            pm_Uniforms.emplace(fp_UniformName, uniformLocation);
+            glUseProgram(pm_ProgramID);  // Ensure the program is active
+            
+            GLuint f_UniformLocation = glGetUniformLocation(pm_ProgramID, fp_UniformName);
+            std::cout << "Uniform Location: " << f_UniformLocation << "\n";
+            if (f_UniformLocation == GLuint(-1)) {
+                std::cerr << "Uniform " << fp_UniformName << " not found or not used in shaders.\n";
+            }
+            else {
+                pm_Uniforms.insert({ fp_UniformName, f_UniformLocation });
+            }
         }
 
-        void SetUniform(const char* uniformName, glm::mat4 matrix) {
-            glUniformMatrix4fv(pm_Uniforms[uniformName], 1, GL_FALSE, glm::value_ptr(matrix)); //allocates a floatbuffer and fills it simultaneously  
+        void SetUniformMat4(const std::string& uniformName, glm::mat4 matrix) {
+            if(uniformName == "model")
+                glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(matrix));
+            else if(uniformName == "view")
+                glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(matrix));
+            else
+                glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(matrix));
+
+
+            //glUniformMatrix4fv(pm_Uniforms[uniformName], 1, GL_FALSE, glm::value_ptr(matrix)); 
         }
 
-        void SetUniform(const std::string uniformName, const int value) { //retrieves uniform and its associated GLuint and sets it
+        void SetUniform1i(const std::string uniformName, const int value) { //retrieves uniform and its associated GLuint and sets it
             glUniform1i(pm_Uniforms[uniformName], value);
         }
 
-        void SetUniform(std::string uniformName, const float value) {
+        void SetUniform1f(std::string uniformName, const float value) {
             glUniform1f(pm_Uniforms[uniformName], value);
         }
 
-        void SetUniform(const std::string uniformName, glm::vec3 value) {
+        void SetUniform3f(const std::string uniformName, glm::vec3 value) {
             glUniform3f(pm_Uniforms[uniformName], value.x, value.y, value.z);
         }
 
-        void SetUniform(const std::string uniformName, glm::vec4 value) {
+        void SetUniform4f(const std::string uniformName, glm::vec4 value) {
             glUniform4f(pm_Uniforms[uniformName], value.x, value.y, value.z, value.w);
         }
 
@@ -99,12 +120,12 @@ namespace PeachCore {
         //FOG UNIFORM CREATOR AND SETTER
         //////////////////////////////////////////////
 
-        void createFogUniform(std::string uniformName) 
-        {
-            CreateUniform(uniformName + ".activeFog");
-            CreateUniform(uniformName + ".colour");
-            CreateUniform(uniformName + ".density");
-        }
+        //void createFogUniform(std::string uniformName) 
+        //{
+        //    CreateUniform(uniformName + ".activeFog");
+        //    CreateUniform(uniformName + ".colour");
+        //    CreateUniform(uniformName + ".density");
+        //}
 
         //void SetUniform(std::string uniformName, Fog fog) {
         //    SetUniform(uniformName + ".activeFog", fog.isActive() ? 1 : 0);
@@ -116,14 +137,14 @@ namespace PeachCore {
         //MATERIAL UNIFORM CREATOR AND SETTER
         //////////////////////////////////////////////
 
-        void CreateMaterialUniforms(std::string uniformName) 
-        {
-            CreateUniform(uniformName + ".ambient");
-            CreateUniform(uniformName + ".diffuse");
-            CreateUniform(uniformName + ".specular");
-            CreateUniform(uniformName + ".hasTexture");
-            CreateUniform(uniformName + ".reflectance");
-        }
+        //void CreateMaterialUniforms(std::string uniformName) 
+        //{
+        //    CreateUniform(uniformName + ".ambient");
+        //    CreateUniform(uniformName + ".diffuse");
+        //    CreateUniform(uniformName + ".specular");
+        //    CreateUniform(uniformName + ".hasTexture");
+        //    CreateUniform(uniformName + ".reflectance");
+        //}
 
         //void SetMaterialUniforms(std::string uniformName, Material material) {
         //    SetUniform(uniformName + ".ambient", material.getAmbientColour());
@@ -134,30 +155,80 @@ namespace PeachCore {
         //}
 
         //////////////////////////////////////////////
+        //TEXTURE UNIFORM CREATOR AND SETTER
+        //////////////////////////////////////////////
+
+        void CreateSamplerUniform(const char* fp_UniformName) { //need to name this TextureSampler at the moment
+            CreateUniform(fp_UniformName);  // Assuming CreateUniform stores the location in pm_Uniforms
+        }
+
+        void SetTexture(const std::string& fp_UniformName, GLuint fp_TextureID, GLuint fp_TextureUnit) {
+            glActiveTexture(GL_TEXTURE0 + fp_TextureUnit);  // Activate the correct texture unit before binding
+            glBindTexture(GL_TEXTURE_2D, fp_TextureID);
+            glUniform1i(30, fp_TextureUnit);  // Set the sampler to use the correct texture unit
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+
+        //////////////////////////////////////////////
         //SHADER LINKER AND CLEANUP
         //////////////////////////////////////////////
 
         void Link()   
         {
-            glLinkProgram(pm_ProgramID);
+            glUseProgram(pm_ProgramID);
 
-            //if (glGetProgrami(programId, GL_LINK_STATUS) == 0) {
-            //    throw new Exception("Error linking Shader code: " + glGetProgramInfoLog(programId, 1024));
-            //}
-
-            if (pm_Shaders["VertexShader"] != 0) {
-                glDetachShader(pm_ProgramID, pm_Shaders["VertexShader"]);
+            for (auto& shader : pm_Shaders) {
+                glAttachShader(pm_ProgramID, shader.second);
+                std::cout << shader.second << "\n";
             }
 
-            if (pm_Shaders["FragmentShader"] != 0) {
-                glDetachShader(pm_ProgramID, pm_Shaders["FragmentShader"]);
+            glLinkProgram(pm_ProgramID);
+            std::cout << "Program ID: " << pm_ProgramID << "\n";
+            GLint success;
+            GLchar infoLog[512];
+            
+            glGetProgramiv(pm_ProgramID, GL_LINK_STATUS, &success);
+            if (!success) 
+            {
+                glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
+                std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+            }
+
+            for (auto& shader : pm_Shaders) 
+            {
+                glDetachShader(pm_ProgramID, shader.second);
+                glDeleteShader(shader.second);  // Delete the shader as it's no longer needed
             }
 
             glValidateProgram(pm_ProgramID);
 
-            //if (glGetProgrami(programId, GL_VALIDATE_STATUS) == 0) {
-            //    throw new Exception("Warning validating Shader code: " + glGetProgramInfoLog(programId, 1024));
-            //}
+            // After glValidateProgram(pm_ProgramID);
+            glGetProgramiv(pm_ProgramID, GL_VALIDATE_STATUS, &success);
+            if (!success)
+            {
+                glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
+                std::cerr << "Shader validation error: " << infoLog << std::endl;
+                // Handle the error
+            }
+
+            AutoCaptureActiveUniforms(); //Does what it says on the tin. please dont ask how many times i cried while writing this class, please just dont'.
+        }
+
+        void AutoCaptureActiveUniforms()
+        {
+            int total = -1;
+            glGetProgramiv(pm_ProgramID, GL_ACTIVE_UNIFORMS, &total);
+            for (int i = 0; i < total; ++i) {
+                int name_len = -1, num = -1;
+                GLenum type = GL_ZERO;
+                char name[100];
+                glGetActiveUniform(pm_ProgramID, GLuint(i), sizeof(name) - 1,
+                    &name_len, &num, &type, name);
+                name[name_len] = 0;
+                GLuint location = glGetUniformLocation(pm_ProgramID, name);
+                pm_Uniforms.insert({ std::string(name), location });
+                std::cout << "Uniform " << i << " Type: " << type << " Name: " << name << " Location: " << location << "\n";
+            }
         }
 
         void Bind() 
@@ -183,37 +254,6 @@ namespace PeachCore {
         // load/compilation functions
         //////////////////////////////////////////////
 
-        bool LoadShader(const std::string& type, const std::string& filePath) {
-        
-            std::vector<uint8_t> buffer;
-            if (!LoadFile(filePath, buffer)) {
-                std::cerr << "Failed to load shader file: " << filePath << std::endl;
-                return false;
-            }
-
-
-            if (false) {
-                std::cerr << "Failed to create " << type << " shader from: " << filePath << std::endl;
-                return false;
-            }
-            return true;
-        }
-
-        bool FinalizeProgram() {
-            if (!pm_Shaders.count("VertexShader") || !pm_Shaders.count("FragmentShader")) {
-                std::cerr << "Vertex and Fragment shaders must be loaded to create a program." << std::endl;
-                return false;
-            }
-
-            
-            // Optionally attach other shaders here if needed, like Geometry or Compute shaders
-            return false;
-        }
-
-        //////////////////////////////////////////////
-        // load/compilation functions
-        //////////////////////////////////////////////
-
         //loads and compiles one shader, also attaches it to the current ShaderProgram
         bool LoadAndCompileShader(const std::string& kind, const std::string& filePath) 
         {
@@ -222,14 +262,11 @@ namespace PeachCore {
 
             if (!shaderFile)
             {
-                std::cerr << "Failed to open shader file: " << filePath << std::endl;
+                LogManager::RenderingLogger().Warn("Failed to open shader file: " + filePath, "ShaderProgram");
                 return false;
             }
             std::string source((std::istreambuf_iterator<char>(shaderFile)), std::istreambuf_iterator<char>());
-
-
            
-
             if (kind == "VertexShader")
             {
                 CreateVertexShader(source);
@@ -239,6 +276,11 @@ namespace PeachCore {
             {
                 CreateFragmentShader(source);
             }
+            else
+            {
+                LogManager::RenderingLogger().Warn("Failed to associate loaded shader with pre-defined shader types", "ShaderProgram");
+                return false;
+            }
 
             // Compile the source code
             return true;
@@ -247,7 +289,7 @@ namespace PeachCore {
         //compiles multiple shaders
         bool LoadAndCompileShaders(const std::map<std::string, std::string>& fp_ShadersToLoadAndCompile) //takes a map of "Shader Type" : "Shader Paths"
         {
-
+            glUseProgram(pm_ProgramID);
             for (auto& shader : fp_ShadersToLoadAndCompile)
             {
                 LoadAndCompileShader(shader.first, shader.second); //loads shader type from shader path in map
@@ -261,6 +303,70 @@ namespace PeachCore {
            
             return true;
         }
+
+        void PrintShaderProgramDebugVerbose() 
+            const
+        {
+            GLint numShaders = 0, numUniforms = 0, maxLength = 0;
+
+            glUseProgram(pm_ProgramID);
+
+            // Get the number of shaders attached to the program
+            glGetProgramiv(pm_ProgramID, GL_ATTACHED_SHADERS, &numShaders);
+            std::vector<GLuint> shaders(numShaders);
+            glGetAttachedShaders(pm_ProgramID, numShaders, nullptr, &shaders[0]);
+
+            std::cout << "Number of shaders attached: " << numShaders << "\n";
+            for (GLuint shader : shaders) {
+                GLint type;
+                glGetShaderiv(shader, GL_SHADER_TYPE, &type);
+                std::cout << "Shader ID: " << shader << " Type: " << (type == GL_VERTEX_SHADER ? "Vertex" : "Fragment") << "\n";
+            }
+
+            // Querying all active uniforms
+            glGetProgramiv(pm_ProgramID, GL_ACTIVE_UNIFORMS, &numUniforms);
+            glGetProgramiv(pm_ProgramID, GL_ACTIVE_UNIFORM_MAX_LENGTH, &maxLength);
+            std::vector<char> uniformName(maxLength);
+
+            std::cout << "Active uniforms:\n";
+            for (int i = 0; i < numUniforms; i++) {
+                GLint size;
+                GLenum type;
+                glGetActiveUniform(pm_ProgramID, i, maxLength, nullptr, &size, &type, &uniformName[0]);
+                GLuint location = glGetUniformLocation(pm_ProgramID, &uniformName[0]);
+                std::cout << "Uniform " << i << ": " << &uniformName[0] << " Location: " << location << " Type: " << type << " Size: " << size << "\n";
+            }
+
+            // Check link status
+            GLint linkStatus;
+            glGetProgramiv(pm_ProgramID, GL_LINK_STATUS, &linkStatus);
+            if (linkStatus != GL_TRUE) {
+                char infoLog[512];
+                glGetProgramInfoLog(pm_ProgramID, 512, nullptr, infoLog);
+                std::cout << "Linking error: " << infoLog << "\n";
+            }
+            else {
+                std::cout << "Program linked successfully.\n";
+            }
+
+            // Validate program
+            glValidateProgram(pm_ProgramID);
+            GLint validateStatus;
+            glGetProgramiv(pm_ProgramID, GL_VALIDATE_STATUS, &validateStatus);
+            if (validateStatus != GL_TRUE) {
+                char validateInfoLog[512];
+                glGetProgramInfoLog(pm_ProgramID, 512, nullptr, validateInfoLog);
+                std::cout << "Validation error: " << validateInfoLog << "\n";
+            }
+            else {
+                std::cout << "Program validated successfully.\n";
+            }
+
+            glUseProgram(0); // Unbind program after checking
+        }
+
+
+
 
         std::string GetProgramName() const {
             return pm_ProgramName;
@@ -279,17 +385,6 @@ private:
         std::string pm_ProgramName;
 
         GLuint pm_ProgramID;
-
-        bool LoadFile(const std::string& filename, std::vector<uint8_t>& data) {
-            std::ifstream file(filename, std::ios::binary | std::ios::ate);
-            if (!file) {
-                return false;
-            }
-            std::streamsize size = file.tellg();
-            file.seekg(0, std::ios::beg);
-            data.resize(size);
-            return file.read((char*)data.data(), size).good();
-        }
     };
 
 }

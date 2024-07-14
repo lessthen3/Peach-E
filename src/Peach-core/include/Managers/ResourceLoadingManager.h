@@ -6,7 +6,7 @@
 //#include <windows.h>
 //#include <GL/glew.h>
 //#include <gl/GL.h>
-#include "../Unsorted/OpenGLRenderer.h"
+#include "RenderingManager.h"
 
 //#include <map>
 #include <mutex>

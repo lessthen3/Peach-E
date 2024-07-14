@@ -7,6 +7,9 @@
 #define SDL_MAIN_HANDLED
 #include <SDL2/SDL.h>
 
+//#include <GL/glew.h>
+//#include <GL/GL.h>
+
 #include <iostream>
 #include <string>
 #include "../Peach-core/Peach-core.hpp"
@@ -23,6 +26,8 @@ std::atomic<bool> m_Running(true);
 const float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
 const float USER_DEFINED_UPDATE_FPS = 60.0f;
 float USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game so no const >w<
+
+using namespace PeachCore;
 
 static void RenderFrame() {
 
@@ -245,10 +250,6 @@ int main(int argc, char* argv[])
     int f_WindowWidth = 800;
     int f_WindowHeight = 600;
 
-    /*std::thread T_Audio(AudioThread);
-    std::thread T_ResourceLoading(ResourceLoadingThread);
-    std::thread T_Network(NetworkThread);*/
-
     //////////////////////////////////////////////
     // Setup Renderer for 2D
     //////////////////////////////////////////////
@@ -256,8 +257,10 @@ int main(int argc, char* argv[])
     try 
     {
         //PeachCore::RenderingManager::Renderer().SetRendererType(bgfx::RendererType::Vulkan); // Example to force OpenGL
-        PeachCore::RenderingManager::Renderer().CreateSDLWindow("SDL Window", f_WindowWidth, f_WindowHeight);
-        PeachCore::RenderingManager::Renderer().CreateRenderer2D();
+        RenderingManager::Renderer().CreateSDLWindow("SDL Window", f_WindowWidth, f_WindowHeight);
+        RenderingManager::Renderer().CreateRenderer2D();
+        glViewport(0, 0, f_WindowWidth, f_WindowHeight);
+        RenderingManager::Renderer().GetOpenGLRenderer()->RenderFrame();
     }
     catch (const std::exception& ex) {
         std::cerr << "An error occurred: " << ex.what() << std::endl;
@@ -265,118 +268,103 @@ int main(int argc, char* argv[])
     }
 
     //////////////////// Camera Setup ////////////////////
-
-    PeachCore::Camera2D camera(f_WindowWidth, f_WindowHeight);
-    //bgfx::setViewTransform(0, camera.GetViewMatrix(), nullptr); // No projection matrix set here, assuming it's handled in Camera2D
-
+    //NEED TO STILL IMPLEMENT
+    //PeachCore::Camera2D camera(f_WindowWidth, f_WindowHeight);
+    
     //////////////////// Texture Setup ////////////////////
-
-    //PeachCore::Texture2D m_FirstTexture = PeachCore::Texture2D("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/owo.jpg");
+    Texture2D m_FirstTexture = PeachCore::Texture2D(">w<", "D:/Game Development/Random Junk I Like to Keep/Texture-Tests/owo.jpg");
     //m_FirstTexture = PeachCore::Texture2D("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/spooktacular.png");
 
+    ////////////////// Basic Shader Setup //////////////////
+    
+    OpenGLRenderer* m_CurrentRenderer = RenderingManager::Renderer().GetOpenGLRenderer();
+
+    ShaderProgram* m_CurrentShaderProgram = m_CurrentRenderer->LoadShadersFromSource("Test_Program",
+                                                                                                            "D:/Game Development/Peach-E/src/Peach-core/tests/vertex.glsl", 
+                                                                                                            "D:/Game Development/Peach-E/src/Peach-core/tests/fragment.glsl");
+    (m_CurrentShaderProgram->Bind());
+
+    
+
+    //m_CurrentShaderProgram->CreateSamplerUniform("texture_sampler");
+    m_CurrentShaderProgram->SetTexture("texture_sampler", m_FirstTexture.m_ID, 30);
+
+    //m_CurrentShaderProgram->CreateUniform("model");
+    //m_CurrentShaderProgram->CreateUniform("view");
+    //m_CurrentShaderProgram->CreateUniform("projection");
+    //   
+    m_CurrentShaderProgram->SetUniformMat4("model", glm::mat4(1.0));
+    m_CurrentShaderProgram->SetUniformMat4("view", glm::mat4(1.0));
+    m_CurrentShaderProgram->SetUniformMat4("projection", glm::mat4(1.0));
+
+    //m_CurrentShaderProgram->PrintShaderProgramDebugVerbose();
     //////////////////// Vertex and Index Buffer Setup ////////////////////
+    glm::vec2 position = glm::vec2(0.1, 0.1);
+    glm::vec2 size = glm::vec2(0.2, 0.2);
 
-    // Assuming you have these already defined somewhere
-    struct Vertex {
-        float x, y;
-        float u, v;
+
+    m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID);
+    Vertex vertices[] =
+    {
+        {-0.5f, -0.5f, 0.0f, 0.0f, 0.0f},  // Bottom-left
+        {0.5f, -0.5f, 0.0f, 1.0f, 0.0f},   // Bottom-right
+        {0.5f,  0.5f, 0.0f, 1.0f, 1.0f},   // Top-right
+        {-0.5f,  0.5f, 0.0f, 0.0f, 1.0f}   // Top-left
     };
 
-    // Vertex data for a full-screen quad
-    Vertex vertices[] = {
-        {-1.0f, -1.0f, 0.0f, 1.0f},
-        {1.0f, -1.0f, 1.0f, 1.0f},
-        {1.0f, 1.0f, 1.0f, 0.0f},
-        {-1.0f, 1.0f, 0.0f, 0.0f}
+    std::vector<unsigned int> indices =
+    {
+        0, 1, 2,   // First Triangle
+        2, 3, 0    // Second Triangle
     };
-    const uint16_t indices[] = { 0, 1, 2, 2, 3, 0 };
-
-    //bgfx::VertexLayout f_VertexLayout;
-
-    //f_VertexLayout.begin()
-    //    .add(bgfx::Attrib::Position, 2, bgfx::AttribType::Float) // 2D position (x, y)
-    //    .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float) // Texture coordinates (u, v)
-    //    .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Float)
-    //    .end();
-
-    //auto vertexBuffer = bgfx::createVertexBuffer(
-    //    bgfx::makeRef(vertices, sizeof(vertices)),
-    //    f_VertexLayout
-    //);
-    //auto indexBuffer = bgfx::createIndexBuffer(
-    //    bgfx::makeRef(indices, sizeof(indices))
-    //);
-
-    //bgfx::setVertexBuffer(0, vertexBuffer);
-    //bgfx::setIndexBuffer(indexBuffer);
-
-    //bgfx::UniformHandle f_TextureUniform = bgfx::createUniform("s_texture", bgfx::UniformType::Sampler);
 
 
-    //// Bind texture
-    //bgfx::setTexture(0, f_TextureUniform, m_FirstTexture.GetTextureHandle());
-
-    //////////////////// Basic Shader Setup ////////////////////
-
-    //PeachCore::ShaderProgram f_ShaderProgram;
-
-    // Load and compile the vertex shader
-    //if (!f_ShaderProgram.LoadAndCompileShaders("D:/Game Development/Random Junk I Like to Keep/VertexShaderTest.glsl", "D:/Game Development/Random Junk I Like to Keep/FragmentShaderTest.glsl")) {
-    //    std::cerr << "Failed to compile the shaders." << std::endl;
-    //    return EXIT_FAILURE;
-    //}
-
-    //// Finalize and create the shader program
-    //if (!f_ShaderProgram.FinalizeProgram()) {
-    //    std::cerr << "Failed to create the shader program." << std::endl;
-    //    return EXIT_FAILURE;
-    //}
-
-    // Draw call
-    //bgfx::submit(0, f_ShaderProgram.GetProgram());
-
-    //bgfx::frame();
-
-
-
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    //////////////////// Draw Call >w< ////////////////////
+    int FrameCount = 0;
+    while (true)
+    {
+        if(FrameCount > 100)
+            {break;}
+        FrameCount++;
+        m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID); std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    
 
     m_Running = false;
 
     //GameLoop();
 
+
+    /*std::thread T_Audio(AudioThread);
+    std::thread T_ResourceLoading(ResourceLoadingThread);
+    std::thread T_Network(NetworkThread);*/
     
    /* T_Audio.join();
     T_ResourceLoading.join();
     T_Network.join();*/
-    
-
-
-
-
-
-
 
     // Clean up
-    //PeachCore::ThreadPoolManager::ThreadPool().Shutdown();
-
+    //PeachCore::ThreadPoolManager::ThreadPool().Shutdown
     //Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule("Test-Function-Read");
 
 
-   
-    std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin.dll",
-                                                                                               "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin2.dll" };
-    std::vector<std::string> ListOfUnixPluginsToLoad = { };
 
-    #if defined(_WIN32) || defined(_WIN64)
-        LoadPluginsFromConfigs(ListOfWindowsPluginsToLoad); // Windows
-    #else
-        LoadPluginsFromConfigs(ListOfUnixPluginsToLoad); // Linux/Unix
-    #endif
 
-    RunPlugins();
+    //////////////////////////////////////////////////////////////////////////////////////////
+
+    //std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin.dll",
+    //                                                                                           "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin2.dll" };
+    //std::vector<std::string> ListOfUnixPluginsToLoad = { };
+
+    //#if defined(_WIN32) || defined(_WIN64)
+    //    LoadPluginsFromConfigs(ListOfWindowsPluginsToLoad); // Windows
+    //#else
+    //    LoadPluginsFromConfigs(ListOfUnixPluginsToLoad); // Linux/Unix
+    //#endif
+
+    //RunPlugins();
   
-    PeachCore::LogManager::MainLogger().Debug("Exit Success!", "Peach-E");
+    //PeachCore::LogManager::MainLogger().Debug("Exit Success!", "Peach-E");
 
     return EXIT_SUCCESS;
 }

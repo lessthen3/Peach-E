@@ -2,7 +2,7 @@
 
 #include "../../../Managers/LogManager.h"
 #include "../../../Unsorted/PeachNode.h"
-//#include "../../Rendering2D/Texture2D.h"
+#include "../../Rendering2D/Texture2D.h"
 
 #include <vector>
 #include <tuple>
@@ -49,7 +49,7 @@ namespace PeachCore {
         std::vector<Tile> m_Tiles;
         
     private:
-        //Texture2D pm_Texture;
+        Texture2D pm_Texture;
         int pm_TileWidth;
         int pm_TileHeight;
         

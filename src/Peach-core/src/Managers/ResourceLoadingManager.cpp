@@ -17,7 +17,7 @@ namespace PeachCore {
 
 	GLuint ResourceLoadingManager::LoadTextureData(const std::string& fp_ImagePath, OpenGLRenderer* fp_CurrentRenderer) //loads and registers data and returns the GLuint reference for the texture ID, possibly vao info too
 	{
-		GLuint f_TextureID;
+		GLuint f_TextureID = 696913376969; //default texture value
 
 		// Load image data (consider using stb_image or any similar library)
 		int width, height, nrChannels;
@@ -29,7 +29,7 @@ namespace PeachCore {
 		}
 
 
-		f_TextureID = fp_CurrentRenderer->RegisterTexture(data, width, height);
+		f_TextureID = fp_CurrentRenderer->RegisterTexture(data, width, height, nrChannels);
 
 		stbi_image_free(data);
 		return f_TextureID;

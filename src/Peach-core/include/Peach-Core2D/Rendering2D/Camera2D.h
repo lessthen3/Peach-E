@@ -2,6 +2,7 @@
 
 
 #include "../Utilities2D/Vector2D.h"
+#include <glm/glm.hpp>
 
 namespace PeachCore {
 
@@ -28,7 +29,7 @@ namespace PeachCore {
             UpdateViewMatrix();
         }
 
-        const float* GetViewMatrix() const {
+        glm::mat4 GetViewMatrix() const {
             return pm_ViewMatrix;
         }
 
@@ -49,7 +50,7 @@ namespace PeachCore {
         float pm_Rotation;
         float pm_Scale;
         float m_ScreenWidth, m_ScreenHeight;
-        float pm_ViewMatrix[16];
+        glm::mat4 pm_ViewMatrix;
     };
 
 }

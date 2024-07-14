@@ -1,9 +1,8 @@
 #include "../../../include/Peach-Core2D/Rendering2D/Texture2D.h"
-//#include "../../../include/Managers/ResourceLoadingManager.h"
 
 namespace PeachCore {
 
-    Texture2D::Texture2D(const std::string& fp_Name, const std::string& fp_ImagePath, OpenGLRenderer* fp_CurrentRenderer)
+    Texture2D::Texture2D(const std::string& fp_Name, const std::string& fp_ImagePath)
     {
         m_Name = fp_Name;
         //if (!LoadTexture(imagePath)) {
@@ -11,14 +10,14 @@ namespace PeachCore {
         //    throw std::runtime_error("Failed to load texture");
         //}
 
-        ID = ResourceLoadingManager::ResourceLoader().LoadTextureData(fp_ImagePath, fp_CurrentRenderer); //retrieve texture id when ready if this fails it will return the default texture
+        m_ID = LoadTexture(fp_ImagePath);
 
     }
 
     Texture2D::Texture2D(const Texture2D& other)
         : m_Width(other.m_Width), m_Height(other.m_Height),
         m_TileWidth(other.m_TileWidth), m_TileHeight(other.m_TileHeight),
-        pm_IsValid(other.pm_IsValid), ID(other.ID) //INCOMPLETE COPY CONSTRUCTOR, DO NOT USE PLEASE I BEG YOU PLEASE
+        pm_IsValid(other.pm_IsValid), m_ID(other.m_ID) //INCOMPLETE COPY CONSTRUCTOR, DO NOT USE PLEASE I BEG YOU PLEASE
     {
         if (other.pm_IsValid) {
             // Optionally load texture again from a known path or duplicate the texture handle
@@ -27,22 +26,26 @@ namespace PeachCore {
     }
 
     Texture2D::~Texture2D() {
-        //if (bgfx::isValid(pm_BGFXTexture)) {
-        //    bgfx::destroy(pm_BGFXTexture);
-        //}
+        RenderingManager::Renderer().GetOpenGLRenderer()->DeleteTexture(m_ID);
         std::cout << "Hey! I am out of this joint, let's blow this popsicle stand buckoo" << "\n";
     }
 
-    bool Texture2D::LoadTexture(const char* imagePath) 
+    GLuint Texture2D::LoadTexture(const std::string& fp_ImagePath) 
     {
-        //if (!f_Data) {
-        //    LogManager::MainLogger().Warn("Failed to load texture at: " + std::string(imagePath), "Texture2D");
-        //    return false;
-        //}
-        //Make call to ResourceLoading Thread via a call to ResourceLoadingManager
+        //retrieve texture id when ready if this fails it will return the default texture
+        GLuint f_TextureID = ResourceLoadingManager::ResourceLoader().LoadTextureData(fp_ImagePath, RenderingManager::Renderer().GetOpenGLRenderer()); 
         pm_IsValid = true;
 
-        return true;
+        return f_TextureID;
+    }
+
+    void Texture2D::DeleteTexture()
+    {
+        if(!pm_IsValid) //Should be false if texture was never set
+            {return;}
+        //queue the texture for deletion when buffer chain pushes
+        //make a list of texture's to be deleted that contains all the GLuint ID's that need to be cleared from the current glcontext
+        m_ID = 696913376969; //>w<
     }
 
     void Texture2D::Bind(const uint8_t slot) const {
@@ -77,18 +80,13 @@ namespace PeachCore {
         }
     }
 
-
-    //bgfx::TextureHandle Texture2D::GetTextureHandle() const
-    //{
-    //    return pm_BGFXTexture;
-    //}
-
     std::tuple<float, float, float, float> Texture2D::GetTileUV(const int tileIndex) const {
         if (tileIndex < 0 || tileIndex >= m_TileUVs.size()) {
             throw std::out_of_range("Tile index is out of range.");
         }
         return m_TileUVs[tileIndex];
     }
+   
     int Texture2D::GetTileCount() const {
         return m_TileUVs.size();
     }

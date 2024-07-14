@@ -29,7 +29,7 @@ namespace PeachCore {
         ~RenderingManager();
 
     private:
-        RenderingManager() = default;// Private constructor for singleton
+        RenderingManager();// Private constructor for singleton
 
         SDL_Window* pm_CurrentWindow = nullptr;
         OpenGLRenderer* pm_OpenGLRenderer = nullptr;
@@ -69,6 +69,8 @@ namespace PeachCore {
             }
             return pm_OpenGLRenderer;
         }
+
+
         //void Draw(const sf::Drawable& fp_Drawable);
         //void DrawTextToScreen(const std::string& fp_Text, const sf::Font& fp_Font, unsigned int fp_Size, const sf::Vector2f& fp_Position, const sf::Color& fp_Color = sf::Color::White);
 

@@ -19,12 +19,16 @@ namespace PeachCore {
             SDL_Quit();
         }
     } 
+    RenderingManager::RenderingManager() 
+    {
+
+    }
 
     void RenderingManager::Initialize(const std::string fp_RendererType, const std::string& fp_Title, const int fp_Width, const int fp_Height)
     {
         if (hasBeenInitialized)
         {
-            LogManager::MainLogger().Warn("RenderingManager has already been initialized, RenderingManager is only allowed to initialize once per run", "RenderingManager");
+            LogManager::RenderingLogger().Warn("RenderingManager has already been initialized, RenderingManager is only allowed to initialize once per run", "RenderingManager");
             return;
         }
         else
@@ -63,10 +67,19 @@ namespace PeachCore {
     }
 
     void RenderingManager::CreateRenderer2D() {
-        if (!pm_CurrentWindow) {
+        if (!pm_CurrentWindow) 
+        {
             throw std::runtime_error("Window not created before building renderer.");
+        } 
+        else if (pm_OpenGLRenderer) 
+        {
+            LogManager::RenderingLogger().Warn("RenderingManager has already been initialized with a rendering backend, why are you doing it again?", "RenderingManager");
+            return;
+        } 
+        else 
+        {
+            pm_OpenGLRenderer = new OpenGLRenderer(pm_CurrentWindow, false);
         }
-        pm_OpenGLRenderer = new OpenGLRenderer(pm_CurrentWindow, false);
     }
 
     void RenderingManager::RenderFrame() {
@@ -89,7 +102,6 @@ namespace PeachCore {
     {
 
     }
-
 
     void RenderingManager::EndFrame()
     {

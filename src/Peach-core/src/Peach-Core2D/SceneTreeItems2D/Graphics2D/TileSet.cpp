@@ -1,23 +1,23 @@
 #include "../../../../include/Peach-Core2D/SceneTreeItems2D/Graphics2D/TileSet.h"
-//#include "../../../../include/Peach-Core2D/Rendering2D/Texture2D.h"
+
 namespace PeachCore {
 
-    //void TileSet::CreateTilesFromTexture2D()
-    //{
-    //    if (!pm_Texture.IsValid())
-    //    {
-    //        LogManager::MainLogger().Warn("Attempted to create tiles for tile set when no texture was loaded", name);
-    //        return;
-    //    }
+    void TileSet::CreateTilesFromTexture2D()
+    {
+        if (!pm_Texture.IsValid())
+        {
+            LogManager::MainLogger().Warn("Attempted to create tiles for tile set when no texture was loaded", name);
+            return;
+        }
 
-    //    m_Tiles.clear(); //clear list in case new tile UV's are generated
-    //    m_Tiles.resize(pm_Texture.GetTileCount());  // Resize m_Tiles vector to match the number of UVs calculated
+        m_Tiles.clear(); //clear list in case new tile UV's are generated
+        m_Tiles.resize(pm_Texture.GetTileCount());  // Resize m_Tiles vector to match the number of UVs calculated
 
-    //    for (auto& tuple : pm_Texture.m_TileUVs)
-    //    {
-    //        m_Tiles.push_back(Tile(tuple));
-    //    }
-    //}
+        for (auto& tuple : pm_Texture.m_TileUVs)
+        {
+            m_Tiles.push_back(Tile(tuple));
+        }
+    }
 
     TileSet::~TileSet() {
         // Cleanup Box2D bodies if needed
@@ -56,24 +56,24 @@ namespace PeachCore {
    
     void TileSet::LoadTexture(const std::string fp_Name, const std::string& fp_ImagePath) 
     {
-        //pm_Texture = Texture2D(fp_Name, fp_ImagePath);
+        pm_Texture = Texture2D(fp_Name, fp_ImagePath);
     }
 
-    //void TileSet::SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight)
-    //{
-    //    if (!pm_Texture.IsValid())
-    //    {
-    //        LogManager::MainLogger().Warn("Attempted to set UV's for tile set when no texture was loaded", name);
-    //        return;
-    //    }
+    void TileSet::SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight)
+    {
+        if (!pm_Texture.IsValid())
+        {
+            LogManager::MainLogger().Warn("Attempted to set UV's for tile set when no texture was loaded", name);
+            return;
+        }
 
-    //    pm_TileWidth = fp_DesiredTileWidth;
-    //    pm_TileHeight = fp_DesiredTileHeight;
+        pm_TileWidth = fp_DesiredTileWidth;
+        pm_TileHeight = fp_DesiredTileHeight;
 
-    //    pm_Texture.DefineTileSize(fp_DesiredTileWidth, fp_DesiredTileHeight);
-    //    pm_Texture.CalculateTileUVs();
-    //    
-    //}
+        pm_Texture.DefineTileSize(fp_DesiredTileWidth, fp_DesiredTileHeight);
+        pm_Texture.CalculateTileUVs();
+        
+    }
 
     void TileSet::DefinePhysicsForTile(int fp_TileIndex, b2World& world, float metersPerPixel) {
         ValidateTileIndex(fp_TileIndex);
