@@ -104,23 +104,18 @@ namespace PeachCore
 
         void DrawTexture(const GLuint& fp_TextureID) 
         {
+            //clear screen to prepare for drawing
             glClearColor(0.27f, 0.5f, 0.8f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | (pm_Is3DEnabled ? GL_DEPTH_BUFFER_BIT : 0));
-            SDL_GL_SwapWindow(pm_Window);
 
-            GLuint f_ShaderProgramID = pm_ShaderPrograms.at("Test_Program").GetProgramID();
             // Assuming shaderProgram is active and configured
-            glUseProgram(f_ShaderProgramID);
-            //glBindVertexArray(VAO);  // Bind the VAO
+            ShaderProgram f_CurrentShaderProgram = pm_ShaderPrograms.at("Test_Program");
+            glUseProgram(f_CurrentShaderProgram.GetProgramID());
 
-            // Bind the texture
+           // Texture setup
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, fp_TextureID);
-
-            glUniform1i(30, 0);
-
-            // Bind the VAO that has quad configurations
-            //glBindVertexArray(quadVAO);
+            glUniform1i(f_CurrentShaderProgram.GetUniformLocation("texture_sampler"), 0);
 
             //// Setup vertices and texture coordinates based on position, size, and UVs
             //Vertex vertices[] = {
@@ -145,10 +140,7 @@ namespace PeachCore
                 2, 3, 0    // Second Triangle
             };
 
-            // Update vertex data
-            //glBindBuffer(GL_ARRAY_BUFFER, pm_VBO);
-            //glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-
+            //bind buffers and throw data inside of them
             glBindVertexArray(pm_VAO);
 
             glBindBuffer(GL_ARRAY_BUFFER, pm_VBO); //bind vertices to vbo
@@ -157,25 +149,21 @@ namespace PeachCore
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pm_EBO); //bind indices for drawing triangles
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0); // move index of vertex from 1 to 3rd element, size of vert is 5 floats, 0 offset
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)0); // move index of vertex from 1 to 3rd element, size of vert is 5 floats, 0 offset
             glEnableVertexAttribArray(0);
-            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))); // Texture coord attribute
+            glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat))); // Texture coord attribute
             glEnableVertexAttribArray(1);
-
-
-
-            //// Draw the quad
-            //glDrawArrays(GL_TRIANGLE_FAN, 0, 4);  // Assuming you're drawing a quad
 
             // Draw the quad
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
-
-            SDL_GL_SwapWindow(pm_Window);
+            // Cleanup
+            glBindVertexArray(0);
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindTexture(GL_TEXTURE_2D, 0);
-            glBindVertexArray(0);
             glUseProgram(0);
+
+            SDL_GL_SwapWindow(pm_Window);
         }
 
         void BatchDrawTexture(const GLuint& fp_TextureID, const std::vector<glm::vec2>& positions, const glm::vec2& size)
@@ -265,14 +253,14 @@ namespace PeachCore
             return true;
         }
 
-        ShaderProgram* LoadShadersFromSource(const std::string& fp_Name, const std::string& fp_VertexSource, const std::string& fp_FragmentSource) 
+        void LoadShadersFromSource(const std::string& fp_Name, const std::string& fp_VertexSource, const std::string& fp_FragmentSource) 
         {
             ShaderProgram f_Shader;
             glUseProgram(f_Shader.GetProgramID());
+            std::cout << "program id in openglrenderer " << f_Shader.GetProgramID() << "\n";
             f_Shader.LoadAndCompileShaders({{"VertexShader", fp_VertexSource}, {"FragmentShader", fp_FragmentSource}});
             f_Shader.Link();
             pm_ShaderPrograms.insert({fp_Name, f_Shader});
-            return &f_Shader;
         }
 
         void LoadShadersFromBinary(const std::string& fp_FilePath)

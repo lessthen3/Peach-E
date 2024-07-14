@@ -29,12 +29,12 @@ namespace PeachCore {
         //SHADER CREATOR FOR FRAGMENT AND VERTEX SHADERS
         ////////////////////////////////////////////////////////////
 
-        void CreateVertexShader(const std::string& fp_ShaderCode)
+        void CreateVertexShader(const std::string fp_ShaderCode)
         {
             pm_Shaders.insert({"VertexShader", CreateShader(fp_ShaderCode, GL_VERTEX_SHADER) });
         }
 
-        void CreateFragmentShader(const std::string& fp_ShaderCode)
+        void CreateFragmentShader(const std::string fp_ShaderCode)
         {
             pm_Shaders.insert({"FragmentShader", CreateShader(fp_ShaderCode, GL_FRAGMENT_SHADER) });
         }
@@ -71,61 +71,33 @@ namespace PeachCore {
         }
 
         ///////////////////////////////////////////////
-        //GENERIC UNIFORM SETTERS AND CREATOR
+        // Generic Uniform Setters 
         ///////////////////////////////////////////////
 
-        void CreateUniform(const char* fp_UniformName) 
+        void SetUniformMat4(const std::string& fp_UniformName, glm::mat4 matrix) 
         {
-            glUseProgram(pm_ProgramID);  // Ensure the program is active
-            
-            GLuint f_UniformLocation = glGetUniformLocation(pm_ProgramID, fp_UniformName);
-            std::cout << "Uniform Location: " << f_UniformLocation << "\n";
-            if (f_UniformLocation == GLuint(-1)) {
-                std::cerr << "Uniform " << fp_UniformName << " not found or not used in shaders.\n";
-            }
-            else {
-                pm_Uniforms.insert({ fp_UniformName, f_UniformLocation });
-            }
+            glUniformMatrix4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(matrix));
         }
 
-        void SetUniformMat4(const std::string& uniformName, glm::mat4 matrix) {
-            if(uniformName == "model")
-                glUniformMatrix4fv(0, 1, GL_FALSE, glm::value_ptr(matrix));
-            else if(uniformName == "view")
-                glUniformMatrix4fv(3, 1, GL_FALSE, glm::value_ptr(matrix));
-            else
-                glUniformMatrix4fv(1, 1, GL_FALSE, glm::value_ptr(matrix));
-
-
-            //glUniformMatrix4fv(pm_Uniforms[uniformName], 1, GL_FALSE, glm::value_ptr(matrix)); 
+        void SetUniform1i(const std::string& fp_UniformName, const int value) { //retrieves uniform and its associated GLuint and sets it
+            glUniform1i(pm_Uniforms[fp_UniformName], value);
         }
 
-        void SetUniform1i(const std::string uniformName, const int value) { //retrieves uniform and its associated GLuint and sets it
-            glUniform1i(pm_Uniforms[uniformName], value);
+        void SetUniform1f(const std::string& fp_UniformName, const float value) {
+            glUniform1f(pm_Uniforms[fp_UniformName], value);
         }
 
-        void SetUniform1f(std::string uniformName, const float value) {
-            glUniform1f(pm_Uniforms[uniformName], value);
+        void SetUniform3f(const std::string& fp_UniformName, glm::vec3 value) {
+            glUniform3f(pm_Uniforms[fp_UniformName], value.x, value.y, value.z);
         }
 
-        void SetUniform3f(const std::string uniformName, glm::vec3 value) {
-            glUniform3f(pm_Uniforms[uniformName], value.x, value.y, value.z);
-        }
-
-        void SetUniform4f(const std::string uniformName, glm::vec4 value) {
-            glUniform4f(pm_Uniforms[uniformName], value.x, value.y, value.z, value.w);
+        void SetUniform4f(const std::string& fp_UniformName, glm::vec4 value) {
+            glUniform4f(pm_Uniforms[fp_UniformName], value.x, value.y, value.z, value.w);
         }
 
         //////////////////////////////////////////////
-        //FOG UNIFORM CREATOR AND SETTER
+        // Fog Uniform Creator Setters
         //////////////////////////////////////////////
-
-        //void createFogUniform(std::string uniformName) 
-        //{
-        //    CreateUniform(uniformName + ".activeFog");
-        //    CreateUniform(uniformName + ".colour");
-        //    CreateUniform(uniformName + ".density");
-        //}
 
         //void SetUniform(std::string uniformName, Fog fog) {
         //    SetUniform(uniformName + ".activeFog", fog.isActive() ? 1 : 0);
@@ -134,17 +106,8 @@ namespace PeachCore {
         //}
 
         //////////////////////////////////////////////
-        //MATERIAL UNIFORM CREATOR AND SETTER
+        // Material Uniform Setters
         //////////////////////////////////////////////
-
-        //void CreateMaterialUniforms(std::string uniformName) 
-        //{
-        //    CreateUniform(uniformName + ".ambient");
-        //    CreateUniform(uniformName + ".diffuse");
-        //    CreateUniform(uniformName + ".specular");
-        //    CreateUniform(uniformName + ".hasTexture");
-        //    CreateUniform(uniformName + ".reflectance");
-        //}
 
         //void SetMaterialUniforms(std::string uniformName, Material material) {
         //    SetUniform(uniformName + ".ambient", material.getAmbientColour());
@@ -155,35 +118,33 @@ namespace PeachCore {
         //}
 
         //////////////////////////////////////////////
-        //TEXTURE UNIFORM CREATOR AND SETTER
+        // Texture Uniform Setter
         //////////////////////////////////////////////
-
-        void CreateSamplerUniform(const char* fp_UniformName) { //need to name this TextureSampler at the moment
-            CreateUniform(fp_UniformName);  // Assuming CreateUniform stores the location in pm_Uniforms
-        }
 
         void SetTexture(const std::string& fp_UniformName, GLuint fp_TextureID, GLuint fp_TextureUnit) {
             glActiveTexture(GL_TEXTURE0 + fp_TextureUnit);  // Activate the correct texture unit before binding
             glBindTexture(GL_TEXTURE_2D, fp_TextureID);
-            glUniform1i(30, fp_TextureUnit);  // Set the sampler to use the correct texture unit
+            glUniform1i(GetUniformLocation(fp_UniformName), fp_TextureUnit);  // Set the sampler to use the correct texture unit
             glBindTexture(GL_TEXTURE_2D, 0);
         }
 
         //////////////////////////////////////////////
-        //SHADER LINKER AND CLEANUP
+        // Shader Linker 
         //////////////////////////////////////////////
 
         void Link()   
         {
             glUseProgram(pm_ProgramID);
 
-            for (auto& shader : pm_Shaders) {
+            for (auto& shader : pm_Shaders)
+            {
                 glAttachShader(pm_ProgramID, shader.second);
                 std::cout << shader.second << "\n";
             }
 
             glLinkProgram(pm_ProgramID);
-            std::cout << "Program ID: " << pm_ProgramID << "\n";
+            std::cout << "Program ID: " << pm_ProgramID << "Successfully Linked!" << "\n";
+
             GLint success;
             GLchar infoLog[512];
             
@@ -196,7 +157,7 @@ namespace PeachCore {
 
             for (auto& shader : pm_Shaders) 
             {
-                glDetachShader(pm_ProgramID, shader.second);
+               // glDetachShader(pm_ProgramID, shader.second);
                 glDeleteShader(shader.second);  // Delete the shader as it's no longer needed
             }
 
@@ -214,22 +175,34 @@ namespace PeachCore {
             AutoCaptureActiveUniforms(); //Does what it says on the tin. please dont ask how many times i cried while writing this class, please just dont'.
         }
 
-        void AutoCaptureActiveUniforms()
+        void AutoCaptureActiveUniforms() //gets uniforms detected by current glContext, then puts them into a map of the form <uniform-name, uniformLocation>
         {
             int total = -1;
             glGetProgramiv(pm_ProgramID, GL_ACTIVE_UNIFORMS, &total);
-            for (int i = 0; i < total; ++i) {
+
+            for (int i = 0; i < total; ++i)
+            {
                 int name_len = -1, num = -1;
                 GLenum type = GL_ZERO;
                 char name[100];
+
                 glGetActiveUniform(pm_ProgramID, GLuint(i), sizeof(name) - 1,
                     &name_len, &num, &type, name);
+
                 name[name_len] = 0;
                 GLuint location = glGetUniformLocation(pm_ProgramID, name);
-                pm_Uniforms.insert({ std::string(name), location });
-                std::cout << "Uniform " << i << " Type: " << type << " Name: " << name << " Location: " << location << "\n";
+
+                const char* f_temp = name;
+
+                pm_Uniforms.insert({ f_temp, location}); //have to c_str() this our it breaks because i think the string termination is fucked with char[]
+
+                std::cout << "Uniform " << i << " Type: " << type << " Name: " << f_temp << " Location: " << location << "\n";
             }
         }
+
+       //////////////////////////////////////////////
+       // Shader Cleanup
+       //////////////////////////////////////////////
 
         void Bind() 
             const
@@ -294,17 +267,17 @@ namespace PeachCore {
             {
                 LoadAndCompileShader(shader.first, shader.second); //loads shader type from shader path in map
             }
-            
+
             if (false) {
                 std::cerr << "Failed to compile shaders." << std::endl;
                 return false;
             }
 
-           
+
             return true;
         }
 
-        void PrintShaderProgramDebugVerbose() 
+        void PrintShaderProgramDebugVerbose()
             const
         {
             GLint numShaders = 0, numUniforms = 0, maxLength = 0;
@@ -365,8 +338,19 @@ namespace PeachCore {
             glUseProgram(0); // Unbind program after checking
         }
 
+        void PrintShaderProgramUniformList()
+        {
+            for (auto& uniform : pm_Uniforms)
+            {
+                std::cout << "Uniform Name: " << uniform.first << "\n";
+                std::cout << "Uniform Location: " << uniform.second << "\n";
+            }
+        }
 
-
+        GLuint GetUniformLocation(const std::string& fp_UniformName)
+        {
+            return pm_Uniforms.at(fp_UniformName);
+        }
 
         std::string GetProgramName() const {
             return pm_ProgramName;

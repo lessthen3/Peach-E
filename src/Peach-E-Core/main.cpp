@@ -279,56 +279,36 @@ int main(int argc, char* argv[])
     
     OpenGLRenderer* m_CurrentRenderer = RenderingManager::Renderer().GetOpenGLRenderer();
 
-    ShaderProgram* m_CurrentShaderProgram = m_CurrentRenderer->LoadShadersFromSource("Test_Program",
-                                                                                                            "D:/Game Development/Peach-E/src/Peach-core/tests/vertex.glsl", 
-                                                                                                            "D:/Game Development/Peach-E/src/Peach-core/tests/fragment.glsl");
-    (m_CurrentShaderProgram->Bind());
+    m_CurrentRenderer->LoadShadersFromSource("Test_Program",
+        "D:/Game Development/Peach-E/src/Peach-core/tests/vertex.glsl",
+        "D:/Game Development/Peach-E/src/Peach-core/tests/fragment.glsl");
 
-    
+    ShaderProgram m_CurrentShaderProgram = m_CurrentRenderer->GetShaderProgram("Test_Program");
 
-    //m_CurrentShaderProgram->CreateSamplerUniform("texture_sampler");
-    m_CurrentShaderProgram->SetTexture("texture_sampler", m_FirstTexture.m_ID, 30);
+    while (m_Running) {
 
-    //m_CurrentShaderProgram->CreateUniform("model");
-    //m_CurrentShaderProgram->CreateUniform("view");
-    //m_CurrentShaderProgram->CreateUniform("projection");
-    //   
-    m_CurrentShaderProgram->SetUniformMat4("model", glm::mat4(1.0));
-    m_CurrentShaderProgram->SetUniformMat4("view", glm::mat4(1.0));
-    m_CurrentShaderProgram->SetUniformMat4("projection", glm::mat4(1.0));
+        // Set up shaders
+        m_CurrentShaderProgram.Bind();
+        m_CurrentShaderProgram.SetTexture("texture_sampler", m_FirstTexture.m_ID, 0);
+        //m_CurrentShaderProgram.SetUniformMat4("model", glm::mat4(1.0));
+        //m_CurrentShaderProgram.SetUniformMat4("view", glm::mat4(1.0));
+        //m_CurrentShaderProgram.SetUniformMat4("projection", glm::mat4(1.0));
 
-    //m_CurrentShaderProgram->PrintShaderProgramDebugVerbose();
-    //////////////////// Vertex and Index Buffer Setup ////////////////////
-    glm::vec2 position = glm::vec2(0.1, 0.1);
-    glm::vec2 size = glm::vec2(0.2, 0.2);
+        // Draw
+        m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID);
 
-
-    m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID);
-    Vertex vertices[] =
-    {
-        {-0.5f, -0.5f, 0.0f, 0.0f, 0.0f},  // Bottom-left
-        {0.5f, -0.5f, 0.0f, 1.0f, 0.0f},   // Bottom-right
-        {0.5f,  0.5f, 0.0f, 1.0f, 1.0f},   // Top-right
-        {-0.5f,  0.5f, 0.0f, 0.0f, 1.0f}   // Top-left
-    };
-
-    std::vector<unsigned int> indices =
-    {
-        0, 1, 2,   // First Triangle
-        2, 3, 0    // Second Triangle
-    };
-
+        std::this_thread::sleep_for(std::chrono::milliseconds(60));
+    }
 
     //////////////////// Draw Call >w< ////////////////////
-    int FrameCount = 0;
-    while (true)
-    {
-        if(FrameCount > 100)
-            {break;}
-        FrameCount++;
-        m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID); std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    
+    //int FrameCount = 0;
+    //while (true)
+    //{
+    //    if(FrameCount > 100)
+    //        {break;}
+    //    FrameCount++;
+    //    m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID); std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    //}
 
     m_Running = false;
 
