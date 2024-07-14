@@ -11,7 +11,7 @@ Do whatever you want with this, go absolutely buck wild, I'd love to see the awf
 
 IT HURTS PROGRAMMING IS FUN, 
 
-
+opengl makes me hurt in ways that nothing else has made me hurt
 
 
 
