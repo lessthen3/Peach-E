@@ -11,36 +11,54 @@ namespace PeachCore {
 
 	}
 
-
-
-
-
-	GLuint ResourceLoadingManager::LoadTextureData(const std::string& fp_ImagePath, OpenGLRenderer* fp_CurrentRenderer) //loads and registers data and returns the GLuint reference for the texture ID, possibly vao info too
+	shared_ptr<LoadingQueue> ResourceLoadingManager::GetAudioResourceLoadingQueue() //This method should be one of the first methods called on startup
 	{
-		GLuint f_TextureID = 696913376969; //default texture value
+		if(pm_AudioQueueReferenceCount == 2)  //stops unwanted extra references from being created accidentally
+			{return nullptr;}
+		else if(pm_AudioQueueReferenceCount == 0)  //lazy initialization for LoadingQueue cause why not
+			{pm_AudioResourceLoadingQueue = make_shared<LoadingQueue>();}
 
-		// Load image data (consider using stb_image or any similar library)
-		int width, height, nrChannels;
-		unsigned char* data = stbi_load(fp_ImagePath.c_str(), &width, &height, &nrChannels, 0);
+		pm_AudioQueueReferenceCount++;
+		return pm_AudioResourceLoadingQueue;
+	}
 
-		if (!data)
+	shared_ptr<LoadingQueue> ResourceLoadingManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
+	{
+		if (pm_DrawableQueueReferenceCount == 2) //stops unwanted extra references from being created accidentally
+			{return nullptr;}
+		else if(pm_DrawableQueueReferenceCount == 0) //lazy initialization for LoadingQueue cause why not
+			{pm_DrawableResourceLoadingQueue = make_shared<LoadingQueue>();}
+
+		pm_DrawableQueueReferenceCount++;
+		return pm_DrawableResourceLoadingQueue;
+	}
+
+
+
+	bool ResourceLoadingManager::LoadTexture(const string& fp_FilePath)
+	{
+		auto texture = make_unique<sf::Texture>();
+
+		if (texture->loadFromFile(fp_FilePath))
 		{
-			std::cerr << "Failed to load texture image!" << std::endl;
+			TryPushingLoadedResourcePackage( move(make_unique<LoadedResourcePackage>("someObjectID", move(texture))) );
+			return true;
 		}
 
-
-		f_TextureID = fp_CurrentRenderer->RegisterTexture(data, width, height, nrChannels);
-
-		stbi_image_free(data);
-		return f_TextureID;
+		return false; // Handle failed load appropriately
 	}
 
 		// Called by the rendering thread
-	std::list<PendingResource> ResourceLoadingManager::FetchPendingResources() {
-		std::lock_guard<std::mutex> lock(resourceMutex);
-		//auto& resources = std::move(pm_ListOfResourcesThatNeedToBeLoaded); // Move the contents
-		//pm_ListOfResourcesThatNeedToBeLoaded.clear(); // Clear the original list
-		//return resources;
-		return {};
+	bool ResourceLoadingManager::TryPushingLoadedResourcePackage(unique_ptr<LoadedResourcePackage> fp_LoadedPackage)
+	{
+		pm_WaitingFullyLoadedResourcePackages.push_back(move(fp_LoadedPackage));
+
+		if (!pm_DrawableResourceLoadingQueue->PushLoadedResourcePackage(pm_WaitingFullyLoadedResourcePackages))
+		{
+			LogManager::ResourceLoadingLogger().Debug("Load put off until later", "ResourceLoadingManager");
+			return false;
+		}
+
+		return true;
 	}
 }

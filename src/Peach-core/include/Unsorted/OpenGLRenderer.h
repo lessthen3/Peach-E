@@ -1,13 +1,10 @@
 #pragma once
 
-
-
-#include <SDL2/SDL.h>
-//#include <GL/glew.h>
-//#include<GL/GL.h>
-//#include <glm/glm.hpp>
-
 #include "../Unsorted/ShaderProgram.h"
+
+#include <SFML/Window.hpp>
+#include <SFML/Graphics.hpp>
+#include <SFML/OpenGL.hpp>
 
 #include <vector>
 #include <iostream>
@@ -35,19 +32,20 @@ namespace PeachCore
     class OpenGLRenderer
     {
     public:
-        OpenGLRenderer(SDL_Window* window, bool enable3D = false)
-            : pm_Window(window), pm_Is3DEnabled(enable3D)
+        explicit OpenGLRenderer(sf::RenderWindow* fp_Window, bool fp_Is3DEnabled = false)
+            : pm_CurrentWindow(fp_Window), pm_Is3DEnabled(fp_Is3DEnabled) 
         {
-            if (!InitOpenGL()) {
+           /* if (!InitOpenGL())
+            {
                 throw std::runtime_error("Failed to initialize OpenGL.");
-            }
+            }*/
         }
 
         ~OpenGLRenderer() {
-            glDeleteVertexArrays(1, &pm_VAO);
-            glDeleteBuffers(1, &pm_VBO);
-            glDeleteBuffers(1, &pm_EBO);
-            SDL_GL_DeleteContext(pm_OpenGLContext);
+            //glDeleteVertexArrays(1, &pm_VAO);
+            //glDeleteBuffers(1, &pm_VBO);
+            //glDeleteBuffers(1, &pm_EBO);
+            
         }
 
         void SetTextureFiltering(GLuint textureId, TextureFiltering filtering) {
@@ -163,7 +161,7 @@ namespace PeachCore
             glBindTexture(GL_TEXTURE_2D, 0);
             glUseProgram(0);
 
-            SDL_GL_SwapWindow(pm_Window);
+            pm_CurrentWindow->display();
         }
 
         void BatchDrawTexture(const GLuint& fp_TextureID, const std::vector<glm::vec2>& positions, const glm::vec2& size)
@@ -200,7 +198,7 @@ namespace PeachCore
 
             glClearColor(0.27f, 0.5f, 0.8f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | (pm_Is3DEnabled ? GL_DEPTH_BUFFER_BIT : 0));
-            SDL_GL_SwapWindow(pm_Window);
+            pm_CurrentWindow->display();
         }
 
         GLuint RegisterTexture(const unsigned char* fp_Data, const int fp_Width, const int fp_Height, const int fp_Channels)
@@ -276,8 +274,7 @@ namespace PeachCore
 
 
     private:
-        SDL_Window* pm_Window;
-        SDL_GLContext pm_OpenGLContext;
+        sf::RenderWindow* pm_CurrentWindow;
         bool pm_Is3DEnabled;
 
         GLuint pm_VAO, pm_VBO, pm_EBO; //current state of OpenGL
@@ -290,24 +287,8 @@ namespace PeachCore
 
     private:
 
-        bool InitOpenGL() 
+        bool InitOpenGL() //SFML handles context creation and settings for us, we can create a core profile and define major/minor versions there (thank god)
         {
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
-            pm_OpenGLContext = SDL_GL_CreateContext(pm_Window);
-            if (!pm_OpenGLContext) {
-                std::cerr << "SDL_GL_CreateContext: " << SDL_GetError() << std::endl;
-                return false;
-            }
-
-            GLenum err = glewInit();
-            if (GLEW_OK != err) {
-                std::cerr << "GLEW Error: " << glewGetErrorString(err) << std::endl;
-                return false;
-            }
-
             if (pm_Is3DEnabled) {
                 glEnable(GL_DEPTH_TEST);
                 glDepthFunc(GL_LESS);
@@ -317,7 +298,6 @@ namespace PeachCore
             glGenBuffers(1, &pm_VBO);
             glGenBuffers(1, &pm_EBO);
             
-
             return true;
         }
 

@@ -13,7 +13,7 @@ namespace PeachCore {
         m_Tiles.clear(); //clear list in case new tile UV's are generated
         m_Tiles.resize(pm_Texture.GetTileCount());  // Resize m_Tiles vector to match the number of UVs calculated
 
-        for (auto& tuple : pm_Texture.m_TileUVs)
+        for (auto& tuple : pm_Texture.GetTileUVs())
         {
             m_Tiles.push_back(Tile(tuple));
         }

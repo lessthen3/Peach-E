@@ -27,13 +27,13 @@ class PeachEBuilder(ConanFile):
         #binary serialization?
 
         # media controllers
-        self.requires("sdl/2.30.4")
+        self.requires("sfml/2.6.1")
         self.requires("imgui/cci.20230105+1.89.2.docking")
         
 
         # audio decoder and playback
         self.requires("dr_libs/cci.20230529")
-        self.requires("openal-soft/1.23.1")
+        self.requires("openal-soft/1.22.2")
 
         # asset importing
         self.requires("stb/cci.20230920")
@@ -41,12 +41,12 @@ class PeachEBuilder(ConanFile):
         self.requires("cgltf/1.13")
         self.requires("nanosvg/cci.20231025")
         
-        # vulkan
-        self.requires("vulkan-memory-allocator/cci.20231120")
-        self.requires("vulkan-headers/1.3.243.0")
-        self.requires("vulkan-loader/1.3.243.0")
+        # # vulkan
+        # self.requires("vulkan-memory-allocator/cci.20231120")
+        # self.requires("vulkan-headers/1.3.243.0")
+        # self.requires("vulkan-loader/1.3.243.0")
 
         # opengl
         self.requires("glew/2.2.0")
         self.requires("glm/cci.20230113")
-        self.requires("opengl-registry/cci.20220929")
+

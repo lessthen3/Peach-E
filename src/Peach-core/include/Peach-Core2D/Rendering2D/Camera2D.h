@@ -1,56 +1,40 @@
 #pragma once
 
 
-#include "../Utilities2D/Vector2D.h"
+#include <SFML/Graphics.hpp>
 #include <glm/glm.hpp>
 
 namespace PeachCore {
 
     class Camera2D {
     public:
-        Camera2D(float fp_ScreenWidth, float fp_ScreenHeight)
-            : pm_Position(0.0f, 0.0f), pm_Rotation(0.0f), pm_Scale(1.0f),
-            m_ScreenWidth(fp_ScreenWidth), m_ScreenHeight(fp_ScreenHeight) {
-            UpdateViewMatrix();
+        Camera2D(sf::RenderWindow& window)
+            : m_Window(window) {
+            // Initialize the view to the size of the window
+            m_View.setSize(window.getSize().x, window.getSize().y);
+            m_View.setCenter(window.getSize().x / 2, window.getSize().y / 2);
         }
 
-        void SetPosition(const Vector2f& position) {
-            pm_Position = position;
-            UpdateViewMatrix();
+        void setCenter(float x, float y) {
+            m_View.setCenter(x, y);
         }
 
-        void SetRotation(float rotation) {
-            pm_Rotation = rotation;
-            UpdateViewMatrix();
+        void setSize(float width, float height) {
+            m_View.setSize(width, height);
         }
 
-        void SetScale(float scale) {
-            pm_Scale = scale;
-            UpdateViewMatrix();
-        }
-
-        glm::mat4 GetViewMatrix() const {
-            return pm_ViewMatrix;
+        void apply() {
+            m_Window.setView(m_View);
         }
 
     private:
-        void UpdateViewMatrix() {
-            //bx::mtxIdentity(pm_ViewMatrix);
-            //bx::mtxScale(pm_ViewMatrix, pm_Scale, pm_Scale, 1.0f);
-            //bx::mtxRotateZ(pm_ViewMatrix, pm_Rotation);
-            //bx::mtxTranslate(pm_ViewMatrix, -pm_Position.x, -pm_Position.y, 0.0f);
+        sf::RenderWindow& m_Window;
+        sf::View m_View;
 
-            //// Convert to projection space
-            //float ortho[16];
-            //bx::mtxOrtho(ortho, 0.0f, m_ScreenWidth, m_ScreenHeight, 0.0f, 0.1f, 100.0f, 0.0f, bgfx::getCaps()->homogeneousDepth);
-            //bx::mtxMul(pm_ViewMatrix, pm_ViewMatrix, ortho);
-        }
-
-        Vector2f pm_Position;
+        //Vector2f pm_Position;
         float pm_Rotation;
         float pm_Scale;
         float m_ScreenWidth, m_ScreenHeight;
-        glm::mat4 pm_ViewMatrix;
     };
 
 }

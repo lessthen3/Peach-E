@@ -1,33 +1,34 @@
 /*
     Copyright(c) 2024-present Ranyodh Singh Mandur.
 */
-#define STB_IMAGE_IMPLEMENTATION //BLACK MAGIC KEEP HERE IMPORTANT DOOOO NOT MOVE THIS FUCKING HEADER
-
-
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-
-//#include <GL/glew.h>
-//#include <GL/GL.h>
-
 #include <iostream>
 #include <string>
-#include "../Peach-core/Peach-core.hpp"
-#include "../Princess/include/Parsers/PythonScriptParser.h"
-#include <pybind11/pybind11.h>
-
 #include <chrono>
 #include <thread>
 #include <atomic>
+#include <variant>
 
+#include <pybind11/pybind11.h>
 
-std::atomic<bool> m_Running(true);
+#include "../Peach-core/Peach-core.hpp"
+#include "../Princess/include/Parsers/PythonScriptParser.h"
+
+using namespace PeachCore;
+using namespace std;
+
+atomic<bool> m_Running(true);
 
 const float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
 const float USER_DEFINED_UPDATE_FPS = 60.0f;
 float USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game so no const >w<
 
-using namespace PeachCore;
+weak_ptr<CommandQueue> m_RenderingManagersCommandQueue; //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
+
+weak_ptr<LoadingQueue> m_AudioResourceLoadingQueue; //used to push load commands that are destined for AudioManager
+weak_ptr<LoadingQueue> m_DrawableResourceLoadingQueue; //used to push load commands that are destined for RenderingManager
+
+// ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
+//map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
 
 static void RenderFrame() {
 
@@ -35,8 +36,8 @@ static void RenderFrame() {
     // Render the game scene    
     //PeachCore::RenderingManager::Renderer().renderFrame();
 
-    std::cout << "Rendering frame...\n";
-    std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Simulate work
+    cout << "Rendering frame...\n";
+    this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
 
 }
 
@@ -51,8 +52,8 @@ static void ConstantUpdate(float fp_FixedDeltaTime) {
     // Render the game scene    
     //PeachCore::RenderingManager::Renderer().renderFrame();
 
-    std::cout << "Rendering frame...\n";
-    std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Simulate work
+    cout << "Rendering frame...\n";
+    this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
 
 }
 
@@ -62,8 +63,8 @@ static void Update(float fp_FixedDeltaTime) {
     // Render the game scene    
     //PeachCore::RenderingManager::Renderer().renderFrame();
 
-    std::cout << "Rendering frame...\n";
-    std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Simulate work
+    cout << "Rendering frame...\n";
+    this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
 
 }
 
@@ -82,11 +83,11 @@ static void GameLoop()
     float f_GeneralUpdateAccumulator = 0.0f;
     float f_RenderAccumulator = 0.0f;
 
-    auto f_CurrentTime = std::chrono::high_resolution_clock::now();
+    auto f_CurrentTime = chrono::high_resolution_clock::now();
 
     while (m_Running) {
-        auto f_NewTime = std::chrono::high_resolution_clock::now();
-        float f_FrameTime = std::chrono::duration<float>(f_NewTime - f_CurrentTime).count();
+        auto f_NewTime = chrono::high_resolution_clock::now();
+        float f_FrameTime = chrono::duration<float>(f_NewTime - f_CurrentTime).count();
         f_CurrentTime = f_NewTime;
 
         // Prevent spiral of death by clamping frame time, frames will be skipped, but if you're already this behind then thats the least of your problems lmao
@@ -122,7 +123,7 @@ static void GameLoop()
 }
 
 
-static void LoadPluginsFromConfigs(const std::vector<std::string>& fp_ListOfPluginsToLoad)
+static void LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad)
 {
     for (int index = 0; index < fp_ListOfPluginsToLoad.size(); index++)
     {
@@ -139,8 +140,8 @@ static void RenderThread()
 {
     while (m_Running) {
         // Play audio
-        std::cout << "Playing ur mom LOL...\n";
-        std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Simulate work
+        cout << "Playing ur mom LOL...\n";
+        this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
     }
 }
 
@@ -148,8 +149,8 @@ static void AudioThread()
 {
     while (m_Running) {
         // Play audio
-        std::cout << "Playing audio...\n";
-        std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Simulate work
+        cout << "Playing audio...\n";
+        this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
     }
 }
 
@@ -157,8 +158,8 @@ static void ResourceLoadingThread()
 {
     while (m_Running) {
         // Load resources
-        std::cout << "Loading resources...\n";
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Simulate work
+        cout << "Loading resources...\n";
+        this_thread::sleep_for(chrono::milliseconds(100)); // Simulate work
     }
 }
 
@@ -166,8 +167,8 @@ static void NetworkThread()
 {
     while (m_Running) {
         // Handle network communication
-        std::cout << "Handling network...\n";
-        std::this_thread::sleep_for(std::chrono::milliseconds(16)); // Simulate work
+        cout << "Handling network...\n";
+        this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
     }
 }
 
@@ -187,7 +188,7 @@ static void SetupRenderer()
    //PeachCore::RenderingManager::Renderer().SetFrameRateLimit(120);
    //PeachCore::RenderingManager::Renderer().SetVSync(true);
 
-   //std::string f_PathToFontFile = "D:/Game Development/Fonts I guess/Comic Sans MS";
+   //string f_PathToFontFile = "D:/Game Development/Fonts I guess/Comic Sans MS";
 
    // sf::Font font;
    // if (!font.loadFromFile(f_PathToFontFile)) {
@@ -225,7 +226,7 @@ static void SetupLogManagers()
     PeachCore::LogManager::ResourceLoadingLogger().Debug("ResourceLoadingLogger successfully initialized", "Peach-E");
     PeachCore::LogManager::NetworkLogger().Debug("NetworkLogger successfully initialized", "Peach-E");
 
-    std::cout << "Hello World!\n"; //>w<
+    cout << "Hello World!\n"; //>w<
 
     PeachCore::LogManager::MainLogger().Warn("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
 
@@ -237,6 +238,26 @@ static void SetupLogManagers()
 //    PeachCore::PythonScriptManager::Python().InitializePythonBindingsForPeachCore(fp_Module);
 //}
 
+//static void PushCommands(const CreateData& createData, const UpdateData& updateData, const DeleteData& deleteData) 
+//{
+//    if (!createData.objectIDs.empty()) {
+//        Command createCmd{ CommandType::CreateAsset, createData };
+//        commandQueue.push(createCmd);
+//    }
+//    if (!updateData.objectIDs.empty()) {
+//        Command updateCmd{ CommandType::UpdateAsset, updateData };
+//        commandQueue.push(updateCmd);
+//    }
+//    if (!deleteData.objectIDs.empty()) {
+//        Command deleteCmd{ CommandType::DeleteAsset, deleteData };
+//        commandQueue.push(deleteCmd);
+//    }
+//}
+
+static void IssueLoadingCommands()
+{
+
+}
 
 //////////////////////////////////////////////
 // MAIN FUNCTION BABY
@@ -244,7 +265,6 @@ static void SetupLogManagers()
 
 int main(int argc, char* argv[])
 {
-    SDL_SetMainReady();  // Tell SDL that the main function is handled and ready
     SetupLogManagers();
 
     int f_WindowWidth = 800;
@@ -256,68 +276,80 @@ int main(int argc, char* argv[])
 
     try 
     {
-        //PeachCore::RenderingManager::Renderer().SetRendererType(bgfx::RendererType::Vulkan); // Example to force OpenGL
-        RenderingManager::Renderer().CreateSDLWindow("SDL Window", f_WindowWidth, f_WindowHeight);
-        RenderingManager::Renderer().CreateRenderer2D();
-        glViewport(0, 0, f_WindowWidth, f_WindowHeight);
-        RenderingManager::Renderer().GetOpenGLRenderer()->RenderFrame();
+        m_RenderingManagersCommandQueue = RenderingManager::Renderer().Initialize("Peach Engine", f_WindowWidth, f_WindowHeight);
+        //RenderingManager::Renderer().GetOpenGLRenderer()->RenderFrame();
     }
-    catch (const std::exception& ex) {
-        std::cerr << "An error occurred: " << ex.what() << std::endl;
+    catch (const exception& ex) 
+    {
+        cerr << "An error occurred: " << ex.what() << endl;
         return EXIT_FAILURE;
     }
+
+    IssueLoadingCommands();
 
     //////////////////// Camera Setup ////////////////////
     //NEED TO STILL IMPLEMENT
     //PeachCore::Camera2D camera(f_WindowWidth, f_WindowHeight);
     
-    //////////////////// Texture Setup ////////////////////
-    Texture2D m_FirstTexture = PeachCore::Texture2D(">w<", "D:/Game Development/Random Junk I Like to Keep/Texture-Tests/owo.jpg");
-    //m_FirstTexture = PeachCore::Texture2D("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/spooktacular.png");
+    ////////////////////// Texture Setup ////////////////////
+    //Texture2D m_FirstTexture = PeachCore::Texture2D(">w<", "D:/Game Development/Random Junk I Like to Keep/Texture-Tests/owo.jpg");
+    ////m_FirstTexture = PeachCore::Texture2D("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/spooktacular.png");
 
-    ////////////////// Basic Shader Setup //////////////////
-    
-    OpenGLRenderer* m_CurrentRenderer = RenderingManager::Renderer().GetOpenGLRenderer();
 
-    m_CurrentRenderer->LoadShadersFromSource("Test_Program",
-        "D:/Game Development/Peach-E/src/Peach-core/tests/vertex.glsl",
-        "D:/Game Development/Peach-E/src/Peach-core/tests/fragment.glsl");
+    m_DrawableResourceLoadingQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
 
-    ShaderProgram m_CurrentShaderProgram = m_CurrentRenderer->GetShaderProgram("Test_Program");
+    ResourceLoadingManager::ResourceLoader().LoadTexture("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/owo.jpg");
 
-    while (m_Running) {
 
-        // Set up shaders
-        m_CurrentShaderProgram.Bind();
-        m_CurrentShaderProgram.SetTexture("texture_sampler", m_FirstTexture.m_ID, 0);
-        //m_CurrentShaderProgram.SetUniformMat4("model", glm::mat4(1.0));
-        //m_CurrentShaderProgram.SetUniformMat4("view", glm::mat4(1.0));
-        //m_CurrentShaderProgram.SetUniformMat4("projection", glm::mat4(1.0));
+    //this_thread::sleep_for(chrono::milliseconds(200));
 
-        // Draw
-        m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID);
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(60));
-    }
+    //RenderingManager::Renderer().ProcessLoadedResourcePackages();
+
+    RenderingManager::Renderer().RenderFrame();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //////////////////// Basic Shader Setup //////////////////
+
 
     //////////////////// Draw Call >w< ////////////////////
-    //int FrameCount = 0;
-    //while (true)
-    //{
-    //    if(FrameCount > 100)
-    //        {break;}
-    //    FrameCount++;
-    //    m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID); std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  
+     //while (m_Running) {
+
+    //    // Set up shaders
+    //    m_CurrentShaderProgram.Bind();
+    //    m_CurrentShaderProgram.SetTexture("texture_sampler", m_FirstTexture.m_ID, 0);
+    //    //m_CurrentShaderProgram.SetUniformMat4("model", glm::mat4(1.0));
+    //    //m_CurrentShaderProgram.SetUniformMat4("view", glm::mat4(1.0));
+    //    //m_CurrentShaderProgram.SetUniformMat4("projection", glm::mat4(1.0));
+
+    //    // Draw
+    //    m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID);
+
+    //    this_thread::sleep_for(chrono::milliseconds(60));
     //}
+
 
     m_Running = false;
 
     //GameLoop();
 
 
-    /*std::thread T_Audio(AudioThread);
-    std::thread T_ResourceLoading(ResourceLoadingThread);
-    std::thread T_Network(NetworkThread);*/
+    /*thread T_Audio(AudioThread);
+    thread T_ResourceLoading(ResourceLoadingThread);
+    thread T_Network(NetworkThread);*/
     
    /* T_Audio.join();
     T_ResourceLoading.join();
@@ -330,85 +362,21 @@ int main(int argc, char* argv[])
 
 
 
-    //////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////// Plugins ///////////////////////////////////////////
 
-    //std::vector<std::string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin.dll",
-    //                                                                                           "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin2.dll" };
-    //std::vector<std::string> ListOfUnixPluginsToLoad = { };
+    vector<string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin.dll",
+                                                                                               "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin2.dll" };
+    vector<string> ListOfUnixPluginsToLoad = { };
 
-    //#if defined(_WIN32) || defined(_WIN64)
-    //    LoadPluginsFromConfigs(ListOfWindowsPluginsToLoad); // Windows
-    //#else
-    //    LoadPluginsFromConfigs(ListOfUnixPluginsToLoad); // Linux/Unix
-    //#endif
+    #if defined(_WIN32) || defined(_WIN64)
+        LoadPluginsFromConfigs(ListOfWindowsPluginsToLoad); // Windows
+    #else
+        LoadPluginsFromConfigs(ListOfUnixPluginsToLoad); // Linux/Unix
+    #endif
 
-    //RunPlugins();
+    RunPlugins();
   
-    //PeachCore::LogManager::MainLogger().Debug("Exit Success!", "Peach-E");
+    PeachCore::LogManager::MainLogger().Debug("Exit Success!", "Peach-E");
 
     return EXIT_SUCCESS;
 }
-
-
-
-
-
-
-
-//////////////////////////////////////////////
-// Setting Up SDL Context
-//////////////////////////////////////////////
-
-//static void CreateSDLWindow()
-//{
-//
-//    // Initialize SDL
-//    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
-//        std::cerr << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
-//        return;
-//    }
-//
-//    // Create a window
-//    SDL_Window* window = SDL_CreateWindow("SDL Window",
-//        SDL_WINDOWPOS_UNDEFINED,
-//        SDL_WINDOWPOS_UNDEFINED,
-//        640, 480,
-//        SDL_WINDOW_SHOWN);
-//    if (window == nullptr) {
-//        std::cerr << "Window could not be created! SDL_Error: " << SDL_GetError() << std::endl;
-//        SDL_Quit();
-//        return;
-//    }
-//
-//    bool quit = false;
-//    SDL_Event e;
-//
-//    // Main loop
-//    while (!quit) {
-//        // Event handling
-//        while (SDL_PollEvent(&e) != 0) {
-//            if (e.type == SDL_QUIT) {
-//                quit = true;
-//            }
-//            else if (e.type == SDL_KEYDOWN) {
-//                if (e.key.keysym.sym == SDLK_SPACE) {
-//                    quit = true;
-//                }
-//            }
-//        }
-//
-//        // Clear screen (optional)
-//        SDL_SetRenderDrawColor(SDL_GetRenderer(window), 0x00, 0x00, 0x00, 0xFF);
-//        SDL_RenderClear(SDL_GetRenderer(window));
-//
-//        // Render stuff here (if any)
-//
-//        // Update screen
-//        SDL_RenderPresent(SDL_GetRenderer(window));
-//    }
-//
-//    // Destroy window and quit SDL
-//    SDL_DestroyWindow(window);
-//    SDL_Quit();
-//
-//}

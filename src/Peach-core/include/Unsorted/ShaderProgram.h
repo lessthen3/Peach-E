@@ -8,7 +8,6 @@
 #include <vector>
 
 #include <GL/glew.h>
-#include <GL/GL.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 

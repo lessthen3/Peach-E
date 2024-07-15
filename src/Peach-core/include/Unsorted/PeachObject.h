@@ -8,6 +8,9 @@ namespace PeachCore {
         class PeachObject {
 
         public:
+            PeachObject(){
+
+            }
             virtual ~PeachObject();
 
             virtual void Update(float dt) = 0;

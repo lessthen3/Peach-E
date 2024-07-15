@@ -1,29 +1,9 @@
 #pragma once
 
-
-#include <stb_image.h>
-
-//#include <windows.h>
-//#include <GL/glew.h>
-//#include <gl/GL.h>
 #include "RenderingManager.h"
-
-//#include <map>
-#include <mutex>
-#include <list>
-//#include <string>
-//#include "LogManager.h"
-//
-
-
+#include "LogManager.h"
 
 namespace PeachCore {
-
-	struct PendingResource {
-		std::string Type;
-		std::vector<unsigned char> Data;
-		int Width, Height; //used for textures
-	};
 
 	class ResourceLoadingManager {
 	public:
@@ -35,7 +15,7 @@ namespace PeachCore {
 		~ResourceLoadingManager();
 
 	public:
-		std::mutex resourceMutex;
+		mutex resourceMutex;
 
 	private:
 		ResourceLoadingManager();
@@ -47,13 +27,21 @@ namespace PeachCore {
 
 
 	public:
-		GLuint LoadTextureData(const std::string& fp_ImagePath, OpenGLRenderer* fp_CurrentRenderer);
+		shared_ptr<LoadingQueue> GetAudioResourceLoadingQueue();
+		shared_ptr<LoadingQueue> GetDrawableResourceLoadingQueue();
 
-		
-		std::list<PendingResource> FetchPendingResources();
+	public: //PUBLIC FOR TESTING
+		bool TryPushingLoadedResourcePackage(unique_ptr<LoadedResourcePackage> fp_LoadedPackage);
+		bool LoadTexture(const string& fp_FilePath);
 
 	private:
-		std::list<PendingResource> pm_ListOfResourcesThatNeedToBeLoaded;
+		shared_ptr<LoadingQueue> pm_AudioResourceLoadingQueue; //used to push load commands that are destined for AudioManager
+		shared_ptr<LoadingQueue> pm_DrawableResourceLoadingQueue; //used to push load commands that are destined for RenderingManager
+
+		unsigned int pm_AudioQueueReferenceCount = 0;
+		unsigned int pm_DrawableQueueReferenceCount = 0;
+
+		vector<unique_ptr<LoadedResourcePackage>> pm_WaitingFullyLoadedResourcePackages;
 	};
 
 }

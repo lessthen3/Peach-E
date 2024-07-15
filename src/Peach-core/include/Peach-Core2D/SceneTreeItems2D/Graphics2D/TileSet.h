@@ -11,7 +11,8 @@
 
 namespace PeachCore {
 
-    struct Tile {
+    struct Tile
+    {
     public:
         std::tuple<float, float, float, float> m_UVCoords;
         b2Body* m_PhysicsBody = nullptr;  // Pointer to the Box2D body associated with this tile, if any
@@ -26,7 +27,8 @@ namespace PeachCore {
     };
 
 
-    class TileSet: public PeachNode{
+    class TileSet: public PeachNode
+    {
     public:
         TileSet();
         ~TileSet(); //pm_Texture automatically de-referenced off stack

@@ -7,9 +7,12 @@
 
 namespace PeachCore {
 
-	class PeachNode: public PeachObject {
+	class PeachNode: public PeachObject 
+	{
 	public:
-		PeachNode();
+		PeachNode() {
+
+		}
 		virtual ~PeachNode();
 
 		virtual void Initialize();
