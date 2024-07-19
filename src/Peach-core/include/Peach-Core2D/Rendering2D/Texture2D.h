@@ -79,7 +79,7 @@ namespace PeachCore {
     public:
         int m_Width, m_Height;
         std::string m_Name;
-
+        sf::Texture m_TestTexture;
     private:
         sf::Texture pm_Texture;
         int pm_TileWidth, pm_TileHeight;

@@ -27,18 +27,20 @@ namespace PeachCore {
         // Create an SFML window and context settings
  /*       sf::ContextSettings settings;
         settings.depthBits = 24;
-        settings.stencilBits = 8;
+        settings.stencilBits = 8; //THESE SETTINGS ARE BROKEN FOR SOME REASON, AND I DONT KNOW WHY
         settings.antialiasingLevel = 4;
         settings.majorVersion = 3;
         settings.minorVersion = 3;
         settings.attributeFlags = sf::ContextSettings::Core;*/
 
         pm_CurrentWindow = new sf::RenderWindow(sf::VideoMode(fp_Width, fp_Height), fp_Title, sf::Style::Default);
-        // Usage
+
+        // Camera Setup
         Camera2D camera(*pm_CurrentWindow);
         camera.setCenter(400, 300); // Set this dynamically as needed
         camera.setSize(800, 600); // Set this to zoom in or out
         camera.apply();
+
         if (!pm_CurrentWindow->isOpen())
         {
             throw runtime_error("Failed to create window.");

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Managers/AudioManager.h"
 #include "../Managers/InputManager.h"
 #include "../Managers/LogManager.h"
 #include "../Managers/PluginManager.h"

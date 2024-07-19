@@ -14,7 +14,7 @@ class PeachEBuilder(ConanFile):
         self.requires("clipper2/1.3.0")
 
         # physics
-        self.requires("box2d/2.4.1")
+        #self.requires("box2d/2.4.1") trying out box2d 3.0 right now
         self.requires("bullet3/3.25")
 
         # language support
@@ -36,7 +36,7 @@ class PeachEBuilder(ConanFile):
         self.requires("openal-soft/1.22.2")
 
         # asset importing
-        self.requires("stb/cci.20230920")
+        self.requires("stb/cci.20230920") #DONT NEED STBI REALLY, I THINK WE CAN REPURPOSE SFML::TEXTURE FOR 3D
         self.requires("assimp/5.4.1")
         self.requires("cgltf/1.13")
         self.requires("nanosvg/cci.20231025")

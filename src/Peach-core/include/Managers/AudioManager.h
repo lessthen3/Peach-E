@@ -10,21 +10,25 @@
 #include <AL/alc.h>
 
 #include "LogManager.h"
+#include "ResourceLoadingManager.h"
+
+using namespace std;
 
 namespace PeachCore {
 
     class AudioManager {
     public:
-        static AudioManager& Audio() {
-            static AudioManager instance;
-            return instance;
+        static AudioManager& AudioPlayer() {
+            static AudioManager audioplayer;
+            return audioplayer;
         }
 
         bool Initialize();
+
         void Shutdown();
-        void PlaySound(const std::string& soundFile);
-        std::string GetCurrentTrack() const;
-        void SetCurrentTrack(const std::string& track);
+        void PlaySoundOnce(const string& soundFile); //SUSUSUSUSUSUSUSUSSSYYYY FUNCTION (is PlaySound a predefined funciton in openal?)
+        string GetCurrentTrack() const;
+        void SetCurrentTrack(const string& track);
 
     private:
         AudioManager() : m_Device(nullptr), m_Context(nullptr) {}
@@ -36,15 +40,28 @@ namespace PeachCore {
         AudioManager(const AudioManager&) = delete;
         AudioManager& operator=(const AudioManager&) = delete;
 
-        bool LoadWAVFile(const std::string& filename, ALuint buffer);
+        bool LoadWAVFile(const string& filename, ALuint buffer);
+
+        void ProcessLoadedResourcePackages();
+
+        float GetBPM() //idk get bpm of current track, probably uneccesary but could be useful for rhythm games where users can import custom audio files, and then can generate a bpm map for it
+        {
+
+        }
+
+        void SyncToEventCallback() //used to sync a particular audio event to a user defined function handle to allow for easier integration of dynamic sound environments
+        {
+
+        }
+
+
+    private:
+        shared_ptr<LoadingQueue> pm_LoadedAudioResourceQueue;
 
         ALCdevice* m_Device;
         ALCcontext* m_Context;
-        mutable std::shared_mutex mutex_;
-        std::string m_CurrentTrack;
-        std::vector<ALuint> m_Sources;
+        mutable shared_mutex mutex_;
+        string m_CurrentTrack;
+        vector<ALuint> m_Sources;
 	};
-
-
-
 }

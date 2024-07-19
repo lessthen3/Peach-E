@@ -1,5 +1,6 @@
 #include "../../include/Managers/AudioManager.h"
 
+using namespace std;
 
 namespace PeachCore {
 
@@ -14,6 +15,8 @@ namespace PeachCore {
         }
         
         m_Context = alcCreateContext(m_Device, nullptr);
+
+        shared_ptr<LoadingQueue> pm_LoadedAudioResourceQueue = ResourceLoadingManager::ResourceLoader().GetAudioResourceLoadingQueue();
         
         if (!m_Context || !alcMakeContextCurrent(m_Context))
         {
@@ -22,7 +25,6 @@ namespace PeachCore {
             alcCloseDevice(m_Device);
             return false;
         }
-
         return true;
     }
 
@@ -33,9 +35,9 @@ namespace PeachCore {
         if (m_Device) {alcCloseDevice(m_Device);}
     }
 
-    void AudioManager::PlaySound(const std::string& fp_SoundFile)
+    void AudioManager::PlaySoundOnce(const string& fp_SoundFile)
     {
-        std::unique_lock<std::shared_mutex> lock(mutex_);
+        unique_lock<shared_mutex> lock(mutex_);
         ALuint f_Buffer, f_Source;
         alGenBuffers(1, &f_Buffer);
         alGenSources(1, &f_Source);
@@ -54,24 +56,24 @@ namespace PeachCore {
         m_Sources.push_back(f_Source);
     }
 
-    std::string AudioManager::GetCurrentTrack() const 
+    string AudioManager::GetCurrentTrack() const 
     {
-        std::shared_lock<std::shared_mutex> lock(mutex_);
+        shared_lock<shared_mutex> lock(mutex_);
         return m_CurrentTrack;
     }
 
-    void AudioManager::SetCurrentTrack(const std::string& track)
+    void AudioManager::SetCurrentTrack(const string& track)
  {
-        std::unique_lock<std::shared_mutex> lock(mutex_);
+        unique_lock<shared_mutex> lock(mutex_);
         m_CurrentTrack = track;
     }
 
-    bool AudioManager::LoadWAVFile(const std::string& filename, ALuint buffer) 
+    bool AudioManager::LoadWAVFile(const string& filename, ALuint buffer) 
     {
-        std::ifstream file(filename, std::ios::binary);
+        ifstream file(filename, ios::binary);
         if (!file) 
         {
-            std::cerr << "Failed to open WAV file: " << filename << std::endl;
+            cerr << "Failed to open WAV file: " << filename << endl;
             return false;
         }
 
@@ -80,18 +82,18 @@ namespace PeachCore {
 
         if (strncmp(f_ChunkID, "RIFF", 4) != 0)
         {
-            std::cerr << "Invalid WAV file: " << filename << std::endl;
+            cerr << "Invalid WAV file: " << filename << endl;
             return false;
         }
 
-        file.seekg(4, std::ios::cur); // Skip Chunk Size
+        file.seekg(4, ios::cur); // Skip Chunk Size
 
         char f_Type[4];
         file.read(f_Type, 4);
 
         if (strncmp(f_Type, "WAVE", 4) != 0) 
         {
-            std::cerr << "Invalid WAV file format: " << filename << std::endl;
+            cerr << "Invalid WAV file format: " << filename << endl;
             return false;
         }
 
@@ -100,7 +102,7 @@ namespace PeachCore {
 
         if (strncmp(f_SubChunk1ID, "fmt ", 4) != 0)
         {
-            std::cerr << "Invalid WAV file fmt subchunk: " << filename << std::endl;
+            cerr << "Invalid WAV file fmt subchunk: " << filename << endl;
             return false;
         }
 
@@ -116,7 +118,7 @@ namespace PeachCore {
         uint32_t f_SampleRate;
         file.read(reinterpret_cast<char*>(&f_SampleRate), sizeof(f_SampleRate));
 
-        file.seekg(6, std::ios::cur); // Skip ByteRate and BlockAlign
+        file.seekg(6, ios::cur); // Skip ByteRate and BlockAlign
 
         uint16_t f_BitsPerSample;
         file.read(reinterpret_cast<char*>(&f_BitsPerSample), sizeof(f_BitsPerSample));
@@ -124,14 +126,14 @@ namespace PeachCore {
         char subchunk2ID[4];
         file.read(subchunk2ID, 4);
         if (strncmp(subchunk2ID, "data", 4) != 0) {
-            std::cerr << "Invalid WAV file data subchunk: " << filename << std::endl;
+            cerr << "Invalid WAV file data subchunk: " << filename << endl;
             return false;
         }
 
         uint32_t subchunk2Size;
         file.read(reinterpret_cast<char*>(&subchunk2Size), sizeof(subchunk2Size));
 
-        std::vector<char> data(subchunk2Size);
+        vector<char> data(subchunk2Size);
         file.read(data.data(), subchunk2Size);
 
         ALenum format;
@@ -147,4 +149,25 @@ namespace PeachCore {
         return true;
     }
     
+    void AudioManager::ProcessLoadedResourcePackages()
+    {
+        unique_ptr<LoadedResourcePackage> ResourcePackage;
+        while (pm_LoadedAudioResourceQueue->PopLoadedResourceQueue(ResourcePackage)) {
+            visit(overloaded{
+                [&](unique_ptr<unsigned char>& fp_RawByteData)
+                {
+                    // Handle creation logic here
+                },
+                [&](unique_ptr<sf::Texture>& fp_TextureData)
+                {
+                    
+                },
+                [&](unique_ptr<string>& fp_RawTextData)
+                {
+                    // Handle deletion logic here
+                    // Ensure resources are properly released and objects are cleaned up
+                }
+                }, ResourcePackage.get()->ResourceData);
+        }
+    }
 }

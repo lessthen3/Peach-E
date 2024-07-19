@@ -2,7 +2,7 @@
 
 namespace PeachCore {
 
-	class PeachNode2D : public PeachNode {
+	//class PeachNode2D : public PeachNode {
 
-	};
+	//};
 }

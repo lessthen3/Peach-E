@@ -6,6 +6,8 @@
 #include <typeindex>
 #include <functional>
 
+using namespace std;
+
 namespace PeachCore {
 
     template<typename Event>
@@ -19,45 +21,36 @@ namespace PeachCore {
 
     public:
 
+        // Post an event and handle it immediately
         template<typename EventType>
-        void PostEvent(const EventType& event) {
-            static_assert(std::is_base_of<Event, EventType>::value, "EventType must derive from Event");
-            m_Events[typeid(EventType)].push({ std::make_shared<EventType>(event), m_CurrentFrame });
+        void PostEvent(const EventType& event)
+        {
+            static_assert(is_base_of<Event, EventType>::value, "EventType must derive from Event");
+
+            shared_ptr<EventType> sharedEvent = make_shared<EventType>(event);
+
+            auto& handlerList = handlers[typeid(EventType)];
+            for (auto& handler : handlerList) {
+                handler(sharedEvent);
+            }
         }
 
+        // Subscribe to an event type with a function
         template<typename EventType, typename Func>
         void Subscribe(Func&& func) {
-            handlers[typeid(EventType)].push_back([func = std::forward<Func>(func)](std::shared_ptr<Event> evt) {
-                func(*evt);
+            handlers[typeid(EventType)].push_back([func = forward<Func>(func)](shared_ptr<Event> evt) {
+                func(*static_pointer_cast<EventType>(evt));
                 });
         }
 
+        // Unsubscribe a handler (by function address, simplified version)
         template<typename EventType, typename Func>
         void Unsubscribe(Func&& func) {
             auto& handlersList = handlers[typeid(EventType)];
-            handlersList.erase(std::remove_if(handlersList.begin(), handlersList.end(),
-                [&func](const std::function<void(std::shared_ptr<Event>)>& handler) {
-                    // Here we assume that we can compare handlers directly, which is a simplification.
-                    // In practice, you may need to store a unique identifier for each subscription to enable precise unsubscription.
+            handlersList.erase(remove_if(handlersList.begin(), handlersList.end(),
+                [&func](const auto& handler) {
                     return handler.target<Func>() == func.target<Func>();
                 }), handlersList.end());
-        }
-
-        void ProcessEvents() {
-            for (auto& [type, queue] : m_Events) {
-                std::vector<std::function<void()>> eventBatch;
-                while (!queue.empty() && queue.front().frameQueued < m_CurrentFrame) {
-                    auto event = queue.front().event;
-                    queue.pop();
-                    for (auto& handler : handlers[type]) {
-                        eventBatch.push_back([handler, event]() { handler(event); });
-                    }
-                }
-                if (!eventBatch.empty()) {
-                    //
-                    //
-                }
-            }
         }
 
         void IncrementFrame() {
@@ -65,13 +58,14 @@ namespace PeachCore {
         }
 
     public:
-        struct TimedEvent {
-            std::shared_ptr<Event> event;
+        struct TimedEvent
+        {
+            shared_ptr<Event> event;
             unsigned long int frameQueued;
         };
 
-        std::map<std::type_index, std::queue<TimedEvent>> m_Events;
-        std::map<std::type_index, std::vector<std::function<void(std::shared_ptr<Event>)>>> handlers;
+        map<type_index, queue<TimedEvent>> m_Events;
+        map<type_index, vector<function<void(shared_ptr<Event>)>>> handlers;
         unsigned long int m_CurrentFrame = 0; // Tracks global frame count for 'game' runtime
     };
 

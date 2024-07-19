@@ -6,7 +6,8 @@
 
 #include <vector>
 #include <tuple>
-#include <Box2D/Box2D.h>
+
+#include "../../../Managers/Physics2DManager.h"
 
 
 namespace PeachCore {
@@ -15,7 +16,7 @@ namespace PeachCore {
     {
     public:
         std::tuple<float, float, float, float> m_UVCoords;
-        b2Body* m_PhysicsBody = nullptr;  // Pointer to the Box2D body associated with this tile, if any
+        //b2Body* m_PhysicsBody = nullptr;  // Pointer to the Box2D body associated with this tile, if any
 
         Tile(std::tuple<float, float, float, float>& fp_UVCoords)
         {
@@ -42,7 +43,7 @@ namespace PeachCore {
 
     public:
         Tile GetTile(int index) const;
-        void DefinePhysicsForTile(int index, b2World& world, float metersPerPixel); //int index, b2World& world, const b2BodyDef& bodyDef, const b2FixtureDef& fixtureDef
+        //void DefinePhysicsForTile(int index, b2World& world, float metersPerPixel); //int index, b2World& world, const b2BodyDef& bodyDef, const b2FixtureDef& fixtureDef
         void LoadTexture(const std::string fp_Name, const std::string& fp_ImagePath);
         void SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight);
 

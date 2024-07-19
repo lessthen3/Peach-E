@@ -21,11 +21,11 @@ namespace PeachCore {
 
     TileSet::~TileSet() {
         // Cleanup Box2D bodies if needed
-        for (auto& tile : m_Tiles) {
+        /*for (auto& tile : m_Tiles) {
             if (tile.m_PhysicsBody) {
                 tile.m_PhysicsBody->GetWorld()->DestroyBody(tile.m_PhysicsBody);
             }
-        }
+        }*/
     }
 
     void TileSet::Initialize()
@@ -75,34 +75,34 @@ namespace PeachCore {
         
     }
 
-    void TileSet::DefinePhysicsForTile(int fp_TileIndex, b2World& world, float metersPerPixel) {
-        ValidateTileIndex(fp_TileIndex);
+    //void TileSet::DefinePhysicsForTile(int fp_TileIndex, b2World& world, float metersPerPixel) {
+    //    ValidateTileIndex(fp_TileIndex);
 
 
-        Tile& tile = m_Tiles[fp_TileIndex];
-        b2BodyDef bodyDef;
-        bodyDef.type = b2_staticBody; // Typically m_Tiles are static
-        b2PolygonShape shape;
+    //    Tile& tile = m_Tiles[fp_TileIndex];
+    //    b2BodyDef bodyDef;
+    //    bodyDef.type = b2_staticBody; // Typically m_Tiles are static
+    //    b2PolygonShape shape;
 
-        float physWidth = pm_TileWidth * metersPerPixel;
-        float physHeight = pm_TileHeight * metersPerPixel;
+    //    float physWidth = pm_TileWidth * metersPerPixel;
+    //    float physHeight = pm_TileHeight * metersPerPixel;
 
-        // Define the center position based on tile index if necessary
-        // Example for simplicity: assuming all m_Tiles are at (0,0) origin
-        b2Vec2 position(0, 0); // Modify as needed based on actual tile positioning logic
-        bodyDef.position.Set(position.x + physWidth / 2, position.y + physHeight / 2);
+    //    // Define the center position based on tile index if necessary
+    //    // Example for simplicity: assuming all m_Tiles are at (0,0) origin
+    //    b2Vec2 position(0, 0); // Modify as needed based on actual tile positioning logic
+    //    bodyDef.position.Set(position.x + physWidth / 2, position.y + physHeight / 2);
 
-        shape.SetAsBox(physWidth / 2, physHeight / 2); // SetAsBox takes half-width and half-height
-        b2FixtureDef fixtureDef;
-        fixtureDef.shape = &shape;
+    //    shape.SetAsBox(physWidth / 2, physHeight / 2); // SetAsBox takes half-width and half-height
+    //    b2FixtureDef fixtureDef;
+    //    fixtureDef.shape = &shape;
 
-        // Additional fixture properties like density, friction, and restitution can be set here
-        fixtureDef.density = 1.0f;
-        fixtureDef.friction = 0.3f;
+    //    // Additional fixture properties like density, friction, and restitution can be set here
+    //    fixtureDef.density = 1.0f;
+    //    fixtureDef.friction = 0.3f;
 
-        tile.m_PhysicsBody = world.CreateBody(&bodyDef);
-        tile.m_PhysicsBody->CreateFixture(&fixtureDef);
-    }
+    //    tile.m_PhysicsBody = world.CreateBody(&bodyDef);
+    //    tile.m_PhysicsBody->CreateFixture(&fixtureDef);
+    //}
 
     Tile TileSet::GetTile(int fp_TileIndex) const {
         ValidateTileIndex(fp_TileIndex);

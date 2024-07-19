@@ -1,6 +1,6 @@
 #pragma once
-// Plugin.h
-#pragma once
+
+//#include "" SHOULD INCLUDE THE ENTIRE ENGINE HERE, AND GIVE THIS OUT, IM COMMENTING IT OUT SO WE CAN COMPILE WITHOUT ERRORS
 
 class Plugin {
 public:
