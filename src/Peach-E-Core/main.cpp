@@ -1,20 +1,18 @@
 /*
     Copyright(c) 2024-present Ranyodh Singh Mandur.
 */
-#include <iostream>
-#include <string>
-#include <chrono>
-#include <thread>
-#include <atomic>
-#include <variant>
+
+//#include <SFML/Graphics.hpp>
+//#include <imgui.h>
+//#include "../Peach-core/SFML-Imgui/imgui-SFML.h"
 
 #include <pybind11/pybind11.h>
 
-#include "../Peach-core/include/Managers/PeachEngineManager.h"
+#include "include/Managers/PeachEngineManager.h"
 #include "../Princess/include/Parsers/PythonScriptParser.h"
 
-using namespace PeachCore;
-using namespace std;
+
+using namespace PeachEngine;
 
 atomic<bool> m_Running(true);
 
@@ -73,7 +71,7 @@ static void NetworkThread()
 //////////////////////////////////////////////
 // Setting Up Renderer For Engine
 //////////////////////////////////////////////
-
+//ARTIFACT FOR MUSEUM VIEWING ONLY
 static void SetupRenderer()
 {
     return;
@@ -93,26 +91,67 @@ static void SetupRenderer()
    // }
 }
 
+
+static void InitializeEditor() 
+{
+    //sf::RenderWindow window(sf::VideoMode(800, 600), "Peach Engine Editor");
+    //window.setVerticalSyncEnabled(true);
+    //ImGui::SFML::Init(window);
+
+    //
+    //PeachEngineManager::PeachEngine().SetupLogManagers();
+
+    //sf::Clock deltaClock;
+    //while (window.isOpen()) 
+    //{
+    //    sf::Event event;
+    //    while (window.pollEvent(event)) 
+    //    {
+    //        ImGui::SFML::ProcessEvent(event);
+    //        if (event.type == sf::Event::Closed) 
+    //        {
+    //            window.close();
+    //        }
+    //    }
+
+    //    ImGui::SFML::Update(window, deltaClock.restart());
+
+    //    ImGui::Begin("Engine Tools");
+    //    // Additional tools and controls
+    //    ImGui::End();
+
+    //    // Scene rendering placeholder
+    //    ImGui::Begin("Scene");
+    //    if (ImGui::BeginTabBar("SceneTabs")) 
+    //    {
+    //        if (ImGui::BeginTabItem("Viewport"))
+    //        {
+    //            PeachEngineManager::PeachEngine().RenderFrame();  // Render your scene here
+
+    //            // Ensure RenderFrame() is called each frame before this, renders game state when game is built, otherwise the viewport should be the editor scene-view
+    //            const sf::Texture& texture = RenderingManager::Renderer().GetRenderTexture();
+    //            sf::Sprite sprite(texture);
+
+    //            ImGui::EndTabItem();
+    //        }
+    //        ImGui::EndTabBar();
+    //    }
+    //    ImGui::End();
+
+    //    window.clear();
+    //    ImGui::SFML::Render(window);
+    //    window.display();
+    //}
+
+    //ImGui::SFML::Shutdown();
+}
+
+
 //PYBIND11_MODULE(peach_engine, fp_Module)
 //{
 //    PythonScriptManager::Python().InitializePythonBindingsForPeachCore(fp_Module);
 //}
 
-//static void PushCommands(const CreateData& createData, const UpdateData& updateData, const DeleteData& deleteData) 
-//{
-//    if (!createData.objectIDs.empty()) {
-//        Command createCmd{ CommandType::CreateAsset, createData };
-//        commandQueue.push(createCmd);
-//    }
-//    if (!updateData.objectIDs.empty()) {
-//        Command updateCmd{ CommandType::UpdateAsset, updateData };
-//        commandQueue.push(updateCmd);
-//    }
-//    if (!deleteData.objectIDs.empty()) {
-//        Command deleteCmd{ CommandType::DeleteAsset, deleteData };
-//        commandQueue.push(deleteCmd);
-//    }
-//}
 
 static void IssueLoadingCommands(vector<LoadCommand> fp_ListOfLoadCommands)
 {
@@ -125,14 +164,16 @@ static void IssueLoadingCommands(vector<LoadCommand> fp_ListOfLoadCommands)
 
 int main(int argc, char* argv[])
 {
+
+    //InitializeEditor();
     PeachEngineManager::PeachEngine().SetupLogManagers();
 
     int f_WindowWidth = 800;
     int f_WindowHeight = 600;
 
-    //////////////////////////////////////////////
-    // Setup Renderer for 2D
-    //////////////////////////////////////////////
+    ////////////////////////////////////////////////
+    //// Setup Renderer for 2D
+    ////////////////////////////////////////////////
 
     try 
     {
@@ -140,13 +181,13 @@ int main(int argc, char* argv[])
         //for the main thread to use judiciously
         m_RenderingManagersCommandQueue = RenderingManager::Renderer().Initialize("Peach Engine", f_WindowWidth, f_WindowHeight);
 
-        if (!AudioManager::AudioPlayer().Initialize())
-        {
-            //do something idk
-        }
+    //    if (!AudioManager::AudioPlayer().Initialize())
+    //    {
+    //        //do something idk
+    //    }
         //maybe do a ResourceLoadingManager initialize if needed, idk feels weird that we dont have one yet and it just works lmao, i guess its the lazy initialization
         m_DrawableResourceLoadingQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
-        m_AudioResourceLoadingQueue = ResourceLoadingManager::ResourceLoader().GetAudioResourceLoadingQueue();
+    //    m_AudioResourceLoadingQueue = ResourceLoadingManager::ResourceLoader().GetAudioResourceLoadingQueue();
     }
     catch (const exception& ex) 
     {
@@ -161,50 +202,9 @@ int main(int argc, char* argv[])
     //Camera2D camera(f_WindowWidth, f_WindowHeight);
     
     ////////////////////// Texture Setup ////////////////////
-    //Texture2D m_FirstTexture = Texture2D(">w<", "D:/Game Development/Random Junk I Like to Keep/Texture-Tests/owo.jpg");
-    ////m_FirstTexture = Texture2D("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/spooktacular.png");
-
-
-    
-
-    ResourceLoadingManager::ResourceLoader().LoadTexture("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/owo.jpg");
+    ResourceLoadingManager::ResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
 
     RenderingManager::Renderer().RenderFrame();
-
-
-
-
-
-
-
-
-
-
-    //////////////////// Basic Shader Setup //////////////////
-
-
-    //////////////////// Draw Call >w< ////////////////////
-  
-     //while (m_Running) {
-
-    //    // Set up shaders
-    //    m_CurrentShaderProgram.Bind();
-    //    m_CurrentShaderProgram.SetTexture("texture_sampler", m_FirstTexture.m_ID, 0);
-    //    //m_CurrentShaderProgram.SetUniformMat4("model", glm::mat4(1.0));
-    //    //m_CurrentShaderProgram.SetUniformMat4("view", glm::mat4(1.0));
-    //    //m_CurrentShaderProgram.SetUniformMat4("projection", glm::mat4(1.0));
-
-    //    // Draw
-    //    m_CurrentRenderer->DrawTexture(m_FirstTexture.m_ID);
-
-    //    this_thread::sleep_for(chrono::milliseconds(60));
-    //}
-
-
-    m_Running = false;
-
-    //GameLoop();
-
 
     /*thread T_Audio(AudioThread);
     thread T_ResourceLoading(ResourceLoadingThread);
@@ -217,9 +217,6 @@ int main(int argc, char* argv[])
     // Clean up
     //ThreadPoolManager::ThreadPool().Shutdown
     //Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule("Test-Function-Read");
-
-
-
 
     ////////////////////////////////// Plugins ///////////////////////////////////////////
 

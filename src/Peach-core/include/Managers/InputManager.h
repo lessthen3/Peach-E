@@ -1,10 +1,13 @@
 #pragma once
+#include "../Unsorted/raylib-conflictfree.h"
 
-#include <SFML/Graphics.hpp>
+
 #include <map>
 #include <string>
 #include <functional>
 #include <iostream>
+
+using namespace std;
 
 namespace PeachCore {
 
@@ -19,22 +22,19 @@ namespace PeachCore {
 
     public:
 
-        void MapInput(const std::string& action, sf::Keyboard::Key key);
+        void MapInput(const string& action, int key);
 
-        bool GetPressed(const std::string& action)
-            const;
+        bool GetPressed(const string& action) const;
 
-        sf::Vector2f GetCurrentMousePosition(const sf::RenderWindow& window) 
-            const;
+        Vector2 GetCurrentMousePosition() const;
 
-        void ProcessInput(sf::RenderWindow& window);
+        void ProcessInput();
 
     private:
         InputManager(); // Constructor made private for singleton
-        
 
     private:
-        std::map<std::string, sf::Keyboard::Key> pm_InputMap;
+        map<string, int> pm_InputMap;
     };
 
 }

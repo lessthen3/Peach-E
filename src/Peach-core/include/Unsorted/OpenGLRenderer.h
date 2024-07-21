@@ -2,12 +2,9 @@
 
 #include "../Unsorted/ShaderProgram.h"
 
-#include <SFML/Window.hpp>
-#include <SFML/Graphics.hpp>
-#include <SFML/OpenGL.hpp>
-
 #include <vector>
 #include <iostream>
+#include <GL/glew.h>
 
 namespace PeachCore
 {
@@ -32,8 +29,8 @@ namespace PeachCore
     class OpenGLRenderer
     {
     public:
-        explicit OpenGLRenderer(sf::RenderWindow* fp_Window, bool fp_Is3DEnabled = false)
-            : pm_CurrentWindow(fp_Window), pm_Is3DEnabled(fp_Is3DEnabled) 
+        explicit OpenGLRenderer(bool fp_Is3DEnabled = false)
+            : pm_Is3DEnabled(fp_Is3DEnabled) 
         {
            /* if (!InitOpenGL())
             {
@@ -161,7 +158,7 @@ namespace PeachCore
             glBindTexture(GL_TEXTURE_2D, 0);
             glUseProgram(0);
 
-            pm_CurrentWindow->display();
+            //pm_CurrentWindow->display();
         }
 
         void BatchDrawTexture(const GLuint& fp_TextureID, const std::vector<glm::vec2>& positions, const glm::vec2& size)
@@ -198,7 +195,7 @@ namespace PeachCore
 
             glClearColor(0.27f, 0.5f, 0.8f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | (pm_Is3DEnabled ? GL_DEPTH_BUFFER_BIT : 0));
-            pm_CurrentWindow->display();
+            //pm_CurrentWindow->display();
         }
 
         GLuint RegisterTexture(const unsigned char* fp_Data, const int fp_Width, const int fp_Height, const int fp_Channels)
@@ -274,7 +271,7 @@ namespace PeachCore
 
 
     private:
-        sf::RenderWindow* pm_CurrentWindow;
+        //sf::RenderWindow* pm_CurrentWindow;
         bool pm_Is3DEnabled;
 
         GLuint pm_VAO, pm_VBO, pm_EBO; //current state of OpenGL

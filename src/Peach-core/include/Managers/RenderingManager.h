@@ -10,14 +10,20 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
-#include <string>
+#include "../Unsorted/raylib-conflictfree.h"
+
 #include "LogManager.h"
-#include <variant>
-#include "../Unsorted/OpenGLRenderer.h"
+#include "ResourceLoadingManager.h"
+#include "../Unsorted/ShaderProgram.h"
 #include "../Unsorted/CommandQueue.h"
 #include "../Unsorted/LoadingQueue.h"
-#include "ResourceLoadingManager.h"
-#include "../Peach-Core2D/Rendering2D/Camera2D.h"
+
+
+#include <variant>
+#include <string>
+#include <map>
+
+#include "../Peach-Core2D/Rendering2D/PeachCamera2D.h"
 
 using namespace std;
 
@@ -37,7 +43,7 @@ namespace PeachCore {
         variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
             <
             unique_ptr<unsigned char>, //used for parsing raw byte information, mainly for audio at the moment
-            unique_ptr<sf::Texture>, //SFML loads textures in as a single wrapped unit
+            unique_ptr<Texture2D>, //SFML loads textures in as a single wrapped unit
             unique_ptr<string> //used for parsing JSON metadata if required
 
             > DrawableResourceData; //actual data for graphic
@@ -61,8 +67,8 @@ namespace PeachCore {
         RenderingManager& operator=(const RenderingManager&) = delete;
 
     private:
-        sf::RenderWindow* pm_CurrentWindow;
-        OpenGLRenderer* pm_OpenGLRenderer = nullptr;
+        Texture2D renderTexture;
+        bool textureReady = false;
 
         bool pm_HasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
         string pm_RendererType = "None";
@@ -83,7 +89,9 @@ namespace PeachCore {
         // DrawableObject.ObjectID : DrawableObject dict
         map<string, DrawableObject> pm_ListOfAllDrawables; 
 
-        unique_ptr<sf::Texture> m_TestTexture;
+        unique_ptr<Texture2D> m_TestTexture;
+
+        PeachCamera2D pm_Camera2D;
 
     private:
         inline const float Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
@@ -114,6 +122,10 @@ namespace PeachCore {
         void ProcessCommands();
         void ProcessLoadedResourcePackages();
         
+        void SetupRenderTexture(unsigned int width, unsigned int height);
+
+        const Texture2D& GetRenderTexture()
+            const;
 
 
         shared_ptr<CommandQueue> Initialize(const string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
@@ -126,8 +138,6 @@ namespace PeachCore {
         void Clear();
 
         void GetCurrentViewPort();
-        OpenGLRenderer* GetOpenGLRenderer()
-            const;
         //void Draw(const sf::Drawable& fp_Drawable);
         //void DrawTextToScreen(const std::string& fp_Text, const sf::Font& fp_Font, unsigned int fp_Size, const sf::Vector2f& fp_Position, const sf::Color& fp_Color = sf::Color::White);
 
@@ -139,9 +149,5 @@ namespace PeachCore {
         bool IsVSyncEnabled() const;
 
     };
-
-    // Overloaded pattern implementation for std::visit
-    template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
-    template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
 }

@@ -33,7 +33,8 @@ namespace PeachCore {
     typedef Plugin* (*CreatePluginFunc)();
     typedef void (*DestroyPluginFunc)(Plugin*);
 
-    class PluginManager {
+    class PluginManager
+    {
     public:
         static PluginManager& ManagePlugins() {
             static PluginManager instance;

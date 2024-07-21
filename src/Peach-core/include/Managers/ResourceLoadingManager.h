@@ -1,7 +1,8 @@
 #pragma once
 
-#include "RenderingManager.h"
 #include "LogManager.h"
+
+#include "../Unsorted/LoadingQueue.h"
 
 namespace PeachCore {
 
@@ -32,7 +33,7 @@ namespace PeachCore {
 
 	public: //PUBLIC FOR TESTING
 		bool TryPushingLoadedResourcePackage(unique_ptr<LoadedResourcePackage> fp_LoadedPackage);
-		bool LoadTexture(const string& fp_FilePath);
+		bool LoadTextureFromSpecifiedFilePath(const string& fp_FilePath);
 
 	private:
 		shared_ptr<LoadingQueue> pm_AudioResourceLoadingQueue; //used to push load commands that are destined for AudioManager

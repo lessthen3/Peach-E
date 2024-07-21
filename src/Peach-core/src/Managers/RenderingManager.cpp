@@ -13,7 +13,10 @@ namespace PeachCore {
         //delete pm_OpenGLRenderer;  // SFML handles window cleanup.
     }
 
-    RenderingManager::RenderingManager() : pm_OpenGLRenderer(nullptr), pm_CurrentWindow(nullptr) {}
+    RenderingManager::RenderingManager()
+    {
+
+    }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
     shared_ptr<CommandQueue> RenderingManager::Initialize(const string& fp_Title, int fp_Width, int fp_Height) 
@@ -24,52 +27,27 @@ namespace PeachCore {
             return nullptr;
         }
 
-        // Create an SFML window and context settings
- /*       sf::ContextSettings settings;
-        settings.depthBits = 24;
-        settings.stencilBits = 8; //THESE SETTINGS ARE BROKEN FOR SOME REASON, AND I DONT KNOW WHY
-        settings.antialiasingLevel = 4;
-        settings.majorVersion = 3;
-        settings.minorVersion = 3;
-        settings.attributeFlags = sf::ContextSettings::Core;*/
+        InitWindow(fp_Width, fp_Height, fp_Title.c_str());
 
-        pm_CurrentWindow = new sf::RenderWindow(sf::VideoMode(fp_Width, fp_Height), fp_Title, sf::Style::Default);
-
-        // Camera Setup
-        Camera2D camera(*pm_CurrentWindow);
-        camera.setCenter(400, 300); // Set this dynamically as needed
-        camera.setSize(800, 600); // Set this to zoom in or out
-        camera.apply();
-
-        if (!pm_CurrentWindow->isOpen())
+        if (!IsWindowReady())
         {
             throw runtime_error("Failed to create window.");
         }
+
+        // Camera Setup, stack allocated for now
+        pm_Camera2D =  PeachCamera2D(fp_Width, fp_Height);
+        pm_Camera2D.SetCenter(400, 300); // Set this dynamically as needed
+        pm_Camera2D.SetSize(800, 600); // Set this to zoom in or out
+        pm_Camera2D.Apply();
 
         pm_CommandQueue = make_shared<CommandQueue>();
         pm_LoadedResourceQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
 
         LogManager::RenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
+
         pm_HasBeenInitialized = true;
 
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
-    }
-
-    void RenderingManager::CreateOpenGLRenderer() //builds custom openglrenderer on top of the glcontext created by SFML for use in 3D
-    {
-        if (!pm_CurrentWindow) 
-        {
-            throw runtime_error("Window not created before building renderer.");
-        } 
-        else if (pm_OpenGLRenderer) 
-        {
-            LogManager::RenderingLogger().Warn("RenderingManager has already been initialized with a rendering backend, why are you doing it again?", "RenderingManager");
-            return;
-        } 
-        else 
-        {
-            //pm_OpenGLRenderer = new OpenGLRenderer(pm_CurrentWindow, false);
-        }
     }
 
     void RenderingManager::ProcessCommands() 
@@ -109,7 +87,7 @@ namespace PeachCore {
                 {
                     // Handle creation logic here
                 },
-                [&](unique_ptr<sf::Texture>& fp_TextureData)
+                [&](unique_ptr<Texture2D>& fp_TextureData)
                 {
                     m_TestTexture = move(fp_TextureData);
                 },
@@ -126,55 +104,93 @@ namespace PeachCore {
     {
         ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
-        sf::Sprite sprite;
-        sprite.setTexture(*m_TestTexture);
+                // Main loop that continues until the window is closed
 
-        // Get the size of the window
-        sf::Vector2u windowSize = pm_CurrentWindow->getSize();
+        float sliderValue = 50.0f;
+        char textBoxInput[64] = "Type here";
 
-        // Get the size of the texture
-        sf::Vector2u textureSize = m_TestTexture->getSize();
+        while (!WindowShouldClose()) 
+        {
+            // Begin drawing
+            BeginDrawing();
+            ClearBackground(Color({ 0, 0, 139, 255 })); // Clear the screen with a dark blue color
 
-        // Calculate scale factors
-        float scaleX = float(windowSize.x) / textureSize.x;
-        float scaleY = float(windowSize.y) / textureSize.y;
-        
-        // Set the scale of the sprite
-        sprite.setScale(scaleX, scaleY);
+            // Apply camera settings
+            pm_Camera2D.Apply();
 
-        sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
-        sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
-
-        // Main loop that continues until the window is closed
-        while (pm_CurrentWindow->isOpen()) {
-            // Process events
-            sf::Event event;
-            while (pm_CurrentWindow->pollEvent(event)) {
-                if (event.type == sf::Event::Closed)
-                    pm_CurrentWindow->close();
+            // Draw sprite if texture is loaded
+            if (true) {
+                Texture2D f_DereferencedTexture2D = *m_TestTexture.get();
+                DrawTexturePro(
+                    f_DereferencedTexture2D, //dereference smart ptr
+                    { 0, 0, (float)f_DereferencedTexture2D.width, (float)f_DereferencedTexture2D.height },
+                    { GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f, (float)f_DereferencedTexture2D.width, (float)f_DereferencedTexture2D.height },
+                    { (float)f_DereferencedTexture2D.width / 2.0f, (float)f_DereferencedTexture2D.height / 2.0f },
+                    0.0f,
+                    WHITE
+                );
             }
 
-            // Clear the screen with a dark blue color
-            pm_CurrentWindow->clear(sf::Color(0, 0, 139));
 
-            // Draw the sprite
-            pm_CurrentWindow->draw(sprite);
+            //// Label
+            //GuiLabel(Rectangle({ 10, 50, 200, 20 }), "Hello, raygui!");
 
-            // Update the window
-            pm_CurrentWindow->display();
+            //// Button
+            //if (GuiButton(Rectangle({ 10, 80, 100, 30 }), "Press me")) 
+            //{
+            //    TraceLog(LOG_INFO, "Button pressed!");
+            //}
+
+            //// Slider
+            //sliderValue = GuiSlider(Rectangle({ 10, 120, 200, 20 }), "Slider", NULL, &sliderValue, 0, 100);
+
+            //// Text box
+            //GuiTextBox(Rectangle({ 10, 160, 200, 30 }), textBoxInput, sizeof(textBoxInput), true);
+
+
+
+            EndDrawing(); // Update the window
         }
+
+        CloseWindow(); // Close the window
     }
 
-    void RenderingManager::Clear() {
-        if (pm_CurrentWindow) {
-            pm_CurrentWindow->clear();
-        }
+    // Call this method to setup the render texture
+    //void RenderingManager::SetupRenderTexture(unsigned int width, unsigned int height)
+    //{
+    //    if (renderTexture.create(width, height)) 
+    //    {
+    //        textureReady = true;
+    //        renderTexture.setSmooth(true);
+    //    }
+
+    //    else
+    //    {
+    //        // Handle error
+    //    }
+    //}
+
+    // Use this method to get the texture for ImGui display
+    //const sf::Texture& RenderingManager::GetRenderTexture() 
+    //    const 
+    //{
+    //    return renderTexture.getTexture();
+    //}
+
+    void RenderingManager::Clear() 
+    {
+        BeginDrawing();
+        ClearBackground(RAYWHITE);  // Sets background color
     }
 
-    void RenderingManager::EndFrame() {
-        if (pm_CurrentWindow) {
-            pm_CurrentWindow->display();
-        }
+    void RenderingManager::BeginFrame()
+    {
+        BeginDrawing();
+    }
+
+    void RenderingManager::EndFrame() 
+    {
+        EndDrawing();
     }
 
     void RenderingManager::ResizeWindow()
@@ -182,21 +198,6 @@ namespace PeachCore {
 
     }
 
-    void RenderingManager::BeginFrame()
-    {
-
-    }
-
-    OpenGLRenderer* RenderingManager::GetOpenGLRenderer()
-        const
-    {
-        if (!pm_OpenGLRenderer)
-        {
-            LogManager::RenderingLogger().Warn("Attempted to get a reference to OpenGL backend when reference has not been set", "RenderingManager");
-            return nullptr;
-        }
-        return pm_OpenGLRenderer;
-    }
     string RenderingManager::GetRendererType() const
     {
         return pm_RendererType;

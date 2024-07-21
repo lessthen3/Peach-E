@@ -56,7 +56,7 @@ namespace PeachCore {
    
     void TileSet::LoadTexture(const std::string fp_Name, const std::string& fp_ImagePath) 
     {
-        pm_Texture = Texture2D(fp_Name, fp_ImagePath);
+        pm_Texture = PeachTexture2D(fp_Name, fp_ImagePath);
     }
 
     void TileSet::SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight)
