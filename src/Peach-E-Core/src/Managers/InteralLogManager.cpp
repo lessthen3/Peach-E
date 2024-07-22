@@ -4,7 +4,7 @@
 
 using namespace std;
 
-namespace PeachEngine {
+namespace PeachEditor {
 
     void 
         InternalLogManager::Initialize(const string& logDirectory, const string& fp_LoggerName = "Logger") 

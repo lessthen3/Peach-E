@@ -5,7 +5,7 @@
 
 */
 
-namespace PeachEngine {
+namespace PeachEditor {
 
 
     PeachEngineRenderingManager::~PeachEngineRenderingManager()
@@ -57,6 +57,9 @@ namespace PeachEngine {
         InternalLogManager::InternalRenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
 
         pm_HasBeenInitialized = true;
+
+        CreatePeachEConsole();
+        SetupRenderTexture(300, 300);
 
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
@@ -143,28 +146,71 @@ namespace PeachEngine {
         //sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
         //sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
 
+        bool f_ShouldConsoleBeOpen = true;
+
         ImGui::SFML::Init(*pm_CurrentWindow); 	// sets up ImGui with ether a dark or light default theme
 
         sf::Clock deltaClock;
 
+        PeachCore::RenderingManager::Renderer().Initialize();
+
+        //////////////////////////////////////////////
+        // MAIN RENDER LOOP FOR THE EDITOR
+        //////////////////////////////////////////////
+
         while (pm_CurrentWindow->isOpen())
         {
             Clear(); //clears screen and beings drawing
+
+            //////////////////////////////////////////////
+            // Input Polling for Imgui/SFML
+            //////////////////////////////////////////////
 
             sf::Event event;
 
             while (pm_CurrentWindow->pollEvent(event))
             {
                 ImGui::SFML::ProcessEvent(event);
+
                 if (event.type == sf::Event::Closed) 
                 {
                     pm_CurrentWindow->close();
                 }
             }
 
-            // inside your game loop, between BeginDrawing() and EndDrawing()
-            ImGui::SFML::Update(*pm_CurrentWindow, deltaClock.restart());		// starts the ImGui content mode. Make all ImGui calls after this
+            //////////////////////////////////////////////
+            // Render Texture Setup
+            //////////////////////////////////////////////
 
+            if (pm_ViewportRenderTexture)
+            {
+                pm_ViewportRenderTexture->clear(sf::Color(128, 128, 128)); // Clear with grey >w<, or any color you need
+
+                //// Draw your game elements to the renderTexture instead of the window
+                //// For example:
+                //pm_ViewportRenderTexture->draw(sprite);
+
+                pm_ViewportRenderTexture->display(); // Updates the texture with what has been drawn
+
+                //// Now the renderTexture contains the updated scene
+                //// You can convert it to a sprite and draw it on your main window or use it in the GUI
+                sf::Sprite f_SceneSprite(pm_ViewportRenderTexture->getTexture());
+
+                //// Set position, scale or any transformations needed for your GUI layout
+                f_SceneSprite.setPosition(10, 10); // Example: position it within your GUI
+
+                pm_CurrentWindow->draw(f_SceneSprite); // Draw the texture sprite to the main window
+            }
+
+            //////////////////////////////////////////////
+            // Update Imgui UI
+            //////////////////////////////////////////////
+
+            ImGui::SFML::Update(*pm_CurrentWindow, deltaClock.restart()); // starts the ImGui content mode. Make all ImGui calls after this
+
+            //////////////////////////////////////////////
+            // Virtual File System Setup
+            //////////////////////////////////////////////
 
             // Your ImGui code goes here
             ImGui::Begin("Editor");
@@ -214,18 +260,18 @@ namespace PeachEngine {
 
                 if (ImGui::BeginMenu("Run"))
                 {
-                    if (ImGui::MenuItem("Run Peach-E Project"))
+                    if (ImGui::MenuItem("Run Peach-E Project") && !m_IsSceneCurrentlyRunning)
                     {
                         // Run the game in a new window
-                        thread gameThread([]() 
+                        thread T_GameThread([]() 
                             {
-                            PeachCore::RenderingManager::Renderer().Initialize("Peach Game", 800, 600);
-                            PeachCore::RenderingManager::Renderer().RenderFrame();
-                            //PeachCore::RenderingManager::Renderer().RenderFrame();
-                            
-                            //PeachCore::RenderingManager::Renderer().Shutdown();
+                                PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
+                                PeachCore::RenderingManager::Renderer().RenderFrame();
+                                PeachCore::RenderingManager::Renderer().Shutdown();
+                                PeachEngineRenderingManager::PeachEngineRenderer().m_IsSceneCurrentlyRunning = false;
                             });
-                        gameThread.detach();
+                        T_GameThread.detach();
+                        m_IsSceneCurrentlyRunning = true;
                     }
                     if (ImGui::MenuItem("Build Peach-E Project"))
                     {
@@ -325,18 +371,27 @@ namespace PeachEngine {
             }
 
 
+            //////////////////////////////////////////////
+            // Scene Tree View Panel
+            //////////////////////////////////////////////
 
             // Panels
             ImGui::Begin("Hierarchy");
             ImGui::Text("Scene Hierarchy");
             ImGui::End();
 
+            //////////////////////////////////////////////
+            // Peach-E Console
+            //////////////////////////////////////////////
+
+            pm_EditorConsole->Draw("PEACH CONSOLE", &f_ShouldConsoleBeOpen);
+
             ImGui::Begin("Inspector");
             ImGui::Text("Inspector");
             ImGui::End();
 
 
-            pm_CurrentWindow->clear(sf::Color(0, 0, 139));
+            //pm_CurrentWindow->clear(sf::Color(0, 0, 139));
 
             ImGui::SFML::Render(*pm_CurrentWindow);			// ends the ImGui content mode. Make all ImGui calls before this
 
@@ -352,26 +407,30 @@ namespace PeachEngine {
     }
 
     // Call this method to setup the render texture
-    //void PeachEngineRenderingManager::SetupRenderTexture(unsigned int width, unsigned int height)
-    //{
-    //    if (renderTexture.create(width, height)) 
-    //    {
-    //        textureReady = true;
-    //        renderTexture.setSmooth(true);
-    //    }
+    bool PeachEngineRenderingManager::SetupRenderTexture(unsigned int width, unsigned int height)
+    {
+        if (pm_ViewportRenderTexture)
+        {
+            InternalLogManager::InternalRenderingLogger().Warn("Attempted to setup render texture again when a valid instance of pm_ViewportRenderTexture is running", "PeachEngineRenderingManager");
+            return false;
+        }
 
-    //    else
-    //    {
-    //        // Handle error
-    //    }
-    //}
+        pm_ViewportRenderTexture = make_unique<sf::RenderTexture>();
 
-    // Use this method to get the texture for ImGui display
-    //const sf::Texture& PeachEngineRenderingManager::GetRenderTexture() 
-    //    const 
-    //{
-    //    return renderTexture.getTexture();
-    //}
+        if (pm_ViewportRenderTexture->create(width, height))
+        {
+            pm_ViewportRenderTexture->setSmooth(true);
+        }
+
+        else
+        {
+            InternalLogManager::InternalRenderingLogger().Warn("Failed to create a valid instance of pm_ViewportRenderTexture, setting it back to nullptr", "PeachEngineRenderingManager");
+            pm_ViewportRenderTexture = nullptr;
+            return false;
+        }
+
+        return true;
+    }
 
     void PeachEngineRenderingManager::Clear()
     {
@@ -392,6 +451,17 @@ namespace PeachEngine {
         {
             pm_CurrentWindow->display();
         }
+    }
+
+    void PeachEngineRenderingManager::CreatePeachEConsole()
+    {
+        pm_EditorConsole = make_unique<PeachEConsole>();
+    }
+
+    void PeachEngineRenderingManager::CreateSceneTreeViewPanel()
+    {
+
+
     }
 
     void PeachEngineRenderingManager::ResizeWindow()

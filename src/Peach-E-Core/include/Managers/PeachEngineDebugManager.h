@@ -7,7 +7,7 @@
 
 //FOR CREATING SANDBOX ENVIRONMENTS AND ISOLATING CERTAIN PARTS OF THE EXECUTION
 
-namespace PeachEngine {
+namespace PeachEditor {
 
     class PeachEngineDebugManager {
     public:

@@ -10,8 +10,7 @@ namespace PeachCore {
 
     RenderingManager::~RenderingManager() 
     {
-        delete pm_Camera2D;
-        delete pm_CurrentWindow;
+        Shutdown();
     }
 
     RenderingManager::RenderingManager()
@@ -21,12 +20,28 @@ namespace PeachCore {
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
     shared_ptr<CommandQueue> 
-        RenderingManager::Initialize(const string& fp_Title, int fp_Width, int fp_Height) 
+        RenderingManager::Initialize()
     {
-        if (pm_HasBeenInitialized)
+        if (pm_CommandQueue || pm_LoadedResourceQueue)
         {
             LogManager::RenderingLogger().Warn("RenderingManager already initialized.", "RenderingManager");
             return nullptr;
+        }
+
+        pm_CommandQueue = make_shared<CommandQueue>();
+        pm_LoadedResourceQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
+
+        LogManager::RenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
+
+        return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
+    }
+
+    bool RenderingManager::CreateWindowAndCamera2D(const string& fp_Title, int fp_Width, int fp_Height)
+    {
+        if (pm_CurrentWindow || pm_CurrentCamera2D)
+        {
+            LogManager::RenderingLogger().Warn("RenderingManager already has a valid window or camera2D currently active", "RenderingManager");
+            return false;
         }
 
         // Create an SFML window and context settings
@@ -41,24 +56,18 @@ namespace PeachCore {
         pm_CurrentWindow = new sf::RenderWindow(sf::VideoMode(fp_Width, fp_Height), fp_Title, sf::Style::Default);
 
         // Camera Setup
-        pm_Camera2D = new PeachCamera2D(*pm_CurrentWindow);
-        pm_Camera2D->SetCenter(400, 300); // Set this dynamically as needed
-        pm_Camera2D->SetSize(800, 600); // Set this to zoom in or out
-        pm_Camera2D->Enable();
+        pm_CurrentCamera2D = new PeachCamera2D(*pm_CurrentWindow);
+        pm_CurrentCamera2D->SetCenter(400, 300); // Set this dynamically as needed
+        pm_CurrentCamera2D->SetSize(800, 600); // Set this to zoom in or out
+        pm_CurrentCamera2D->Enable();
 
         if (!pm_CurrentWindow->isOpen())
         {
             throw runtime_error("Failed to create window.");
+            return false;
         }
 
-        pm_CommandQueue = make_shared<CommandQueue>();
-        pm_LoadedResourceQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
-
-        LogManager::RenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
-
-        pm_HasBeenInitialized = true;
-
-        return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
+        return true;
     }
 
     void 
@@ -163,36 +172,6 @@ namespace PeachCore {
         }
     }
 
-    // Call this method to setup the render texture
-    void RenderingManager::SetupRenderTexture(unsigned int width, unsigned int height)
-    {
-        if (renderTexture.create(width, height)) 
-        {
-            textureReady = true;
-            renderTexture.setSmooth(true);
-        }
-
-        else
-        {
-            // Handle error
-        }
-    }
-
-     //Use this method to get the texture for ImGui display
-    const sf::Texture& RenderingManager::GetRenderTexture() 
-        const 
-    {
-        return sf::Texture(); //renderTexture.getTexture();
-    }
-
-    void RenderingManager::Clear() 
-    {
-        if (pm_CurrentWindow)
-        {
-            pm_CurrentWindow->clear();
-        }
-    }
-
     void RenderingManager::BeginFrame()
     {
         //BeginDrawing();
@@ -206,18 +185,26 @@ namespace PeachCore {
         }
     }
 
+    void RenderingManager::Shutdown()
+    {
+        if(pm_CurrentCamera2D)
+        {
+            delete pm_CurrentCamera2D;
+            pm_CurrentCamera2D = nullptr;
+        }
+        if(pm_CurrentWindow)
+        {
+            delete pm_CurrentWindow;
+            pm_CurrentWindow = nullptr;
+        }
+    }
+
     void 
         RenderingManager::ResizeWindow()
     {
 
     }
 
-    string 
-        RenderingManager::GetRendererType() 
-        const
-    {
-        return pm_RendererType;
-    }
     void
         RenderingManager::GetCurrentViewPort()
     {

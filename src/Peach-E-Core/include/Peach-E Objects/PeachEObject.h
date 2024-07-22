@@ -1,6 +1,6 @@
 #pragma once
 
-namespace PeachEngine {
+namespace PeachEditor {
 
 	struct PeachEObject
 	{

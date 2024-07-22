@@ -67,34 +67,6 @@ namespace PeachCore {
         RenderingManager& operator=(const RenderingManager&) = delete;
 
     private:
-        sf::Texture renderTexture;
-        bool textureReady = false;
-
-        bool pm_HasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
-        string pm_RendererType = "None";
-
-        unsigned int pm_FrameRateLimit = 60;
-        bool pm_IsVSyncEnabled = false;
-
-    private:
-        unsigned long int pm_CurrentFrame = 0;
-        shared_ptr<CommandQueue> pm_CommandQueue;
-        shared_ptr<LoadingQueue> pm_LoadedResourceQueue;
-
-        // Object ID : CurrentPosition
-        map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
-                                                                                                    //but i could't give less of a fuck right now
-        // Object ID : DeltaPosition
-        map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
-        // DrawableObject.ObjectID : DrawableObject dict
-        map<string, DrawableObject> pm_ListOfAllDrawables; 
-
-        unique_ptr<sf::Texture> m_TestTexture;
-
-        PeachCamera2D* pm_Camera2D;
-        sf::RenderWindow* pm_CurrentWindow = nullptr;
-
-    private:
         inline const float Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
             const
         {
@@ -119,7 +91,7 @@ namespace PeachCore {
 
     public:
 
-        void CreateOpenGLRenderer();
+        bool CreateWindowAndCamera2D(const string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
         void ProcessCommands();
         void ProcessLoadedResourcePackages();
         
@@ -129,7 +101,7 @@ namespace PeachCore {
             const;
 
 
-        shared_ptr<CommandQueue> Initialize(const string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
+        shared_ptr<CommandQueue> Initialize();
         void ResizeWindow();
         string GetRendererType() const;
 
@@ -137,6 +109,8 @@ namespace PeachCore {
         void BeginFrame();
         void EndFrame();
         void Clear();
+
+        void Shutdown();
 
         void GetCurrentViewPort();
         //void Draw(const sf::Drawable& fp_Drawable);
@@ -148,6 +122,29 @@ namespace PeachCore {
         void SetVSync(const bool fp_IsEnabled);
 
         bool IsVSyncEnabled() const;
+
+
+    private:
+        unsigned int pm_FrameRateLimit = 60;
+        bool pm_IsVSyncEnabled = false;
+
+    private:
+        unsigned long int pm_CurrentFrame = 0;
+        shared_ptr<CommandQueue> pm_CommandQueue;
+        shared_ptr<LoadingQueue> pm_LoadedResourceQueue;
+
+        // Object ID : CurrentPosition
+        map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
+                                                                                                    //but i could't give less of a fuck right now
+        // Object ID : DeltaPosition
+        map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
+        // DrawableObject.ObjectID : DrawableObject dict
+        map<string, DrawableObject> pm_ListOfAllDrawables;
+
+        unique_ptr<sf::Texture> m_TestTexture;
+
+        PeachCamera2D* pm_CurrentCamera2D;
+        sf::RenderWindow* pm_CurrentWindow = nullptr;
 
     };
 

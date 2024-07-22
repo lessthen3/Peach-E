@@ -10,7 +10,7 @@
 
 using namespace std;
 
-namespace PeachEngine {
+namespace PeachEditor {
 
     class InternalLogManager 
     {

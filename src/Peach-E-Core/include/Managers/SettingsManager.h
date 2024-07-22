@@ -6,7 +6,7 @@
 
 //THIS IS WHERE WE HANDLE (de)SERIALIZATION OF JSON DATA
 
-namespace PeachEngine {
+namespace PeachEditor {
 
 
 	struct SettingsManager

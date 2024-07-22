@@ -1,6 +1,6 @@
 #include "../../include/Managers/PeachEngineResourceLoadingManager.h"
 
-namespace PeachEngine {
+namespace PeachEditor {
 
 	PeachEngineResourceLoadingManager::~PeachEngineResourceLoadingManager()
 	{

@@ -5,7 +5,7 @@
 
 using namespace std;
 
-namespace PeachEngine {
+namespace PeachEditor {
 
 	struct ExportConfigSetting
 	{

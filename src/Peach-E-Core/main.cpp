@@ -14,7 +14,7 @@
 #include "../Princess/include/Parsers/PythonScriptParser.h"
 
 
-using namespace PeachEngine;
+using namespace PeachEditor;
 
 atomic<bool> m_Running(true);
 
@@ -35,7 +35,8 @@ void test()
 
 static void RenderThread()
 {
-    while (m_Running) {
+    while (m_Running)
+    {
         // Play audio
         cout << "Playing ur mom LOL...\n";
         this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
@@ -44,7 +45,8 @@ static void RenderThread()
 
 static void AudioThread()
 {
-    while (m_Running) {
+    while (m_Running) 
+    {
         // Play audio
         cout << "Playing audio...\n";
         this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
@@ -53,7 +55,8 @@ static void AudioThread()
 
 static void ResourceLoadingThread() 
 {
-    while (m_Running) {
+    while (m_Running) 
+    {
         // Load resources
         cout << "Loading resources...\n";
         this_thread::sleep_for(chrono::milliseconds(100)); // Simulate work
@@ -62,7 +65,8 @@ static void ResourceLoadingThread()
 
 static void NetworkThread() 
 {
-    while (m_Running) {
+    while (m_Running) 
+    {
         // Handle network communication
         cout << "Handling network...\n";
         this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
@@ -93,72 +97,10 @@ static void SetupRenderer()
    // }
 }
 
-
-static void InitializeEditor() 
-{
-    //sf::RenderWindow window(sf::VideoMode(800, 600), "Peach Engine Editor");
-    //window.setVerticalSyncEnabled(true);
-    //ImGui::SFML::Init(window);
-
-    //
-    //PeachEngineManager::PeachEngine().SetupLogManagers();
-
-    //sf::Clock deltaClock;
-    //while (window.isOpen()) 
-    //{
-    //    sf::Event event;
-    //    while (window.pollEvent(event)) 
-    //    {
-    //        ImGui::SFML::ProcessEvent(event);
-    //        if (event.type == sf::Event::Closed) 
-    //        {
-    //            window.close();
-    //        }
-    //    }
-
-    //    ImGui::SFML::Update(window, deltaClock.restart());
-
-    //    ImGui::Begin("Engine Tools");
-    //    // Additional tools and controls
-    //    ImGui::End();
-
-    //    // Scene rendering placeholder
-    //    ImGui::Begin("Scene");
-    //    if (ImGui::BeginTabBar("SceneTabs")) 
-    //    {
-    //        if (ImGui::BeginTabItem("Viewport"))
-    //        {
-    //            PeachEngineManager::PeachEngine().RenderFrame();  // Render your scene here
-
-    //            // Ensure RenderFrame() is called each frame before this, renders game state when game is built, otherwise the viewport should be the editor scene-view
-    //            const sf::Texture& texture = RenderingManager::Renderer().GetRenderTexture();
-    //            sf::Sprite sprite(texture);
-
-    //            ImGui::EndTabItem();
-    //        }
-    //        ImGui::EndTabBar();
-    //    }
-    //    ImGui::End();
-
-    //    window.clear();
-    //    ImGui::SFML::Render(window);
-    //    window.display();
-    //}
-
-    //ImGui::SFML::Shutdown();
-}
-
-
 //PYBIND11_MODULE(peach_engine, fp_Module)
 //{
 //    PythonScriptManager::Python().InitializePythonBindingsForPeachCore(fp_Module);
 //}
-
-
-static void IssueLoadingCommands(vector<LoadCommand> fp_ListOfLoadCommands)
-{
-
-}
 
 //////////////////////////////////////////////
 // MAIN FUNCTION BABY
@@ -166,8 +108,6 @@ static void IssueLoadingCommands(vector<LoadCommand> fp_ListOfLoadCommands)
 
 int main(int argc, char* argv[])
 {
-
-    //InitializeEditor();
     PeachEngineManager::PeachEngine().SetupLogManagers();
     PeachEngineManager::PeachEngine().SetupInternalLogManagers();
 
@@ -180,35 +120,28 @@ int main(int argc, char* argv[])
 
     try 
     {
-        //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr 
-        //for the main thread to use judiciously
+        //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
         m_RenderingManagersCommandQueue = PeachEngineRenderingManager::PeachEngineRenderer().Initialize("Peach Engine", f_WindowWidth, f_WindowHeight);
 
     //    if (!AudioManager::AudioPlayer().Initialize())
     //    {
     //        //do something idk
     //    }
+ 
         //maybe do a ResourceLoadingManager initialize if needed, idk feels weird that we dont have one yet and it just works lmao, i guess its the lazy initialization
         m_DrawableResourceLoadingQueue = PeachEngineResourceLoadingManager::PeachEngineResourceLoader().GetDrawableResourceLoadingQueue();
     //    m_AudioResourceLoadingQueue = ResourceLoadingManager::ResourceLoader().GetAudioResourceLoadingQueue();
+
+
+        ////////////////////// Texture Setup ////////////////////
+    //PeachEngineResourceLoadingManager::PeachEngineResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
+        PeachEngineRenderingManager::PeachEngineRenderer().RenderFrame();
     }
     catch (const exception& ex) 
     {
         cerr << "An error occurred: " << ex.what() << endl;
         return EXIT_FAILURE;
     }
-
-    //IssueLoadingCommands();
-
-    //////////////////// Camera Setup ////////////////////
-    //NEED TO STILL IMPLEMENT
-    //Camera2D camera(f_WindowWidth, f_WindowHeight);
-    
-    ////////////////////// Texture Setup ////////////////////
-    //PeachEngineResourceLoadingManager::PeachEngineResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
-
-    PeachEngineRenderingManager::PeachEngineRenderer().RenderFrame();
-
     /*thread T_Audio(AudioThread);
     thread T_ResourceLoading(ResourceLoadingThread);
     thread T_Network(NetworkThread);*/

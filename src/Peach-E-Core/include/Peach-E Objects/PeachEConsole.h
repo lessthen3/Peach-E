@@ -1,18 +1,18 @@
 #pragma once
 
+#include <imgui.h>
 
 #include <vector>
 #include <string>
 #include <sstream>
 #include "PeachEObject.h"
 
-namespace PeachEngine {
+namespace PeachEditor {
 
     struct PeachEConsole : public PeachEObject {
     public:
-        PeachEConsole() {
-            Clear();
-        }
+        PeachEConsole();
+        ~PeachEConsole();
 
         void Clear();
 
@@ -23,9 +23,9 @@ namespace PeachEngine {
         void SetScrollToBottom() { scrollToBottom = true; }
 
     private:
-        //ImGuiTextBuffer buffer;
-        //ImGuiTextFilter filter;
-        //ImVector<int> lineOffsets;
+        ImGuiTextBuffer buffer;
+        ImGuiTextFilter filter;
+        ImVector<int> lineOffsets;
         bool scrollToBottom = false;
     };
 }

@@ -5,7 +5,7 @@
 #include "../../../Peach-core/include/Unsorted/CommandQueue.h"
 #include "../../../Peach-core/include/Unsorted/LoadingQueue.h"
 
-namespace PeachEngine {
+namespace PeachEditor {
 
 	class PeachEngineResourceLoadingManager {
 	public:

@@ -23,7 +23,7 @@ using namespace std;
 
 //AND MAKE RESPONSIBILITES AND CODE IN GENERAL MORE CLEAN AND EASY TO READ
 
-namespace PeachEngine {
+namespace PeachEditor {
 
     class PeachEngineManager 
     {
@@ -103,7 +103,12 @@ namespace PeachEngine {
        // Peach Engine Startup Config Setup
        //////////////////////////////////////////////
 
-        void LoadGameConfigsFromJSON()
+        void LoadGameStartupConfigsFromJSON()
+        {
+
+        }
+
+        void AdjustGameStartupJSONConfigs()
         {
 
         }
@@ -155,6 +160,11 @@ namespace PeachEngine {
 
         }
 
+        void IssueLoadingCommands(vector<LoadCommand> fp_ListOfLoadCommands)
+        {
+
+        }
+
         void StartGameLoop()
         {
             const float f_PhysicsDeltaTime = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;  // Fixed physics update rate 
@@ -167,7 +177,8 @@ namespace PeachEngine {
 
             auto f_CurrentTime = chrono::high_resolution_clock::now();
 
-            while (m_Running) {
+            while (m_Running)
+            {
                 auto f_NewTime = chrono::high_resolution_clock::now();
                 float f_FrameTime = chrono::duration<float>(f_NewTime - f_CurrentTime).count();
                 f_CurrentTime = f_NewTime;
@@ -199,7 +210,8 @@ namespace PeachEngine {
                     f_GeneralUpdateAccumulator -= f_UserDefinedDeltaTime;
                 }
 
-                if (f_RenderAccumulator >= f_RenderDeltaTime) {
+                if (f_RenderAccumulator >= f_RenderDeltaTime) 
+                {
                     RenderFrame();
                     f_RenderAccumulator -= f_RenderDeltaTime;
                 }

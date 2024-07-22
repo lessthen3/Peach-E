@@ -1,0 +1,15 @@
+PeachEngineRenderingManager:
+
+-need to cleanup the renderwindow that the current scene is being run on, in case the user/me does something retarded and close
+the fucking engine before closing the running scene instance lmao (which i just did btw oof)
+
+-cleanup renderwindo so htat we can re run the scene instance once changes have been implemented and shit
+
+-we need to implement JSON reading so that, when the scene is changed inside the editor, it updates the JSON config that 
+PeachCore reads from on startup. so that all asset changes and such are reflected appropriately
+
+-The JSON reading capabilities can be repurposesd for REDO/UNDO; AUTOSAVE; EXPOSING VARIABLES FROM SCRIPTS TO
+EDITOR.
+
+
+-try out using raylib as the library that runs the game, and use sfml for the editor maybe? (idk><??)

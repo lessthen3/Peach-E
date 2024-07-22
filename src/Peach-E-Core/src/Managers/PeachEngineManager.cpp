@@ -1,6 +1,6 @@
 #include "../../include/Managers/PeachEngineManager.h"
 
-namespace PeachCore
+namespace PeachEditor
 {
    
 
