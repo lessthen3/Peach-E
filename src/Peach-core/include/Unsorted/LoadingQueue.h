@@ -10,7 +10,7 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
-#include "raylib-conflictfree.h"
+#include <SFML/Graphics.hpp>
 
 #include <mutex>
 #include <string>
@@ -32,12 +32,12 @@ namespace PeachCore {
             <
             //unique_ptr<unsigned const char>, //used for parsins byte info that is supposed to be immutable, mainly for preference not really required -- NOT SURE IF NEEDED OR NOT
             unique_ptr<unsigned char>, //used for parsing raw byte information, mainly for audio at the moment
-            unique_ptr<Texture2D>, //SFML loads textures in as a single wrapped unit
+            unique_ptr<sf::Texture>, //SFML loads textures in as a single wrapped unit
             unique_ptr<string> //used for parsing JSON metadata if required
 
             > ResourceData;
 
-        LoadedResourcePackage(const string& fp_ID, unique_ptr<Texture2D> tex): ObjectID(fp_ID), ResourceData(move(tex)) {}
+        LoadedResourcePackage(const string& fp_ID, unique_ptr<sf::Texture> tex): ObjectID(fp_ID), ResourceData(move(tex)) {}
         LoadedResourcePackage(const string& fp_ID, unique_ptr<unsigned char> fp_RawByteData) : ObjectID(fp_ID), ResourceData(move(fp_RawByteData)) {}
         LoadedResourcePackage(const string& fp_ID, unique_ptr<string> fp_JSONData) : ObjectID(fp_ID), ResourceData(move(fp_JSONData)) {}
         LoadedResourcePackage() = default;

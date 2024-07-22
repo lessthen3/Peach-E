@@ -1,6 +1,6 @@
 #pragma once
-#include "../Unsorted/raylib-conflictfree.h"
 
+#include <SFML/Graphics.hpp>
 
 #include <map>
 #include <string>
@@ -22,19 +22,21 @@ namespace PeachCore {
 
     public:
 
-        void MapInput(const string& action, int key);
+        void MapInput(const string& action, sf::Keyboard::Key key);
 
-        bool GetPressed(const string& action) const;
+        bool GetPressed(const string& action)
+            const;
 
-        Vector2 GetCurrentMousePosition() const;
+        sf::Vector2f GetCurrentMousePosition(const sf::RenderWindow& window)
+            const;
 
-        void ProcessInput();
+        void ProcessInput(sf::RenderWindow& window);
 
     private:
         InputManager(); // Constructor made private for singleton
 
     private:
-        map<string, int> pm_InputMap;
+        map<string, sf::Keyboard::Key> pm_InputMap;
     };
 
 }

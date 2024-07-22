@@ -10,9 +10,9 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
-#include "../../../Peach-core/include/Unsorted/raylib-conflictfree.h"
+#include <SFML/Graphics.hpp>
 
-#include <rlImGui.h>
+#include "../../../Peach-core/GOATS/sfml-imgui/imgui-SFML.h"
 #include <imgui.h>
 
 #include "PeachEngineManager.h"
@@ -44,7 +44,7 @@ namespace PeachEngine {
         variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
             <
             unique_ptr<unsigned char>, //used for parsing raw byte information, mainly for audio at the moment
-            unique_ptr<Texture2D>, //SFML loads textures in as a single wrapped unit
+            unique_ptr<sf::Texture>, //SFML loads textures in as a single wrapped unit
             unique_ptr<string> //used for parsing JSON metadata if required
 
             > DrawableResourceData; //actual data for graphic
@@ -58,8 +58,8 @@ namespace PeachEngine {
     public:
         static PeachEngineRenderingManager& PeachEngineRenderer()
         {
-            static PeachEngineRenderingManager instance;
-            return instance;
+            static PeachEngineRenderingManager peach_engine_renderer;
+            return peach_engine_renderer;
         }
 
         ~PeachEngineRenderingManager();
@@ -70,7 +70,7 @@ namespace PeachEngine {
         PeachEngineRenderingManager& operator=(const PeachEngineRenderingManager&) = delete;
 
     private:
-        Texture2D renderTexture;
+        sf::Texture renderTexture;
         bool textureReady = false;
 
         bool pm_HasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
@@ -92,9 +92,10 @@ namespace PeachEngine {
         // DrawableObject.ObjectID : DrawableObject dict
         map<string, DrawableObject> pm_ListOfAllDrawables;
 
-        unique_ptr<Texture2D> m_TestTexture;
+        unique_ptr<sf::Texture> m_TestTexture;
 
-        PeachCore::PeachCamera2D pm_Camera2D;
+        PeachCamera2D* pm_Camera2D;
+        sf::RenderWindow* pm_CurrentWindow = nullptr;
 
     private:
         inline const float Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
@@ -116,7 +117,7 @@ namespace PeachEngine {
 
         void SetupRenderTexture(unsigned int width, unsigned int height);
 
-        const Texture2D& GetRenderTexture()
+        const sf::Texture& GetRenderTexture()
             const;
 
 

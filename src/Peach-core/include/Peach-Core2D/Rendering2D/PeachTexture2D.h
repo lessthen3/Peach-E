@@ -10,8 +10,7 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
-#include "../../Unsorted/raylib-conflictfree.h"
-
+#include <SFML/Graphics.hpp>
 #include "../../Managers/LogManager.h"
 #include "../../Managers/ResourceLoadingManager.h"
 
@@ -21,12 +20,13 @@
 #include <tuple>
 #include <future>
 
+using namespace std;
 
 namespace PeachCore {
 
     class PeachTexture2D {
     public:
-        PeachTexture2D(const std::string& fp_Name ,const std::string& fp_ImagePath);
+        PeachTexture2D(const string& fp_Name ,const string& fp_ImagePath);
         ~PeachTexture2D();
 
         PeachTexture2D(const PeachTexture2D& other); //copy constructor
@@ -39,14 +39,14 @@ namespace PeachCore {
                 // No need to explicitly delete the texture since sf::Texture manages its own memory
 
                 // Transfer resources
-                pm_Texture = std::move(other.pm_Texture);  // Move the sf::Texture
-                m_Name = std::move(other.m_Name);
+                pm_Texture = move(other.pm_Texture);  // Move the sf::Texture
+                m_Name = move(other.m_Name);
                 m_Width = other.m_Width;
                 m_Height = other.m_Height;
                 pm_TileWidth = other.pm_TileWidth;
                 pm_TileHeight = other.pm_TileHeight;
                 pm_IsValid = other.pm_IsValid;
-                pm_TileUVs = std::move(other.pm_TileUVs);
+                pm_TileUVs = move(other.pm_TileUVs);
 
                 // Reset the 'other' object
                 other.m_Width = 0;
@@ -62,15 +62,15 @@ namespace PeachCore {
         void DefineTileSize(const int tileWidth, const int tileHeight);
         void CalculateTileUVs();
         
-        void LoadTexture(const std::string& fp_ImagePath); //used to call ResourceLoadingThread to read the desired file using stbi, and then when possible notify the Renderer to attach the texture,                       
+        void LoadTexture(const string& fp_ImagePath); //used to call ResourceLoadingThread to read the desired file using stbi, and then when possible notify the Renderer to attach the texture,                       
         void DeleteTexture();                                                    //probably will do this at a certain interval like at the end of each frame, or render cycle idk
         
 
-        std::vector<std::tuple<float, float, float, float>> GetTileUVs()
+        vector<tuple<float, float, float, float>> GetTileUVs()
             const;
-        std::tuple<float, float, float, float> GetTileUV(const int tileIndex) 
+        tuple<float, float, float, float> GetTileUV(const int tileIndex) 
             const;
-        const Texture2D& GetPeachTexture2D()
+        const sf::Texture& GetPeachTexture2D()
             const;
         int GetTileCount() 
             const;
@@ -79,13 +79,13 @@ namespace PeachCore {
 
     public:
         int m_Width, m_Height;
-        std::string m_Name;
-        Texture2D m_TestTexture;
+        string m_Name;
+        sf::Texture m_TestTexture;
     private:
-        Texture2D pm_Texture;
+        sf::Texture pm_Texture;
         int pm_TileWidth, pm_TileHeight;
         bool pm_IsValid = false; //used for tracking whether LoadTexture() was successful/ if a texture is currently loaded
-        std::vector<std::tuple<float, float, float, float>> pm_TileUVs; // UV coordinates for each tile
+        vector<tuple<float, float, float, float>> pm_TileUVs; // UV coordinates for each tile
     };
 }
 //then i Want a TileMap that takes the TileSet, and has lists for holding data about currently placed tiles from the tile map.Im not

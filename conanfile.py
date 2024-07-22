@@ -8,6 +8,7 @@ class PeachEBuilder(ConanFile):
         # just chillin
         self.requires("spdlog/1.14.1")
         self.requires("onetbb/2021.12.0")
+        self.requires("physfs/3.2.0")
 
         # geometry
         self.requires("cgal/5.6.1")
@@ -26,7 +27,11 @@ class PeachEBuilder(ConanFile):
         self.requires("cereal/1.3.2")
         self.requires("zlib/1.3.1")
 
-        # media controllers
+        # opengl + imgui
+        self.requires("glew/2.2.0")
+        self.requires("glm/cci.20230113")
+        self.requires("sfml/2.6.1")
+
         self.requires("imgui/cci.20230105+1.89.2.docking")
         
         # audio decoder and playback
@@ -37,8 +42,4 @@ class PeachEBuilder(ConanFile):
         self.requires("assimp/5.4.1")
         self.requires("cgltf/1.13")
         self.requires("nanosvg/cci.20231025")
-
-        # opengl
-        self.requires("glew/2.2.0")
-        self.requires("glm/cci.20230113")
 

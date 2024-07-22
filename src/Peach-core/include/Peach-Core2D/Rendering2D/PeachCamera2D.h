@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../Unsorted/raylib-conflictfree.h"
+#include <SFML/Graphics.hpp>
 
 
 #include <glm/glm.hpp>
@@ -10,7 +10,7 @@ namespace PeachCore {
     class PeachCamera2D 
     {
     public:
-        PeachCamera2D(float screenWidth, float screenHeight);
+        PeachCamera2D(sf::RenderWindow& fp_RenderWindow);
         PeachCamera2D() = default;
         ~PeachCamera2D();
 
@@ -23,12 +23,20 @@ namespace PeachCore {
         void Rotate(float dAngle);
         void Zoom(float dZoom);
 
-        void Apply();
+        void Enable();
         void Disable();
 
     private:
-        Camera2D m_Camera;
-        float m_ScreenWidth, m_ScreenHeight;
+        sf::RenderWindow& pm_CurrentWindow;
+        sf::View pm_View;
+
+
+        //Vector2f pm_Position;
+        float pm_Rotation;
+        float pm_Scale;
+        float pm_ScreenWidth, pm_ScreenHeight;
+
+        sf::Vector2f pm_GlobalPosition;
     };
 
 }

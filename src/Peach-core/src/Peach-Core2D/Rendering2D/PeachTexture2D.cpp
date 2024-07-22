@@ -45,7 +45,7 @@ namespace PeachCore {
     void PeachTexture2D::DeleteTexture() //resets the texture2D object
     {
         if (pm_IsValid) {
-            pm_Texture = Texture2D();  // Assign a new, empty sf::Texture to release the old one
+            pm_Texture = sf::Texture();  // Assign a new, empty sf::Texture to release the old one
             m_Width = 0;
             m_Height = 0;
             pm_TileWidth = 0;
@@ -94,7 +94,7 @@ namespace PeachCore {
     }
    
     // Additional methods to interact with SFML's Texture
-    const Texture2D& PeachTexture2D::GetPeachTexture2D()
+    const sf::Texture& PeachTexture2D::GetPeachTexture2D()
         const 
     {
         return pm_Texture;

@@ -205,7 +205,7 @@ int main(int argc, char* argv[])
     //Camera2D camera(f_WindowWidth, f_WindowHeight);
     
     ////////////////////// Texture Setup ////////////////////
-    PeachEngineResourceLoadingManager::PeachEngineResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
+    //PeachEngineResourceLoadingManager::PeachEngineResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
 
     PeachEngineRenderingManager::PeachEngineRenderer().RenderFrame();
 

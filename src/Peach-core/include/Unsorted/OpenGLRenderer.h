@@ -72,45 +72,11 @@ namespace PeachCore
             glBindTexture(GL_TEXTURE_2D, 0);
         }
 
-        void Draw(const std::vector<float>& vertices, const std::vector<unsigned int>& indices, bool is3D = false) 
-        {
-            //SetupVertexArray(vertices, indices); WHY, WHY ,WHY ,WHY YYYYYYYYYYYYYYYYYYYYYYY
-            glDrawElements(
-                is3D ? GL_TRIANGLES : GL_TRIANGLE_STRIP,
-                indices.size(),
-                GL_UNSIGNED_INT,
-                nullptr
-            );
-        }
-
-        void BatchDraw(const std::vector<float>& vertices, const std::vector<unsigned int>& indices, int numObjects, bool is3D = false) 
-        {
-            //SetupVertexArray(vertices, indices); this should be called once, not every time we draw thats fucking retarded
-            for (int i = 0; i < numObjects; ++i) {
-                glDrawElementsBaseVertex(
-                    is3D ? GL_TRIANGLES : GL_TRIANGLE_STRIP,
-                    indices.size() / numObjects,
-                    GL_UNSIGNED_INT,
-                    (void*)(sizeof(unsigned int) * (i * indices.size() / numObjects)),
-                    i * (vertices.size() / numObjects / (is3D ? 3 : 2))
-                );
-            }
-        }
-
         void DrawTexture(const GLuint& fp_TextureID) 
         {
             //clear screen to prepare for drawing
             glClearColor(0.27f, 0.5f, 0.8f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | (pm_Is3DEnabled ? GL_DEPTH_BUFFER_BIT : 0));
-
-            //// Setup vertices and texture coordinates based on position, size, and UVs
-            //Vertex vertices[] = {
-            //    // positions         // texture coords
-            //    {position.x, position.y, 0.0f, uv0.x, uv0.y},
-            //    {position.x + size.x, position.y, 0.0f, uv1.x, uv0.y},
-            //    {position.x + size.x, position.y + size.y, 0.0f, uv1.x, uv1.y},
-            //    {position.x, position.y + size.y, 0.0f, uv0.x, uv1.y},
-            //};
 
             Vertex vertices[] =
             {
@@ -161,17 +127,6 @@ namespace PeachCore
             glUseProgram(0);
 
             //pm_CurrentWindow->display();
-        }
-
-        void BatchDrawTexture(const GLuint& fp_TextureID, const std::vector<glm::vec2>& positions, const glm::vec2& size)
-        {
-            glBindTexture(GL_TEXTURE_2D, fp_TextureID);
-
-            for (const auto& pos : positions) {
-                //DrawTexture(fp_TextureID, pos, size, glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 1.0f)); //NOT EFFICIENT NEED TO CHANGE TO REDUCE CALL OVERHEAD
-            }                                                                                                                          //THIS IS LITERALLY THE WHOLE POINT OF BATCHING
-
-            glBindTexture(GL_TEXTURE_2D, 0);
         }
 
         void RenderFrame() 
@@ -260,17 +215,9 @@ namespace PeachCore
             pm_ShaderPrograms.insert({fp_Name, f_Shader});
         }
 
-        void LoadShadersFromBinary(const std::string& fp_FilePath)
-        {
-            //TODO: make this fucking code, i want shipped games to load from binaries, and editor projects to load from source
-        }
-
         ShaderProgram& GetShaderProgram(const std::string& fp_Name) {
             return pm_ShaderPrograms.at(fp_Name);
         }
-
-    
-
 
     private:
         //sf::RenderWindow* pm_CurrentWindow;
@@ -279,7 +226,6 @@ namespace PeachCore
         GLuint pm_VAO, pm_VBO, pm_EBO; //current state of OpenGL
 
         std::map<std::string, ShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which ShaderProgram
-
         std::map< std::string, std::tuple<GLuint, GLuint, GLuint> > MapOfVisualElements; //keeps track of the vao,vbo,ebo id's for each element that is registered
 
 

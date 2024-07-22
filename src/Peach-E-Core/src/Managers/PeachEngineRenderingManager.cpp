@@ -10,10 +10,8 @@ namespace PeachEngine {
 
     PeachEngineRenderingManager::~PeachEngineRenderingManager()
     {
-        //THIS BRICKS EVERYTHING AND IDK Y, IT DELETES GLFW OR SMTH IDFK
-        //EndDrawing(); //IMPORTANT: need to end drawing before closing window, or else we will have an ungraceful exit from the program
-        //rlImGuiShutdown();		// cleans up ImGui
-        //CloseWindow(); // Close the window
+        delete pm_Camera2D;
+        delete pm_CurrentWindow;
     }
 
     PeachEngineRenderingManager::PeachEngineRenderingManager()
@@ -22,36 +20,45 @@ namespace PeachEngine {
     }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
-    shared_ptr<PeachCore::CommandQueue> 
+    shared_ptr<CommandQueue>
         PeachEngineRenderingManager::Initialize(const string& fp_Title, int fp_Width, int fp_Height)
     {
         if (pm_HasBeenInitialized)
         {
-            InternalLogManager::InternalRenderingLogger().Warn("PeachEngineRenderingManager already initialized.", "PeachEngineRenderingManager");
+            InternalLogManager::InternalRenderingLogger().Warn("RenderingManager already initialized.", "RenderingManager");
             return nullptr;
         }
 
-        InitWindow(fp_Width, fp_Height, fp_Title.c_str());
+        // Create an SFML window and context settings
+/*       sf::ContextSettings settings;
+       settings.depthBits = 24;
+       settings.stencilBits = 8; //THESE SETTINGS ARE BROKEN FOR SOME REASON, AND I DONT KNOW WHY
+       settings.antialiasingLevel = 4;
+       settings.majorVersion = 3;
+       settings.minorVersion = 3;
+       settings.attributeFlags = sf::ContextSettings::Core;*/
 
-        if (!IsWindowReady())
+        pm_CurrentWindow = new sf::RenderWindow(sf::VideoMode(fp_Width, fp_Height), fp_Title, sf::Style::Default);
+
+        // Camera Setup
+        pm_Camera2D = new PeachCamera2D(*pm_CurrentWindow);
+        pm_Camera2D->SetCenter(400, 300); // Set this dynamically as needed
+        pm_Camera2D->SetSize(800, 600); // Set this to zoom in or out
+        pm_Camera2D->Enable();
+
+        if (!pm_CurrentWindow->isOpen())
         {
             throw runtime_error("Failed to create window.");
         }
 
-        // Camera Setup, stack allocated for now
-        pm_Camera2D = PeachCore::PeachCamera2D(fp_Width, fp_Height);
-        pm_Camera2D.SetCenter(400, 300); // Set this dynamically as needed
-        pm_Camera2D.SetSize(800, 600); // Set this to zoom in or out
-        pm_Camera2D.Apply();
+        pm_CommandQueue = make_shared<CommandQueue>();
+        pm_LoadedResourceQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
 
-        pm_CommandQueue = make_shared<PeachCore::CommandQueue>();
-        pm_LoadedResourceQueue = PeachEngineResourceLoadingManager::PeachEngineResourceLoader().GetDrawableResourceLoadingQueue();
-
-        InternalLogManager::InternalRenderingLogger().Debug("PeachEngineRenderingManager successfully initialized >w<", "PeachEngineRenderingManager");
+        InternalLogManager::InternalRenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
 
         pm_HasBeenInitialized = true;
 
-        return pm_CommandQueue; //returns one and only one ptr to whoever initializes PeachEngineRenderingManager, this is meant only for the main thread
+        return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
     void
@@ -98,7 +105,7 @@ namespace PeachEngine {
                 {
                     // Handle creation logic here
                 },
-                [&](unique_ptr<Texture2D>& fp_TextureData)
+                [&](unique_ptr<sf::Texture>& fp_TextureData)
                 {
                     m_TestTexture = move(fp_TextureData);
                 },
@@ -117,39 +124,46 @@ namespace PeachEngine {
         //ProcessCommands(); //process all updates
                 // Main loop that continues until the window is closed
 
-        float sliderValue = 50.0f;
-        char textBoxInput[64] = "Type here";
+        //sf::Sprite sprite;
+        //sprite.setTexture(*m_TestTexture);
 
-        rlImGuiSetup(true); 	// sets up ImGui with ether a dark or light default theme
+        //// Get the size of the window
+        //sf::Vector2u windowSize = pm_CurrentWindow->getSize();
 
-        while (!WindowShouldClose())
+        //// Get the size of the texture
+        //sf::Vector2u textureSize = m_TestTexture->getSize();
+
+        //// Calculate scale factors
+        //float scaleX = float(windowSize.x) / textureSize.x;
+        //float scaleY = float(windowSize.y) / textureSize.y;
+
+        //// Set the scale of the sprite
+        //sprite.setScale(scaleX, scaleY);
+
+        //sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
+        //sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
+
+        ImGui::SFML::Init(*pm_CurrentWindow); 	// sets up ImGui with ether a dark or light default theme
+
+        sf::Clock deltaClock;
+
+        while (pm_CurrentWindow->isOpen())
         {
             Clear(); //clears screen and beings drawing
-            //pm_Camera2D.Apply(); //already applide in Initialize() method
 
-            // Draw background texture if a custom background is set
-            if (true) 
+            sf::Event event;
+
+            while (pm_CurrentWindow->pollEvent(event))
             {
-                Texture2D f_DereferencedTexture2D = *m_TestTexture.get();
-
-                DrawTexturePro
-                (
-                    f_DereferencedTexture2D, //dereference smart ptr
-
-                    { 0, 0, (float)f_DereferencedTexture2D.width, (float)f_DereferencedTexture2D.height },
-
-                    { GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f, (float)f_DereferencedTexture2D.width, (float)f_DereferencedTexture2D.height },
-
-                    { (float)f_DereferencedTexture2D.width / 2.0f, (float)f_DereferencedTexture2D.height / 2.0f },
-
-                    0.0f,
-
-                    WHITE
-                );
+                ImGui::SFML::ProcessEvent(event);
+                if (event.type == sf::Event::Closed) 
+                {
+                    pm_CurrentWindow->close();
+                }
             }
 
             // inside your game loop, between BeginDrawing() and EndDrawing()
-            rlImGuiBegin();			// starts the ImGui content mode. Make all ImGui calls after this
+            ImGui::SFML::Update(*pm_CurrentWindow, deltaClock.restart());		// starts the ImGui content mode. Make all ImGui calls after this
 
 
             // Your ImGui code goes here
@@ -179,7 +193,7 @@ namespace PeachEngine {
                     }
                     if (ImGui::MenuItem("Exit")) //THIS CRASHES EVERYTHING BUT I GUESS THAT IS A WAY TO CLOSE STUFF
                     {
-                        EndDrawing(); // IMPORTANT: NEEDA EXPLICITLY ENDDRAWING() BEFORE CALLING CLOSEWINDOW!
+                        Clear(); // IMPORTANT: NEEDA EXPLICITLY ENDDRAWING() BEFORE CALLING CLOSEWINDOW!
                         break;
                     }
                     ImGui::EndMenu();
@@ -205,8 +219,8 @@ namespace PeachEngine {
                         // Run the game in a new window
                         thread gameThread([]() 
                             {
-                            PeachCore::RenderingManager::Renderer().Initialize("Peach Engine Game", 800, 600);
-                            
+                            PeachCore::RenderingManager::Renderer().Initialize("Peach Game", 800, 600);
+                            PeachCore::RenderingManager::Renderer().RenderFrame();
                             //PeachCore::RenderingManager::Renderer().RenderFrame();
                             
                             //PeachCore::RenderingManager::Renderer().Shutdown();
@@ -298,16 +312,16 @@ namespace PeachEngine {
 
             if (isMouseInViewport)
             {
-                // Convert ImGui mouse coordinates to viewport coordinates
-                Vector2 mousePosInViewport = { mousePos.x - viewportPos.x, mousePos.y - viewportPos.y };
+                //// Convert ImGui mouse coordinates to viewport coordinates
+                //Vector2 mousePosInViewport = { mousePos.x - viewportPos.x, mousePos.y - viewportPos.y };
 
-                // Handle drag and drop or selection
-                if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                    // Handle mouse click
-                }
-                if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-                    // Handle mouse drag
-                }
+                //// Handle drag and drop or selection
+                //if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                //    // Handle mouse click
+                //}
+                //if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+                //    // Handle mouse drag
+                //}
             }
 
 
@@ -322,18 +336,19 @@ namespace PeachEngine {
             ImGui::End();
 
 
+            pm_CurrentWindow->clear(sf::Color(0, 0, 139));
 
+            ImGui::SFML::Render(*pm_CurrentWindow);			// ends the ImGui content mode. Make all ImGui calls before this
 
-            rlImGuiEnd();			// ends the ImGui content mode. Make all ImGui calls before this
+            // Draw the sprite
+            //pm_CurrentWindow->draw(sprite);
 
-            EndDrawing(); // Update the window
+            // Update the window
+            pm_CurrentWindow->display();
         }
-
         //TO-DO: set flags that indicate the current state of closewindow and imguishutdown, because if we call them again in the destructor it realllllllly doesn't like that
         // after your game loop is over, before you close the window
-        rlImGuiShutdown();		// cleans up ImGui
-
-        CloseWindow(); // Close the window
+        ImGui::SFML::Shutdown();		// cleans up ImGui
     }
 
     // Call this method to setup the render texture
@@ -360,18 +375,23 @@ namespace PeachEngine {
 
     void PeachEngineRenderingManager::Clear()
     {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);  // Sets background color
+        if (pm_CurrentWindow)
+        {
+            pm_CurrentWindow->clear();
+        }
     }
 
     void PeachEngineRenderingManager::BeginFrame()
     {
-        BeginDrawing();
+        //BeginDrawing();
     }
 
     void PeachEngineRenderingManager::EndFrame()
     {
-        EndDrawing();
+        if (pm_CurrentWindow)
+        {
+            pm_CurrentWindow->display();
+        }
     }
 
     void PeachEngineRenderingManager::ResizeWindow()

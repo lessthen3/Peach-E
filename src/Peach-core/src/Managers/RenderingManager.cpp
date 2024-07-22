@@ -10,7 +10,8 @@ namespace PeachCore {
 
     RenderingManager::~RenderingManager() 
     {
-        //delete pm_OpenGLRenderer;  // SFML handles window cleanup.
+        delete pm_Camera2D;
+        delete pm_CurrentWindow;
     }
 
     RenderingManager::RenderingManager()
@@ -19,7 +20,8 @@ namespace PeachCore {
     }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
-    shared_ptr<CommandQueue> RenderingManager::Initialize(const string& fp_Title, int fp_Width, int fp_Height) 
+    shared_ptr<CommandQueue> 
+        RenderingManager::Initialize(const string& fp_Title, int fp_Width, int fp_Height) 
     {
         if (pm_HasBeenInitialized)
         {
@@ -27,18 +29,27 @@ namespace PeachCore {
             return nullptr;
         }
 
-        InitWindow(fp_Width, fp_Height, fp_Title.c_str());
+        // Create an SFML window and context settings
+/*       sf::ContextSettings settings;
+       settings.depthBits = 24;
+       settings.stencilBits = 8; //THESE SETTINGS ARE BROKEN FOR SOME REASON, AND I DONT KNOW WHY
+       settings.antialiasingLevel = 4;
+       settings.majorVersion = 3;
+       settings.minorVersion = 3;
+       settings.attributeFlags = sf::ContextSettings::Core;*/
 
-        if (!IsWindowReady())
+        pm_CurrentWindow = new sf::RenderWindow(sf::VideoMode(fp_Width, fp_Height), fp_Title, sf::Style::Default);
+
+        // Camera Setup
+        pm_Camera2D = new PeachCamera2D(*pm_CurrentWindow);
+        pm_Camera2D->SetCenter(400, 300); // Set this dynamically as needed
+        pm_Camera2D->SetSize(800, 600); // Set this to zoom in or out
+        pm_Camera2D->Enable();
+
+        if (!pm_CurrentWindow->isOpen())
         {
             throw runtime_error("Failed to create window.");
         }
-
-        // Camera Setup, stack allocated for now
-        pm_Camera2D =  PeachCamera2D(fp_Width, fp_Height);
-        pm_Camera2D.SetCenter(400, 300); // Set this dynamically as needed
-        pm_Camera2D.SetSize(800, 600); // Set this to zoom in or out
-        pm_Camera2D.Apply();
 
         pm_CommandQueue = make_shared<CommandQueue>();
         pm_LoadedResourceQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
@@ -89,7 +100,7 @@ namespace PeachCore {
                 {
                     // Handle creation logic here
                 },
-                [&](unique_ptr<Texture2D>& fp_TextureData)
+                [&](unique_ptr<sf::Texture>& fp_TextureData)
                 {
                     m_TestTexture = move(fp_TextureData);
                 },
@@ -107,114 +118,133 @@ namespace PeachCore {
     {
         ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
-                // Main loop that continues until the window is closed
 
-        float sliderValue = 50.0f;
-        char textBoxInput[64] = "Type here";
+        //sf::Sprite sprite;
+        //sprite.setTexture(*m_TestTexture);
 
-        while (!WindowShouldClose()) 
+        //// Get the size of the window
+        //sf::Vector2u windowSize = pm_CurrentWindow->getSize();
+
+        //// Get the size of the texture
+        //sf::Vector2u textureSize = m_TestTexture->getSize();
+
+        //// Calculate scale factors
+        //float scaleX = float(windowSize.x) / textureSize.x;
+        //float scaleY = float(windowSize.y) / textureSize.y;
+
+        //// Set the scale of the sprite
+        //sprite.setScale(scaleX, scaleY);
+
+        //sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
+        //sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
+
+        // Main loop that continues until the window is closed
+        while (pm_CurrentWindow->isOpen()) 
         {
-            // Begin drawing
-            BeginDrawing();
-            ClearBackground(Color({ 0, 0, 139, 255 })); // Clear the screen with a dark blue color
+            // Process events
+            sf::Event event;
 
-            // Apply camera settings
-            pm_Camera2D.Apply();
-
-            // Draw sprite if texture is loaded
-            if (true) 
+            while (pm_CurrentWindow->pollEvent(event)) 
             {
-                Texture2D f_DereferencedTexture2D = *m_TestTexture.get();
-
-                DrawTexturePro
-                (
-                    f_DereferencedTexture2D, //dereferenced smart ptr
-
-                    { 0, 0, (float)f_DereferencedTexture2D.width, (float)f_DereferencedTexture2D.height },
-
-                    { GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f, (float)f_DereferencedTexture2D.width, (float)f_DereferencedTexture2D.height },
-
-                    { (float)f_DereferencedTexture2D.width / 2.0f, (float)f_DereferencedTexture2D.height / 2.0f },
-
-                    0.0f,
-
-                    WHITE
-                );
+                if (event.type == sf::Event::Closed)
+                {
+                    pm_CurrentWindow->close();
+                }
             }
 
-            EndDrawing(); // Update the window
-        }
+            // Clear the screen with a dark blue color
+            pm_CurrentWindow->clear(sf::Color(0, 0, 139));
 
-        CloseWindow(); // Close the window
+            // Draw the sprite
+            //pm_CurrentWindow->draw(sprite);
+
+            // Update the window
+            pm_CurrentWindow->display();
+        }
     }
 
     // Call this method to setup the render texture
-    //void RenderingManager::SetupRenderTexture(unsigned int width, unsigned int height)
-    //{
-    //    if (renderTexture.create(width, height)) 
-    //    {
-    //        textureReady = true;
-    //        renderTexture.setSmooth(true);
-    //    }
+    void RenderingManager::SetupRenderTexture(unsigned int width, unsigned int height)
+    {
+        if (renderTexture.create(width, height)) 
+        {
+            textureReady = true;
+            renderTexture.setSmooth(true);
+        }
 
-    //    else
-    //    {
-    //        // Handle error
-    //    }
-    //}
+        else
+        {
+            // Handle error
+        }
+    }
 
-    // Use this method to get the texture for ImGui display
-    //const sf::Texture& RenderingManager::GetRenderTexture() 
-    //    const 
-    //{
-    //    return renderTexture.getTexture();
-    //}
+     //Use this method to get the texture for ImGui display
+    const sf::Texture& RenderingManager::GetRenderTexture() 
+        const 
+    {
+        return sf::Texture(); //renderTexture.getTexture();
+    }
 
     void RenderingManager::Clear() 
     {
-        BeginDrawing();
-        ClearBackground(RAYWHITE);  // Sets background color
+        if (pm_CurrentWindow)
+        {
+            pm_CurrentWindow->clear();
+        }
     }
 
     void RenderingManager::BeginFrame()
     {
-        BeginDrawing();
+        //BeginDrawing();
     }
 
     void RenderingManager::EndFrame() 
     {
-        EndDrawing();
+        if (pm_CurrentWindow)
+        {
+            pm_CurrentWindow->display();
+        }
     }
 
-    void RenderingManager::ResizeWindow()
+    void 
+        RenderingManager::ResizeWindow()
     {
 
     }
 
-    string RenderingManager::GetRendererType() const
+    string 
+        RenderingManager::GetRendererType() 
+        const
     {
         return pm_RendererType;
     }
-    void RenderingManager::GetCurrentViewPort()
+    void
+        RenderingManager::GetCurrentViewPort()
     {
       
     }
-    unsigned int RenderingManager::GetFrameRateLimit() const
+    unsigned int 
+        RenderingManager::GetFrameRateLimit() 
+        const
     {
         return pm_FrameRateLimit;
     }
-    bool RenderingManager::IsVSyncEnabled() const
+    bool 
+        RenderingManager::IsVSyncEnabled() 
+        const
     {
         return pm_IsVSyncEnabled;
     }
-    void RenderingManager::SetVSync(const bool fp_IsEnabled)
+    void 
+        RenderingManager::SetVSync(const bool fp_IsEnabled)
     {
         if (fp_IsEnabled)
         {
             pm_IsVSyncEnabled = fp_IsEnabled;
         }
     }
-    void RenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
+    void 
+        RenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
     {
         pm_FrameRateLimit = fp_Limit;
     }

@@ -39,13 +39,11 @@ namespace PeachCore {
 
 	bool ResourceLoadingManager::LoadTextureFromSpecifiedFilePath(const string& fp_FilePath)
 	{
-		auto texture = make_unique<Texture2D>();
+		auto f_LoadedTexture = make_unique<sf::Texture>();
 
-		*texture = LoadTexture(fp_FilePath.c_str());
-
-		if (texture->id != 0)
+		if (f_LoadedTexture->loadFromFile(fp_FilePath))
 		{
-			TryPushingLoadedResourcePackage( move(make_unique<LoadedResourcePackage>("someObjectID", move(texture))) );
+			TryPushingLoadedResourcePackage( move(make_unique<LoadedResourcePackage>("someObjectID", move(f_LoadedTexture))) );
 			return true;
 		}
 

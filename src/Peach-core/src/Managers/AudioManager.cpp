@@ -158,7 +158,7 @@ namespace PeachCore {
                 {
                     // Handle creation logic here
                 },
-                [&](unique_ptr<Texture2D>& fp_TextureData)
+                [&](unique_ptr<sf::Texture>& fp_TextureData)
                 {
                     
                 },
