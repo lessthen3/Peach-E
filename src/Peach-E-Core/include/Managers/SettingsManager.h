@@ -4,6 +4,8 @@
 #include <vector>
 #include <map>
 
+//THIS IS WHERE WE HANDLE (de)SERIALIZATION OF JSON DATA
+
 namespace PeachEngine {
 
 

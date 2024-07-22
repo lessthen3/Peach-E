@@ -1,8 +1,14 @@
 #include "../../../include/Peach-Core2D/Rendering2D/PeachCamera2D.h"
 
-namespace 
-    PeachCore 
+namespace PeachCore 
 {
+
+    PeachCamera2D::~PeachCamera2D()
+    {
+
+        Disable();
+    }
+
     PeachCamera2D::PeachCamera2D(float fp_ScreenWidth, float fp_ScreenHeight)
         : m_ScreenWidth(fp_ScreenWidth), m_ScreenHeight(fp_ScreenHeight)
     {
@@ -53,5 +59,10 @@ namespace
     void PeachCamera2D::Apply() 
     {
         BeginMode2D(m_Camera);
+    }
+
+    void PeachCamera2D::Disable()
+    {
+        EndMode2D();
     }
 }

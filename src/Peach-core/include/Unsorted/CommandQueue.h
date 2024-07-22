@@ -15,6 +15,7 @@
 #include <variant>
 #include <mutex>
 #include <queue>
+#include <map>
 
 #include <glm/glm.hpp>
 
@@ -94,7 +95,8 @@ namespace PeachCore
         //implement any additional cleanup logic based off of object type if needed
     };
 
-    struct Command
+    //USED BY MAIN THREAD TO SEND DRAWING COMMANDS TO THE RENDERING THREAD
+    struct DrawCommand
     {
         //Index 0 --> CreateData, Index 1 --> UpdateData, Index 2 --> DeleteData, always. don't need a special typing system because we dont need anything else
         variant
@@ -104,6 +106,14 @@ namespace PeachCore
             vector<DeleteDrawableData>
             > DrawableData[3];                   //stores a list of all data needed to be updated that frame only need 3 spaces for our commands
     }; //implement a way to track what commands are going out on what frame, so implement a global frame tracker here for debugging purposes TOODODDODODODODODDOO
+
+    //USED BY THE RENDERING THREAD TO SEND ANY RELEVANT DATA BACK TO THE MAIN THREAD
+    struct Response
+    {
+        //queue<unique_ptr<PeachNode>> ListOfPeachNodesToAdd;
+
+    };
+
 
     class CommandQueue 
     {
@@ -115,7 +125,9 @@ namespace PeachCore
         }
 
     private:
-        queue<Command> pm_CommandQueue;
+        queue<DrawCommand> pm_SendersQueue;
+        queue<Response> pm_ResponsdersQueue;
+
         mutex Mutex;
 
         //////////////////////////////////////////////
@@ -124,22 +136,43 @@ namespace PeachCore
 
     public:
         // Push a new command onto the queue
-        void PushCommandQueue(const Command& command)
+        void PushSendersQueue(const DrawCommand& command)
         {
             lock_guard<mutex> lock(Mutex);
-            pm_CommandQueue.push(command);
+            pm_SendersQueue.push(command);
         }
 
         // Pop the next command from the queue
-        bool PopCommandQueue(Command& command) //returns true if empty, returns false if there are more commands to process--for use in while loops
+        bool PopSendersQueue(DrawCommand& command) //returns true if empty, returns false if there are more commands to process--for use in while loops
         {
             lock_guard<mutex> lock(Mutex);
 
-            if (pm_CommandQueue.empty())
+            if (pm_SendersQueue.empty())
                 {return true;}
 
-            command = move(pm_CommandQueue.front());
-            pm_CommandQueue.pop();
+            command = move(pm_SendersQueue.front());
+            pm_SendersQueue.pop();
+
+            return false;
+        }
+
+        // Push a new command onto the queue
+        void PushRespondersQueue(const Response& fp_Response)
+        {
+            lock_guard<mutex> lock(Mutex);
+            pm_ResponsdersQueue.push(fp_Response);
+        }
+
+        // Pop the next command from the queue
+        bool PopRespondersQueue(Response& fp_Response) //returns true if empty, returns false if there are more commands to process--for use in while loops
+        {
+            lock_guard<mutex> lock(Mutex);
+
+            if (pm_ResponsdersQueue.empty())
+                {return true;}
+
+            fp_Response = move(pm_ResponsdersQueue.front());
+            pm_ResponsdersQueue.pop();
 
             return false;
         }

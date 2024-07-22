@@ -50,12 +50,13 @@ namespace PeachCore {
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
-    void RenderingManager::ProcessCommands() 
+    void 
+        RenderingManager::ProcessCommands() 
     {
-        Command command;
-        while (pm_CommandQueue->PopCommandQueue(command)) 
+        DrawCommand f_DrawCommand;
+        while (pm_CommandQueue->PopSendersQueue(f_DrawCommand))
         {
-            for (auto& data : command.DrawableData)
+            for (auto& drawable_data : f_DrawCommand.DrawableData)
             {
                 visit(overloaded{
                     [&](const vector<CreateDrawableData>& fp_Data)
@@ -73,12 +74,13 @@ namespace PeachCore {
                         // Handle deletion logic here
                         // Ensure resources are properly released and objects are cleaned up
                     }
-                    }, data);
+                    }, drawable_data);
             }
         }
     }
 
-    void RenderingManager::ProcessLoadedResourcePackages()
+    void 
+        RenderingManager::ProcessLoadedResourcePackages()
     {
         unique_ptr<LoadedResourcePackage> ResourcePackage;
         while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage)) {
@@ -100,7 +102,8 @@ namespace PeachCore {
         }
     }
 
-    void RenderingManager::RenderFrame() 
+    void 
+        RenderingManager::RenderFrame() 
     {
         ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
@@ -119,35 +122,25 @@ namespace PeachCore {
             pm_Camera2D.Apply();
 
             // Draw sprite if texture is loaded
-            if (true) {
+            if (true) 
+            {
                 Texture2D f_DereferencedTexture2D = *m_TestTexture.get();
-                DrawTexturePro(
-                    f_DereferencedTexture2D, //dereference smart ptr
+
+                DrawTexturePro
+                (
+                    f_DereferencedTexture2D, //dereferenced smart ptr
+
                     { 0, 0, (float)f_DereferencedTexture2D.width, (float)f_DereferencedTexture2D.height },
+
                     { GetScreenWidth() / 2.0f, GetScreenHeight() / 2.0f, (float)f_DereferencedTexture2D.width, (float)f_DereferencedTexture2D.height },
+
                     { (float)f_DereferencedTexture2D.width / 2.0f, (float)f_DereferencedTexture2D.height / 2.0f },
+
                     0.0f,
+
                     WHITE
                 );
             }
-
-
-            //// Label
-            //GuiLabel(Rectangle({ 10, 50, 200, 20 }), "Hello, raygui!");
-
-            //// Button
-            //if (GuiButton(Rectangle({ 10, 80, 100, 30 }), "Press me")) 
-            //{
-            //    TraceLog(LOG_INFO, "Button pressed!");
-            //}
-
-            //// Slider
-            //sliderValue = GuiSlider(Rectangle({ 10, 120, 200, 20 }), "Slider", NULL, &sliderValue, 0, 100);
-
-            //// Text box
-            //GuiTextBox(Rectangle({ 10, 160, 200, 30 }), textBoxInput, sizeof(textBoxInput), true);
-
-
 
             EndDrawing(); // Update the window
         }

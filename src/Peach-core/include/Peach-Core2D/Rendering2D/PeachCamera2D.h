@@ -7,10 +7,12 @@
 
 namespace PeachCore {
 
-    class PeachCamera2D {
+    class PeachCamera2D 
+    {
     public:
         PeachCamera2D(float screenWidth, float screenHeight);
         PeachCamera2D() = default;
+        ~PeachCamera2D();
 
         void SetCenter(float x, float y);
         void SetSize(float width, float height);
@@ -22,6 +24,7 @@ namespace PeachCore {
         void Zoom(float dZoom);
 
         void Apply();
+        void Disable();
 
     private:
         Camera2D m_Camera;

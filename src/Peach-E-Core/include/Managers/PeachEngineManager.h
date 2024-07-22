@@ -14,7 +14,7 @@
 using namespace PeachCore;
 using namespace std;
 
-//#include "nuklear.h"
+#include "InternalLogManager.h"
 
 #include <unordered_map>
 #include <stdexcept>
@@ -81,6 +81,22 @@ namespace PeachEngine {
             LogManager::MainLogger().Warn("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
 
             LogManager::MainLogger().Trace("Success! This Built Correctly", "Peach-E");
+        }
+
+        void SetupInternalLogManagers()
+            const
+        {
+
+            InternalLogManager::InternalMainLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalMainLogger");
+            InternalLogManager::InternalAudioLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalAudioLogger");
+            InternalLogManager::InternalRenderingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalRenderingLogger");
+            InternalLogManager::InternalResourceLoadingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalResourceLoadingLogger");
+
+            InternalLogManager::InternalMainLogger().Debug("InternalMainLogger successfully initialized", "Peach-E");
+            InternalLogManager::InternalAudioLogger().Debug("InternalAudioLogger successfully initialized", "Peach-E");
+            InternalLogManager::InternalRenderingLogger().Debug("InternalRenderingLogger successfully initialized", "Peach-E");
+            InternalLogManager::InternalResourceLoadingLogger().Debug("InternalResourceLoadingLogger successfully initialized", "Peach-E");
+
         }
 
         //////////////////////////////////////////////

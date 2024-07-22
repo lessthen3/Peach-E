@@ -8,6 +8,8 @@
 
 #include <pybind11/pybind11.h>
 
+//#include "include/Managers/PeachEngine.h"
+#include "include/Managers/PeachEngineRenderingManager.h"
 #include "include/Managers/PeachEngineManager.h"
 #include "../Princess/include/Parsers/PythonScriptParser.h"
 
@@ -167,6 +169,7 @@ int main(int argc, char* argv[])
 
     //InitializeEditor();
     PeachEngineManager::PeachEngine().SetupLogManagers();
+    PeachEngineManager::PeachEngine().SetupInternalLogManagers();
 
     int f_WindowWidth = 800;
     int f_WindowHeight = 600;
@@ -179,14 +182,14 @@ int main(int argc, char* argv[])
     {
         //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr 
         //for the main thread to use judiciously
-        m_RenderingManagersCommandQueue = RenderingManager::Renderer().Initialize("Peach Engine", f_WindowWidth, f_WindowHeight);
+        m_RenderingManagersCommandQueue = PeachEngineRenderingManager::PeachEngineRenderer().Initialize("Peach Engine", f_WindowWidth, f_WindowHeight);
 
     //    if (!AudioManager::AudioPlayer().Initialize())
     //    {
     //        //do something idk
     //    }
         //maybe do a ResourceLoadingManager initialize if needed, idk feels weird that we dont have one yet and it just works lmao, i guess its the lazy initialization
-        m_DrawableResourceLoadingQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
+        m_DrawableResourceLoadingQueue = PeachEngineResourceLoadingManager::PeachEngineResourceLoader().GetDrawableResourceLoadingQueue();
     //    m_AudioResourceLoadingQueue = ResourceLoadingManager::ResourceLoader().GetAudioResourceLoadingQueue();
     }
     catch (const exception& ex) 
@@ -202,9 +205,9 @@ int main(int argc, char* argv[])
     //Camera2D camera(f_WindowWidth, f_WindowHeight);
     
     ////////////////////// Texture Setup ////////////////////
-    ResourceLoadingManager::ResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
+    PeachEngineResourceLoadingManager::PeachEngineResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
 
-    RenderingManager::Renderer().RenderFrame();
+    PeachEngineRenderingManager::PeachEngineRenderer().RenderFrame();
 
     /*thread T_Audio(AudioThread);
     thread T_ResourceLoading(ResourceLoadingThread);

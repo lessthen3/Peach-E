@@ -1,18 +1,18 @@
-#include "../../include/Managers/LogManager.h"
+#include "../../include/Managers/InternalLogManager.h"
 #include <fstream>
 #include <iostream>
 
 using namespace std;
 
-namespace PeachCore {
+namespace PeachEngine {
 
     void 
-        LogManager::Initialize(const string& logDirectory, const string& fp_LoggerName = "Logger") 
+        InternalLogManager::Initialize(const string& logDirectory, const string& fp_LoggerName = "Logger") 
     {
 
         if (hasBeenInitialized) //stops accidental reinitialization of logmanager
         {
-            cout << "LogManager has already been initialized, LogManager is only allowed to initialize once per run\n";
+            cout << "InternalLogManager has already been initialized, InternalLogManager is only allowed to initialize once per run\n";
             return;
         }
         else if (fp_LoggerName == "") //prevents any directory nonsense
@@ -23,9 +23,9 @@ namespace PeachCore {
         m_LoggerName = fp_LoggerName;
 
         // Ensure log directory exists
-        if (!filesystem::exists(logDirectory)) 
+        if (!filesystem::exists(logDirectory))
         {
-            try 
+            try
             {
                 filesystem::create_directories(logDirectory);
             }
@@ -34,11 +34,11 @@ namespace PeachCore {
                 cerr << "An error occurred: " << ex.what() << endl;
                 return;
             }
-            
+
         }
         // Create log files if they don't exist
         CreateLogFiles(logDirectory);
-        
+
         // Define sinks
         vector<spdlog::sink_ptr> sinks;
 
@@ -60,36 +60,49 @@ namespace PeachCore {
         logger->flush_on(spdlog::level::trace);   // Flush the logger on every trace log message
 
         spdlog::register_logger(logger);  // Register the logger with spdlog
-       
+
         hasBeenInitialized = true; //logger should be fully initialized successfully
     }
 
-    void LogManager::Trace(const string& message, const string& className) {
+    void 
+        InternalLogManager::Trace(const string& message, const string& className) 
+    {
         logger->trace("[{}] {}", className, message);
     }
 
-    void LogManager::Debug(const string& message, const string& className) {
+    void 
+        InternalLogManager::Debug(const string& message, const string& className) 
+    {
         logger->debug("[{}] {}", className, message);
     }
 
-    void LogManager::Info(const string& message, const string& className) {
+    void 
+        InternalLogManager::Info(const string& message, const string& className) 
+    {
         logger->info("[{}] {}", className, message);
     }
 
-    void LogManager::Warn(const string& message, const string& className) {
+    void 
+        InternalLogManager::Warn(const string& message, const string& className) 
+    {
         logger->warn("[{}] {}", className, message);
     }
 
-    void LogManager::Error(const string& message, const string& className) {
+    void 
+        InternalLogManager::Error(const string& message, const string& className) 
+    {
         logger->error("[{}] {}", className, message);
     }
 
-    void LogManager::Fatal(const string& message, const string& className) {
+    void 
+        InternalLogManager::Fatal(const string& message, const string& className)
+    {
         logger->critical("[{}] {}", className, message);
     }
 
     void 
-        LogManager::CreateLogFiles(const string& logDirectory) 
+        InternalLogManager::CreateLogFiles(const string& logDirectory) 
+            const
     {
         vector<string> logFiles = {
             "trace.log",

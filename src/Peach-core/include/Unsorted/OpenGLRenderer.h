@@ -103,15 +103,6 @@ namespace PeachCore
             glClearColor(0.27f, 0.5f, 0.8f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | (pm_Is3DEnabled ? GL_DEPTH_BUFFER_BIT : 0));
 
-            // Assuming shaderProgram is active and configured
-            ShaderProgram f_CurrentShaderProgram = pm_ShaderPrograms.at("Test_Program");
-            glUseProgram(f_CurrentShaderProgram.GetProgramID());
-
-           // Texture setup
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, fp_TextureID);
-            glUniform1i(f_CurrentShaderProgram.GetUniformLocation("texture_sampler"), 0);
-
             //// Setup vertices and texture coordinates based on position, size, and UVs
             //Vertex vertices[] = {
             //    // positions         // texture coords
@@ -148,6 +139,17 @@ namespace PeachCore
             glEnableVertexAttribArray(0);
             glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(3 * sizeof(GLfloat))); // Texture coord attribute
             glEnableVertexAttribArray(1);
+
+            //I MOVED THIS CODE AFTER WE BIND THE BUFFERS BECAUSE I WANNA SEE IF IT DOES ANYTHING >W< FOR SOME REASON
+            // OUR VERTEX SHADER ISNT PROPERLY LOADING AND IT HURTS ME
+            // Assuming shaderProgram is active and configured
+            ShaderProgram f_CurrentShaderProgram = pm_ShaderPrograms.at("Test_Program");
+            glUseProgram(f_CurrentShaderProgram.GetProgramID());
+
+            // Texture setup
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, fp_TextureID);
+            glUniform1i(f_CurrentShaderProgram.GetUniformLocation("texture_sampler"), 0);
 
             // Draw the quad
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
