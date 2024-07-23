@@ -414,11 +414,18 @@ namespace PeachEditor {
             // Peach-E Console
             //////////////////////////////////////////////
 
+            //ImGui::Begin("Console DockSpace");
+
+            //ImGuiID console_dock_space_ID = ImGui::GetID("Console DockSpace");
+            //ImGui::DockSpace(console_dock_space_ID);
+
+            //ImGui::SetNextWindowDockID(console_dock_space_ID, ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowPos(ImVec2(0, pm_CurrentWindow->getSize().y * 0.60f)); //start at the y point thats right "above" (below in this context) the viewport
+            ImGui::SetNextWindowSize(ImVec2(pm_CurrentWindow->getSize().x * 0.70f, pm_CurrentWindow->getSize().y * 0.40f)); //SIZE OF PEACH-E CONSOLE
+
             pm_EditorConsole->Draw("PEACH CONSOLE", &f_ShouldConsoleBeOpen);
 
-            ImGui::Begin("Inspector");
-            ImGui::Text("Inspector");
-            ImGui::End();
+            //ImGui::End(); //End Console DockSpace
 
             ImGui::SFML::Render(*pm_CurrentWindow);			// ends the ImGui content mode. Make all ImGui calls before this
 
