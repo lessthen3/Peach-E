@@ -150,6 +150,12 @@ namespace PeachCore {
         // Main loop that continues until the window is closed
         while (pm_CurrentWindow->isOpen()) 
         {
+            if (pm_IsShutDown) //used to stop rendering loop if possible when ForceQuit() is called
+            {
+                pm_CurrentWindow->clear();
+                pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
+                break;
+            }
             // Process events
             sf::Event event;
 

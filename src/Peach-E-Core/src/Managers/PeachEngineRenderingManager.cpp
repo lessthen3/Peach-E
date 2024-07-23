@@ -59,7 +59,7 @@ namespace PeachEditor {
         pm_HasBeenInitialized = true;
 
         CreatePeachEConsole();
-        SetupRenderTexture(300, 300);
+        SetupRenderTexture(pm_CurrentWindow->getSize().x, pm_CurrentWindow->getSize().y);
 
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
@@ -150,7 +150,10 @@ namespace PeachEditor {
 
         ImGui::SFML::Init(*pm_CurrentWindow); 	// sets up ImGui with ether a dark or light default theme
 
-        sf::Clock deltaClock;
+        ImGuiIO& f_ImGuiIO = ImGui::GetIO();
+        f_ImGuiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
+
+        sf::Clock f_DeltaClock;
 
         PeachCore::RenderingManager::Renderer().Initialize();
 
@@ -176,7 +179,23 @@ namespace PeachEditor {
                 {
                     pm_CurrentWindow->close();
                 }
+
+                // Handle window resize
+                if (event.type == sf::Event::Resized) 
+                {
+                    // Recreate the render texture with new dimensions
+                    ResizeRenderTexture(event.size.width, event.size.height);
+                    pm_Camera2D->SetSize(event.size.width, event.size.height); // Adjust camera as well if necessary
+                    pm_Camera2D->SetCenter(event.size.width * 0.50f, event.size.height * 0.50f);
+                    pm_CurrentWindow->setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
+                }
             }
+
+            //////////////////////////////////////////////
+            // Update Imgui UI
+            //////////////////////////////////////////////
+
+            ImGui::SFML::Update(*pm_CurrentWindow, f_DeltaClock.restart()); // starts the ImGui content mode. Make all ImGui calls after this
 
             //////////////////////////////////////////////
             // Render Texture Setup
@@ -186,27 +205,36 @@ namespace PeachEditor {
             {
                 pm_ViewportRenderTexture->clear(sf::Color(128, 128, 128)); // Clear with grey >w<, or any color you need
 
-                //// Draw your game elements to the renderTexture instead of the window
-                //// For example:
-                //pm_ViewportRenderTexture->draw(sprite);
-
                 pm_ViewportRenderTexture->display(); // Updates the texture with what has been drawn
 
-                //// Now the renderTexture contains the updated scene
-                //// You can convert it to a sprite and draw it on your main window or use it in the GUI
-                sf::Sprite f_SceneSprite(pm_ViewportRenderTexture->getTexture());
+                // Initialize Dockspace
+                ImGuiID dockspace_id = ImGui::GetID("ViewportDockspace");
+                ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
-                //// Set position, scale or any transformations needed for your GUI layout
-                f_SceneSprite.setPosition(10, 10); // Example: position it within your GUI
+                ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+                                                                       ImGuiWindowFlags_NoResize    | ImGuiWindowFlags_NoMove |
+                                                                       ImGuiWindowFlags_NoScrollbar| ImGuiWindowFlags_NoScrollWithMouse;
 
-                pm_CurrentWindow->draw(f_SceneSprite); // Draw the texture sprite to the main window
+                //ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.5f); // Adjust border size
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));  // Set padding to zero for current window
+                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // Set border color to white
+
+
+                ImGui::SetNextWindowPos(ImVec2(0, 0));
+                ImGui::SetNextWindowSize(ImVec2(pm_CurrentWindow->getSize().x * 0.70f, pm_CurrentWindow->getSize().y *0.60f)); //SIZE OF IMGUI VIEWPORT
+                //ImGui::SetNextWindowDockID(ImGui::GetID("MyDockSpace"), ImGuiCond_FirstUseEver);
+
+                if (ImGui::Begin("Viewport", nullptr, window_flags))
+                {
+                   // ImVec2 content_region_avail = ImGui::GetContentRegionAvail(); // Get available space in the window
+                    // Display texture fitted to the available window space
+                    ImGui::Image(*pm_ViewportRenderTexture);
+                }
+
+                ImGui::End();
+                ImGui::PopStyleVar(); // Pop border size
+                ImGui::PopStyleColor(); // Pop border color
             }
-
-            //////////////////////////////////////////////
-            // Update Imgui UI
-            //////////////////////////////////////////////
-
-            ImGui::SFML::Update(*pm_CurrentWindow, deltaClock.restart()); // starts the ImGui content mode. Make all ImGui calls after this
 
             //////////////////////////////////////////////
             // Virtual File System Setup
@@ -240,6 +268,8 @@ namespace PeachEditor {
                     if (ImGui::MenuItem("Exit")) //THIS CRASHES EVERYTHING BUT I GUESS THAT IS A WAY TO CLOSE STUFF
                     {
                         Clear(); // IMPORTANT: NEEDA EXPLICITLY ENDDRAWING() BEFORE CALLING CLOSEWINDOW!
+                        m_IsSceneCurrentlyRunning = false;
+                        PeachCore::RenderingManager::Renderer().ForceQuit();
                         break;
                     }
                     ImGui::EndMenu();
@@ -263,19 +293,21 @@ namespace PeachEditor {
                     if (ImGui::MenuItem("Run Peach-E Project") && !m_IsSceneCurrentlyRunning)
                     {
                         // Run the game in a new window
-                        thread T_GameThread([]() 
+                        thread T_CurrentSceneRunnerThread([]()
                             {
                                 PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
                                 PeachCore::RenderingManager::Renderer().RenderFrame();
                                 PeachCore::RenderingManager::Renderer().Shutdown();
+                                
                                 PeachEngineRenderingManager::PeachEngineRenderer().m_IsSceneCurrentlyRunning = false;
                             });
-                        T_GameThread.detach();
+                        T_CurrentSceneRunnerThread.detach();
                         m_IsSceneCurrentlyRunning = true;
                     }
-                    if (ImGui::MenuItem("Build Peach-E Project"))
+                    if (ImGui::MenuItem("Force Quit Peach-E Project"))
                     {
-                        // Open action
+                        m_IsSceneCurrentlyRunning = false;
+                        PeachCore::RenderingManager::Renderer().ForceQuit();
                     }
                     ImGui::EndMenu();
                 }
@@ -347,8 +379,6 @@ namespace PeachEditor {
             // Setting Up Scene View
             //////////////////////////////////////////////
 
-            //ImGui::Begin("Viewport");
-
             ImVec2 viewportSize = ImGui::GetContentRegionAvail();
             ImVec2 viewportPos = ImGui::GetCursorScreenPos();
 
@@ -390,9 +420,6 @@ namespace PeachEditor {
             ImGui::Text("Inspector");
             ImGui::End();
 
-
-            //pm_CurrentWindow->clear(sf::Color(0, 0, 139));
-
             ImGui::SFML::Render(*pm_CurrentWindow);			// ends the ImGui content mode. Make all ImGui calls before this
 
             // Draw the sprite
@@ -401,13 +428,12 @@ namespace PeachEditor {
             // Update the window
             pm_CurrentWindow->display();
         }
-        //TO-DO: set flags that indicate the current state of closewindow and imguishutdown, because if we call them again in the destructor it realllllllly doesn't like that
-        // after your game loop is over, before you close the window
+
         ImGui::SFML::Shutdown();		// cleans up ImGui
     }
 
     // Call this method to setup the render texture
-    bool PeachEngineRenderingManager::SetupRenderTexture(unsigned int width, unsigned int height)
+    bool PeachEngineRenderingManager::SetupRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour) //pass in screen width and size, and it scales it to the desired proportions automatically
     {
         if (pm_ViewportRenderTexture)
         {
@@ -417,11 +443,14 @@ namespace PeachEditor {
 
         pm_ViewportRenderTexture = make_unique<sf::RenderTexture>();
 
-        if (pm_ViewportRenderTexture->create(width, height))
+        if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && !IsNearestNeighbour)
         {
             pm_ViewportRenderTexture->setSmooth(true);
         }
-
+        else if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && IsNearestNeighbour)
+        {
+            pm_ViewportRenderTexture->setSmooth(false);
+        }
         else
         {
             InternalLogManager::InternalRenderingLogger().Warn("Failed to create a valid instance of pm_ViewportRenderTexture, setting it back to nullptr", "PeachEngineRenderingManager");
@@ -432,17 +461,37 @@ namespace PeachEditor {
         return true;
     }
 
+    bool PeachEngineRenderingManager::ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour)  //pass in screen width and size, and it scales it to the desired proportions automatically
+    {
+        if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && !IsNearestNeighbour)
+        {
+            pm_ViewportRenderTexture->setSmooth(true);
+        }
+        else if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && IsNearestNeighbour)
+        {
+            pm_ViewportRenderTexture->setSmooth(false);
+        }
+        else
+        {
+            InternalLogManager::InternalRenderingLogger().Warn("Failed to resize a valid instance of pm_ViewportRenderTexture, setting it back to nullptr", "PeachEngineRenderingManager");
+            pm_ViewportRenderTexture = nullptr;
+            return false;
+        }
+
+        return true;
+    }
+
+    void PeachEngineRenderingManager::RunCurrentScene()
+    {
+
+    }
+
     void PeachEngineRenderingManager::Clear()
     {
         if (pm_CurrentWindow)
         {
             pm_CurrentWindow->clear();
         }
-    }
-
-    void PeachEngineRenderingManager::BeginFrame()
-    {
-        //BeginDrawing();
     }
 
     void PeachEngineRenderingManager::EndFrame()
@@ -461,11 +510,6 @@ namespace PeachEditor {
     void PeachEngineRenderingManager::CreateSceneTreeViewPanel()
     {
 
-
-    }
-
-    void PeachEngineRenderingManager::ResizeWindow()
-    {
 
     }
 

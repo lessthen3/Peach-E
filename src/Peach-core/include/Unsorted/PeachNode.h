@@ -5,27 +5,27 @@
 #include <memory>
 #include "../Unsorted/PeachObject.h"
 
+using namespace std;
+
 namespace PeachCore {
 
-	class PeachNode: public PeachObject 
+	class PeachNode : public PeachObject
 	{
 	public:
-		PeachNode() {
-
-		}
 		virtual ~PeachNode();
 
-		virtual void Initialize();
-		virtual void Update(float fp_TimeSinceLastFrame);
-		virtual void ConstantUpdate(float fp_TimeSinceLastFrame);
+		virtual void Initialize() = 0;
+		virtual void Update(float fp_TimeSinceLastFrame) = 0;
+		virtual void ConstantUpdate(float fp_TimeSinceLastFrame) = 0;
 		//virtual void HalfConstantUpdate(float fp_TimeSinceLastFrame);
-		virtual void OnSceneTreeExit();
+		virtual void OnSceneTreeExit() = 0;
+		virtual void Draw() = 0;
 
 		bool IsPausable = true;
 		bool IsVisible = true;
 		bool ShouldBeInTree = false;
 
-		std::vector<std::unique_ptr<PeachNode>> m_Children;
+		vector<unique_ptr<PeachNode>> m_Children;
 
 		PeachNode GetPeachNode();
 
@@ -41,9 +41,9 @@ namespace PeachCore {
 
 		void GetViewPort();
 
-		std::string GetPathInTree();
+		string GetPathInTree();
 
-		PeachNode* FindChild(std::string fp_DesiredPeachNode); //returns first instance of child found matching the name
+		PeachNode* FindChild(string fp_DesiredPeachNode); //returns first instance of child found matching the name
 
 		PeachNode Replicate();
 

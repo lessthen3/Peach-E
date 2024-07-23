@@ -6,7 +6,7 @@ namespace PeachCore {
     {
         if (!pm_Texture.IsValid())
         {
-            LogManager::MainLogger().Warn("Attempted to create tiles for tile set when no texture was loaded", name);
+            LogManager::MainLogger().Warn("Attempted to create tiles for tile set when no texture was loaded", m_Name);
             return;
         }
 
@@ -63,7 +63,7 @@ namespace PeachCore {
     {
         if (!pm_Texture.IsValid())
         {
-            LogManager::MainLogger().Warn("Attempted to set UV's for tile set when no texture was loaded", name);
+            LogManager::MainLogger().Warn("Attempted to set UV's for tile set when no texture was loaded", m_Name);
             return;
         }
 
@@ -118,7 +118,7 @@ namespace PeachCore {
     {
         if (fp_Index < 0 || fp_Index >= m_Tiles.size())
         {
-            LogManager::MainLogger().Warn("Attempted to access invalid index number for tile set list", name);
+            LogManager::MainLogger().Warn("Attempted to access invalid index number for tile set list", m_Name);
             throw std::out_of_range("Tile index is out of range.");
         }
     }

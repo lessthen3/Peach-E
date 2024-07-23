@@ -79,16 +79,6 @@ namespace PeachCore {
 
         }
 
-        void LoadResource(const string& fp_ObjectID, const string& fp_ResourceFilePath, const Drawable& fp_GraphicsType) //Should call to ResourceLoadingManager to initiate loading on a seperate thread
-        {
-            //create LoadCommand
-        }
-
-        void LoadTexture(const string& fp_ResourceFilePath)
-        {
-            //create LoadCommand specifically for a sf::Texture
-        }
-
     public:
 
         bool CreateWindowAndCamera2D(const string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
@@ -123,11 +113,15 @@ namespace PeachCore {
 
         bool IsVSyncEnabled() const;
 
+        void ForceQuit()
+        {
+            pm_IsShutDown = true;
+        }
 
     private:
         unsigned int pm_FrameRateLimit = 60;
         bool pm_IsVSyncEnabled = false;
-
+        bool pm_IsShutDown = false;
     private:
         unsigned long int pm_CurrentFrame = 0;
         shared_ptr<CommandQueue> pm_CommandQueue;

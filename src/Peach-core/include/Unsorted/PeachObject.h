@@ -2,25 +2,24 @@
 
 #include <string>
 
+using namespace std;
+
 namespace PeachCore {
 
     //Base Node class
-        class PeachObject {
+        class PeachObject 
+        {
 
         public:
-            PeachObject(){
-
-            }
             virtual ~PeachObject();
 
-            virtual void Update(float dt) = 0;
-            virtual void ConstantUpdate(float dt) = 0;
-            virtual void Draw() = 0;
+            virtual void Update(float fp_TimeSinceLastFrame) = 0;
+            virtual void ConstantUpdate(float fp_TimeSinceLastFrame) = 0;
 
-            std::string name;
+            string m_Name;
 
         protected:
-            PeachObject(const std::string& name) : name(name) {}
+            PeachObject(const string& fp_Name) : m_Name(fp_Name) {}
     };
 
 }

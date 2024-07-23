@@ -90,7 +90,8 @@ namespace PeachEditor {
         void ProcessCommands();
         void ProcessLoadedResourcePackages();
 
-        bool SetupRenderTexture(unsigned int width, unsigned int height);
+        bool SetupRenderTexture(const unsigned int width, const unsigned int height, bool IsNearestNeighbour = false);
+        bool ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour = false);
 
         const sf::RenderTexture& GetRenderTexture()
             const;
@@ -117,12 +118,12 @@ namespace PeachEditor {
 
         bool IsVSyncEnabled() const;
 
+        void RunCurrentScene();
+
         atomic<bool> m_IsSceneCurrentlyRunning = false; //tracks whether the current working scene in the current peach project, is running in the editor
 
 
     private:
-        unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
-
         bool pm_HasViewportRenderTextureBeenInitialized = false;
         bool pm_HasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
 
@@ -150,6 +151,7 @@ namespace PeachEditor {
         sf::RenderWindow* pm_CurrentWindow = nullptr;
 
         unique_ptr<PeachEConsole> pm_EditorConsole = nullptr;
+        unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
     };
 
 }
