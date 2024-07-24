@@ -10,8 +10,21 @@ namespace PeachEditor {
 
     PeachEngineRenderingManager::~PeachEngineRenderingManager()
     {
-        delete pm_Camera2D;
-        delete pm_CurrentWindow;
+        Shutdown();
+    }
+
+    void PeachEngineRenderingManager::Shutdown()
+    {
+        if (pm_Camera2D)
+        {
+            delete pm_Camera2D;
+            pm_Camera2D = nullptr;
+        }
+        if (pm_CurrentWindow)
+        {
+            delete pm_CurrentWindow;
+            pm_CurrentWindow = nullptr;
+        }
     }
 
     PeachEngineRenderingManager::PeachEngineRenderingManager()
@@ -127,35 +140,35 @@ namespace PeachEditor {
         //ProcessCommands(); //process all updates
                 // Main loop that continues until the window is closed
 
-        //sf::Sprite sprite;
-        //sprite.setTexture(*m_TestTexture);
-
-        //// Get the size of the window
-        //sf::Vector2u windowSize = pm_CurrentWindow->getSize();
-
-        //// Get the size of the texture
-        //sf::Vector2u textureSize = m_TestTexture->getSize();
-
-        //// Calculate scale factors
-        //float scaleX = float(windowSize.x) / textureSize.x;
-        //float scaleY = float(windowSize.y) / textureSize.y;
-
-        //// Set the scale of the sprite
-        //sprite.setScale(scaleX, scaleY);
-
-        //sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
-        //sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
-
         bool f_ShouldConsoleBeOpen = true;
 
         ImGui::SFML::Init(*pm_CurrentWindow); 	// sets up ImGui with ether a dark or light default theme
 
-        ImGuiIO& f_ImGuiIO = ImGui::GetIO();
-        f_ImGuiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
+        //ImGuiIO& f_ImGuiIO = ImGui::GetIO();
+        //f_ImGuiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
 
         sf::Clock f_DeltaClock;
 
         PeachCore::RenderingManager::Renderer().Initialize();
+
+        float f_MainMenuBarYOffSet = 0.0f; //used for tracking the total y size of the mainmenu bar
+
+        //also makings only one call to the windowsize each loop, just feels cleaner and easier to read
+        float f_CurrentAvailableWindowSpaceX = 0.0f; //adjusts for the main menu bar offset
+        float f_CurrentAvailableWindowSpaceY = 0.0f;
+
+        ImGuiWindowFlags file_system_window_flags
+            = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+
+        ImGuiWindowFlags viewport_window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+
+        ImGuiWindowFlags scene_tree_view_window_flags
+            = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+
+        ImGuiWindowFlags console_window_flags
+            = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
         //////////////////////////////////////////////
         // MAIN RENDER LOOP FOR THE EDITOR
@@ -198,54 +211,6 @@ namespace PeachEditor {
             ImGui::SFML::Update(*pm_CurrentWindow, f_DeltaClock.restart()); // starts the ImGui content mode. Make all ImGui calls after this
 
             //////////////////////////////////////////////
-            // Render Texture Setup
-            //////////////////////////////////////////////
-
-            if (pm_ViewportRenderTexture)
-            {
-                pm_ViewportRenderTexture->clear(sf::Color(128, 128, 128)); // Clear with grey >w<, or any color you need
-
-                pm_ViewportRenderTexture->display(); // Updates the texture with what has been drawn
-
-                // Initialize Dockspace
-                ImGuiID dockspace_id = ImGui::GetID("ViewportDockspace");
-                ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
-
-                ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-                                                                       ImGuiWindowFlags_NoResize    | ImGuiWindowFlags_NoMove |
-                                                                       ImGuiWindowFlags_NoScrollbar| ImGuiWindowFlags_NoScrollWithMouse;
-
-                //ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.5f); // Adjust border size
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));  // Set padding to zero for current window
-                ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // Set border color to white
-
-
-                ImGui::SetNextWindowPos(ImVec2(0, 0));
-                ImGui::SetNextWindowSize(ImVec2(pm_CurrentWindow->getSize().x * 0.70f, pm_CurrentWindow->getSize().y *0.60f)); //SIZE OF IMGUI VIEWPORT
-                //ImGui::SetNextWindowDockID(ImGui::GetID("MyDockSpace"), ImGuiCond_FirstUseEver);
-
-                if (ImGui::Begin("Viewport", nullptr, window_flags))
-                {
-                   // ImVec2 content_region_avail = ImGui::GetContentRegionAvail(); // Get available space in the window
-                    // Display texture fitted to the available window space
-                    ImGui::Image(*pm_ViewportRenderTexture);
-                }
-
-                ImGui::End();
-                ImGui::PopStyleVar(); // Pop border size
-                ImGui::PopStyleColor(); // Pop border color
-            }
-
-            //////////////////////////////////////////////
-            // Virtual File System Setup
-            //////////////////////////////////////////////
-
-            // Your ImGui code goes here
-            ImGui::Begin("Editor");
-            ImGui::Text("Hello, Raylib ImGui!");
-            ImGui::End();
-
-            //////////////////////////////////////////////
             // Menu Bar Setup
             //////////////////////////////////////////////
 
@@ -253,15 +218,19 @@ namespace PeachEditor {
             {
                 if (ImGui::BeginMenu("File"))
                 {
-                    if (ImGui::MenuItem("New"))
+                    if (ImGui::MenuItem("New Project"))
                     {
                         // New action
                     }
-                    if (ImGui::MenuItem("Open"))
+                    if (ImGui::MenuItem("Open Project"))
                     {
                         // Open action
                     }
-                    if (ImGui::MenuItem("Save"))
+                    if (ImGui::MenuItem("Save Project"))
+                    {
+                        // Save action
+                    }
+                    if (ImGui::MenuItem("Save Project as. . ."))
                     {
                         // Save action
                     }
@@ -329,13 +298,13 @@ namespace PeachEditor {
                     ImGui::EndMenu();
                 }
 
-                if (ImGui::BeginMenu("View"))
+                if (ImGui::BeginMenu("Editor"))
                 {
-                    if (ImGui::MenuItem("Delete"))
+                    if (ImGui::MenuItem("Editor Theme"))
                     {
-                        // New action
+                        // Open action
                     }
-                    if (ImGui::MenuItem("Duplicate"))
+                    if (ImGui::MenuItem("Editor Settings"))
                     {
                         // Open action
                     }
@@ -347,14 +316,6 @@ namespace PeachEditor {
                     if (ImGui::MenuItem("Open Terminal"))
                     {
                         // New action
-                    }
-                    if (ImGui::MenuItem("Editor Theme"))
-                    {
-                        // Open action
-                    }
-                    if (ImGui::MenuItem("Editor Settings"))
-                    {
-                        // Open action
                     }
                     ImGui::EndMenu();
                 }
@@ -375,38 +336,87 @@ namespace PeachEditor {
                 ImGui::EndMainMenuBar();
             }
 
+            f_MainMenuBarYOffSet = ImGui::GetItemRectSize().y;
+
+            f_CurrentAvailableWindowSpaceX = pm_CurrentWindow->getSize().x;
+            f_CurrentAvailableWindowSpaceY = pm_CurrentWindow->getSize().y - f_MainMenuBarYOffSet;
+
             //////////////////////////////////////////////
-            // Setting Up Scene View
-            //////////////////////////////////////////////
+           // Render Texture Setup
+           //////////////////////////////////////////////
 
-            ImVec2 viewportSize = ImGui::GetContentRegionAvail();
-            ImVec2 viewportPos = ImGui::GetCursorScreenPos();
-
-            // Get mouse position in viewport
-            ImVec2 mousePos = ImGui::GetMousePos();
-            bool isMouseInViewport = ImGui::IsMouseHoveringRect(viewportPos, ImVec2(viewportPos.x + viewportSize.x, viewportPos.y + viewportSize.y));
-
-            if (isMouseInViewport)
+            if (pm_ViewportRenderTexture)
             {
-                //// Convert ImGui mouse coordinates to viewport coordinates
-                //Vector2 mousePosInViewport = { mousePos.x - viewportPos.x, mousePos.y - viewportPos.y };
+                pm_ViewportRenderTexture->clear(sf::Color(128, 128, 128)); // Clear with grey >w<, or any color you need
 
-                //// Handle drag and drop or selection
-                //if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-                //    // Handle mouse click
-                //}
-                //if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-                //    // Handle mouse drag
-                //}
+                pm_ViewportRenderTexture->display(); // Updates the texture with what has been drawn
+
+                // Initialize Dockspace
+                ImGuiID dockspace_id = ImGui::GetID("ViewportDockspace");
+                ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+
+                //ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.5f); // Adjust border size
+                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));  // Set padding to zero for current window
+                //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // Set border color to white
+
+
+                ImGui::SetNextWindowPos(ImVec2(0, f_MainMenuBarYOffSet));
+                ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.60f)); //SIZE OF IMGUI VIEWPORT
+
+                if (ImGui::Begin("Viewport", nullptr, viewport_window_flags))
+                {
+                    ImGui::Image(*pm_ViewportRenderTexture);
+                }
+
+                ImGui::End();
+                ImGui::PopStyleVar(); // Pop border size
+                //ImGui::PopStyleColor(); // Pop border color
             }
 
+            //ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+            //ImVec2 viewportPos = ImGui::GetCursorScreenPos();
+
+            //// Get mouse position in viewport
+            //ImVec2 mousePos = ImGui::GetMousePos();
+            //bool isMouseInViewport = ImGui::IsMouseHoveringRect(viewportPos, ImVec2(viewportPos.x + viewportSize.x, viewportPos.y + viewportSize.y));
+
+            //if (isMouseInViewport)
+            //{
+            //    //// Convert ImGui mouse coordinates to viewport coordinates
+            //    //Vector2 mousePosInViewport = { mousePos.x - viewportPos.x, mousePos.y - viewportPos.y };
+
+            //    //// Handle drag and drop or selection
+            //    //if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+            //    //    // Handle mouse click
+            //    //}
+            //    //if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+            //    //    // Handle mouse drag
+            //    //}
+            //}
+
+            //////////////////////////////////////////////
+            // Virtual File System Setup
+            //////////////////////////////////////////////
+
+            //start at the (x,y) that is located at the bottom right corner of the viewport
+            ImGui::SetNextWindowPos(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.60f + f_MainMenuBarYOffSet));
+            //SIZE OF FILE SYSTEM VIEW PANEL
+            ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.30f, f_CurrentAvailableWindowSpaceY * 0.40f + f_MainMenuBarYOffSet));
+
+            // Your ImGui code goes here
+            ImGui::Begin("File System", nullptr, file_system_window_flags);
+            ImGui::Text("Hello PhysFS");
+            ImGui::End();
 
             //////////////////////////////////////////////
             // Scene Tree View Panel
             //////////////////////////////////////////////
 
+            ImGui::SetNextWindowPos(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_MainMenuBarYOffSet)); //start at the x point thats directly to the right of the viewport
+            ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.30f, f_CurrentAvailableWindowSpaceY * 0.60f)); //SIZE OF SCENE TREE VIEW PANEL
+
             // Panels
-            ImGui::Begin("Hierarchy");
+            ImGui::Begin("Hierarchy", nullptr, scene_tree_view_window_flags);
             ImGui::Text("Scene Hierarchy");
             ImGui::End();
 
@@ -414,23 +424,15 @@ namespace PeachEditor {
             // Peach-E Console
             //////////////////////////////////////////////
 
-            //ImGui::Begin("Console DockSpace");
-
-            //ImGuiID console_dock_space_ID = ImGui::GetID("Console DockSpace");
-            //ImGui::DockSpace(console_dock_space_ID);
-
             //ImGui::SetNextWindowDockID(console_dock_space_ID, ImGuiCond_FirstUseEver);
-            ImGui::SetNextWindowPos(ImVec2(0, pm_CurrentWindow->getSize().y * 0.60f)); //start at the y point thats right "above" (below in this context) the viewport
-            ImGui::SetNextWindowSize(ImVec2(pm_CurrentWindow->getSize().x * 0.70f, pm_CurrentWindow->getSize().y * 0.40f)); //SIZE OF PEACH-E CONSOLE
+            ImGui::SetNextWindowPos(ImVec2(0, f_CurrentAvailableWindowSpaceY * 0.60f + f_MainMenuBarYOffSet)); //start at the y point thats right "above" (below in this context) the viewport
+            ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.40f + f_MainMenuBarYOffSet)); //SIZE OF PEACH-E CONSOLE
 
-            pm_EditorConsole->Draw("PEACH CONSOLE", &f_ShouldConsoleBeOpen);
+            pm_EditorConsole->Draw("PEACH CONSOLE", console_window_flags, &f_ShouldConsoleBeOpen);
 
             //ImGui::End(); //End Console DockSpace
 
             ImGui::SFML::Render(*pm_CurrentWindow);			// ends the ImGui content mode. Make all ImGui calls before this
-
-            // Draw the sprite
-            //pm_CurrentWindow->draw(sprite);
 
             // Update the window
             pm_CurrentWindow->display();
@@ -440,7 +442,8 @@ namespace PeachEditor {
     }
 
     // Call this method to setup the render texture
-    bool PeachEngineRenderingManager::SetupRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour) //pass in screen width and size, and it scales it to the desired proportions automatically
+    bool 
+        PeachEngineRenderingManager::SetupRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour) //pass in screen width and size, and it scales it to the desired proportions automatically
     {
         if (pm_ViewportRenderTexture)
         {
@@ -468,7 +471,8 @@ namespace PeachEditor {
         return true;
     }
 
-    bool PeachEngineRenderingManager::ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour)  //pass in screen width and size, and it scales it to the desired proportions automatically
+    bool 
+        PeachEngineRenderingManager::ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour)  //pass in screen width and size, and it scales it to the desired proportions automatically
     {
         if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && !IsNearestNeighbour)
         {
@@ -488,12 +492,14 @@ namespace PeachEditor {
         return true;
     }
 
-    void PeachEngineRenderingManager::RunCurrentScene()
+    void 
+        PeachEngineRenderingManager::RunCurrentScene()
     {
 
     }
 
-    void PeachEngineRenderingManager::Clear()
+    void 
+        PeachEngineRenderingManager::Clear()
     {
         if (pm_CurrentWindow)
         {
@@ -501,7 +507,8 @@ namespace PeachEditor {
         }
     }
 
-    void PeachEngineRenderingManager::EndFrame()
+    void 
+        PeachEngineRenderingManager::EndFrame()
     {
         if (pm_CurrentWindow)
         {
@@ -509,12 +516,14 @@ namespace PeachEditor {
         }
     }
 
-    void PeachEngineRenderingManager::CreatePeachEConsole()
+    void 
+        PeachEngineRenderingManager::CreatePeachEConsole()
     {
         pm_EditorConsole = make_unique<PeachEConsole>();
     }
 
-    void PeachEngineRenderingManager::CreateSceneTreeViewPanel()
+    void 
+        PeachEngineRenderingManager::CreateSceneTreeViewPanel()
     {
 
 

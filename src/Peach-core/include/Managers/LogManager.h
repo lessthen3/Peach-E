@@ -13,33 +13,33 @@ namespace PeachCore {
     class LogManager {
     public:
         static LogManager& Logger() {
-            static LogManager instance;
-            return instance;
+            static LogManager logger;
+            return logger;
         }
 
         static LogManager& RenderingLogger() {
-            static LogManager renderinglogger;
-            return renderinglogger;
+            static LogManager rendering_logger;
+            return rendering_logger;
         }
 
         static LogManager& MainLogger() {
-            static LogManager mainlogger;
-            return mainlogger;
+            static LogManager main_logger;
+            return main_logger;
         }
 
         static LogManager& AudioLogger() {
-            static LogManager audiologger;
-            return audiologger;
+            static LogManager audio_logger;
+            return audio_logger;
         }
 
         static LogManager& NetworkLogger() {
-            static LogManager networklogger;
-            return networklogger;
+            static LogManager network_logger;
+            return network_logger;
         }
 
         static LogManager& ResourceLoadingLogger() {
-            static LogManager resourceloaderlogger;
-            return resourceloaderlogger;
+            static LogManager resourceloader_logger;
+            return resourceloader_logger;
         }
 
         void Initialize(const std::string& logDirectory, const std::string& fp_LoggerName);

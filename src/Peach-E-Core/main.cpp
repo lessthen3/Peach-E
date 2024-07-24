@@ -28,6 +28,92 @@ shared_ptr<LoadingQueue> m_DrawableResourceLoadingQueue; //used to push load com
 //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
 //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
 
+#include <iostream>
+#include <filesystem>
+#include <unordered_map>
+#include <string>
+#include <chrono>
+#include <thread>
+
+using namespace std;
+
+// Function to list all files recursively
+static unordered_map<string, filesystem::file_time_type> 
+    GetCurrentDirectoryState(const filesystem::path& path) 
+{
+    unordered_map<string, filesystem::file_time_type> files;
+
+    try 
+    {
+        for (const auto& entry : filesystem::recursive_directory_iterator(path)) 
+        {
+            if (filesystem::is_regular_file(entry.status()) || filesystem::is_directory(entry.status()))
+            {
+                files[entry.path().string()] = filesystem::last_write_time(entry);
+            }
+        }
+    }
+    catch (const filesystem::filesystem_error& e) 
+    {
+        cerr << "Error: " << e.what() << '\n';
+    }
+
+    return files;
+}
+
+// Function to compare two filesystem states, returns true if file_system_1 == file_system_2, returns false otherwise
+static bool 
+    CompareStates(const unordered_map<string, filesystem::file_time_type>& old_state, const unordered_map<string, filesystem::file_time_type>& new_state) 
+{
+    for (const auto& file : new_state) 
+    {
+        auto it = old_state.find(file.first);
+
+        if (it == old_state.end())
+        {
+            cout << "New file: " << file.first << '\n';
+            return false;
+        }
+        else if (it->second != file.second)
+        {
+            cout << "Modified file: " << file.first << '\n';
+            return false;
+        }
+    }
+
+    for (const auto& file : old_state)
+    {
+        if (new_state.find(file.first) == new_state.end())
+        {
+            cout << "Deleted file: " << file.first << '\n';
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static void 
+    CheckAndUpdateFileSystem()
+{
+    auto f_CurrentPath = filesystem::current_path(); //idfk
+    auto f_InitialPathState = GetCurrentDirectoryState(f_CurrentPath);
+
+    while (true)
+    {
+        this_thread::sleep_for(chrono::seconds(1)); // Check once every second for any changes
+
+        auto new_state = GetCurrentDirectoryState(f_CurrentPath);
+
+        if (new_state != f_InitialPathState)
+        {
+            CompareStates(f_InitialPathState, new_state);
+            f_InitialPathState = move(new_state);
+        }
+    }
+}
+
+
 void test()
 {
 
@@ -136,6 +222,7 @@ int main(int argc, char* argv[])
         ////////////////////// Texture Setup ////////////////////
     //PeachEngineResourceLoadingManager::PeachEngineResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
         PeachEngineRenderingManager::PeachEngineRenderer().RenderFrame();
+        PeachEngineRenderingManager::PeachEngineRenderer().Shutdown();
     }
     catch (const exception& ex) 
     {

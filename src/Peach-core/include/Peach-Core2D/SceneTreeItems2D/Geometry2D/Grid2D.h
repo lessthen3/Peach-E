@@ -13,6 +13,8 @@ namespace PeachCore {
 		virtual void OnSceneTreeExit();
 		virtual void QueueRemoval();
 
+		virtual nlohmann::json SerializePeachNodeToJSON();
+
 		Grid2D() = default;
 		~Grid2D() = default;
 	};

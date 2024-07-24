@@ -19,19 +19,22 @@ project "Peach Engine"
     includedirs {
         "%{prj.location}/Peach-core/GOATS/box2d/include",
         "%{prj.location}/Peach-core/GOATS/libsodium/include",
-        "%{prj.location}/Peach-core/GOATS/python/include"
+        "%{prj.location}/Peach-core/GOATS/python/include",
+        "%{prj.location}/Peach-core/GOATS/ggpo/include"
     }
 
     libdirs {
         "%{prj.location}/Peach-core/GOATS/box2d/lib",
         "%{prj.location}/Peach-core/GOATS/libsodium/lib",
-        "%{prj.location}/Peach-core/GOATS/python/lib"
+        "%{prj.location}/Peach-core/GOATS/python/lib",
+        "%{prj.location}/Peach-core/GOATS/ggpo/lib"
     }
 
     links {
         "box2d",
         "libsodium",
-        "python312"
+        "python312",
+        "GGPO"
     }
 
     filter "configurations:Debug"

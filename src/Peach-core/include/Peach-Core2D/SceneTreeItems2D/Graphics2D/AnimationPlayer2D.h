@@ -12,7 +12,8 @@ namespace PeachCore {
 		float duration;
 	};
 
-	struct Animation {
+	struct Animation 
+	{
 
 	};
 
@@ -25,10 +26,19 @@ namespace PeachCore {
 
 	public:
 		AnimationPlayer2D();
-		virtual ~AnimationPlayer2D();
+		~AnimationPlayer2D();
 		void AddFrame(Frame&& fp_Frame);
 		void StepFrameForward(float fp_TimeSinceLastFrame);
 		const float GetLength() const { return m_TotalLength; }
+
+
+		void Initialize();
+		void Update();
+		void ConstantUpdate();
+		void QueueFree();
+		void OnSceneTreeExit();
+
+		nlohmann::json SerializePeachNodeToJSON();
 
 	};
 

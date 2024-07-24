@@ -13,6 +13,21 @@ namespace PeachCore {
         Shutdown();
     }
 
+    void 
+        RenderingManager::Shutdown()
+    {
+        if (pm_CurrentCamera2D)
+        {
+            delete pm_CurrentCamera2D;
+            pm_CurrentCamera2D = nullptr;
+        }
+        if (pm_CurrentWindow)
+        {
+            delete pm_CurrentWindow;
+            pm_CurrentWindow = nullptr;
+        }
+    }
+
     RenderingManager::RenderingManager()
     {
 
@@ -36,7 +51,8 @@ namespace PeachCore {
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
-    bool RenderingManager::CreateWindowAndCamera2D(const string& fp_Title, int fp_Width, int fp_Height)
+    bool 
+        RenderingManager::CreateWindowAndCamera2D(const string& fp_Title, int fp_Width, int fp_Height)
     {
         if (pm_CurrentWindow || pm_CurrentCamera2D)
         {
@@ -178,30 +194,18 @@ namespace PeachCore {
         }
     }
 
-    void RenderingManager::BeginFrame()
+    void 
+        RenderingManager::BeginFrame()
     {
         //BeginDrawing();
     }
 
-    void RenderingManager::EndFrame() 
+    void 
+        RenderingManager::EndFrame() 
     {
         if (pm_CurrentWindow)
         {
             pm_CurrentWindow->display();
-        }
-    }
-
-    void RenderingManager::Shutdown()
-    {
-        if(pm_CurrentCamera2D)
-        {
-            delete pm_CurrentCamera2D;
-            pm_CurrentCamera2D = nullptr;
-        }
-        if(pm_CurrentWindow)
-        {
-            delete pm_CurrentWindow;
-            pm_CurrentWindow = nullptr;
         }
     }
 

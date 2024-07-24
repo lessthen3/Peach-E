@@ -9,7 +9,7 @@ namespace PeachEditor {
 
     PeachEConsole::~PeachEConsole()
     {
-
+        Clear();
     }
 
     void PeachEConsole::Clear() 
@@ -34,9 +34,9 @@ namespace PeachEditor {
         }
     }
 
-    void PeachEConsole::Draw(const char* title, bool* p_open) 
+    void PeachEConsole::Draw(const char* title, const ImGuiWindowFlags& console_window_flags, bool* p_open)
     {
-        ImGui::Begin(title, p_open);
+        ImGui::Begin(title, p_open, console_window_flags);
 
         if (ImGui::Button("Clear")) 
         {

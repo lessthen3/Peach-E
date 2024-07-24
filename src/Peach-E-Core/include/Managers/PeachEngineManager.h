@@ -108,7 +108,7 @@ namespace PeachEditor {
 
         }
 
-        void AdjustGameStartupJSONConfigs()
+        void AdjustGameStartupJSONConfigs() //not sure if this should be here, but ima put it here for now for ease of access
         {
 
         }
@@ -117,15 +117,10 @@ namespace PeachEditor {
         // Game Loop Methods
         //////////////////////////////////////////////
 
-        void RenderFrame() {
-
-
-            // Render the game scene    
-            //RenderingManager::Renderer().renderFrame();
-
+        void RenderFrame() 
+        {
             cout << "Rendering frame...\n";
             this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-
         }
 
         void StepPhysicsWorldState(float fp_FixedDeltaTime)
@@ -133,26 +128,16 @@ namespace PeachEditor {
 
         }
 
-        void ConstantUpdate(float fp_FixedDeltaTime) {
-
-
-            // Render the game scene    
-            //RenderingManager::Renderer().renderFrame();
-
-            cout << "Rendering frame...\n";
+        void ConstantUpdate(float fp_FixedDeltaTime) 
+        {
+            cout << "Updating Physics frame...\n";
             this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-
         }
 
-        void Update(float fp_FixedDeltaTime) {
-
-
-            // Render the game scene    
-            //RenderingManager::Renderer().renderFrame();
-
-            cout << "Rendering frame...\n";
+        void Update(float fp_FixedDeltaTime) 
+        {
+            cout << "Updating frame...\n";
             this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-
         }
 
         void PollUserInputEvents()
@@ -165,7 +150,7 @@ namespace PeachEditor {
 
         }
 
-        void StartGameLoop()
+        void MainGameLoop()
         {
             const float f_PhysicsDeltaTime = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;  // Fixed physics update rate 
             const float f_UserDefinedDeltaTime = 1.0f / USER_DEFINED_UPDATE_FPS;  // User-defined Update() rate
@@ -242,22 +227,24 @@ namespace PeachEditor {
         //////////////////////////////////////////////
         // Pushing Commands To RenderingManager
         //////////////////////////////////////////////
-        
-        //static void PushCommands(const CreateData& createData, const UpdateData& updateData, const DeleteData& deleteData) 
-//{
-//    if (!createData.objectIDs.empty()) {
-//        Command createCmd{ CommandType::CreateAsset, createData };
-//        commandQueue.push(createCmd);
-//    }
-//    if (!updateData.objectIDs.empty()) {
-//        Command updateCmd{ CommandType::UpdateAsset, updateData };
-//        commandQueue.push(updateCmd);
-//    }
-//    if (!deleteData.objectIDs.empty()) {
-//        Command deleteCmd{ CommandType::DeleteAsset, deleteData };
-//        commandQueue.push(deleteCmd);
-//    }
-//}
+        // 
+        //MEANT TO BE CALLED ONCE EVERY FRAME, SO WE BATCH ALL CALLS TOGETHER FOR EACH CATEGORY
+        void PushCommands(const CreateDrawableData& fp_CreateData, const UpdateActiveDrawableData& fp_UpdateData, const DeleteDrawableData& fp_DeleteData)
+        {
+            /*if (!createData.objectIDs.empty()) {
+                Command createCmd{ CommandType::CreateAsset, createData };
+                commandQueue.push(createCmd);
+            }
+            if (!updateData.objectIDs.empty()) {
+                Command updateCmd{ CommandType::UpdateAsset, updateData };
+                commandQueue.push(updateCmd);
+            }
+            if (!deleteData.objectIDs.empty()) {
+                Command deleteCmd{ CommandType::DeleteAsset, deleteData };
+                commandQueue.push(deleteCmd);
+            }*/
+        }
+
         private:
 
             //string CurrentlySelectedRenderer = "Nothing";

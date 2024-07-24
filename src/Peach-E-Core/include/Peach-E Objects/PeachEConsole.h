@@ -18,7 +18,7 @@ namespace PeachEditor {
 
         void AddLog(const std::string& message);
 
-        void Draw(const char* title, bool* p_open = NULL);
+        void Draw(const char* title, const ImGuiWindowFlags& console_window_flags, bool* p_open = NULL);
 
         void SetScrollToBottom() { scrollToBottom = true; }
 

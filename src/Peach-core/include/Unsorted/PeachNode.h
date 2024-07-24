@@ -1,5 +1,8 @@
 #pragma once
 
+
+#include <nlohmann/json.hpp>
+
 #include <string>
 #include <vector>
 #include <memory>
@@ -21,9 +24,14 @@ namespace PeachCore {
 		virtual void OnSceneTreeExit() = 0;
 		virtual void Draw() = 0;
 
+		virtual nlohmann::json SerializePeachNodeToJSON() = 0;
+
+
 		bool IsPausable = true;
 		bool IsVisible = true;
 		bool ShouldBeInTree = false;
+
+		unsigned int m_DrawingLayer = 0;
 
 		vector<unique_ptr<PeachNode>> m_Children;
 

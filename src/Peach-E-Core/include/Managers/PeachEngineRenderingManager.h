@@ -93,18 +93,15 @@ namespace PeachEditor {
         bool SetupRenderTexture(const unsigned int width, const unsigned int height, bool IsNearestNeighbour = false);
         bool ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour = false);
 
-        const sf::RenderTexture& GetRenderTexture()
-            const;
-
 
         shared_ptr<PeachCore::CommandQueue> Initialize(const string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
-        void ResizeWindow();
         string GetRendererType() const;
 
         void RenderFrame();
-        void BeginFrame();
         void EndFrame();
         void Clear();
+
+        void Shutdown();
 
         void CreatePeachEConsole();
         void CreateSceneTreeViewPanel();
@@ -139,8 +136,8 @@ namespace PeachEditor {
 
         // Object ID : CurrentPosition
         map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
-        //but i could't give less of a fuck right now
-// Object ID : DeltaPosition
+                                                                                                    //but i could't give less of a fuck right now
+        // Object ID : DeltaPosition
         map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
         // DrawableObject.ObjectID : DrawableObject dict
         map<string, DrawableObject> pm_ListOfAllDrawables;
@@ -152,6 +149,9 @@ namespace PeachEditor {
 
         unique_ptr<PeachEConsole> pm_EditorConsole = nullptr;
         unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
+
+
+        unique_ptr<sf::Sprite> pm_ViewPortRenderTextureSprite = nullptr;
     };
 
 }
