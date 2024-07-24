@@ -1,16 +1,13 @@
 # Peach-E
  Peach Game Engine
  
-//////////////////////////////////////////////
-//                 > /// <                  //
-//////////////////////////////////////////////
+Hey! This is a game engine that you are free to do whatever with!
 
-Do whatever you want with this, go absolutely buck wild, I'd love to see the awful and amazing things you guys got inside of you (especially because im not liable)
+Peach-E is an open-source game engine that currently is limited to 2D only. 
 
+Currently you can target Windows, Linux and MacOS on desktop.
 
-
-IT HURTS PROGRAMMING IS FUN, 
-
+we can't build for mobile or web (yet OwO)
 
 
 
