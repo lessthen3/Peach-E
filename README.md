@@ -9,7 +9,7 @@ Currently you can target Windows, Linux, and MacOS.
 
 
 
-If you want to build Peach-E for yourself (assuming you have the appropriate cpp runtime tools):
+If you want to build Peach-E for yourself:
 
 0. This project is built using __C++20__, and you will need __CMake 3.20+__ and __conan2__ (scroll down to the resources section for links if you are unfamiliar)
 
