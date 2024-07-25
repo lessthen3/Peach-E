@@ -17,7 +17,7 @@ If you want to build Peach-E for yourself:
 
 2. Run: __python init.py__ in your terminal and your done!
 
-__Note:__ here is the conan profile I am using for building Peach-E,
+__Note:__ You'll have to change some directory specific code in PeachEngineManager. Particularly, SetupLogManagers() and SetupInternalLogManagers(). Whatever directory you wish to use will be auto-populated with relevant log files.
 
 ### Conan Profile Settings
 
