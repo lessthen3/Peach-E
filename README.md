@@ -11,13 +11,13 @@ Currently you can target Windows, Linux, and MacOS.
 
 If you want to build Peach-E for yourself (assuming you have the appropriate cpp runtime tools):
 
-0. This project is built using C++20, and you will need CMake 3.20+ and conan2 (scroll down to the resources section for links if you are unfamiliar)
+0. This project is built using __C++20__, and you will need __CMake 3.20+__ and __conan2__ (scroll down to the resources section for links if you are unfamiliar)
 
 1. Clone the repo
 
-2. Run: python init.py and your done!
+2. Run: __python init.py__ in your terminal and your done!
 
-Note: here is the conan profile I am using for building Peach-E,
+__Note:__ here is the conan profile I am using for building Peach-E,
 
 ### Conan Profile Settings
 
@@ -32,7 +32,7 @@ compiler.version=193
 os=Windows
 ```
 
-Resources:
+### Resources:
 
 [Latest CMake Download](https://cmake.org/download/)
 
