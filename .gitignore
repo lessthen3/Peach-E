@@ -10,3 +10,6 @@
 
 # Build Output
 /build
+
+# JSON
+**.json
