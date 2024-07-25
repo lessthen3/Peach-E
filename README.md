@@ -5,7 +5,7 @@ Hey! This is a game engine that you are free to do whatever with!
 
 Peach-E is an open-source game engine that currently is functional for 2D only. 
 
-Currently you can target Windows, Linux and MacOS.
+Currently you can target Windows, Linux, and MacOS.
 
 
 
