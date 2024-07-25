@@ -1,18 +1,19 @@
 import subprocess
 
-def RunConan(build_type):
-    subprocess.run(('conan', 'install', '.', 
-    '--build', 'missing', 
-    '--output-folder=./dependencies', 
-    f'--settings=build_type={build_type}'))
+def run_conan(build_type):
+    subprocess.run([
+        'conan', 'install', '.', '-s', 'build_type=Debug', '-s', 'compiler.cppstd=20', '--output-folder=build', "--build missing"
+    ])
 
-def RunPremake(action):
-    subprocess.run((
-        'premake5', action
-    ))
+def run_cmake():
+    subprocess.run([
+        'cmake', '-S', '.', '-B', 'build'
+    ])
+    # subprocess.run([
+    #     'cmake', '--build', 'build'
+    # ])
 
 if __name__ == "__main__":
-    RunConan("Debug")
-    RunConan("Release")
-
-    RunPremake("vs2022")
+    run_conan("Debug")
+    #run_conan("Release")
+    run_cmake()

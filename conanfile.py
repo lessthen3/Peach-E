@@ -1,8 +1,11 @@
 from conan import ConanFile
+from conan.tools.cmake import cmake_layout
+from conan.tools.cmake import CMakeToolchain
+from conan.tools.cmake import CMakeDeps
 
 class PeachEBuilder(ConanFile):
     settings = "os", "arch", "compiler", "build_type"
-    generators = "PremakeDeps"
+    generators = "CMakeDeps", "CMakeToolchain"
 
     def requirements(self):
         # just chillin
@@ -43,3 +46,14 @@ class PeachEBuilder(ConanFile):
         self.requires("cgltf/1.13")
         self.requires("nanosvg/cci.20231025")
 
+    def generate(self):
+        cmake = CMakeDeps(self)
+        #cmake.generate()
+
+    def build(self):
+        cmake = CMake(self)
+        cmake.configure()
+        cmake.build()
+
+    def layout(self):
+        cmake_layout(self)
