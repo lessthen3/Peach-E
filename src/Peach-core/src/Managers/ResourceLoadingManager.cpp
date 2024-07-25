@@ -15,10 +15,17 @@ namespace PeachCore {
 
 	shared_ptr<LoadingQueue> ResourceLoadingManager::GetAudioResourceLoadingQueue() //This method should be one of the first methods called on startup
 	{
-		if(pm_AudioQueueReferenceCount == 2)  //stops unwanted extra references from being created accidentally
-			{return nullptr;}
-		else if(pm_AudioQueueReferenceCount == 0)  //lazy initialization for LoadingQueue cause why not
-			{pm_AudioResourceLoadingQueue = make_shared<LoadingQueue>();}
+		assert(pm_AudioQueueReferenceCount <= 2);
+
+		if (pm_AudioQueueReferenceCount == 2)  //stops unwanted extra references from being created accidentally
+		{
+			LogManager::ResourceLoadingLogger().Warn("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's AudioResourceLoadingQueue", "PeachEngineResourceLoadingManager");
+			return nullptr;
+		}
+		else if (pm_AudioResourceLoadingQueue == 0) //lazy initialization for LoadingQueue cause why not
+		{
+			pm_AudioResourceLoadingQueue = make_shared<PeachCore::LoadingQueue>();
+		}
 
 		pm_AudioQueueReferenceCount++;
 		return pm_AudioResourceLoadingQueue;
@@ -26,10 +33,17 @@ namespace PeachCore {
 
 	shared_ptr<LoadingQueue> ResourceLoadingManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
 	{
+		assert(pm_DrawableQueueReferenceCount <= 2);
+
 		if (pm_DrawableQueueReferenceCount == 2) //stops unwanted extra references from being created accidentally
-			{return nullptr;}
-		else if(pm_DrawableQueueReferenceCount == 0) //lazy initialization for LoadingQueue cause why not
-			{pm_DrawableResourceLoadingQueue = make_shared<LoadingQueue>();}
+		{
+			LogManager::ResourceLoadingLogger().Warn("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's DrawableResourceLoadingQueue", "PeachEngineResourceLoadingManager");
+			return nullptr;
+		}
+		else if (pm_DrawableQueueReferenceCount == 0) //lazy initialization for LoadingQueue cause why not
+		{
+			pm_DrawableResourceLoadingQueue = make_shared<PeachCore::LoadingQueue>();
+		}
 
 		pm_DrawableQueueReferenceCount++;
 		return pm_DrawableResourceLoadingQueue;

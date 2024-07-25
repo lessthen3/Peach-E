@@ -14,7 +14,7 @@
 using namespace PeachCore;
 using namespace std;
 
-#include "InternalLogManager.h"
+#include "LogManager.h"
 
 #include <unordered_map>
 #include <stdexcept>
@@ -60,7 +60,8 @@ namespace PeachEditor {
         // Setting Up and Setting Output Directory
         //////////////////////////////////////////////
 
-        void SetupLogManagers()
+        void 
+            SetupLogManagers()
             const
         {
 
@@ -83,19 +84,9 @@ namespace PeachEditor {
             LogManager::MainLogger().Trace("Success! This Built Correctly", "Peach-E");
         }
 
-        void SetupInternalLogManagers()
-            const
+        void
+            SetupVirtualFileSystem()
         {
-
-            InternalLogManager::InternalMainLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalMainLogger");
-            InternalLogManager::InternalAudioLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalAudioLogger");
-            InternalLogManager::InternalRenderingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalRenderingLogger");
-            InternalLogManager::InternalResourceLoadingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalResourceLoadingLogger");
-
-            InternalLogManager::InternalMainLogger().Debug("InternalMainLogger successfully initialized", "Peach-E");
-            InternalLogManager::InternalAudioLogger().Debug("InternalAudioLogger successfully initialized", "Peach-E");
-            InternalLogManager::InternalRenderingLogger().Debug("InternalRenderingLogger successfully initialized", "Peach-E");
-            InternalLogManager::InternalResourceLoadingLogger().Debug("InternalResourceLoadingLogger successfully initialized", "Peach-E");
 
         }
 
@@ -108,7 +99,7 @@ namespace PeachEditor {
 
         }
 
-        void AdjustGameStartupJSONConfigs() //not sure if this should be here, but ima put it here for now for ease of access
+        void AdjustGameStartupJSONConfigs() //this is here for adjusting the JSON configs from the Peach Editor
         {
 
         }
@@ -203,6 +194,16 @@ namespace PeachEditor {
             }
         }
 
+        void StartGameLoop()
+        {
+            LoadGameStartupConfigsFromJSON();
+            SetupLogManagers(); //only need to setup Peach-core loggers since this is run assuming the editor doesn't exist
+
+            MainGameLoop();
+
+            //CLEAN-UP AND ANY CLOSING THINGS THAT SHOULD BE LOGGED TO CHECK THE STATE OF THE ENGINE AS IT EXITS
+
+        }
         //////////////////////////////////////////////
         // Loading and Running Plugins From DLL'S
         //////////////////////////////////////////////

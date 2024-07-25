@@ -10,6 +10,15 @@ PeachCore reads from on startup. so that all asset changes and such are reflecte
 -The JSON reading capabilities can be repurposesd for REDO/UNDO; AUTOSAVE; EXPOSING VARIABLES FROM SCRIPTS TO
 EDITOR.
 
+MAKE SURE: we need the editor colour pallettes to be colour-blind friendly, so we need to pick seperate pallettes that i like
+for each kind of colour blindness
+(also make a tool for colour blind people to work with visual assets that tries to make things easier)
+
+MAKE SURE: ALL relevant information must be available easily in a nice visual manner that accomodates the hard of hearing
+eg. creating tools that visualize where spatial sound is coming from with our OpenAL implementation as a standard option for
+users/me to implement in any game made with Peach-E
+eg. create tools for developers that are hard of hearing to be able to interact with audio assets in a meaningful way for solo devs
+and for teams that have a mix of sensory preception capabilities
 
 check
 
@@ -19,9 +28,17 @@ first instance of a new scene to insta close, then the 2nd time running it works
 -IMPLEMENT: finalize command queue implementation, where the main thread issues the load commands, and create commands
 at the same time, and batches all update + delete commands into a list to send into the queue for that frame.
 
+-IMPLEMENT: voice chat capabilities with our OpenAL implementation that allows for live recording from whatever audio device
+that is selected and ALLOWED to play at that time by the end-users(gamers(RISE UP))
+
 -FIX BUG: right now when we try to run the peach engine executable on another machine, it seems like we're missing dll's
 like python312.dll, some random vs/vc dll missing; it seems like its dll's that are required to run cpp and python code i think
 probably should figure out what needs to be bundled with the engine to actually work on different machines and platforms lmao
+
+-POSSIBLE BUG: CHECK FOR OTHER RUNNING INSTANCES OF PEACH EDITOR THAT MIGHT MISTAKENLY BEEN OPENED
+(i definitely didn't just do that with vs2022 >w<) SO THAT POSSIBLE WRITES TO THE SAME FILE AT THE SAME TIMEDONT 
+CORRUPT SCENE JSON DATA OOF!
+
 
 -ADD CPACK INSTALLER FOR PYTHON312.DLL TO ENFORCE PYTHON VERSIONING AND MAKE THINGS EASIER FOR
 BEGINNERS:

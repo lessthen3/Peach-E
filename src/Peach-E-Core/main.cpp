@@ -9,8 +9,8 @@
 #include <pybind11/pybind11.h>
 
 //#include "include/Managers/PeachEngine.h"
-#include "include/Managers/PeachEngineRenderingManager.h"
-#include "include/Managers/PeachEngineManager.h"
+#include "include/Managers/PeachEditorRenderingManager.h"
+#include "../Peach-core/include/Managers/PeachEngineManager.h"
 #include "../Princess/include/Parsers/PythonScriptParser.h"
 
 
@@ -113,6 +113,22 @@ static void
     }
 }
 
+static void 
+    SetupInternalLogManagers()
+{
+
+    InternalLogManager::InternalMainLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalMainLogger");
+    InternalLogManager::InternalAudioLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalAudioLogger");
+    InternalLogManager::InternalRenderingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalRenderingLogger");
+    InternalLogManager::InternalResourceLoadingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalResourceLoadingLogger");
+
+    InternalLogManager::InternalMainLogger().Debug("InternalMainLogger successfully initialized", "Peach-E");
+    InternalLogManager::InternalAudioLogger().Debug("InternalAudioLogger successfully initialized", "Peach-E");
+    InternalLogManager::InternalRenderingLogger().Debug("InternalRenderingLogger successfully initialized", "Peach-E");
+    InternalLogManager::InternalResourceLoadingLogger().Debug("InternalResourceLoadingLogger successfully initialized", "Peach-E");
+
+}
+
 
 void test()
 {
@@ -195,7 +211,8 @@ static void SetupRenderer()
 int main(int argc, char* argv[])
 {
     PeachEngineManager::PeachEngine().SetupLogManagers();
-    PeachEngineManager::PeachEngine().SetupInternalLogManagers();
+    
+    SetupInternalLogManagers();
 
     int f_WindowWidth = 800;
     int f_WindowHeight = 600;

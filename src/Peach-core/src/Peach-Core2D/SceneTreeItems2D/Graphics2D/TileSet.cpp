@@ -2,7 +2,24 @@
 
 namespace PeachCore {
 
-    void TileSet::CreateTilesFromTexture2D()
+    TileSet::~TileSet() 
+    {
+        // Cleanup Box2D bodies if needed OLD BOX2D V2.4.1 OOOOOOO BOY
+        /*for (auto& tile : m_Tiles) {
+            if (tile.m_PhysicsBody) {
+                tile.m_PhysicsBody->GetWorld()->DestroyBody(tile.m_PhysicsBody);
+            }
+        }*/
+    }
+
+    void 
+        TileSet::Initialize()
+    {
+
+    }
+
+    void 
+        TileSet::CreateTilesFromTexture2D()
     {
         if (!pm_Texture.IsValid())
         {
@@ -19,47 +36,39 @@ namespace PeachCore {
         }
     }
 
-    TileSet::~TileSet() {
-        // Cleanup Box2D bodies if needed
-        /*for (auto& tile : m_Tiles) {
-            if (tile.m_PhysicsBody) {
-                tile.m_PhysicsBody->GetWorld()->DestroyBody(tile.m_PhysicsBody);
-            }
-        }*/
-    }
-
-    void TileSet::Initialize()
+    void 
+        TileSet::Update(float fp_TimeSinceLastFrame)
     {
 
     }
 
-    void TileSet::Update(float fp_TimeSinceLastFrame)
+    void 
+        TileSet::ConstantUpdate(float fp_TimeSinceLastFrame)
     {
 
     }
 
-    void TileSet::ConstantUpdate(float fp_TimeSinceLastFrame)
+    void 
+        TileSet::OnSceneTreeExit()
     {
 
     }
 
-    void TileSet::OnSceneTreeExit()
-    {
-
-    }
-
-    void TileSet::QueueRemoval()
+    void 
+        TileSet::QueueRemoval()
     {
 
     }
 
    
-    void TileSet::LoadTexture(const std::string fp_Name, const std::string& fp_ImagePath) 
+    void 
+        TileSet::SetCurrentTexture(unique_ptr<sf::Texture>& fp_NewTexture) //idk how moving the unique_ptr reference is gonna act 2 functions deep, but it should work normally
     {
-        pm_Texture = PeachTexture2D(fp_Name, fp_ImagePath);
+        pm_Texture = PeachTexture2D(m_Name, fp_NewTexture);
     }
 
-    void TileSet::SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight)
+    void 
+        TileSet::SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight)
     {
         if (!pm_Texture.IsValid())
         {
@@ -104,22 +113,30 @@ namespace PeachCore {
     //    tile.m_PhysicsBody->CreateFixture(&fixtureDef);
     //}
 
-    Tile TileSet::GetTile(int fp_TileIndex) const {
+    Tile 
+        TileSet::GetTile(int fp_TileIndex) 
+        const 
+    {
         ValidateTileIndex(fp_TileIndex);
         return m_Tiles[fp_TileIndex];
     }
 
-    std::tuple<float, float, float, float> TileSet::GetTileUV(const int index) const {
+    tuple<float, float, float, float> 
+        TileSet::GetTileUV(const int index) 
+        const 
+    {
         //return pm_Texture.GetTileUV(index);  // Delegate to Texture2D to fetch UVs
         return { 0,0,0,0 };
     }
 
-    void TileSet::ValidateTileIndex(int fp_Index) const
+    void 
+        TileSet::ValidateTileIndex(int fp_Index) 
+        const
     {
         if (fp_Index < 0 || fp_Index >= m_Tiles.size())
         {
             LogManager::MainLogger().Warn("Attempted to access invalid index number for tile set list", m_Name);
-            throw std::out_of_range("Tile index is out of range.");
+            throw out_of_range("Tile index is out of range.");
         }
     }
 

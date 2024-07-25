@@ -15,10 +15,10 @@
 #include "../../../Peach-core/GOATS/sfml-imgui/imgui-SFML.h"
 #include <imgui.h>
 
-#include "PeachEngineManager.h"
+#include "../../../Peach-core/include/Managers/PeachEngineManager.h"
 
 #include "InternalLogManager.h"
-#include "PeachEngineResourceLoadingManager.h"
+#include "PeachEditorResourceLoadingManager.h"
 
 #include "../../../Peach-core/include/Peach-Core2D/Rendering2D/PeachCamera2D.h"
 

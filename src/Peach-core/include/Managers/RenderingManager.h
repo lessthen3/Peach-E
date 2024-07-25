@@ -18,6 +18,8 @@
 #include "../Unsorted/CommandQueue.h"
 #include "../Unsorted/LoadingQueue.h"
 
+#include "../Unsorted/PeachNode.h"
+
 
 #include <variant>
 #include <string>
@@ -78,6 +80,11 @@ namespace PeachCore {
         {
 
         }
+
+        PeachNode* CreateNode();
+
+
+
 
     public:
 

@@ -1,4 +1,4 @@
-#include "../../include/Managers/PeachEngineRenderingManager.h"
+#include "../../include/Managers/PeachEditorRenderingManager.h"
 /*
     This class is used to manage the render thread, and queue/unqueue objects safely
     Copyright(c) 2024-present Ranyodh Singh Mandur.
