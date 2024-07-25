@@ -22,3 +22,19 @@ at the same time, and batches all update + delete commands into a list to send i
 -FIX BUG: right now when we try to run the peach engine executable on another machine, it seems like we're missing dll's
 like python312.dll, some random vs/vc dll missing; it seems like its dll's that are required to run cpp and python code i think
 probably should figure out what needs to be bundled with the engine to actually work on different machines and platforms lmao
+
+-ADD CPACK INSTALLER FOR PYTHON312.DLL TO ENFORCE PYTHON VERSIONING AND MAKE THINGS EASIER FOR
+BEGINNERS:
+# Install application binaries
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
+
+# Include DLLs and redistributables
+install(FILES path/to/python312.dll DESTINATION bin)
+install(FILES path/to/msvcp140.dll DESTINATION bin) # Example for VC++ redistributable DLL
+
+# CPack configuration
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/License.txt")
+set(CPACK_PACKAGE_VERSION_MAJOR "1")
+set(CPACK_PACKAGE_VERSION_MINOR "0")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+include(CPack)

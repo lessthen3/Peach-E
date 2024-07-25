@@ -20,7 +20,7 @@ set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
 set(BINARY_DIR "${PROJECT_BINARY_DIR}/bin")
 
 # Automatically find all the source files in the source directory
-file(GLOB_RECURSE SOURCES "${SOURCE_DIR}/*.cpp")
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${SOURCE_DIR}/*.cpp" "${SOURCE_DIR}/*.h")
 
 add_library(box2d STATIC IMPORTED)
 
