@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-set(CMAKE_TOOLCHAIN_FILE "D:/Game Development/Peach-E/build/build/generators/conan_toolchain.cmake")
+set(CMAKE_TOOLCHAIN_FILE "${PROJECT_BINARY_DIR}/build/generators/conan_toolchain.cmake")
 
 include (build/build/generators/conan_toolchain.cmake)
 
@@ -60,6 +60,7 @@ include_directories()
 link_directories()
 
 find_package(spdlog CONFIG REQUIRED)
+find_package(TBB REQUIRED)
 find_package(PhysFS REQUIRED)
 
 find_package(cgal REQUIRED)
@@ -96,8 +97,10 @@ target_link_libraries(${PROJECT_NAME}
     python312 
     GGPO
     spdlog::spdlog
+    onetbb::onetbb
     physfs-static
     CGAL::CGAL
+    clipper2::clipper2
     Bullet::Bullet
     pybind11::pybind11
     sol2::sol2
@@ -109,8 +112,11 @@ target_link_libraries(${PROJECT_NAME}
     glm::glm
     sfml::sfml
     imgui::imgui
+    dr_libs::dr_libs
     OpenAL::OpenAL
-    assimp::assimp)
+    assimp::assimp
+    cgltf::cgltf
+    nanosvg::nanosvg)
 
 # Debug and Release specific settings
 set_target_properties(${PROJECT_NAME} PROPERTIES
