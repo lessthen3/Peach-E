@@ -17,6 +17,9 @@ namespace PeachCore {
 	public:
 		virtual ~PeachNode();
 
+		//PeachNode(): PeachObject(){}
+		//PeachNode() = default;
+
 		virtual void 
 			Initialize() = 0;
 		virtual void 

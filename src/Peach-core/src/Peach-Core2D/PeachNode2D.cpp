@@ -2,6 +2,9 @@
 
 namespace PeachCore {
 
+	PeachNode2D::~PeachNode2D()
+	{
 
+	}
 
 }
