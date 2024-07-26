@@ -25,16 +25,6 @@ namespace PeachCore {
         if (pm_IsValid) 
         {
             pm_Texture = nullptr; //reassign texture to nullptr so that the unique_ptr gets dereferenced and is cleaned up automatically
-
-            m_Width = 0;
-            m_Height = 0;
-
-            pm_TileWidth = 0;
-            pm_TileHeight = 0;
-
-            pm_TileUVs.clear();
-
-            pm_IsValid = false;
         }
     }
 

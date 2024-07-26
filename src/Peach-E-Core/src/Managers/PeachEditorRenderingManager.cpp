@@ -150,6 +150,7 @@ namespace PeachEditor {
         sf::Clock f_DeltaClock;
 
         PeachCore::RenderingManager::Renderer().Initialize();
+        PeachCore::ResourceLoadingManager::ResourceLoader().LoadTextureFromSpecifiedFilePath("Y:/Peach-E/First Texture.png");
 
         float f_MainMenuBarYOffSet = 0.0f; //used for tracking the total y size of the mainmenu bar
 

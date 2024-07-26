@@ -4,7 +4,8 @@ using namespace std;
 
 namespace PeachCore {
 
-    bool AudioManager::Initialize()
+    bool 
+        AudioManager::Initialize()
     {
         m_Device = alcOpenDevice(nullptr); // Open default device
         
@@ -21,21 +22,29 @@ namespace PeachCore {
         if (!m_Context || !alcMakeContextCurrent(m_Context))
         {
             LogManager::AudioLogger().Error("Failed to create or set audio context", "AudioManager");
-            if (m_Context) {alcDestroyContext(m_Context);}
+
+            if (m_Context) 
+            {
+                alcDestroyContext(m_Context);
+            }
+
             alcCloseDevice(m_Device);
+
             return false;
         }
         return true;
     }
 
-    void AudioManager::Shutdown() 
+    void 
+        AudioManager::Shutdown() 
     {
         alcMakeContextCurrent(nullptr);
         if (m_Context) {alcDestroyContext(m_Context);}
         if (m_Device) {alcCloseDevice(m_Device);}
     }
 
-    void AudioManager::PlaySoundOnce(const string& fp_SoundFile)
+    void 
+        AudioManager::PlaySoundOnce(const string& fp_SoundFile)
     {
         unique_lock<shared_mutex> lock(mutex_);
         ALuint f_Buffer, f_Source;
@@ -56,19 +65,22 @@ namespace PeachCore {
         m_Sources.push_back(f_Source);
     }
 
-    string AudioManager::GetCurrentTrack() const 
+    string 
+        AudioManager::GetCurrentTrack() const 
     {
         shared_lock<shared_mutex> lock(mutex_);
         return m_CurrentTrack;
     }
 
-    void AudioManager::SetCurrentTrack(const string& track)
+    void 
+        AudioManager::SetCurrentTrack(const string& track)
  {
         unique_lock<shared_mutex> lock(mutex_);
         m_CurrentTrack = track;
     }
 
-    bool AudioManager::LoadWAVFile(const string& filename, ALuint buffer) 
+    bool 
+        AudioManager::LoadWAVFile(const string& filename, ALuint buffer) 
     {
         ifstream file(filename, ios::binary);
         if (!file) 
@@ -149,7 +161,8 @@ namespace PeachCore {
         return true;
     }
     
-    void AudioManager::ProcessLoadedResourcePackages()
+    void 
+        AudioManager::ProcessLoadedResourcePackages()
     {
         unique_ptr<LoadedResourcePackage> ResourcePackage;
         while (pm_LoadedAudioResourceQueue->PopLoadedResourceQueue(ResourcePackage)) {

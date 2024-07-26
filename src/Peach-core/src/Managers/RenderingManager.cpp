@@ -144,24 +144,24 @@ namespace PeachCore {
         ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
 
-        //sf::Sprite sprite;
-        //sprite.setTexture(*m_TestTexture);
+        sf::Sprite sprite;
+        sprite.setTexture(*m_TestTexture);
 
         //// Get the size of the window
-        //sf::Vector2u windowSize = pm_CurrentWindow->getSize();
+        sf::Vector2u windowSize = pm_CurrentWindow->getSize();
 
         //// Get the size of the texture
-        //sf::Vector2u textureSize = m_TestTexture->getSize();
+        sf::Vector2u textureSize = m_TestTexture->getSize();
 
         //// Calculate scale factors
-        //float scaleX = float(windowSize.x) / textureSize.x;
-        //float scaleY = float(windowSize.y) / textureSize.y;
+        float scaleX = float(windowSize.x) / textureSize.x;
+        float scaleY = float(windowSize.y) / textureSize.y;
 
         //// Set the scale of the sprite
-        //sprite.setScale(scaleX, scaleY);
+        sprite.setScale(scaleX, scaleY);
 
-        //sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
-        //sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
+        sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
+        sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
 
         // Main loop that continues until the window is closed
         while (pm_CurrentWindow->isOpen()) 
@@ -187,7 +187,7 @@ namespace PeachCore {
             pm_CurrentWindow->clear(sf::Color(0, 0, 139));
 
             // Draw the sprite
-            //pm_CurrentWindow->draw(sprite);
+            pm_CurrentWindow->draw(sprite);
 
             // Update the window
             pm_CurrentWindow->display();

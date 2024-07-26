@@ -40,8 +40,8 @@ namespace PeachCore {
 
                 // Transfer object based resources
                 pm_Texture = move(other.pm_Texture);  // Move the sf::Texture
-                m_Name = move(other.m_Name);
                 pm_TileUVs = move(other.pm_TileUVs);
+                m_Name = move(other.m_Name);
 
                 //Create new copies of primitive types
                 m_Width = other.m_Width;
@@ -61,6 +61,25 @@ namespace PeachCore {
 
                 other.pm_IsValid = false;
             }
+            return *this;
+        }
+
+        PeachTexture2D&
+            operator=(nullptr_t fp_NullPtr) //null operator
+            noexcept
+        {
+            pm_Texture = nullptr;
+            pm_TileUVs.clear();
+            m_Name = "";
+
+            m_Width = 0;
+            m_Height = 0;
+
+            pm_TileWidth = 0;
+            pm_TileHeight = 0;
+
+            pm_IsValid = false;
+
             return *this;
         }
 

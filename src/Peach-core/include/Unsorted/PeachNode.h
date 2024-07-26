@@ -17,15 +17,21 @@ namespace PeachCore {
 	public:
 		virtual ~PeachNode();
 
-		virtual void Initialize() = 0;
-		virtual void Update(float fp_TimeSinceLastFrame) = 0;
-		virtual void ConstantUpdate(float fp_TimeSinceLastFrame) = 0;
-		//virtual void HalfConstantUpdate(float fp_TimeSinceLastFrame);
-		virtual void OnSceneTreeExit() = 0;
-		virtual void Draw() = 0;
+		virtual void 
+			Initialize() = 0;
+		virtual void 
+			Update(float fp_TimeSinceLastFrame) = 0;
+		virtual void 
+			ConstantUpdate(float fp_TimeSinceLastFrame) = 0;
+		virtual void 
+			OnSceneTreeExit() = 0;
+		virtual void
+			QueueRemoval() = 0; //queues for removal from scene tree at end of frame or whenever is convenient idk
+		virtual void 
+			Draw() = 0;
 
-		virtual nlohmann::json SerializePeachNodeToJSON() = 0;
-
+		virtual nlohmann::json 
+			SerializePeachNodeToJSON() = 0;
 
 		bool IsPausable = true;
 		bool IsVisible = true;
@@ -39,24 +45,26 @@ namespace PeachCore {
 
 		PeachNode ReparentPeachNode();
 
-		virtual void QueueRemoval(); //queues for removal from scene tree at end of frame or whenever is convenient idk
+		void
+			PrintTree();
 
-		void PrintTree();
+		bool 
+			IsInsideTree();
 
-		bool IsInsideTree();
+		bool 
+			HasPeachNode();
 
-		bool HasPeachNode();
+		void 
+			GetViewPort();
 
-		void GetViewPort();
+		string
+			GetPathInTree();
 
-		string GetPathInTree();
+		PeachNode* 
+			FindChild(string fp_DesiredPeachNode); //returns first instance of child found matching the name
 
-		PeachNode* FindChild(string fp_DesiredPeachNode); //returns first instance of child found matching the name
-
-		PeachNode Replicate();
-
-
-
+		PeachNode 
+			Replicate();
 	};
 
 }
