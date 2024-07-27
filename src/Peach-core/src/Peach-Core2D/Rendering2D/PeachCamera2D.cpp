@@ -5,25 +5,32 @@ namespace PeachCore
 
     PeachCamera2D::~PeachCamera2D()
     {
+        if(pm_View)
+        {
+            pm_View.reset(nullptr);
+        }
 
         Disable();
     }
 
     PeachCamera2D::PeachCamera2D(sf::RenderWindow& fp_RenderWindow)
-        : pm_CurrentWindow(fp_RenderWindow) {
+        : pm_CurrentWindow(fp_RenderWindow) 
+    {
+        pm_View = make_unique<sf::View>();
+
         // Initialize the view to the size of the window
-        pm_View.setSize(fp_RenderWindow.getSize().x, fp_RenderWindow.getSize().y);
-        pm_View.setCenter(fp_RenderWindow.getSize().x / 2, fp_RenderWindow.getSize().y / 2);
+        pm_View->setSize(fp_RenderWindow.getSize().x, fp_RenderWindow.getSize().y);
+        pm_View->setCenter(fp_RenderWindow.getSize().x / 2, fp_RenderWindow.getSize().y / 2);
     }
 
     void PeachCamera2D::SetCenter(float fp_X, float fp_Y) 
     {
-        pm_View.setCenter(fp_X, fp_Y);
+        pm_View->setCenter(fp_X, fp_Y);
     }
 
     void PeachCamera2D::SetSize(const float fp_Width, const float fp_Height) 
     {
-        pm_View.setSize(fp_Width, fp_Height);
+        pm_View->setSize(fp_Width, fp_Height);
     }
 
     void PeachCamera2D::SetRotation(float fp_Angle) 
@@ -56,7 +63,7 @@ namespace PeachCore
 
     void PeachCamera2D::Enable() 
     {
-        pm_CurrentWindow.setView(pm_View);
+        pm_CurrentWindow.setView(*pm_View);
     }
 
     void PeachCamera2D::Disable()

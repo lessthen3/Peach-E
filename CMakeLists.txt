@@ -1,18 +1,20 @@
 cmake_minimum_required(VERSION 3.20)
 
+# conan toolchain setup
 set(CMAKE_TOOLCHAIN_FILE "${PROJECT_BINARY_DIR}/build/generators/conan_toolchain.cmake")
-
 include (build/build/generators/conan_toolchain.cmake)
 
+# project definition
 project(Peach_Engine VERSION 1.0 DESCRIPTION "Peach Engine" LANGUAGES CXX)
 
-
+# idk i just saw someone else do this
 list(APPEND CMAKE_MODULE_PATH "build/CMakeFiles")
 
+# enforcing C++20 standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
+# idk i saw someone else do this, i only have static libs so idk
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 # Define directories
@@ -21,6 +23,10 @@ set(BINARY_DIR "${PROJECT_BINARY_DIR}/bin")
 
 # Automatically find all the source files in the source directory
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${SOURCE_DIR}/*.cpp" "${SOURCE_DIR}/*.h")
+
+#
+# LINKING ALL EXTERNALLY COMPILED LIBRARIES
+#
 
 add_library(box2d STATIC IMPORTED)
 
@@ -58,6 +64,10 @@ include_directories()
 
 # Link directories
 link_directories()
+
+#
+# LOCATING ALL OF OUR EXTERNAL DEPS FROM CONAN
+#
 
 find_package(spdlog CONFIG REQUIRED)
 find_package(TBB REQUIRED)
@@ -117,6 +127,11 @@ target_link_libraries(${PROJECT_NAME}
     assimp::assimp
     cgltf::cgltf
     nanosvg::nanosvg)
+
+
+#
+# idefk, i thought knew what this did, but i really feel like i don't know what this does lmao
+#
 
 # Debug and Release specific settings
 set_target_properties(${PROJECT_NAME} PROPERTIES

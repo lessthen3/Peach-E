@@ -102,7 +102,7 @@ namespace PeachCore {
         void ResizeWindow();
         string GetRendererType() const;
 
-        void RenderFrame();
+        void RenderFrame(bool fp_IsStressTest = false);
         void BeginFrame();
         void EndFrame();
         void Clear();
@@ -131,8 +131,6 @@ namespace PeachCore {
         bool pm_IsShutDown = false;
     private:
         unsigned long int pm_CurrentFrame = 0;
-        shared_ptr<CommandQueue> pm_CommandQueue;
-        shared_ptr<LoadingQueue> pm_LoadedResourceQueue;
 
         // Object ID : CurrentPosition
         map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
@@ -142,9 +140,12 @@ namespace PeachCore {
         // DrawableObject.ObjectID : DrawableObject dict
         map<string, DrawableObject> pm_ListOfAllDrawables;
 
-        unique_ptr<sf::Texture> m_TestTexture;
+        shared_ptr<CommandQueue> pm_CommandQueue = nullptr;
+        shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
-        PeachCamera2D* pm_CurrentCamera2D;
+        unique_ptr<sf::Texture> m_TestTexture = nullptr;
+
+        PeachCamera2D* pm_CurrentCamera2D = nullptr;
         sf::RenderWindow* pm_CurrentWindow = nullptr;
 
     };

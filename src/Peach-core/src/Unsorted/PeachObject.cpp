@@ -1,7 +1,8 @@
 #include "../../include/Unsorted/PeachObject.h"
 
 namespace PeachCore {
-    PeachObject::~PeachObject() {
+    PeachObject::~PeachObject() 
+    {
         // Proper cleanup code here
     }
 }

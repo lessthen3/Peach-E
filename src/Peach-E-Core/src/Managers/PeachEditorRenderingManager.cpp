@@ -7,6 +7,38 @@
 
 namespace PeachEditor {
 
+    static void RunGameInstance()
+    {
+        // Assuming this function sets up, runs, and tears down the game environment
+        PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
+        PeachCore::RenderingManager::Renderer().RenderFrame(true); //set IsStressTest to true, renders only one frame then exits immediately
+        PeachCore::RenderingManager::Renderer().Shutdown();
+    }
+
+    static void StessTest(int numIterations, int delayMs)
+    {
+        for (int i = 0; i < numIterations; ++i)
+        {
+            cout << "Iteration: " << i + 1 << endl;
+
+            // Start the game instance in a thread
+            thread gameThread(RunGameInstance);
+
+            // Allow the thread some time to start and initialize resources
+            this_thread::sleep_for(chrono::milliseconds(delayMs));
+
+            // Assuming the game can be stopped by calling a stop function or similar
+            // If your architecture uses a global or static flag to signal shutdown, set it here
+            PeachCore::RenderingManager::Renderer().ForceQuit();
+
+            // Wait for the thread to finish execution
+            gameThread.join();
+
+            // Allow some time for resources to be fully released
+            this_thread::sleep_for(chrono::milliseconds(delayMs));
+        }
+    }
+
 
     PeachEngineRenderingManager::~PeachEngineRenderingManager()
     {
@@ -150,7 +182,7 @@ namespace PeachEditor {
         sf::Clock f_DeltaClock;
 
         PeachCore::RenderingManager::Renderer().Initialize();
-        PeachCore::ResourceLoadingManager::ResourceLoader().LoadTextureFromSpecifiedFilePath("Y:/Peach-E/First Texture.png");
+        PeachCore::ResourceLoadingManager::ResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Peach-E/First Texture.png");
 
         float f_MainMenuBarYOffSet = 0.0f; //used for tracking the total y size of the mainmenu bar
 
@@ -317,6 +349,10 @@ namespace PeachEditor {
                     if (ImGui::MenuItem("Open Terminal"))
                     {
                         // New action
+                    }
+                    if (ImGui::MenuItem("Run Stress Test"))
+                    {
+                        StessTest(1000, 50);
                     }
                     ImGui::EndMenu();
                 }

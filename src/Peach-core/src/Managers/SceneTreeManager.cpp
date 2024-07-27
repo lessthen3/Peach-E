@@ -35,30 +35,35 @@ namespace PeachCore {
     //    scenes[fp_Scene->GetName()] = scene;
     //}
 
-    void SceneTreeManager::RemoveScene(const std::string& fp_SceneName) {
+    void 
+        SceneTreeManager::RemoveScene(const std::string& fp_SceneName)
+    {
         pm_Scenes.erase(fp_SceneName);
     }
 
-    void SceneTreeManager::Update(float fp_TimeSinceLastFrame) {
-        if (m_CurrentScene) {
+    void 
+        SceneTreeManager::Update(float fp_TimeSinceLastFrame) 
+    {
+        if (m_CurrentScene)
+        {
             m_CurrentScene->Update(fp_TimeSinceLastFrame);
         }
     }
 
-    void SceneTreeManager::Draw() {
-        if (m_CurrentScene) {
-            m_CurrentScene->Draw();
-        }
-    }
-
-    void SceneTreeManager::PauseCurrentScene() {
-        if (m_CurrentScene) {
+    void 
+        SceneTreeManager::PauseCurrentScene()
+    {
+        if (m_CurrentScene) 
+        {
             m_CurrentScene->Pause();
         }
     }
 
-    void SceneTreeManager::ResumeCurrentScene() {
-        if (m_CurrentScene) {
+    void 
+        SceneTreeManager::ResumeCurrentScene() 
+    {
+        if (m_CurrentScene) 
+        {
             m_CurrentScene->Resume();
         }
     }

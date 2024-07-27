@@ -33,13 +33,6 @@ namespace PeachCore {
             }
         }
 
-        void Draw() {
-            if (pm_IsPaused) return;
-            for (auto& node : pm_PeachNodes) {
-                node->Draw();
-            }
-        }
-
         void Pause() { pm_IsPaused = true; }
         void Resume() { pm_IsPaused = false; }
 

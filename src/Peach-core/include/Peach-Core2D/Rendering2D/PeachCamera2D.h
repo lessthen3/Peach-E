@@ -2,8 +2,11 @@
 
 #include <SFML/Graphics.hpp>
 
-
 #include <glm/glm.hpp>
+
+#include <memory>
+
+using namespace std;
 
 namespace PeachCore {
 
@@ -28,7 +31,7 @@ namespace PeachCore {
 
     private:
         sf::RenderWindow& pm_CurrentWindow;
-        sf::View pm_View;
+        unique_ptr<sf::View> pm_View = nullptr;
 
 
         //Vector2f pm_Position;
