@@ -23,8 +23,15 @@ namespace PeachCore {
         }
         if (pm_CurrentWindow)
         {
+            pm_CurrentWindow->clear();
+            pm_CurrentWindow->close();
+
             delete pm_CurrentWindow;
             pm_CurrentWindow = nullptr;
+        }
+        if (m_TestTexture)
+        {
+            m_TestTexture.reset(nullptr);
         }
     }
 
@@ -94,7 +101,8 @@ namespace PeachCore {
         {
             for (auto& drawable_data : f_DrawCommand.DrawableData)
             {
-                visit(overloaded{
+                visit(overloaded
+                    {
                     [&](const vector<CreateDrawableData>& fp_Data)
                     {
                         // Handle creation logic here
@@ -119,8 +127,11 @@ namespace PeachCore {
         RenderingManager::ProcessLoadedResourcePackages()
     {
         unique_ptr<LoadedResourcePackage> ResourcePackage;
-        while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage)) {
-            visit(overloaded{
+
+        while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage)) 
+        {
+            visit(overloaded
+                {
                 [&]( unique_ptr<unsigned char>& fp_RawByteData)
                 {
                     // Handle creation logic here
@@ -128,6 +139,7 @@ namespace PeachCore {
                 [&](unique_ptr<sf::Texture>& fp_TextureData)
                 {
                     m_TestTexture = move(fp_TextureData);
+                    LogManager::RenderingLogger().Debug("Loaded a texture from the loading queue", "RenderingManager");
                 },
                 [&](unique_ptr<string>& fp_JSONData)
                 {
@@ -139,39 +151,40 @@ namespace PeachCore {
     }
 
     void 
-        RenderingManager::RenderFrame() 
+        RenderingManager::RenderFrame(bool fp_IsStressTest)
     {
-        ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
+        //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
 
-        sf::Sprite sprite;
-        sprite.setTexture(*m_TestTexture);
+        //sf::Sprite sprite;
+        //sprite.setTexture(*m_TestTexture);
 
-        //// Get the size of the window
-        sf::Vector2u windowSize = pm_CurrentWindow->getSize();
+        ////// Get the size of the window
+        //sf::Vector2u windowSize = pm_CurrentWindow->getSize();
 
-        //// Get the size of the texture
-        sf::Vector2u textureSize = m_TestTexture->getSize();
+        ////// Get the size of the texture
+        //sf::Vector2u textureSize = m_TestTexture->getSize();
 
-        //// Calculate scale factors
-        float scaleX = float(windowSize.x) / textureSize.x;
-        float scaleY = float(windowSize.y) / textureSize.y;
+        ////// Calculate scale factors
+        //float scaleX = float(windowSize.x) / textureSize.x;
+        //float scaleY = float(windowSize.y) / textureSize.y;
 
-        //// Set the scale of the sprite
-        sprite.setScale(scaleX, scaleY);
+        ////// Set the scale of the sprite
+        //sprite.setScale(scaleX, scaleY);
 
-        sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
-        sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
+        //sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
+        //sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
 
         // Main loop that continues until the window is closed
         while (pm_CurrentWindow->isOpen()) 
         {
-            if (pm_IsShutDown) //used to stop rendering loop if possible when ForceQuit() is called
-            {
-                pm_CurrentWindow->clear();
-                pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
-                break;
-            }
+            //if (pm_IsShutDown) //used to stop rendering loop if possible when ForceQuit() is called
+            //{
+            //    pm_CurrentWindow->clear();
+            //    pm_CurrentWindow->close();
+            //    pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
+            //    break;
+            //}
             // Process events
             sf::Event event;
 
@@ -187,10 +200,18 @@ namespace PeachCore {
             pm_CurrentWindow->clear(sf::Color(0, 0, 139));
 
             // Draw the sprite
-            pm_CurrentWindow->draw(sprite);
+            //pm_CurrentWindow->draw(sprite);
 
             // Update the window
             pm_CurrentWindow->display();
+
+            if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
+            {
+                pm_CurrentWindow->clear();
+                pm_CurrentWindow->close();
+                pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
+                break;
+            }
         }
     }
 

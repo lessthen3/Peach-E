@@ -17,9 +17,6 @@ namespace PeachCore {
 	public:
 		virtual ~PeachNode();
 
-		//PeachNode(): PeachObject(){}
-		//PeachNode() = default;
-
 		virtual void 
 			Initialize() = 0;
 		virtual void 
@@ -30,8 +27,6 @@ namespace PeachCore {
 			OnSceneTreeExit() = 0;
 		virtual void
 			QueueRemoval() = 0; //queues for removal from scene tree at end of frame or whenever is convenient idk
-		virtual void 
-			Draw() = 0;
 
 		virtual nlohmann::json 
 			SerializePeachNodeToJSON() = 0;
@@ -44,9 +39,9 @@ namespace PeachCore {
 
 		vector<unique_ptr<PeachNode>> m_Children;
 
-		PeachNode GetPeachNode();
+		PeachNode& GetPeachNode(); //returns a reference to the desired PeachNode
 
-		PeachNode ReparentPeachNode();
+		bool ReparentPeachNode(); //returns true if operation was successful, returns false otherwise
 
 		void
 			PrintTree();

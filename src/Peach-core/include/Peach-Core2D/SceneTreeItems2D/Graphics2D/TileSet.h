@@ -50,6 +50,9 @@ namespace PeachCore {
         void
             QueueRemoval();
 
+        nlohmann::json
+            SerializePeachNodeToJSON();
+
     //Class Specific Methods
     public:
         Tile 

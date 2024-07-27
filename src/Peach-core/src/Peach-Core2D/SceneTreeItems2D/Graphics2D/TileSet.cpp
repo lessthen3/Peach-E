@@ -60,6 +60,18 @@ namespace PeachCore {
 
     }
 
+    nlohmann::json
+        TileSet::SerializePeachNodeToJSON()
+    {
+        nlohmann::json f_TileSetJSONData;
+
+
+
+
+
+        return f_TileSetJSONData;
+    }
+
    
     void 
         TileSet::SetCurrentTexture(unique_ptr<sf::Texture>& fp_NewTexture) //idk how moving the unique_ptr reference is gonna act 2 functions deep, but it should work normally

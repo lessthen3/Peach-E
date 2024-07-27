@@ -14,11 +14,11 @@ namespace PeachCore {
 
             PeachObject() = default;
 
-            virtual void 
-                Update(float fp_TimeSinceLastFrame) = 0;
+            //virtual void 
+            //    Update(float fp_TimeSinceLastFrame) = 0; not sure if update functions are neccessary here because they can just inherit peachnode
 
-            virtual void 
-                ConstantUpdate(float fp_TimeSinceLastFrame) = 0;
+            //virtual void 
+            //    ConstantUpdate(float fp_TimeSinceLastFrame) = 0;
 
             string m_Name;
 
