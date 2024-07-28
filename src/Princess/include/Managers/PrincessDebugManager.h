@@ -2,7 +2,7 @@
 
 namespace Princess {
 
-	class DebugManager
+	class PrincessDebugManager
 	{
 	};
 }

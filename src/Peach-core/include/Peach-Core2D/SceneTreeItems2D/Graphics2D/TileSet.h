@@ -61,7 +61,7 @@ namespace PeachCore {
 
         //void DefinePhysicsForTile(int index, b2World& world, float metersPerPixel); //int index, b2World& world, const b2BodyDef& bodyDef, const b2FixtureDef& fixtureDef
         void 
-            SetCurrentTexture(unique_ptr<sf::Texture>& fp_NewTexture);
+            SetCurrentTexture(TextureData& fp_NewTexture);
 
         void 
             SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight);

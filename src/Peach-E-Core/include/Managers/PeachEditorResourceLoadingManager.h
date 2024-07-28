@@ -1,5 +1,7 @@
 #pragma once
 
+//#include <stb_image.h>
+
 #include "InternalLogManager.h"
 
 #include "../../../Peach-core/include/Unsorted/CommandQueue.h"
@@ -7,34 +9,39 @@
 
 namespace PeachEditor {
 
-	class PeachEngineResourceLoadingManager {
+	class PeachEditorResourceLoadingManager {
 	public:
-		static PeachEngineResourceLoadingManager& PeachEngineResourceLoader() {
-			static PeachEngineResourceLoadingManager resourceloader;
-			return resourceloader;
+		static PeachEditorResourceLoadingManager& PeachEditorResourceLoader() {
+			static PeachEditorResourceLoadingManager peach_editor_resource_loader;
+			return peach_editor_resource_loader;
 		}
 
-		~PeachEngineResourceLoadingManager();
+		~PeachEditorResourceLoadingManager();
 
 	public:
-		mutex resourceMutex;
+		mutex PeachEditorResourceMutex;
 
 	private:
-		PeachEngineResourceLoadingManager();
+		PeachEditorResourceLoadingManager();
 
-		PeachEngineResourceLoadingManager(const PeachEngineResourceLoadingManager&) = delete;
-		PeachEngineResourceLoadingManager& operator=(const PeachEngineResourceLoadingManager&) = delete;
+		PeachEditorResourceLoadingManager(const PeachEditorResourceLoadingManager&) = delete;
+		PeachEditorResourceLoadingManager& operator=(const PeachEditorResourceLoadingManager&) = delete;
 
 
 
 
 	public:
-		shared_ptr<PeachCore::LoadingQueue> GetAudioResourceLoadingQueue();
-		shared_ptr<PeachCore::LoadingQueue> GetDrawableResourceLoadingQueue();
+		shared_ptr<PeachCore::LoadingQueue> 
+			GetAudioResourceLoadingQueue();
+
+		shared_ptr<PeachCore::LoadingQueue> 
+			GetDrawableResourceLoadingQueue();
 
 	public: //PUBLIC FOR TESTING
-		bool TryPushingLoadedResourcePackage(unique_ptr<PeachCore::LoadedResourcePackage> fp_LoadedPackage);
-		bool LoadTextureFromSpecifiedFilePath(const string& fp_FilePath);
+		bool 
+			TryPushingLoadedResourcePackage(unique_ptr<PeachCore::LoadedResourcePackage> fp_LoadedPackage);
+		bool 
+			LoadTextureFromSpecifiedFilePath(const string& fp_FilePath);
 
 	private:
 		shared_ptr<PeachCore::LoadingQueue> pm_AudioResourceLoadingQueue; //used to push load commands that are destined for AudioManager

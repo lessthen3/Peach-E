@@ -166,19 +166,16 @@ namespace PeachCore {
     {
         unique_ptr<LoadedResourcePackage> ResourcePackage;
         while (pm_LoadedAudioResourceQueue->PopLoadedResourceQueue(ResourcePackage)) {
-            visit(overloaded{
-                [&](unique_ptr<unsigned char>& fp_RawByteData)
+            visit(overloaded
+                {
+                [&](AudioData& fp_RawByteData)
                 {
                     // Handle creation logic here
                 },
-                [&](unique_ptr<sf::Texture>& fp_TextureData)
+                [](auto&&)
                 {
-                    
-                },
-                [&](unique_ptr<string>& fp_RawTextData)
-                {
-                    // Handle deletion logic here
-                    // Ensure resources are properly released and objects are cleaned up
+                    // Default handler for any unhandled types
+                    LogManager::AudioLogger().Warn("Unhandled type in variant for ProcessLoadedResourcePackage", "AudioManager");
                 }
                 }, ResourcePackage.get()->ResourceData);
         }

@@ -10,9 +10,13 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
-#include <SFML/Graphics.hpp>
 
-#include "../../../Peach-core/GOATS/sfml-imgui/imgui-SFML.h"
+#include <SDL2/SDL.h>
+#include <GL/glew.h>
+
+#include "../../../Peach-core/GOATS/Imgui-OpenGL3/imgui_impl_opengl3.h"
+#include "../../../Peach-core/GOATS/Imgui-SDL2/imgui_impl_sdl2.h"
+
 #include <imgui.h>
 
 #include "../../../Peach-core/include/Managers/PeachEngineManager.h"
@@ -20,7 +24,6 @@
 #include "InternalLogManager.h"
 #include "PeachEditorResourceLoadingManager.h"
 
-#include "../../../Peach-core/include/Peach-Core2D/Rendering2D/PeachCamera2D.h"
 
 #include "../Peach-E Objects/PeachEConsole.h"
 
@@ -29,7 +32,7 @@
 #include <map>
 #include <atomic> //should be used for communicating whether the scene execution thread is currently running or not
 
-using namespace std;
+using namespace std; 
 
 namespace PeachEditor {
 
@@ -46,9 +49,8 @@ namespace PeachEditor {
 
         variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
             <
-            unique_ptr<unsigned char>, //used for parsing raw byte information, mainly for audio at the moment
-            unique_ptr<sf::Texture>, //SFML loads textures in as a single wrapped unit
-            unique_ptr<string> //used for parsing JSON metadata if required
+            PeachCore::TextureData, //used for parsing raw byte information, mainly for audio at the moment
+            unique_ptr<nlohmann::json> //used for parsing JSON metadata if required
 
             > DrawableResourceData; //actual data for graphic
 
@@ -56,21 +58,21 @@ namespace PeachEditor {
         //ShaderProgram Shaders;
     };
 
-    class PeachEngineRenderingManager 
+    class PeachEditorRenderingManager 
     {
     public:
-        static PeachEngineRenderingManager& PeachEngineRenderer()
+        static PeachEditorRenderingManager& PeachEngineRenderer()
         {
-            static PeachEngineRenderingManager peach_engine_renderer;
+            static PeachEditorRenderingManager peach_engine_renderer;
             return peach_engine_renderer;
         }
 
-        ~PeachEngineRenderingManager();
+        ~PeachEditorRenderingManager();
 
     private:
-        PeachEngineRenderingManager();
-        PeachEngineRenderingManager(const PeachEngineRenderingManager&) = delete;
-        PeachEngineRenderingManager& operator=(const PeachEngineRenderingManager&) = delete;
+        PeachEditorRenderingManager();
+        PeachEditorRenderingManager(const PeachEditorRenderingManager&) = delete;
+        PeachEditorRenderingManager& operator=(const PeachEditorRenderingManager&) = delete;
 
     private:
         inline const float Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
@@ -93,29 +95,49 @@ namespace PeachEditor {
         bool SetupRenderTexture(const unsigned int width, const unsigned int height, bool IsNearestNeighbour = false);
         bool ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour = false);
 
+        bool
+            CreateSDLWindow(const char* title, int width, int height);
 
-        shared_ptr<PeachCore::CommandQueue> Initialize(const string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
-        string GetRendererType() const;
+        shared_ptr<PeachCore::CommandQueue> 
+            Initialize(const string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
 
-        void RenderFrame();
-        void EndFrame();
-        void Clear();
+        string 
+            GetRendererType() 
+            const;
 
-        void Shutdown();
+        void 
+            RenderFrame();
+        void 
+            EndFrame();
+        void 
+            Clear();
 
-        void CreatePeachEConsole();
-        void CreateSceneTreeViewPanel();
+        void 
+            Shutdown();
 
-        void GetCurrentViewPort();
+        void 
+            CreatePeachEConsole();
+        void 
+            CreateSceneTreeViewPanel();
 
-        unsigned int GetFrameRateLimit() const;
+        void 
+            GetCurrentViewPort();
 
-        void SetFrameRateLimit(unsigned int fp_Limit);
-        void SetVSync(const bool fp_IsEnabled);
+        unsigned int 
+            GetFrameRateLimit() 
+            const;
 
-        bool IsVSyncEnabled() const;
+        void 
+            SetFrameRateLimit(unsigned int fp_Limit);
+        void 
+            SetVSync(const bool fp_IsEnabled);
 
-        void RunCurrentScene();
+        bool 
+            IsVSyncEnabled() 
+            const;
+
+        void 
+            RunCurrentScene();
 
         atomic<bool> m_IsSceneCurrentlyRunning = false; //tracks whether the current working scene in the current peach project, is running in the editor
 
@@ -142,16 +164,15 @@ namespace PeachEditor {
         // DrawableObject.ObjectID : DrawableObject dict
         map<string, DrawableObject> pm_ListOfAllDrawables;
 
-        unique_ptr<sf::Texture> m_TestTexture = nullptr;
+        PeachCore::PeachTexture2D m_TestTexture;
 
-        PeachCamera2D* pm_Camera2D = nullptr;
-        sf::RenderWindow* pm_CurrentWindow = nullptr;
+        PeachCore::OpenGLRenderer* pm_OpenGLRenderer = nullptr;
+        PeachCore::PeachCamera2D* pm_Camera2D = nullptr;
+        SDL_Window* pm_CurrentWindow = nullptr;
 
         unique_ptr<PeachEConsole> pm_EditorConsole = nullptr;
-        unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
+        //unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
 
-
-        unique_ptr<sf::Sprite> pm_ViewPortRenderTextureSprite = nullptr;
     };
 
 }

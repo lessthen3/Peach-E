@@ -56,7 +56,8 @@ namespace PeachCore {
             pm_EventTaskBatches.push(fp_Tasks);
         }
 
-        void EnqueueContinuous(const function<void()>& fp_Task, int fp_Priority) {
+        void EnqueueContinuous(const function<void()>& fp_Task, int fp_Priority) 
+        {
             lock_guard<mutex> lock(m_QueueMutex);
             cout << "Enqueueing Continuous Task at priority: " << fp_Priority << endl;
             m_ContinuousTasks[fp_Priority].push(fp_Task);
@@ -73,27 +74,38 @@ namespace PeachCore {
             cout << "Processing Tasks" << endl;
 
             // Move event tasks to the main queue with highest priority
-            while (!pm_EventTaskBatches.empty()) {
+            while (!pm_EventTaskBatches.empty()) 
+            {
                 auto& batch = pm_EventTaskBatches.front();
+
                 cout << "Moving Event Batch of size: " << batch.size() << " to main queue" << endl;
+
                 pm_EventTaskBatches.pop();
-                for (auto& task : batch) {
+
+                for (auto& task : batch)
+                {
                     m_Tasks[0].push(task);
                 }
             }
 
-            for (auto& [priority, queue] : m_OneTimeTasks) {
-                while (!queue.empty()) {
+            for (auto& [priority, queue] : m_OneTimeTasks) 
+            {
+                while (!queue.empty()) 
+                {
                     cout << "Moving One-Time Task at priority: " << priority << " to main queue" << endl;
                     m_Tasks[priority].push(queue.front());
                     queue.pop();
                 }
             }
+
             m_OneTimeTasks.clear();
 
-            for (auto& [priority, queue] : m_ContinuousTasks) {
-                while (!queue.empty()) {
+            for (auto& [priority, queue] : m_ContinuousTasks) 
+            {
+                while (!queue.empty())
+                {
                     cout << "Moving Continuous Task at priority: " << priority << " to main queue" << endl;
+                    
                     m_Tasks[priority].push(queue.front());
                     queue.pop();
                 }
@@ -102,7 +114,9 @@ namespace PeachCore {
             m_Condition.notify_all();
         }
 
-        void Shutdown() {
+        void 
+            Shutdown()
+        {
             {
                 lock_guard<mutex> lock(m_QueueMutex);
                 m_Stop = true;

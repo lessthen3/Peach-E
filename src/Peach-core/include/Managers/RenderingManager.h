@@ -10,7 +10,7 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
-#include <SFML/Graphics.hpp>
+#include <SDL2/SDL.h>
 
 #include "LogManager.h"
 #include "ResourceLoadingManager.h"
@@ -19,7 +19,9 @@
 #include "../Unsorted/LoadingQueue.h"
 
 #include "../Unsorted/PeachNode.h"
+#include "../Unsorted/OpenGLRenderer.h"
 
+#include "../Peach-Core2D/Rendering2D/PeachTexture2D.h"
 
 #include <variant>
 #include <string>
@@ -44,8 +46,8 @@ namespace PeachCore {
 
         variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
             <
-            unique_ptr<unsigned char>, //used for parsing raw byte information, mainly for audio at the moment
-            unique_ptr<sf::Texture>, //SFML loads textures in as a single wrapped unit
+
+            unique_ptr<PeachTexture2D>, //SFML loads textures in as a single wrapped unit
             unique_ptr<string> //used for parsing JSON metadata if required
 
             > DrawableResourceData; //actual data for graphic
@@ -54,7 +56,8 @@ namespace PeachCore {
         ShaderProgram Shaders;
     };
 
-    class RenderingManager {
+    class RenderingManager 
+    {
     public:
         static RenderingManager& Renderer() 
         {
@@ -94,13 +97,23 @@ namespace PeachCore {
         
         void SetupRenderTexture(unsigned int width, unsigned int height);
 
-        const sf::Texture& GetRenderTexture()
+        const PeachTexture2D& 
+            GetRenderTexture()
             const;
 
+        bool
+            CreateSDLWindow(const char* fp_WindowTitle, const int fp_WindowWidth, const int fp_WindowHeight);
 
-        shared_ptr<CommandQueue> Initialize();
-        void ResizeWindow();
-        string GetRendererType() const;
+        shared_ptr<CommandQueue> 
+            Initialize();
+
+
+        void 
+            ResizeWindow();
+
+        string 
+            GetRendererType() 
+            const;
 
         void RenderFrame(bool fp_IsStressTest = false);
         void BeginFrame();
@@ -143,11 +156,11 @@ namespace PeachCore {
         shared_ptr<CommandQueue> pm_CommandQueue = nullptr;
         shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
-        unique_ptr<sf::Texture> m_TestTexture = nullptr;
+        unique_ptr<PeachTexture2D> m_TestTexture = nullptr;
 
+        OpenGLRenderer* pm_OpenGLRenderer = nullptr;
         PeachCamera2D* pm_CurrentCamera2D = nullptr;
-        sf::RenderWindow* pm_CurrentWindow = nullptr;
-
+        SDL_Window* pm_CurrentWindow = nullptr;
     };
 
 }

@@ -7,7 +7,8 @@
 
 namespace PeachEditor {
 
-    static void RunGameInstance()
+    static void 
+        RunGameInstance()
     {
         // Assuming this function sets up, runs, and tears down the game environment
         PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
@@ -15,7 +16,8 @@ namespace PeachEditor {
         PeachCore::RenderingManager::Renderer().Shutdown();
     }
 
-    static void StessTest(int numIterations, int delayMs)
+    static void 
+        StessTest(int numIterations, int delayMs)
     {
         for (int i = 0; i < numIterations; ++i)
         {
@@ -40,12 +42,13 @@ namespace PeachEditor {
     }
 
 
-    PeachEngineRenderingManager::~PeachEngineRenderingManager()
+    PeachEditorRenderingManager::~PeachEditorRenderingManager()
     {
         Shutdown();
     }
 
-    void PeachEngineRenderingManager::Shutdown()
+    void 
+        PeachEditorRenderingManager::Shutdown()
     {
         if (pm_Camera2D)
         {
@@ -54,19 +57,53 @@ namespace PeachEditor {
         }
         if (pm_CurrentWindow)
         {
-            delete pm_CurrentWindow;
+            SDL_DestroyWindow(pm_CurrentWindow);
+            SDL_Quit();
+
+           //WARNING: DELETING THE CURRENT WINDOW AFTER DESTROYING THE SDL WINDOW AND CALLING SDL_QUIT() CAUSES A HEAP MEMORY VIOLATION
+           // delete pm_CurrentWindow; 
             pm_CurrentWindow = nullptr;
+        }
+        if (pm_OpenGLRenderer)
+        {
+            delete pm_OpenGLRenderer;
+            pm_OpenGLRenderer = nullptr;
         }
     }
 
-    PeachEngineRenderingManager::PeachEngineRenderingManager()
+    PeachEditorRenderingManager::PeachEditorRenderingManager()
     {
 
     }
 
+    bool PeachEditorRenderingManager::CreateSDLWindow(const char* fp_WindowTitle, const int fp_WindowWidth, const int fp_WindowHeight)
+    {
+        if (SDL_Init(SDL_INIT_VIDEO) < 0) 
+        {
+            InternalLogManager::InternalRenderingLogger().Fatal("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager");
+            return false;
+        }
+
+        pm_CurrentWindow = SDL_CreateWindow(
+            fp_WindowTitle,
+            SDL_WINDOWPOS_UNDEFINED,
+            SDL_WINDOWPOS_UNDEFINED,
+            fp_WindowWidth, fp_WindowHeight,
+            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+
+        if (!pm_CurrentWindow) 
+        {
+            InternalLogManager::InternalRenderingLogger().Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager");
+            SDL_Quit();
+            return false;
+        }
+
+        return true;
+    }
+
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
-    shared_ptr<CommandQueue>
-        PeachEngineRenderingManager::Initialize(const string& fp_Title, int fp_Width, int fp_Height)
+    shared_ptr<PeachCore::CommandQueue>
+        PeachEditorRenderingManager::Initialize(const string& fp_Title, int fp_Width, int fp_Height)
     {
         if (pm_HasBeenInitialized)
         {
@@ -74,43 +111,35 @@ namespace PeachEditor {
             return nullptr;
         }
 
-        // Create an SFML window and context settings
-/*       sf::ContextSettings settings;
-       settings.depthBits = 24;
-       settings.stencilBits = 8; //THESE SETTINGS ARE BROKEN FOR SOME REASON, AND I DONT KNOW WHY
-       settings.antialiasingLevel = 4;
-       settings.majorVersion = 3;
-       settings.minorVersion = 3;
-       settings.attributeFlags = sf::ContextSettings::Core;*/
-
-        pm_CurrentWindow = new sf::RenderWindow(sf::VideoMode(fp_Width, fp_Height), fp_Title, sf::Style::Default);
-
-        // Camera Setup
-        pm_Camera2D = new PeachCamera2D(*pm_CurrentWindow);
-        pm_Camera2D->SetCenter(400, 300); // Set this dynamically as needed
-        pm_Camera2D->SetSize(800, 600); // Set this to zoom in or out
-        pm_Camera2D->Enable();
-
-        if (!pm_CurrentWindow->isOpen())
+        if (!CreateSDLWindow(fp_Title.c_str(), fp_Width, fp_Height))
         {
-            throw runtime_error("Failed to create window.");
+            throw runtime_error("Couldn't even start up a window for the editor oof");
         }
 
-        pm_CommandQueue = make_shared<CommandQueue>();
-        pm_LoadedResourceQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
+        // Camera Setup
+        //pm_Camera2D = new PeachCore::PeachCamera2D(*pm_CurrentWindow);
+        //pm_Camera2D->SetCenter(400, 300); // Set this dynamically as needed
+        //pm_Camera2D->SetSize(800, 600); // Set this to zoom in or out
+        //pm_Camera2D->Enable();
+
+
+        pm_CommandQueue = make_shared<PeachCore::CommandQueue>();
+        pm_LoadedResourceQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
+
+        pm_OpenGLRenderer = new PeachCore::OpenGLRenderer(pm_CurrentWindow, false);
 
         InternalLogManager::InternalRenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
 
         pm_HasBeenInitialized = true;
 
         CreatePeachEConsole();
-        SetupRenderTexture(pm_CurrentWindow->getSize().x, pm_CurrentWindow->getSize().y);
+        SetupRenderTexture(fp_Width, fp_Height);
 
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
     void
-        PeachEngineRenderingManager::ProcessCommands()
+        PeachEditorRenderingManager::ProcessCommands()
     {
         PeachCore::DrawCommand f_DrawCommand;
         while (pm_CommandQueue->PopSendersQueue(f_DrawCommand))
@@ -141,7 +170,7 @@ namespace PeachEditor {
     }
 
     void
-        PeachEngineRenderingManager::ProcessLoadedResourcePackages()
+        PeachEditorRenderingManager::ProcessLoadedResourcePackages()
     {
         unique_ptr<PeachCore::LoadedResourcePackage> ResourcePackage;
         while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage))
@@ -149,46 +178,41 @@ namespace PeachEditor {
             visit(
                 PeachCore::overloaded
                 {
-                [&](unique_ptr<unsigned char>& fp_RawByteData)
+                [&](PeachCore::TextureData& fp_TextureByteData)
                 {
                     // Handle creation logic here
+                    //stbi_image_free(fp_TextureByteData.get()); //unload texture data
                 },
-                [&](unique_ptr<sf::Texture>& fp_TextureData)
+                [](auto&&) 
                 {
-                    m_TestTexture = move(fp_TextureData);
-                },
-                [&](unique_ptr<string>& fp_JSONData)
-                {
-                    // Handle deletion logic here
-                    // Ensure resources are properly released and objects are cleaned up
+                    // Default handler for any unhandled types
+                    InternalLogManager::InternalRenderingLogger().Warn("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager");
                 }
                 }, ResourcePackage.get()->ResourceData);
         }
     }
 
-    void PeachEngineRenderingManager::RenderFrame()
+    void PeachEditorRenderingManager::RenderFrame()
     {
-        ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
+        //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
                 // Main loop that continues until the window is closed
 
         bool f_ShouldConsoleBeOpen = true;
 
-        ImGui::SFML::Init(*pm_CurrentWindow); 	// sets up ImGui with ether a dark or light default theme
-
         //ImGuiIO& f_ImGuiIO = ImGui::GetIO();
         //f_ImGuiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
 
-        sf::Clock f_DeltaClock;
+        //sf::Clock f_DeltaClock;
 
-        PeachCore::RenderingManager::Renderer().Initialize();
-        PeachCore::ResourceLoadingManager::ResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Peach-E/First Texture.png");
+        //PeachCore::RenderingManager::Renderer().Initialize();
+        //PeachCore::ResourceLoadingManager::ResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Peach-E/First Texture.png");
 
-        float f_MainMenuBarYOffSet = 0.0f; //used for tracking the total y size of the mainmenu bar
+        int f_MainMenuBarYOffSet = 0; //used for tracking the total y size of the mainmenu bar
 
         //also makings only one call to the windowsize each loop, just feels cleaner and easier to read
-        float f_CurrentAvailableWindowSpaceX = 0.0f; //adjusts for the main menu bar offset
-        float f_CurrentAvailableWindowSpaceY = 0.0f;
+        int f_CurrentAvailableWindowSpaceX = 0; //adjusts for the main menu bar offset
+        int f_CurrentAvailableWindowSpaceY = 0;
 
         ImGuiWindowFlags file_system_window_flags
             = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
@@ -207,7 +231,20 @@ namespace PeachEditor {
         // MAIN RENDER LOOP FOR THE EDITOR
         //////////////////////////////////////////////
 
-        while (pm_CurrentWindow->isOpen())
+        SDL_GLContext* gl_context = pm_OpenGLRenderer->GetCurrentOpenGLContext(); //gl_context life span < OpenGLRenderer ALWAYS
+
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+
+        // Setup ImGui binding
+        ImGui_ImplSDL2_InitForOpenGL(pm_CurrentWindow, gl_context);
+        ImGui_ImplOpenGL3_Init("#version 130");
+
+        ImGui::StyleColorsDark();
+
+        bool f_IsProgramRuntimeOver = false;
+
+        while (!f_IsProgramRuntimeOver)
         {
             Clear(); //clears screen and beings drawing
 
@@ -215,33 +252,36 @@ namespace PeachEditor {
             // Input Polling for Imgui/SFML
             //////////////////////////////////////////////
 
-            sf::Event event;
+            SDL_Event event;
 
-            while (pm_CurrentWindow->pollEvent(event))
+            while (SDL_PollEvent(&event))
             {
-                ImGui::SFML::ProcessEvent(event);
+                ImGui_ImplSDL2_ProcessEvent(&event);
 
-                if (event.type == sf::Event::Closed) 
+                if (event.type == SDL_QUIT)
                 {
-                    pm_CurrentWindow->close();
+                    f_IsProgramRuntimeOver = true;
                 }
 
                 // Handle window resize
-                if (event.type == sf::Event::Resized) 
-                {
-                    // Recreate the render texture with new dimensions
-                    ResizeRenderTexture(event.size.width, event.size.height);
-                    pm_Camera2D->SetSize(event.size.width, event.size.height); // Adjust camera as well if necessary
-                    pm_Camera2D->SetCenter(event.size.width * 0.50f, event.size.height * 0.50f);
-                    pm_CurrentWindow->setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
-                }
+                //if (event.type == sf::Event::Resized) 
+                //{
+                //    // Recreate the render texture with new dimensions
+                //    ResizeRenderTexture(event.size.width, event.size.height);
+                //    pm_Camera2D->SetSize(event.size.width, event.size.height); // Adjust camera as well if necessary
+                //    pm_Camera2D->SetCenter(event.size.width * 0.50f, event.size.height * 0.50f);
+                //    pm_CurrentWindow->setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
+                //}
             }
 
             //////////////////////////////////////////////
             // Update Imgui UI
             //////////////////////////////////////////////
 
-            ImGui::SFML::Update(*pm_CurrentWindow, f_DeltaClock.restart()); // starts the ImGui content mode. Make all ImGui calls after this
+           // Start the Dear ImGui frame
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplSDL2_NewFrame();
+            ImGui::NewFrame();
 
             //////////////////////////////////////////////
             // Menu Bar Setup
@@ -270,8 +310,13 @@ namespace PeachEditor {
                     if (ImGui::MenuItem("Exit")) //THIS CRASHES EVERYTHING BUT I GUESS THAT IS A WAY TO CLOSE STUFF
                     {
                         Clear(); // IMPORTANT: NEEDA EXPLICITLY ENDDRAWING() BEFORE CALLING CLOSEWINDOW!
-                        m_IsSceneCurrentlyRunning = false;
-                        PeachCore::RenderingManager::Renderer().ForceQuit();
+
+                        if(m_IsSceneCurrentlyRunning)
+                        {
+                            PeachCore::RenderingManager::Renderer().ForceQuit();
+                            m_IsSceneCurrentlyRunning = false;
+                        }
+
                         break;
                     }
                     ImGui::EndMenu();
@@ -301,12 +346,12 @@ namespace PeachEditor {
                                 PeachCore::RenderingManager::Renderer().RenderFrame();
                                 PeachCore::RenderingManager::Renderer().Shutdown();
                                 
-                                PeachEngineRenderingManager::PeachEngineRenderer().m_IsSceneCurrentlyRunning = false;
+                                PeachEditorRenderingManager::PeachEngineRenderer().m_IsSceneCurrentlyRunning = false;
                             });
                         T_CurrentSceneRunnerThread.detach();
                         m_IsSceneCurrentlyRunning = true;
                     }
-                    if (ImGui::MenuItem("Force Quit Peach-E Project"))
+                    if (ImGui::MenuItem("Force Quit Peach-E Project") && m_IsSceneCurrentlyRunning) //only works if a valid scene instance is running
                     {
                         m_IsSceneCurrentlyRunning = false;
                         PeachCore::RenderingManager::Renderer().ForceQuit();
@@ -374,41 +419,42 @@ namespace PeachEditor {
             }
 
             f_MainMenuBarYOffSet = ImGui::GetItemRectSize().y;
+            //gets size of window in terms of pixels not screen coordinates
+            SDL_GL_GetDrawableSize(pm_CurrentWindow, &f_CurrentAvailableWindowSpaceX, &f_CurrentAvailableWindowSpaceY);
 
-            f_CurrentAvailableWindowSpaceX = pm_CurrentWindow->getSize().x;
-            f_CurrentAvailableWindowSpaceY = pm_CurrentWindow->getSize().y - f_MainMenuBarYOffSet;
+            f_CurrentAvailableWindowSpaceY -= f_MainMenuBarYOffSet;
 
             //////////////////////////////////////////////
            // Render Texture Setup
            //////////////////////////////////////////////
 
-            if (pm_ViewportRenderTexture)
-            {
-                pm_ViewportRenderTexture->clear(sf::Color(128, 128, 128)); // Clear with grey >w<, or any color you need
+            //if (pm_ViewportRenderTexture)
+            //{
+            //    pm_ViewportRenderTexture->clear(sf::Color(128, 128, 128)); // Clear with grey >w<, or any color you need
 
-                pm_ViewportRenderTexture->display(); // Updates the texture with what has been drawn
+            //    pm_ViewportRenderTexture->display(); // Updates the texture with what has been drawn
 
-                // Initialize Dockspace
-                ImGuiID dockspace_id = ImGui::GetID("ViewportDockspace");
-                ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+            //    // Initialize Dockspace
+            //    ImGuiID dockspace_id = ImGui::GetID("ViewportDockspace");
+            //    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
 
-                //ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.5f); // Adjust border size
-                ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));  // Set padding to zero for current window
-                //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // Set border color to white
+            //    //ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.5f); // Adjust border size
+            //    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));  // Set padding to zero for current window
+            //    //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // Set border color to white
 
 
-                ImGui::SetNextWindowPos(ImVec2(0, f_MainMenuBarYOffSet));
-                ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.60f)); //SIZE OF IMGUI VIEWPORT
+            //    ImGui::SetNextWindowPos(ImVec2(0, f_MainMenuBarYOffSet));
+            //    ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.60f)); //SIZE OF IMGUI VIEWPORT
 
-                if (ImGui::Begin("Viewport", nullptr, viewport_window_flags))
-                {
-                    ImGui::Image(*pm_ViewportRenderTexture);
-                }
+            //    if (ImGui::Begin("Viewport", nullptr, viewport_window_flags))
+            //    {
+            //        ImGui::Image(*pm_ViewportRenderTexture);
+            //    }
 
-                ImGui::End();
-                ImGui::PopStyleVar(); // Pop border size
-                //ImGui::PopStyleColor(); // Pop border color
-            }
+            //    ImGui::End();
+            //    ImGui::PopStyleVar(); // Pop border size
+            //    //ImGui::PopStyleColor(); // Pop border color
+            //}
 
             //ImVec2 viewportSize = ImGui::GetContentRegionAvail();
             //ImVec2 viewportPos = ImGui::GetCursorScreenPos();
@@ -461,30 +507,38 @@ namespace PeachEditor {
             // Peach-E Console
             //////////////////////////////////////////////
 
-            //ImGui::SetNextWindowDockID(console_dock_space_ID, ImGuiCond_FirstUseEver);
             ImGui::SetNextWindowPos(ImVec2(0, f_CurrentAvailableWindowSpaceY * 0.60f + f_MainMenuBarYOffSet)); //start at the y point thats right "above" (below in this context) the viewport
             ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.40f + f_MainMenuBarYOffSet)); //SIZE OF PEACH-E CONSOLE
 
             pm_EditorConsole->Draw("PEACH CONSOLE", console_window_flags, &f_ShouldConsoleBeOpen);
 
-            //ImGui::End(); //End Console DockSpace
+            ImGui::Render(); // ends the ImGui content mode. Make all ImGui calls before this
 
-            ImGui::SFML::Render(*pm_CurrentWindow);			// ends the ImGui content mode. Make all ImGui calls before this
+            glViewport(0, 0, static_cast<int>(ImGui::GetIO().DisplaySize.x), static_cast<int>(ImGui::GetIO().DisplaySize.y));
+            glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+            glClear(GL_COLOR_BUFFER_BIT);
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-            // Update the window
-            pm_CurrentWindow->display();
+            SDL_GL_SwapWindow(pm_CurrentWindow);
         }
 
-        ImGui::SFML::Shutdown();		// cleans up ImGui
+        // cleans up ImGui, OpenGL, and our SDL window context
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui_ImplSDL2_Shutdown();
+        ImGui::DestroyContext();
+
+        SDL_GL_DeleteContext(gl_context);
+        SDL_DestroyWindow(pm_CurrentWindow);
+        SDL_Quit();
     }
 
     // Call this method to setup the render texture
     bool 
-        PeachEngineRenderingManager::SetupRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour) //pass in screen width and size, and it scales it to the desired proportions automatically
+        PeachEditorRenderingManager::SetupRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour) //pass in screen width and size, and it scales it to the desired proportions automatically
     {
-        if (pm_ViewportRenderTexture)
+ /*       if (pm_ViewportRenderTexture)
         {
-            InternalLogManager::InternalRenderingLogger().Warn("Attempted to setup render texture again when a valid instance of pm_ViewportRenderTexture is running", "PeachEngineRenderingManager");
+            InternalLogManager::InternalRenderingLogger().Warn("Attempted to setup render texture again when a valid instance of pm_ViewportRenderTexture is running", "PeachEditorRenderingManager");
             return false;
         }
 
@@ -500,96 +554,110 @@ namespace PeachEditor {
         }
         else
         {
-            InternalLogManager::InternalRenderingLogger().Warn("Failed to create a valid instance of pm_ViewportRenderTexture, setting it back to nullptr", "PeachEngineRenderingManager");
+            InternalLogManager::InternalRenderingLogger().Warn("Failed to create a valid instance of pm_ViewportRenderTexture, setting it back to nullptr", "PeachEditorRenderingManager");
             pm_ViewportRenderTexture = nullptr;
             return false;
         }
 
+        return true;*/
         return true;
     }
 
     bool 
-        PeachEngineRenderingManager::ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour)  //pass in screen width and size, and it scales it to the desired proportions automatically
+        PeachEditorRenderingManager::ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour)  //pass in screen width and size, and it scales it to the desired proportions automatically
     {
-        if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && !IsNearestNeighbour)
-        {
-            pm_ViewportRenderTexture->setSmooth(true);
-        }
-        else if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && IsNearestNeighbour)
-        {
-            pm_ViewportRenderTexture->setSmooth(false);
-        }
-        else
-        {
-            InternalLogManager::InternalRenderingLogger().Warn("Failed to resize a valid instance of pm_ViewportRenderTexture, setting it back to nullptr", "PeachEngineRenderingManager");
-            pm_ViewportRenderTexture = nullptr;
-            return false;
-        }
+        //if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && !IsNearestNeighbour)
+        //{
+        //    pm_ViewportRenderTexture->setSmooth(true);
+        //}
+        //else if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && IsNearestNeighbour)
+        //{
+        //    pm_ViewportRenderTexture->setSmooth(false);
+        //}
+        //else
+        //{
+        //    InternalLogManager::InternalRenderingLogger().Warn("Failed to resize a valid instance of pm_ViewportRenderTexture, setting it back to nullptr", "PeachEditorRenderingManager");
+        //    pm_ViewportRenderTexture = nullptr;
+        //    return false;
+        //}
 
+        //return true;
         return true;
     }
 
     void 
-        PeachEngineRenderingManager::RunCurrentScene()
+        PeachEditorRenderingManager::RunCurrentScene()
     {
 
     }
 
     void 
-        PeachEngineRenderingManager::Clear()
+        PeachEditorRenderingManager::Clear()
     {
         if (pm_CurrentWindow)
         {
-            pm_CurrentWindow->clear();
+            glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+            glClear(GL_COLOR_BUFFER_BIT);
         }
     }
 
     void 
-        PeachEngineRenderingManager::EndFrame()
+        PeachEditorRenderingManager::EndFrame()
     {
-        if (pm_CurrentWindow)
-        {
-            pm_CurrentWindow->display();
-        }
+
     }
 
     void 
-        PeachEngineRenderingManager::CreatePeachEConsole()
+        PeachEditorRenderingManager::CreatePeachEConsole()
     {
         pm_EditorConsole = make_unique<PeachEConsole>();
     }
 
     void 
-        PeachEngineRenderingManager::CreateSceneTreeViewPanel()
+        PeachEditorRenderingManager::CreateSceneTreeViewPanel()
     {
 
 
     }
 
-    string PeachEngineRenderingManager::GetRendererType() const
+    string 
+        PeachEditorRenderingManager::GetRendererType() 
+        const
     {
         return pm_RendererType;
     }
-    void PeachEngineRenderingManager::GetCurrentViewPort()
+
+    void 
+        PeachEditorRenderingManager::GetCurrentViewPort()
     {
 
     }
-    unsigned int PeachEngineRenderingManager::GetFrameRateLimit() const
+
+    unsigned int 
+        PeachEditorRenderingManager::GetFrameRateLimit() 
+        const
     {
         return pm_FrameRateLimit;
     }
-    bool PeachEngineRenderingManager::IsVSyncEnabled() const
+
+    bool 
+        PeachEditorRenderingManager::IsVSyncEnabled() 
+        const
     {
         return pm_IsVSyncEnabled;
     }
-    void PeachEngineRenderingManager::SetVSync(const bool fp_IsEnabled)
+
+    void 
+        PeachEditorRenderingManager::SetVSync(const bool fp_IsEnabled)
     {
         if (fp_IsEnabled)
         {
             pm_IsVSyncEnabled = fp_IsEnabled;
         }
     }
-    void PeachEngineRenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
+
+    void 
+        PeachEditorRenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
     {
         pm_FrameRateLimit = fp_Limit;
     }

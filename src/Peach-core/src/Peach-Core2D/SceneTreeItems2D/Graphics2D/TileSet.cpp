@@ -74,7 +74,7 @@ namespace PeachCore {
 
    
     void 
-        TileSet::SetCurrentTexture(unique_ptr<sf::Texture>& fp_NewTexture) //idk how moving the unique_ptr reference is gonna act 2 functions deep, but it should work normally
+        TileSet::SetCurrentTexture(TextureData& fp_NewTexture) //idk how moving the unique_ptr reference is gonna act 2 functions deep, but it should work normally
     {
         pm_Texture = PeachTexture2D(m_Name, fp_NewTexture);
     }

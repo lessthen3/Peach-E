@@ -11,7 +11,6 @@
 
 #include "../../../Peach-core/Peach-core.hpp"
 
-using namespace PeachCore;
 using namespace std;
 
 #include "LogManager.h"
@@ -54,7 +53,7 @@ namespace PeachEditor {
 
         const float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
         const float USER_DEFINED_UPDATE_FPS = 60.0f;
-        float          USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game so no const >w<
+        float        USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game so no const >w<
 
         //////////////////////////////////////////////
         // Setting Up and Setting Output Directory
@@ -65,23 +64,23 @@ namespace PeachEditor {
             const
         {
 
-            LogManager::MainLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "MainLogger");
-            LogManager::AudioLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "AudioLogger");
-            LogManager::RenderingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "RenderingLogger");
-            LogManager::ResourceLoadingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "ResourceLoadingLogger");
-            LogManager::NetworkLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "NetworkLogger");
+            PeachCore::LogManager::MainLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "MainLogger");
+            PeachCore::LogManager::AudioLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "AudioLogger");
+            PeachCore::LogManager::RenderingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "RenderingLogger");
+            PeachCore::LogManager::ResourceLoadingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "ResourceLoadingLogger");
+            PeachCore::LogManager::NetworkLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "NetworkLogger");
 
-            LogManager::MainLogger().Debug("MainLogger successfully initialized", "Peach-E");
-            LogManager::AudioLogger().Debug("AudioLogger successfully initialized", "Peach-E");
-            LogManager::RenderingLogger().Debug("RenderingLogger successfully initialized", "Peach-E");
-            LogManager::ResourceLoadingLogger().Debug("ResourceLoadingLogger successfully initialized", "Peach-E");
-            LogManager::NetworkLogger().Debug("NetworkLogger successfully initialized", "Peach-E");
+            PeachCore::LogManager::MainLogger().Debug("MainLogger successfully initialized", "Peach-E");
+            PeachCore::LogManager::AudioLogger().Debug("AudioLogger successfully initialized", "Peach-E");
+            PeachCore::LogManager::RenderingLogger().Debug("RenderingLogger successfully initialized", "Peach-E");
+            PeachCore::LogManager::ResourceLoadingLogger().Debug("ResourceLoadingLogger successfully initialized", "Peach-E");
+            PeachCore::LogManager::NetworkLogger().Debug("NetworkLogger successfully initialized", "Peach-E");
 
             cout << "Hello World!\n"; //>w<
 
-            LogManager::MainLogger().Warn("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
+            PeachCore::LogManager::MainLogger().Warn("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
 
-            LogManager::MainLogger().Trace("Success! This Built Correctly", "Peach-E");
+            PeachCore::LogManager::MainLogger().Trace("Success! This Built Correctly", "Peach-E");
         }
 
         void
@@ -136,7 +135,7 @@ namespace PeachEditor {
 
         }
 
-        void IssueLoadingCommands(vector<LoadCommand> fp_ListOfLoadCommands)
+        void IssueLoadingCommands(vector<PeachCore::LoadCommand> fp_ListOfLoadCommands)
         {
 
         }
@@ -213,16 +212,16 @@ namespace PeachEditor {
         {
             for (int index = 0; index < fp_ListOfPluginsToLoad.size(); index++)
             {
-                PluginManager::ManagePlugins().LoadPlugin(fp_ListOfPluginsToLoad[index]);
+                PeachCore::PluginManager::ManagePlugins().LoadPlugin(fp_ListOfPluginsToLoad[index]);
             }
         }
 
         void RunPlugins()
             const
         {
-            PluginManager::ManagePlugins().InitializePlugins();
-            PluginManager::ManagePlugins().UpdatePlugins(0.1f);
-            PluginManager::ManagePlugins().ShutdownPlugins();
+            PeachCore::PluginManager::ManagePlugins().InitializePlugins();
+            PeachCore::PluginManager::ManagePlugins().UpdatePlugins(0.1f);
+            PeachCore::PluginManager::ManagePlugins().ShutdownPlugins();
         }
 
         //////////////////////////////////////////////
@@ -230,7 +229,10 @@ namespace PeachEditor {
         //////////////////////////////////////////////
         // 
         //MEANT TO BE CALLED ONCE EVERY FRAME, SO WE BATCH ALL CALLS TOGETHER FOR EACH CATEGORY
-        void PushCommands(const CreateDrawableData& fp_CreateData, const UpdateActiveDrawableData& fp_UpdateData, const DeleteDrawableData& fp_DeleteData)
+        void PushCommands(
+            const PeachCore::CreateDrawableData& fp_CreateData, 
+            const PeachCore::UpdateActiveDrawableData& fp_UpdateData, 
+            const PeachCore::DeleteDrawableData& fp_DeleteData)
         {
             /*if (!createData.objectIDs.empty()) {
                 Command createCmd{ CommandType::CreateAsset, createData };
