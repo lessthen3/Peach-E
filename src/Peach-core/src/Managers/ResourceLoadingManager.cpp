@@ -31,7 +31,8 @@ namespace PeachCore {
 		return pm_AudioResourceLoadingQueue;
 	}
 
-	shared_ptr<LoadingQueue> ResourceLoadingManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
+	shared_ptr<LoadingQueue> 
+		ResourceLoadingManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
 	{
 		assert(pm_DrawableQueueReferenceCount <= 2);
 
@@ -51,18 +52,30 @@ namespace PeachCore {
 
 
 
-	bool ResourceLoadingManager::LoadTextureFromSpecifiedFilePath(const string& fp_FilePath)
-	{
-		auto f_LoadedTexture = make_unique<sf::Texture>();
+	//bool ResourceLoadingManager::LoadTextureFromSpecifiedFilePath(const string& fp_TextureFilePath)
+	//{
+	//	// Load image data (consider using stb_image or any similar library)
+	//	int width, height, nrChannels;
+	//	unique_ptr<unsigned char> f_TextureData = nullptr;
+	//	try
+	//	{
+	//		f_TextureData = make_unique<unsigned char>(stbi_load(fp_TextureFilePath.c_str(), &width, &height, &nrChannels, 0));
+	//	}
+	//	catch (const exception& ex)
+	//	{
+	//		LogManager::ResourceLoadingLogger().Error( "Failed to load texture image!", "ResourceLoadingManager");
+	//		return false;
+	//	}
 
-		if (f_LoadedTexture->loadFromFile(fp_FilePath))
-		{
-			TryPushingLoadedResourcePackage( move(make_unique<LoadedResourcePackage>("someObjectID", move(f_LoadedTexture))) );
-			return true;
-		}
+	//	if (f_TextureData)
+	//	{
+	//		TryPushingLoadedResourcePackage(move(make_unique<LoadedResourcePackage>("someObjectID", move(f_TextureData))));
+	//		stbi_image_free(f_TextureData.get()); //can we unload right away?
+	//		return true;
+	//	}
 
-		return false; // Handle failed load appropriately
-	}
+	//	return false; // Handle failed load appropriately
+	//}
 
 		// Called by the rendering thread  //TODO TRY PUSHING THE PACKAGES IN VECTORS ALWAYS AND ONLY UNPACK IN RENDERINGMANAGER,
 		//WE SHOULD FIGURE OUT A WAY TO LOAD THINGS IN BUNCHES, OR GET ALL LOADED OBJECTS IN ONEGO AND ONLY PUSH THEM ONCE ITS ALL LOADED

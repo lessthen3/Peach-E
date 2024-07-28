@@ -88,13 +88,14 @@ find_package(ZLIB CONFIG REQUIRED)
 
 find_package(GLEW CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
-find_package(sfml CONFIG REQUIRED)
+find_package(SDL2 CONFIG REQUIRED)
 
 find_package(imgui CONFIG REQUIRED)
 
 find_package(dr_libs CONFIG REQUIRED)
 find_package(OpenAL CONFIG REQUIRED)
 
+find_package(stb CONFIG REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_package(cgltf CONFIG REQUIRED)
 find_package(nanosvg CONFIG REQUIRED)
@@ -120,10 +121,11 @@ target_link_libraries(${PROJECT_NAME}
     ZLIB::ZLIB
     GLEW::GLEW
     glm::glm
-    sfml::sfml
+    SDL2::SDL2
     imgui::imgui
     dr_libs::dr_libs
     OpenAL::OpenAL
+    stb::stb
     assimp::assimp
     cgltf::cgltf
     nanosvg::nanosvg)

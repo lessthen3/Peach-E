@@ -8,15 +8,12 @@ namespace PeachCore {
         cout << "Hey! I am out of this joint, let's blow this popsicle stand buckoo" << "\n";
     }
 
-    PeachTexture2D::PeachTexture2D(const string& fp_Name,  unique_ptr<sf::Texture>& fp_Texture) : m_Name(fp_Name)
+    PeachTexture2D::PeachTexture2D(const string& fp_Name,  TextureData& fp_Texture) : m_Name(fp_Name)
     {
-        pm_Texture = move(fp_Texture);
+        pm_Texture.m_TextureByteData = move(fp_Texture.m_TextureByteData);
 
-        sf::Vector2u f_TextureSize = pm_Texture->getSize();
-
-        m_Width = f_TextureSize.x; //I AM NOT SURE WHICH ONE IS X AND WHICH ONE IS Y TBH SO IMA ASSUME IT WORKS WITH NORMAL LOGIC LOL
-        m_Height = f_TextureSize.y;
-
+        m_Width = fp_Texture.m_TextureWidth; //I AM NOT SURE WHICH ONE IS X AND WHICH ONE IS Y TBH SO IMA ASSUME IT WORKS WITH NORMAL LOGIC LOL
+        m_Height = fp_Texture.m_TextureHeight;
         pm_IsValid = true;
     }
 
@@ -24,7 +21,7 @@ namespace PeachCore {
     {
         if (pm_IsValid) 
         {
-            pm_Texture = nullptr; //reassign texture to nullptr so that the unique_ptr gets dereferenced and is cleaned up automatically
+            pm_Texture.m_TextureByteData.reset(nullptr); //reassign texture to nullptr so that the unique_ptr gets dereferenced and is cleaned up automatically
         }
     }
 
@@ -73,14 +70,6 @@ namespace PeachCore {
             throw out_of_range("Tile index is out of range.");
         }
         return pm_TileUVs[tileIndex];
-    }
-   
-    // Additional methods to interact with SFML's Texture
-    const sf::Texture* 
-        PeachTexture2D::GetPeachTexture2D()
-        const 
-    {
-        return pm_Texture.get();
     }
 
     int 

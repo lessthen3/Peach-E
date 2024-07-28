@@ -10,8 +10,10 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
-#include <SFML/Graphics.hpp>
 #include "../../Managers/LogManager.h"
+#include "../../Unsorted/PeachObject.h"
+
+#include "../../Unsorted/LoadingQueue.h"
 
 #include <iostream>
 #include <filesystem>
@@ -23,10 +25,13 @@ using namespace std;
 
 namespace PeachCore {
 
-    class PeachTexture2D
+    class PeachTexture2D: public PeachObject
     {
     public:
-        PeachTexture2D(const string& fp_Name, unique_ptr<sf::Texture>& fp_Texture);
+        PeachTexture2D() : PeachObject() {};
+        PeachTexture2D(const string& fp_Name) : PeachObject(fp_Name) {};
+
+        PeachTexture2D(const string& fp_Name, TextureData& fp_Texture);
         ~PeachTexture2D();
 
         PeachTexture2D& 
@@ -38,8 +43,8 @@ namespace PeachCore {
                 // Clean up existing resources if necessary
                 // No need to explicitly delete the texture since sf::Texture manages its own memory
 
-                // Transfer object based resources
-                pm_Texture = move(other.pm_Texture);  // Move the sf::Texture
+                // Transfer object based resources 
+                pm_Texture.m_TextureByteData = move(other.pm_Texture.m_TextureByteData);  // IDK IF THIS MOVE OPERATION IS KOSCHER
                 pm_TileUVs = move(other.pm_TileUVs);
                 m_Name = move(other.m_Name);
 
@@ -68,7 +73,7 @@ namespace PeachCore {
             operator=(nullptr_t fp_NullPtr) //null operator
             noexcept
         {
-            pm_Texture = nullptr;
+            pm_Texture.m_TextureByteData.reset(nullptr);
             pm_TileUVs.clear();
             m_Name = "";
 
@@ -102,10 +107,6 @@ namespace PeachCore {
             GetTileUV(const int tileIndex) 
             const;
 
-        const sf::Texture*
-            GetPeachTexture2D()
-            const;
-
         int 
             GetTileCount() 
             const;
@@ -119,7 +120,7 @@ namespace PeachCore {
         string m_Name;
 
     private:
-        unique_ptr<sf::Texture> pm_Texture = nullptr;
+        TextureData pm_Texture;
 
         int pm_TileWidth;
         int pm_TileHeight;

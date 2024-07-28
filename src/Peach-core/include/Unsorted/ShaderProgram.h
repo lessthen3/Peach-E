@@ -276,6 +276,7 @@ namespace PeachCore {
             return true;
         }
 
+        //BROKEN DO NOT USE, WIP
         void PrintShaderProgramDebugVerbose()
             const
         {

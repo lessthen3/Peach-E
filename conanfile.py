@@ -26,6 +26,7 @@ class PeachEBuilder(ConanFile):
         self.requires("angelscript/2.36.1")
 
         # serialization and compression
+        self.requires("stb/cci.20230920")
         self.requires("nlohmann_json/3.11.3")
         self.requires("cereal/1.3.2")
         self.requires("zlib/1.3.1")
@@ -33,7 +34,7 @@ class PeachEBuilder(ConanFile):
         # opengl + imgui
         self.requires("glew/2.2.0")
         self.requires("glm/cci.20230113")
-        self.requires("sfml/2.6.1")
+        self.requires("sdl/2.30.5")
 
         self.requires("imgui/cci.20230105+1.89.2.docking")
         

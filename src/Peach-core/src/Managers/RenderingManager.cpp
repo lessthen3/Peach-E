@@ -23,21 +23,46 @@ namespace PeachCore {
         }
         if (pm_CurrentWindow)
         {
-            pm_CurrentWindow->clear();
-            pm_CurrentWindow->close();
+            SDL_DestroyWindow(pm_CurrentWindow);
+            SDL_Quit();
 
             delete pm_CurrentWindow;
             pm_CurrentWindow = nullptr;
         }
-        if (m_TestTexture)
+ /*       if (m_TestTexture)
         {
             m_TestTexture.reset(nullptr);
-        }
+        }*/
     }
 
     RenderingManager::RenderingManager()
     {
 
+    }
+
+    bool RenderingManager::CreateSDLWindow(const char* fp_WindowTitle, const int fp_WindowWidth, const int fp_WindowHeight)
+    {
+        if (SDL_Init(SDL_INIT_VIDEO) < 0)
+        {
+            LogManager::RenderingLogger().Fatal("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "RenderingManager");
+            return false;
+        }
+
+        pm_CurrentWindow = SDL_CreateWindow(
+            fp_WindowTitle,
+            SDL_WINDOWPOS_UNDEFINED,
+            SDL_WINDOWPOS_UNDEFINED,
+            fp_WindowWidth, fp_WindowHeight,
+            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+
+        if (!pm_CurrentWindow)
+        {
+            LogManager::RenderingLogger().Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager");
+            SDL_Quit();
+            return false;
+        }
+
+        return true;
     }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
@@ -67,28 +92,18 @@ namespace PeachCore {
             return false;
         }
 
-        // Create an SFML window and context settings
-/*       sf::ContextSettings settings;
-       settings.depthBits = 24;
-       settings.stencilBits = 8; //THESE SETTINGS ARE BROKEN FOR SOME REASON, AND I DONT KNOW WHY
-       settings.antialiasingLevel = 4;
-       settings.majorVersion = 3;
-       settings.minorVersion = 3;
-       settings.attributeFlags = sf::ContextSettings::Core;*/
-
-        pm_CurrentWindow = new sf::RenderWindow(sf::VideoMode(fp_Width, fp_Height), fp_Title, sf::Style::Default);
-
-        // Camera Setup
-        pm_CurrentCamera2D = new PeachCamera2D(*pm_CurrentWindow);
-        pm_CurrentCamera2D->SetCenter(400, 300); // Set this dynamically as needed
-        pm_CurrentCamera2D->SetSize(800, 600); // Set this to zoom in or out
-        pm_CurrentCamera2D->Enable();
-
-        if (!pm_CurrentWindow->isOpen())
+        if (!CreateSDLWindow(fp_Title.c_str(), fp_Width, fp_Height))
         {
-            throw runtime_error("Failed to create window.");
-            return false;
+            throw runtime_error("Couldn't even start up a window for the editor oof");
         }
+
+        pm_OpenGLRenderer = new OpenGLRenderer(pm_CurrentWindow, false);
+
+        //// Camera Setup
+        //pm_CurrentCamera2D = new PeachCamera2D(*pm_CurrentWindow);
+        //pm_CurrentCamera2D->SetCenter(400, 300); // Set this dynamically as needed
+        //pm_CurrentCamera2D->SetSize(800, 600); // Set this to zoom in or out
+        //pm_CurrentCamera2D->Enable();
 
         return true;
     }
@@ -132,19 +147,14 @@ namespace PeachCore {
         {
             visit(overloaded
                 {
-                [&]( unique_ptr<unsigned char>& fp_RawByteData)
+                [&](TextureData& fp_RawByteData)
                 {
                     // Handle creation logic here
                 },
-                [&](unique_ptr<sf::Texture>& fp_TextureData)
+                [](auto&&)
                 {
-                    m_TestTexture = move(fp_TextureData);
-                    LogManager::RenderingLogger().Debug("Loaded a texture from the loading queue", "RenderingManager");
-                },
-                [&](unique_ptr<string>& fp_JSONData)
-                {
-                    // Handle deletion logic here
-                    // Ensure resources are properly released and objects are cleaned up
+                    // Default handler for any unhandled types
+                    LogManager::RenderingLogger().Warn("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager");
                 }
                 }, ResourcePackage.get()->ResourceData);
         }
@@ -155,60 +165,36 @@ namespace PeachCore {
     {
         //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
-
-        //sf::Sprite sprite;
-        //sprite.setTexture(*m_TestTexture);
-
-        ////// Get the size of the window
-        //sf::Vector2u windowSize = pm_CurrentWindow->getSize();
-
-        ////// Get the size of the texture
-        //sf::Vector2u textureSize = m_TestTexture->getSize();
-
-        ////// Calculate scale factors
-        //float scaleX = float(windowSize.x) / textureSize.x;
-        //float scaleY = float(windowSize.y) / textureSize.y;
-
-        ////// Set the scale of the sprite
-        //sprite.setScale(scaleX, scaleY);
-
-        //sprite.setOrigin(textureSize.x / 2.0f, textureSize.y / 2.0f);
-        //sprite.setPosition(windowSize.x / 2.0f, windowSize.y / 2.0f);
-
+        bool f_IsGameRuntimeOver = false;
         // Main loop that continues until the window is closed
-        while (pm_CurrentWindow->isOpen()) 
+        while (!f_IsGameRuntimeOver)
         {
-            //if (pm_IsShutDown) //used to stop rendering loop if possible when ForceQuit() is called
-            //{
-            //    pm_CurrentWindow->clear();
-            //    pm_CurrentWindow->close();
-            //    pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
-            //    break;
-            //}
-            // Process events
-            sf::Event event;
-
-            while (pm_CurrentWindow->pollEvent(event)) 
+            if (pm_IsShutDown) //used to stop rendering loop if possible when ForceQuit() is called
             {
-                if (event.type == sf::Event::Closed)
+                //pm_CurrentWindow->clear();
+                //pm_CurrentWindow->close();
+                pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
+                break;
+            }
+            SDL_Event event;
+
+            while (SDL_PollEvent(&event))
+            {
+                //ImGui_ImplSDL2_ProcessEvent(&event);
+
+                if (event.type == SDL_QUIT)
                 {
-                    pm_CurrentWindow->close();
+                    f_IsGameRuntimeOver = true;
                 }
             }
 
-            // Clear the screen with a dark blue color
-            pm_CurrentWindow->clear(sf::Color(0, 0, 139));
-
-            // Draw the sprite
-            //pm_CurrentWindow->draw(sprite);
-
-            // Update the window
-            pm_CurrentWindow->display();
+            glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+            glClear(GL_COLOR_BUFFER_BIT);
 
             if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
             {
-                pm_CurrentWindow->clear();
-                pm_CurrentWindow->close();
+                //pm_CurrentWindow->clear();
+                //pm_CurrentWindow->close();
                 pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
                 break;
             }
@@ -224,10 +210,7 @@ namespace PeachCore {
     void 
         RenderingManager::EndFrame() 
     {
-        if (pm_CurrentWindow)
-        {
-            pm_CurrentWindow->display();
-        }
+
     }
 
     void 
@@ -241,18 +224,21 @@ namespace PeachCore {
     {
       
     }
+
     unsigned int 
         RenderingManager::GetFrameRateLimit() 
         const
     {
         return pm_FrameRateLimit;
     }
+
     bool 
         RenderingManager::IsVSyncEnabled() 
         const
     {
         return pm_IsVSyncEnabled;
     }
+
     void 
         RenderingManager::SetVSync(const bool fp_IsEnabled)
     {
@@ -261,6 +247,7 @@ namespace PeachCore {
             pm_IsVSyncEnabled = fp_IsEnabled;
         }
     }
+
     void 
         RenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
     {
