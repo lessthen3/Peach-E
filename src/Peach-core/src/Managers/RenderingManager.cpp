@@ -26,7 +26,7 @@ namespace PeachCore {
             SDL_DestroyWindow(pm_CurrentWindow);
             SDL_Quit();
 
-            delete pm_CurrentWindow;
+            //delete pm_CurrentWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
             pm_CurrentWindow = nullptr;
         }
  /*       if (m_TestTexture)
@@ -99,6 +99,7 @@ namespace PeachCore {
 
         pm_OpenGLRenderer = new OpenGLRenderer(pm_CurrentWindow, false);
 
+        glViewport(0, 0, fp_Width, fp_Height);
         //// Camera Setup
         //pm_CurrentCamera2D = new PeachCamera2D(*pm_CurrentWindow);
         //pm_CurrentCamera2D->SetCenter(400, 300); // Set this dynamically as needed
@@ -190,6 +191,7 @@ namespace PeachCore {
 
             glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
             glClear(GL_COLOR_BUFFER_BIT);
+            SDL_GL_SwapWindow(pm_CurrentWindow);
 
             if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
             {
@@ -199,6 +201,9 @@ namespace PeachCore {
                 break;
             }
         }
+        SDL_GL_DeleteContext(pm_OpenGLRenderer->GetCurrentOpenGLContext());
+        SDL_DestroyWindow(pm_CurrentWindow);
+        SDL_Quit();
     }
 
     void 
