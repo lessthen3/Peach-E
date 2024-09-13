@@ -12,18 +12,10 @@
 #include <list>
 #include <memory>
 #include <stdexcept>
-<<<<<<< HEAD:include/Peach-Core/2D/CollisionPolygon2D.h
-#include "LogManager.h"
-#include "Physics2DManager.h"
-=======
-<<<<<<< Updated upstream:src/Peach-core/include/Peach-Core2D/SceneTreeItems2D/Physics2D/CollisionPolygon2D.h
-#include "../../../Managers/LogManager.h"
-#include "../../../Managers/Physics2DManager.h"
-=======
+
 #include "../Managers/LogManager.h"
 #include "../Managers/Physics2DManager.h"
->>>>>>> Stashed changes:include/Peach-Core/2D/CollisionPolygon2D.h
->>>>>>> 03203df36206f71282dd66e8e335c2b65abe7254:src/Peach-core/include/Peach-Core2D/SceneTreeItems2D/Physics2D/CollisionPolygon2D.h
+
 
 using namespace std;
 
