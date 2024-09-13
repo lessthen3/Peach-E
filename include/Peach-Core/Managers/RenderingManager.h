@@ -72,6 +72,30 @@ namespace PeachCore {
         RenderingManager& operator=(const RenderingManager&) = delete;
 
     private:
+        unsigned int pm_FrameRateLimit = 60;
+        bool pm_IsVSyncEnabled = false;
+        bool pm_IsShutDown = false;
+        unsigned long int pm_CurrentFrame = 0;
+
+        // Object ID : CurrentPosition
+        map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
+        //but i could't give less of a fuck right now
+        // Object ID : DeltaPosition
+        map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
+        // DrawableObject.ObjectID : DrawableObject dict
+        map<string, DrawableObject> pm_ListOfAllDrawables;
+
+        shared_ptr<CommandQueue> pm_CommandQueue = nullptr;
+        shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
+
+        unique_ptr<PeachTexture2D> m_TestTexture = nullptr;
+
+        OpenGLRenderer* pm_OpenGLRenderer = nullptr;
+        PeachCamera2D* pm_CurrentCamera2D = nullptr;
+        SDL_Window* pm_CurrentWindow = nullptr;
+
+
+    private:
         inline const float 
             Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
             const
@@ -137,30 +161,6 @@ namespace PeachCore {
         {
             pm_IsShutDown = true;
         }
-
-    private:
-        unsigned int pm_FrameRateLimit = 60;
-        bool pm_IsVSyncEnabled = false;
-        bool pm_IsShutDown = false;
-    private:
-        unsigned long int pm_CurrentFrame = 0;
-
-        // Object ID : CurrentPosition
-        map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
-                                                                                                    //but i could't give less of a fuck right now
-        // Object ID : DeltaPosition
-        map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
-        // DrawableObject.ObjectID : DrawableObject dict
-        map<string, DrawableObject> pm_ListOfAllDrawables;
-
-        shared_ptr<CommandQueue> pm_CommandQueue = nullptr;
-        shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
-
-        unique_ptr<PeachTexture2D> m_TestTexture = nullptr;
-
-        OpenGLRenderer* pm_OpenGLRenderer = nullptr;
-        PeachCamera2D* pm_CurrentCamera2D = nullptr;
-        SDL_Window* pm_CurrentWindow = nullptr;
     };
 
 }

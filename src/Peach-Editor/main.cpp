@@ -3,19 +3,19 @@
 */
 
 #define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
 
 #include <pybind11/pybind11.h>
 
 #include "../../include/Peach-Editor/Managers/PeachEditorRenderingManager.h"
 #include "../../include/Peach-Core/Managers/PeachEngineManager.h"
 
-#include <iostream>
 #include <filesystem>
-#include <unordered_map>
-#include <string>
 #include <chrono>
 #include <thread>
+
+#include <bgfx/bgfx.h>
+
+#include <bgfx/embedded_shader.h>
 
 using namespace std;
 using namespace PeachEditor;
