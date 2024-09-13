@@ -65,11 +65,19 @@ namespace PeachEditor {
             const
         {
 
+<<<<<<< Updated upstream:src/Peach-core/include/Managers/PeachEngineManager.h
             LogManager::MainLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "MainLogger");
             LogManager::AudioLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "AudioLogger");
             LogManager::RenderingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "RenderingLogger");
             LogManager::ResourceLoadingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "ResourceLoadingLogger");
             LogManager::NetworkLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "NetworkLogger");
+=======
+            PeachCore::LogManager::MainLogger().Initialize("../logs", "MainLogger");
+            PeachCore::LogManager::AudioLogger().Initialize("../logs", "AudioLogger");
+            PeachCore::LogManager::RenderingLogger().Initialize("../logs", "RenderingLogger");
+            PeachCore::LogManager::ResourceLoadingLogger().Initialize("../logs", "ResourceLoadingLogger");
+            PeachCore::LogManager::NetworkLogger().Initialize("../logs", "NetworkLogger");
+>>>>>>> Stashed changes:include/Peach-Core/Managers/PeachEngineManager.h
 
             LogManager::MainLogger().Debug("MainLogger successfully initialized", "Peach-E");
             LogManager::AudioLogger().Debug("AudioLogger successfully initialized", "Peach-E");

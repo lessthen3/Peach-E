@@ -4,9 +4,15 @@
 #include <string>
 #include <memory>
 
+<<<<<<< Updated upstream:src/Peach-core/include/Peach-Core2D/SceneTreeItems2D/Physics2D/CollisionShape2D.h
 #include "../../../Managers/Physics2DManager.h"
 #include "../../../Managers/LogManager.h"
 #include "../../PeachNode2D.h"
+=======
+#include "../Managers/Physics2DManager.h"
+#include "../Managers/LogManager.h"
+#include "PeachNode2D.h"
+>>>>>>> Stashed changes:include/Peach-Core/2D/CollisionShape2D.h
 
 #include "Sensor2D.h"
 

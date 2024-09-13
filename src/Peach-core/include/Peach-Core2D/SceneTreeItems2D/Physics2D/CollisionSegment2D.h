@@ -1,6 +1,10 @@
 #pragma once
 
+<<<<<<< Updated upstream:src/Peach-core/include/Peach-Core2D/SceneTreeItems2D/Physics2D/CollisionSegment2D.h
 #include "../../../Managers/LogManager.h"
+=======
+#include "../Managers/LogManager.h"
+>>>>>>> Stashed changes:include/Peach-Core/2D/CollisionSegment2D.h
 
 #include <vector>
 #include <string>

@@ -117,10 +117,17 @@ static void
     SetupInternalLogManagers()
 {
 
+<<<<<<< Updated upstream:src/Peach-E-Core/main.cpp
     InternalLogManager::InternalMainLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalMainLogger");
     InternalLogManager::InternalAudioLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalAudioLogger");
     InternalLogManager::InternalRenderingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalRenderingLogger");
     InternalLogManager::InternalResourceLoadingLogger().Initialize("D:/Game Development/Random Junk I Like to Keep/LogTestMinGE", "InternalResourceLoadingLogger");
+=======
+    InternalLogManager::InternalMainLogger().Initialize("../logs", "InternalMainLogger");
+    InternalLogManager::InternalAudioLogger().Initialize("../logs", "InternalAudioLogger");
+    InternalLogManager::InternalRenderingLogger().Initialize("../logs", "InternalRenderingLogger");
+    InternalLogManager::InternalResourceLoadingLogger().Initialize("../logs", "InternalResourceLoadingLogger");
+>>>>>>> Stashed changes:src/Peach-Editor/main.cpp
 
     InternalLogManager::InternalMainLogger().Debug("InternalMainLogger successfully initialized", "Peach-E");
     InternalLogManager::InternalAudioLogger().Debug("InternalAudioLogger successfully initialized", "Peach-E");

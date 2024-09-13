@@ -1,11 +1,11 @@
 # Peach-E
 Hey! This is a game engine that you are free to do whatever with!
 
-Peach-E is an open-source game engine that currently is functional for 2D only. 
+Peach-E is an open-source game engine licensed under the permissive MIT License. 
 
 Currently you can target Windows, Linux, and MacOS.
 
-
+## Building Peach-E From Source
 
 If you want to build Peach-E for yourself:
 
@@ -15,9 +15,9 @@ If you want to build Peach-E for yourself:
 
 2. Run: __python init.py__ in your terminal and your done!
 
-__Note:__ You'll have to change some directory specific code in PeachEngineManager. Particularly, SetupLogManagers() and SetupInternalLogManagers(). Whatever directory you wish to use will be auto-populated with relevant log files.
+__Note:__ Fuck you
 
-### Conan Profile Settings
+## Conan Profile Settings
 
 ```ini
 [settings]
@@ -30,7 +30,7 @@ compiler.version=193
 os=Windows
 ```
 
-### Resources:
+## Resources:
 
 [Latest CMake Download](https://cmake.org/download/)
 
