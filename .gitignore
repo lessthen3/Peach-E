@@ -12,5 +12,12 @@
 /build
 /logs
 
+# Logs
+/logs
+
 # JSON
 **.json
+
+# individual files
+/TODO.txt
+/CMakeUserPresets.json
