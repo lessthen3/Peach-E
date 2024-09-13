@@ -12,19 +12,29 @@
 #include <list>
 #include <memory>
 #include <stdexcept>
+<<<<<<< HEAD:include/Peach-Core/2D/CollisionPolygon2D.h
 #include "LogManager.h"
 #include "Physics2DManager.h"
+=======
+<<<<<<< Updated upstream:src/Peach-core/include/Peach-Core2D/SceneTreeItems2D/Physics2D/CollisionPolygon2D.h
+#include "../../../Managers/LogManager.h"
+#include "../../../Managers/Physics2DManager.h"
+=======
+#include "../Managers/LogManager.h"
+#include "../Managers/Physics2DManager.h"
+>>>>>>> Stashed changes:include/Peach-Core/2D/CollisionPolygon2D.h
+>>>>>>> 03203df36206f71282dd66e8e335c2b65abe7254:src/Peach-core/include/Peach-Core2D/SceneTreeItems2D/Physics2D/CollisionPolygon2D.h
 
 using namespace std;
 
 namespace PeachCore {
 
-    typedef CGAL::Exact_predicates_inexact_constructions_kernel                                                         Kernel;
-    typedef CGAL::Partition_traits_2<Kernel>                                                                                            Traits;
-    typedef Traits::Point_2                                                                                                                         Point_2;
-    typedef Traits::Polygon_2                                                                                                                     Polygon_2;
+    typedef CGAL::Exact_predicates_inexact_constructions_kernel              Kernel;
+    typedef CGAL::Partition_traits_2<Kernel>                                      Traits;
+    typedef Traits::Point_2                                                        Point_2;
+    typedef Traits::Polygon_2                                                   Polygon_2;
 
-    typedef list<Polygon_2>                                                                                                                   Polygon_List;
+    typedef list<Polygon_2>                                                    Polygon_List;
 
     class CollisionPolygon2D {
     public:
@@ -44,7 +54,14 @@ namespace PeachCore {
         //convexness is not strictly required, however co-linear points might fuck up the algorithm/slow it down, so we remove them from the list before performing the polygonal decomposition
         //we also check for a minimum of 3 vertices before doing ANY operation on the given set of vertices since those are degenerate cases, and u especially are a degenerate for trying to pass it
         //might have some imprecision for very small or very large values, but whatever floating point arithmetic can only do so much Xd
-        bool CreatePolygonBody(const b2WorldId& fp_World, const glm::vec2& fp_Position, const vector<glm::vec2>& fp_Vertices, bool fp_IsDynamic = true) 
+        bool 
+            CreatePolygonBody
+            (
+                const b2WorldId& fp_World, 
+                const glm::vec2& fp_Position, 
+                const vector<glm::vec2>& fp_Vertices, 
+                const bool fp_IsDynamic = true
+            ) 
         {
             if (fp_Vertices.size() < 3)
             {
@@ -104,7 +121,14 @@ namespace PeachCore {
             return true;
         }
 
-        void CreatePhysicsBody(b2WorldId fp_World, b2BodyId& fp_Body2D, const glm::vec2& fp_Position, bool fp_IsDynamic = true)
+        void 
+            CreatePhysicsBody
+            (
+                b2WorldId fp_World, 
+                b2BodyId& fp_Body2D, 
+                const glm::vec2& fp_Position, 
+                const bool fp_IsDynamic = true
+            )
         {
             b2BodyDef f_BodyDefinition = b2DefaultBodyDef();
             f_BodyDefinition.type = fp_IsDynamic ? b2_dynamicBody : b2_staticBody;
@@ -114,7 +138,13 @@ namespace PeachCore {
             pm_IsValid = true; //you arent allowed to access this manually anywhere
         }
 
-        b2ShapeDef CreateShapeDefinition(const float fp_Density = 1.0f, const float fp_Friction = 0.3f, const float fp_Bounciness = 0.2f)
+        b2ShapeDef 
+            CreateShapeDefinition
+            (
+                const float fp_Density = 1.0f, 
+                const float fp_Friction = 0.3f, 
+                const float fp_Bounciness = 0.2f
+            )
         {
             b2ShapeDef f_ShapeDefinition = b2DefaultShapeDef();
             f_ShapeDefinition.density = fp_Density; //KABOOOOOOOOOOOOOOOOM
@@ -123,7 +153,12 @@ namespace PeachCore {
             return f_ShapeDefinition;
         }
 
-        bool DecomposePossiblyConcavePolygon(vector<b2Vec2>& fp_InputVertices, Polygon_List& fp_OutputPolygons)
+        bool 
+            DecomposePossiblyConcavePolygon
+            (
+                vector<b2Vec2>& fp_InputVertices, 
+                Polygon_List& fp_OutputPolygons
+            )
         {
             vector<b2Vec2> f_OptimizedVertices = RemoveCollinearPoints(fp_InputVertices);
 

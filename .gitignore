@@ -10,6 +10,7 @@
 
 # Build Output
 /build
+/logs
 
 # Logs
 /logs
