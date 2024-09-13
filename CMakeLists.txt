@@ -1,32 +1,47 @@
 cmake_minimum_required(VERSION 3.20)
 
-# conan toolchain setup
-set(CMAKE_TOOLCHAIN_FILE "${PROJECT_BINARY_DIR}/build/generators/conan_toolchain.cmake")
-include (build/build/generators/conan_toolchain.cmake)
-
-# project definition
+# Project definition
 project(Peach_Engine VERSION 1.0 DESCRIPTION "Peach Engine" LANGUAGES CXX)
 
-# idk i just saw someone else do this
-list(APPEND CMAKE_MODULE_PATH "build/CMakeFiles")
-
-# enforcing C++20 standard
+# Enforcing C++20 standard
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# idk i saw someone else do this, i only have static libs so idk
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+####################################### Conan Setup
 
-# Define directories
-set(SOURCE_DIR "${PROJECT_SOURCE_DIR}/src")
-set(BINARY_DIR "${PROJECT_BINARY_DIR}/bin")
+# Conan toolchain setup
+include (build/build/generators/conan_toolchain.cmake)
+
+####################################### Source Files
 
 # Automatically find all the source files in the source directory
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "${SOURCE_DIR}/*.cpp" "${SOURCE_DIR}/*.h")
+file(
+    GLOB_RECURSE 
+    SOURCES 
+    CONFIGURE_DEPENDS 
+    "src/*.cpp" 
+    "include/*.h"
+)
 
-#
-# LINKING ALL EXTERNALLY COMPILED LIBRARIES
-#
+####################################### Library Target
+
+# Create a static library
+add_library(peach STATIC ${SOURCES})
+
+# Specify include directories for the library
+target_include_directories(peach PUBLIC 
+    include/Peach-Core
+)
+
+####################################### Executable Target
+
+# Add executable based on source files
+add_executable(${PROJECT_NAME} src/Peach-Editor/main.cpp)
+
+# Link the library with the executable
+target_link_libraries(${PROJECT_NAME} PRIVATE peach)
+
+####################################### Static Imports
 
 add_library(box2d STATIC IMPORTED)
 
@@ -56,93 +71,95 @@ set_target_properties(GGPO PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
 )
 
-# Add executable based on source files
-add_executable(${PROJECT_NAME} ${SOURCES})
-
-# Include directories
-include_directories()
-
-# Link directories
-link_directories()
-
 #
-# LOCATING ALL OF OUR EXTERNAL DEPS FROM CONAN
+# BGFX STATIC LINKING
 #
 
-find_package(spdlog CONFIG REQUIRED)
-find_package(TBB REQUIRED)
-find_package(PhysFS REQUIRED)
+add_library(bimg STATIC IMPORTED)
 
-find_package(cgal REQUIRED)
-find_package(clipper2 CONFIG REQUIRED)
+set_target_properties(bimg PROPERTIES
+    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/BGFX-stuff/bimg/lib/bimg.lib"
+    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/BGFX-stuff/bimg/include"
+)
 
-find_package(Bullet CONFIG REQUIRED)
-
-find_package(pybind11 CONFIG REQUIRED)
-find_package(sol2 CONFIG REQUIRED)
-find_package(Angelscript CONFIG REQUIRED)
-
-find_package(nlohmann_json CONFIG REQUIRED)
-find_package(cereal CONFIG REQUIRED)
-find_package(ZLIB CONFIG REQUIRED)
-
-find_package(GLEW CONFIG REQUIRED)
-find_package(glm CONFIG REQUIRED)
-find_package(SDL2 CONFIG REQUIRED)
-
-find_package(imgui CONFIG REQUIRED)
-
-find_package(dr_libs CONFIG REQUIRED)
-find_package(OpenAL CONFIG REQUIRED)
-
-find_package(stb CONFIG REQUIRED)
-find_package(assimp CONFIG REQUIRED)
-find_package(cgltf CONFIG REQUIRED)
-find_package(nanosvg CONFIG REQUIRED)
-
-
-# Linking libraries
-target_link_libraries(${PROJECT_NAME} 
+# Link Statically Compiled External Libraries
+target_link_libraries(peach PUBLIC
     box2d 
     libsodium 
     python312 
     GGPO
+    bimg
+)
+
+####################################### Dependency Linking
+
+find_package(spdlog REQUIRED)
+find_package(TBB REQUIRED)
+find_package(PhysFS REQUIRED)
+
+find_package(cgal REQUIRED)
+find_package(clipper2 REQUIRED)
+
+find_package(Bullet REQUIRED)
+
+find_package(pybind11 REQUIRED)
+find_package(sol2 REQUIRED)
+find_package(Angelscript REQUIRED)
+
+find_package(nlohmann_json REQUIRED)
+find_package(cereal REQUIRED)
+find_package(ZLIB REQUIRED)
+
+find_package(GLEW REQUIRED)
+find_package(glm REQUIRED)
+find_package(SDL2 REQUIRED)
+find_package(bgfx REQUIRED)
+
+find_package(imgui REQUIRED)
+
+find_package(dr_libs REQUIRED)
+find_package(OpenAL REQUIRED)
+
+find_package(assimp REQUIRED)
+find_package(cgltf REQUIRED)
+
+
+# Peach Core
+target_link_libraries(peach PUBLIC
+    #logging
     spdlog::spdlog
+    #threading
     onetbb::onetbb
+    #file system
     physfs-static
+    #geometry manipulation
     CGAL::CGAL
     clipper2::clipper2
+    #3D physics
     Bullet::Bullet
+    #lang support
     pybind11::pybind11
     sol2::sol2
     Angelscript::angelscript
+    #data handling
     nlohmann_json::nlohmann_json
     cereal::cereal
     ZLIB::ZLIB
+    #opengl
     GLEW::GLEW
     glm::glm
+    #windowing + rendering
     SDL2::SDL2
+    bgfx::bgfx
     imgui::imgui
+    #audio
     dr_libs::dr_libs
     OpenAL::OpenAL
-    stb::stb
-    assimp::assimp
-    cgltf::cgltf
-    nanosvg::nanosvg)
-
-
-#
-# idefk, i thought knew what this did, but i really feel like i don't know what this does lmao
-#
-
-# Debug and Release specific settings
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${BINARY_DIR}
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${BINARY_DIR}
 )
 
-# Target configurations
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-    $<$<CONFIG:Debug>:DEBUG>
-    $<$<CONFIG:Release>:NDEBUG>
+# Peach Editor
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    #asset importing
+    assimp::assimp
+    cgltf::cgltf
 )

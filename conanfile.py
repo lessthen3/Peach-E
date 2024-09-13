@@ -26,15 +26,15 @@ class PeachEBuilder(ConanFile):
         self.requires("angelscript/2.36.1")
 
         # serialization and compression
-        self.requires("stb/cci.20230920")
         self.requires("nlohmann_json/3.11.3")
         self.requires("cereal/1.3.2")
         self.requires("zlib/1.3.1")
 
-        # opengl + imgui
+        # opengl + imgui + windowing
         self.requires("glew/2.2.0")
         self.requires("glm/cci.20230113")
         self.requires("sdl/2.30.5")
+        self.requires("bgfx/cci.20230216")
 
         self.requires("imgui/cci.20230105+1.89.2.docking")
         
@@ -42,14 +42,12 @@ class PeachEBuilder(ConanFile):
         self.requires("dr_libs/cci.20230529")
         self.requires("openal-soft/1.22.2")
 
-        # asset importing
+        # 3D asset importing
         self.requires("assimp/5.4.1")
         self.requires("cgltf/1.13")
-        self.requires("nanosvg/cci.20231025")
 
     def generate(self):
         cmake = CMakeDeps(self)
-        #cmake.generate()
 
     def build(self):
         cmake = CMake(self)

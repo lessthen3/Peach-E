@@ -13,7 +13,7 @@ If you want to build Peach-E for yourself:
 
 1. Clone the repo
 
-2. Run: __python init.py__ in your terminal and your done!
+2. Run: __python init.py --debug or --release or --both__ in your terminal and your done!
 
 __Note:__ You'll have to change some directory specific code in PeachEngineManager. Particularly, SetupLogManagers() and SetupInternalLogManagers(). Whatever directory you wish to use will be auto-populated with relevant log files.
 
