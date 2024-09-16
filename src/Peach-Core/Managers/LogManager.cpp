@@ -1,6 +1,4 @@
 #include "../../include/Peach-Core/Managers/LogManager.h"
-#include <fstream>
-#include <iostream>
 
 using namespace std;
 

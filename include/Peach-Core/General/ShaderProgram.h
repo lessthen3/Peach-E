@@ -2,10 +2,7 @@
 
 #include "../Managers/LogManager.h"
 
-#include <iostream>
-#include <fstream>
 #include <map>
-#include <vector>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>

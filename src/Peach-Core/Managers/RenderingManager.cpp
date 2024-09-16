@@ -77,32 +77,6 @@ namespace PeachCore {
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
-    bool 
-        RenderingManager::CreateWindowAndCamera2D(const string& fp_Title, int fp_Width, int fp_Height)
-    {
-        if (pm_CurrentWindow || pm_CurrentCamera2D)
-        {
-            LogManager::RenderingLogger().Warn("RenderingManager already has a valid window or camera2D currently active", "RenderingManager");
-            return false;
-        }
-
-        if (!CreateSDLWindow(fp_Title.c_str(), fp_Width, fp_Height))
-        {
-            throw runtime_error("Couldn't even start up a window for the editor oof");
-        }
-
-        pm_OpenGLRenderer = new OpenGLRenderer(pm_CurrentWindow, false);
-
-        glViewport(0, 0, fp_Width, fp_Height);
-        //// Camera Setup
-        //pm_CurrentCamera2D = new PeachCamera2D(*pm_CurrentWindow);
-        //pm_CurrentCamera2D->SetCenter(400, 300); // Set this dynamically as needed
-        //pm_CurrentCamera2D->SetSize(800, 600); // Set this to zoom in or out
-        //pm_CurrentCamera2D->Enable();
-
-        return true;
-    }
-
     void 
         RenderingManager::ProcessCommands() 
     {
@@ -166,7 +140,7 @@ namespace PeachCore {
         {
             if (pm_IsShutDown) //used to stop rendering loop if possible when ForceQuit() is called
             {
-                glClear(GL_COLOR_BUFFER_BIT);
+                //glClear(GL_COLOR_BUFFER_BIT);
                 pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
                 break;
             }
@@ -182,8 +156,6 @@ namespace PeachCore {
                 }
             }
 
-            glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-            glClear(GL_COLOR_BUFFER_BIT);
             SDL_GL_SwapWindow(pm_CurrentWindow);
 
             if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
@@ -194,7 +166,7 @@ namespace PeachCore {
                 break;
             }
         }
-        SDL_GL_DeleteContext(pm_OpenGLRenderer->GetCurrentOpenGLContext());
+
         Shutdown();
     }
 

@@ -5,5 +5,5 @@
 #include "../DirectionalLight2D.h"
 #include "../PointLight2D.h"
 
-#include "../General/OpenGLRenderer.h"
-#include "../General/ShaderProgram.h"
+#include "../../General/PeachRenderer.h"
+#include "../../General/ShaderProgram.h"

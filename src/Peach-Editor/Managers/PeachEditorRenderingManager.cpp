@@ -11,8 +11,8 @@ namespace PeachEditor {
         RunGameInstance()
     {
         // Assuming this function sets up, runs, and tears down the game environment
-        PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
-        PeachCore::RenderingManager::Renderer().RenderFrame(true); //set IsStressTest to true, renders only one frame then exits immediately
+        //PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
+        //PeachCore::RenderingManager::Renderer().RenderFrame(true); //set IsStressTest to true, renders only one frame then exits immediately
         PeachCore::RenderingManager::Renderer().Shutdown();
     }
 
@@ -50,15 +50,16 @@ namespace PeachEditor {
     void 
         PeachEditorRenderingManager::Shutdown()
     {
+        //bgfx::shutdown();
+
         if (pm_Camera2D)
         {
             delete pm_Camera2D;
             pm_Camera2D = nullptr;
         }
-        if (pm_OpenGLRenderer)
+        if (pm_PeachRenderer)
         {
-            delete pm_OpenGLRenderer;
-            pm_OpenGLRenderer = nullptr;
+            pm_PeachRenderer.reset(nullptr);
         }
         if (pm_CurrentWindow)
         {
@@ -76,7 +77,13 @@ namespace PeachEditor {
 
     }
 
-    bool PeachEditorRenderingManager::CreateSDLWindow(const char* fp_WindowTitle, const int fp_WindowWidth, const int fp_WindowHeight)
+    bool 
+        PeachEditorRenderingManager::CreateSDLWindow
+        (
+            const char* fp_WindowTitle, 
+            const int fp_WindowWidth, 
+            const int fp_WindowHeight
+        )
     {
         if (SDL_Init(SDL_INIT_VIDEO) < 0) 
         {
@@ -84,14 +91,17 @@ namespace PeachEditor {
             return false;
         }
 
-        pm_CurrentWindow = SDL_CreateWindow(
+        pm_CurrentWindow = 
+            SDL_CreateWindow
+        (
             fp_WindowTitle,
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
             fp_WindowWidth, fp_WindowHeight,
-            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
+            SDL_WINDOW_SHOWN
+        );
 
-        if (!pm_CurrentWindow) 
+        if (not pm_CurrentWindow) 
         {
             InternalLogManager::InternalRenderingLogger().Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager");
             SDL_Quit();
@@ -103,7 +113,12 @@ namespace PeachEditor {
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
     shared_ptr<PeachCore::CommandQueue>
-        PeachEditorRenderingManager::Initialize(const string& fp_Title, int fp_Width, int fp_Height)
+        PeachEditorRenderingManager::Initialize
+        (
+            const string& fp_Title, 
+            const int fp_Width, 
+            const int fp_Height
+        )
     {
         if (pm_HasBeenInitialized)
         {
@@ -111,9 +126,13 @@ namespace PeachEditor {
             return nullptr;
         }
 
-        if (!CreateSDLWindow(fp_Title.c_str(), fp_Width, fp_Height))
+        if (not CreateSDLWindow(fp_Title.c_str(), fp_Width, fp_Height))
         {
             throw runtime_error("Couldn't even start up a window for the editor oof");
+        }
+        else
+        {
+            InternalLogManager::InternalRenderingLogger().Debug("SDL window successfully created for Peach Editor", "PeachEditorRenderingManager");
         }
 
         // Camera Setup
@@ -126,7 +145,7 @@ namespace PeachEditor {
         pm_CommandQueue = make_shared<PeachCore::CommandQueue>();
         pm_LoadedResourceQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
 
-        pm_OpenGLRenderer = new PeachCore::OpenGLRenderer(pm_CurrentWindow, false);
+        pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_CurrentWindow, false);
 
         InternalLogManager::InternalRenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
 
@@ -231,14 +250,12 @@ namespace PeachEditor {
         // MAIN RENDER LOOP FOR THE EDITOR
         //////////////////////////////////////////////
 
-        SDL_GLContext* gl_context = pm_OpenGLRenderer->GetCurrentOpenGLContext(); //gl_context life span < OpenGLRenderer ALWAYS
-
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();
 
         // Setup ImGui binding
-        ImGui_ImplSDL2_InitForOpenGL(pm_CurrentWindow, gl_context);
-        ImGui_ImplOpenGL3_Init("#version 130");
+        ImGui_Implbgfx_Init(255);
+        ImGui_ImplSDL2_InitForOpenGL(pm_CurrentWindow, nullptr);
 
         ImGui::StyleColorsDark();
 
@@ -279,7 +296,7 @@ namespace PeachEditor {
             //////////////////////////////////////////////
 
            // Start the Dear ImGui frame
-            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_Implbgfx_NewFrame();
             ImGui_ImplSDL2_NewFrame();
             ImGui::NewFrame();
 
@@ -342,8 +359,8 @@ namespace PeachEditor {
                         // Run the game in a new window
                         thread T_CurrentSceneRunnerThread([]()
                             {
-                                PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
-                                PeachCore::RenderingManager::Renderer().RenderFrame();
+                               // PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
+                                //PeachCore::RenderingManager::Renderer().RenderFrame();
                                 
                                 PeachEditorRenderingManager::PeachEngineRenderer().m_IsSceneCurrentlyRunning = false;
                             });
@@ -513,20 +530,19 @@ namespace PeachEditor {
 
             ImGui::Render(); // ends the ImGui content mode. Make all ImGui calls before this
 
-            glViewport(0, 0, static_cast<int>(ImGui::GetIO().DisplaySize.x), static_cast<int>(ImGui::GetIO().DisplaySize.y));
-            glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-            glClear(GL_COLOR_BUFFER_BIT);
-            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+           // glViewport(0, 0, static_cast<int>(ImGui::GetIO().DisplaySize.x), static_cast<int>(ImGui::GetIO().DisplaySize.y));
 
-            SDL_GL_SwapWindow(pm_CurrentWindow);
+            ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+
+            bgfx::touch(0);
+            bgfx::frame();
         }
 
         // cleans up ImGui, OpenGL, and our SDL window context
-        ImGui_ImplOpenGL3_Shutdown();
         ImGui_ImplSDL2_Shutdown();
+        //ImGui_Implbgfx_Shutdown();
         ImGui::DestroyContext();
 
-        SDL_GL_DeleteContext(gl_context);
         Shutdown();
     }
 
@@ -592,11 +608,7 @@ namespace PeachEditor {
     void 
         PeachEditorRenderingManager::Clear()
     {
-        if (pm_CurrentWindow)
-        {
-            glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
-            glClear(GL_COLOR_BUFFER_BIT);
-        }
+
     }
 
     void 

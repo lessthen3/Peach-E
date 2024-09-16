@@ -1,14 +1,7 @@
 #pragma once
 
-<<<<<<< HEAD:include/Peach-Core/2D/CharacterController2D.h
-#include "Physics2DManager.h"
-=======
-<<<<<<< Updated upstream:src/Peach-core/include/Peach-Core2D/SceneTreeItems2D/Physics2D/CharacterController2D.h
-#include "../../../Managers/Physics2DManager.h"
-=======
 #include "../Managers/Physics2DManager.h"
->>>>>>> Stashed changes:include/Peach-Core/2D/CharacterController2D.h
->>>>>>> 03203df36206f71282dd66e8e335c2b65abe7254:src/Peach-core/include/Peach-Core2D/SceneTreeItems2D/Physics2D/CharacterController2D.h
+
 #include <glm/glm.hpp>
 
 namespace PeachCore {

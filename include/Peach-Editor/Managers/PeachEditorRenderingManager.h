@@ -12,9 +12,8 @@
 
 
 #include <SDL2/SDL.h>
-#include <GL/glew.h>
 
-#include "../../include/Peach-Core/General/imgui_impl_opengl3.h"
+#include "../../include/Peach-Core/General/imgui_impl_bgfx.h"
 #include "../../include/Peach-Core/General/imgui_impl_sdl2.h"
 
 #include <imgui.h>
@@ -27,8 +26,6 @@
 
 #include "../Editor/PeachConsole.h"
 
-#include <variant>
-#include <string>
 #include <map>
 #include <atomic> //should be used for communicating whether the scene execution thread is currently running or not
 
@@ -166,7 +163,7 @@ namespace PeachEditor {
 
         PeachCore::PeachTexture2D m_TestTexture;
 
-        PeachCore::OpenGLRenderer* pm_OpenGLRenderer = nullptr;
+        unique_ptr<PeachCore::PeachRenderer> pm_PeachRenderer = nullptr;
         PeachCore::PeachCamera2D* pm_Camera2D = nullptr;
         SDL_Window* pm_CurrentWindow = nullptr;
 

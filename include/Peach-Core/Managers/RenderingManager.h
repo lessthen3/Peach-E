@@ -10,24 +10,18 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
-#include <SDL2/SDL.h>
+#include "../General/PeachRenderer.h"
+#include "../2D/PeachCamera2D.h"
+#include "../2D/PeachTexture2D.h"
 
-#include "LogManager.h"
 #include "ResourceLoadingManager.h"
 #include "../General/ShaderProgram.h"
 #include "../General/CommandQueue.h"
 #include "../General/LoadingQueue.h"
 
 #include "../General/PeachNode.h"
-#include "../General/OpenGLRenderer.h"
-
-#include "../2D/PeachTexture2D.h"
 
 #include <variant>
-#include <string>
-#include <map>
-
-#include "../2D/PeachCamera2D.h"
 
 using namespace std;
 
@@ -90,7 +84,7 @@ namespace PeachCore {
 
         unique_ptr<PeachTexture2D> m_TestTexture = nullptr;
 
-        OpenGLRenderer* pm_OpenGLRenderer = nullptr;
+        PeachRenderer* pm_PeachRenderer = nullptr;
         PeachCamera2D* pm_CurrentCamera2D = nullptr;
         SDL_Window* pm_CurrentWindow = nullptr;
 
@@ -115,7 +109,6 @@ namespace PeachCore {
 
     public:
 
-        bool CreateWindowAndCamera2D(const string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
         void ProcessCommands();
         void ProcessLoadedResourcePackages();
         
@@ -126,7 +119,12 @@ namespace PeachCore {
             const;
 
         bool
-            CreateSDLWindow(const char* fp_WindowTitle, const int fp_WindowWidth, const int fp_WindowHeight);
+            CreateSDLWindow
+            (
+                const char* fp_WindowTitle, 
+                const int fp_WindowWidth, 
+                const int fp_WindowHeight
+            );
 
         shared_ptr<CommandQueue> 
             Initialize();
