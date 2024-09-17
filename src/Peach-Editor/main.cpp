@@ -7,18 +7,13 @@
 #include <pybind11/pybind11.h>
 
 #include "../../include/Peach-Editor/Managers/PeachEditorRenderingManager.h"
-#include "../../include/Peach-Core/Managers/PeachEngineManager.h"
+#include "../../include/Peach-Engine/PeachEngineManager.h"
 
 #include <filesystem>
-#include <chrono>
-#include <thread>
-
-#include <bgfx/bgfx.h>
-
-#include <bgfx/embedded_shader.h>
 
 using namespace std;
 using namespace PeachEditor;
+using namespace PeachEngine;
 
 constexpr unsigned int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
 constexpr unsigned int FAILED_TO_INITIALIZE_OPENGL = -1001;
@@ -194,7 +189,7 @@ static void SetupRenderer()
 // MAIN FUNCTION BABY
 //////////////////////////////////////////////
 
-int main(int argc, char* argv[])
+int main(int fp_ArgCount, char* fp_ArgVector[])
 {
     ////////////////////////////////////////////////
     // Setup Loggers
@@ -246,7 +241,7 @@ int main(int argc, char* argv[])
     //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
 
     ////////////////////////////////////////////////
-    //// Setup Renderer for 2D
+    // Setup Renderer for 2D
     ////////////////////////////////////////////////
 
     const unsigned int mf_MainWindowWidth = 800;
@@ -273,6 +268,8 @@ int main(int argc, char* argv[])
     InternalLogManager::InternalMainLogger().Debug("Peach Editor successfully initialized OpenGL", "main_thread");
 
     PeachEditorRenderingManager::PeachEngineRenderer().RenderFrame();
+
+    SDL_Quit(); //just makes more sense to have the main method do this
 
 //    if (not AudioManager::AudioPlayer().Initialize())
 //    {

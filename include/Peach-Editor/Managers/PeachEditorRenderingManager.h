@@ -18,7 +18,7 @@
 
 #include <imgui.h>
 
-#include "../../include/Peach-Core/Managers/PeachEngineManager.h"
+#include "../../include/Peach-Engine/PeachEngineManager.h"
 
 #include "InternalLogManager.h"
 #include "PeachEditorResourceLoadingManager.h"
@@ -187,7 +187,7 @@ namespace PeachEditor {
 
         unique_ptr<PeachCore::PeachRenderer> pm_PeachRenderer = nullptr;
         PeachCore::PeachCamera2D* pm_Camera2D = nullptr;
-        SDL_Window* pm_CurrentWindow = nullptr;
+        SDL_Window* pm_MainWindow = nullptr;
 
         unique_ptr<PeachConsole> pm_EditorConsole = nullptr;
         //unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;

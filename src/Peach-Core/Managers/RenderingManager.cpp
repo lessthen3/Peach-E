@@ -15,13 +15,13 @@ namespace PeachCore {
     void 
         RenderingManager::Shutdown()
     {
-        if (pm_CurrentWindow)
+        if (pm_MainWindow)
         {
-            SDL_DestroyWindow(pm_CurrentWindow);
+            SDL_DestroyWindow(pm_MainWindow);
             //SDL_Quit();
 
-            //delete pm_CurrentWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
-            pm_CurrentWindow = nullptr;
+            //delete pm_MainWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
+            pm_MainWindow = nullptr;
         }
  /*       if (m_TestTexture)
         {
@@ -49,14 +49,14 @@ namespace PeachCore {
             return false;
         }
 
-        pm_CurrentWindow = SDL_CreateWindow(
+        pm_MainWindow = SDL_CreateWindow(
             fp_WindowTitle,
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
             fp_WindowWidth, fp_WindowHeight,
             SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
 
-        if (!pm_CurrentWindow)
+        if (!pm_MainWindow)
         {
             LogManager::RenderingLogger().Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager");
             SDL_Quit();
@@ -75,13 +75,13 @@ namespace PeachCore {
             pm_PeachRenderer = nullptr;
         }
 
-        if(not pm_CurrentWindow)
+        if(not pm_MainWindow)
         {
             LogManager::RenderingLogger().Warn("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager");
             return false;
         }
 
-        pm_PeachRenderer = new PeachRenderer(pm_CurrentWindow);
+        pm_PeachRenderer = new PeachRenderer(pm_MainWindow);
         return true;
     }
 
@@ -110,19 +110,19 @@ namespace PeachCore {
         (
         )
     {
-        if (not pm_CurrentWindow)
+        if (not pm_MainWindow)
         {
             LogManager::RenderingLogger().Warn("RenderingManager tried to initialize opengl before creating the main window!", "RenderingManager");
             return false;
         }
 
         int f_WindowWidth, f_WindowHeight;
-        SDL_GetWindowSize(pm_CurrentWindow, &f_WindowWidth, &f_WindowHeight);
+        SDL_GetWindowSize(pm_MainWindow, &f_WindowWidth, &f_WindowHeight);
 
         SDL_SysWMinfo wmi;
         SDL_VERSION(&wmi.version);
 
-        if (not SDL_GetWindowWMInfo(pm_CurrentWindow, &wmi)) 
+        if (not SDL_GetWindowWMInfo(pm_MainWindow, &wmi)) 
         {
             cerr << "Unable to get window info: " << SDL_GetError() << endl;
             throw runtime_error("Failed to get window manager info.");
@@ -134,7 +134,7 @@ namespace PeachCore {
 
         bgfx::Init bgfxInit;
 
-        #if defined(_WIN32) || (_WIN64)
+        #if defined(_WIN32) || defined(_WIN64)
                     bgfxInit.platformData.nwh = wmi.info.win.window;  // Windows
         #elif defined(__linux__)
                     bgfxInit.platformData.nwh = (void*)wmi.info.x11.window;  // Linux
@@ -232,9 +232,9 @@ namespace PeachCore {
             return;
         }
 
-        if (not pm_CurrentWindow)
+        if (not pm_MainWindow)
         {
-            LogManager::RenderingLogger().Warn("Please assign a valid SDL window to pm_CurrentWindow before trying to render!", "RenderingManager");
+            LogManager::RenderingLogger().Warn("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager");
             return;
         }
 

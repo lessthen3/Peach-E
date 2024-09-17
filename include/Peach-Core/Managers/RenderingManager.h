@@ -86,7 +86,7 @@ namespace PeachCore {
         unique_ptr<PeachTexture2D> m_TestTexture = nullptr;
 
         PeachRenderer* pm_PeachRenderer = nullptr;
-        SDL_Window* pm_CurrentWindow = nullptr;
+        SDL_Window* pm_MainWindow = nullptr;
 
 
     private:
@@ -139,10 +139,6 @@ namespace PeachCore {
         void 
             ResizeWindow();
 
-        string 
-            GetRendererType() 
-            const;
-
         void 
             RenderFrame(bool fp_IsStressTest = false);
 
@@ -173,11 +169,3 @@ namespace PeachCore {
     };
 
 }
-
-
-//
-//if (not InitOpenGL(f_WindowWidth, f_WindowHeight))
-//{
-//    LogManager::RenderingLogger().Fatal("Failed to initialize OpenGL.", "PeachRenderer");
-//    throw runtime_error("Failed to initialize OpenGL.");
-//}

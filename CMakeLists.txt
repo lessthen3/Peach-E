@@ -15,31 +15,77 @@ include (build/build/generators/conan_toolchain.cmake)
 ####################################### Source Files
 
 # Automatically find all the source files in the source directory
+
+# Peach Core
 file(
     GLOB_RECURSE 
-    SOURCES 
+    PEACH_CORE_SOURCES 
     CONFIGURE_DEPENDS 
-    "src/*.cpp" 
-    "include/*.h"
+    "src/Peach-Core/*.cpp" 
+    "include/Peach-Core/*.h"
+)
+
+# Peach Engine
+file(
+    GLOB_RECURSE 
+    PEACH_ENGINE_SOURCES 
+    CONFIGURE_DEPENDS 
+    "src/Peach-Engine/*.cpp" 
+    "include/Peach-Engine/*.h"
+)
+
+# Peach Editor
+file(
+    GLOB_RECURSE 
+    PEACH_EDITOR_SOURCES 
+    CONFIGURE_DEPENDS 
+    "src/Peach-Editor/*.cpp" 
+    "include/Peach-Editor/*.h"
 )
 
 ####################################### Library Target
 
 # Create a static library
-add_library(peach STATIC ${SOURCES})
+add_library(
+    peach 
+    STATIC 
+    ${PEACH_CORE_SOURCES}
+)
 
 # Specify include directories for the library
-target_include_directories(peach PUBLIC 
+target_include_directories(
+    peach 
+    PUBLIC 
     include/Peach-Core
 )
 
-####################################### Executable Target
+####################################### Executable Targets
 
-# Add executable based on source files
-add_executable(${PROJECT_NAME} src/Peach-Editor/main.cpp)
+# Peach Engine
+add_executable(
+    ${PROJECT_NAME} 
+    ${PEACH_ENGINE_SOURCES}
+)
 
-# Link the library with the executable
-target_link_libraries(${PROJECT_NAME} PRIVATE peach)
+# Link Peach Engine
+target_link_libraries(
+    ${PROJECT_NAME} 
+    PRIVATE 
+    peach
+)
+
+# Peach Editor
+add_executable( 
+    Peach_Editor
+    ${PEACH_EDITOR_SOURCES}
+)
+
+# Link Peach Editor
+target_link_libraries(
+    Peach_Editor 
+    PRIVATE 
+    peach
+)
 
 ####################################### Static Imports
 
@@ -156,7 +202,7 @@ target_link_libraries(peach PUBLIC
 )
 
 # Peach Editor
-target_link_libraries(${PROJECT_NAME} PUBLIC
+target_link_libraries(Peach_Editor PUBLIC
     #asset importing
     assimp::assimp
     cgltf::cgltf

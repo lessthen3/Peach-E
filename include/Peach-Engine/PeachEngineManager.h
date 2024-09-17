@@ -1,10 +1,6 @@
 #pragma once
 
-#include "../Peach-Core.hpp"
-
-using namespace std;
-
-#include "LogManager.h"
+#include "../../include/Peach-Core/Peach-Core.hpp"
 
 #include <stdexcept>
 
@@ -12,7 +8,9 @@ using namespace std;
 
 //AND MAKE RESPONSIBILITES AND CODE IN GENERAL MORE CLEAN AND EASY TO READ
 
-namespace PeachEditor {
+using namespace std;
+
+namespace PeachEngine {
 
     class PeachEngineManager 
     {

@@ -61,14 +61,13 @@ namespace PeachEditor {
         {
             pm_PeachRenderer.reset(nullptr);
         }
-        if (pm_CurrentWindow)
+        if (pm_MainWindow)
         {
-            SDL_DestroyWindow(pm_CurrentWindow);
-            SDL_Quit();
+            SDL_DestroyWindow(pm_MainWindow);
 
            //WARNING: DELETING THE CURRENT WINDOW AFTER DESTROYING THE SDL WINDOW AND CALLING SDL_QUIT() CAUSES A HEAP MEMORY VIOLATION
-           // delete pm_CurrentWindow; 
-            pm_CurrentWindow = nullptr;
+           // delete pm_MainWindow; 
+            pm_MainWindow = nullptr;
         }
     }
 
@@ -91,7 +90,7 @@ namespace PeachEditor {
             return false;
         }
 
-        pm_CurrentWindow = 
+        pm_MainWindow = 
             SDL_CreateWindow
         (
             fp_WindowTitle,
@@ -101,7 +100,7 @@ namespace PeachEditor {
             SDL_WINDOW_SHOWN
         );
 
-        if (not pm_CurrentWindow) 
+        if (not pm_MainWindow) 
         {
             InternalLogManager::InternalRenderingLogger().Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager");
             SDL_Quit();
@@ -124,7 +123,7 @@ namespace PeachEditor {
         pm_CommandQueue = make_shared<PeachCore::CommandQueue>();
         pm_LoadedResourceQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
 
-        //pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_CurrentWindow, false);
+        //pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, false);
 
         InternalLogManager::InternalRenderingLogger().Debug("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager");
 
@@ -139,19 +138,19 @@ namespace PeachEditor {
     bool 
         PeachEditorRenderingManager::InitializeOpenGL()
     {
-        if (not pm_CurrentWindow)
+        if (not pm_MainWindow)
         {
             InternalLogManager::InternalRenderingLogger().Warn("RenderingManager tried to initialize opengl before creating the main window!", "PeachEditorRenderingManager");
             return false;
         }
 
         int f_WindowWidth, f_WindowHeight;
-        SDL_GetWindowSize(pm_CurrentWindow, &f_WindowWidth, &f_WindowHeight);
+        SDL_GetWindowSize(pm_MainWindow, &f_WindowWidth, &f_WindowHeight);
 
         SDL_SysWMinfo wmi;
         SDL_VERSION(&wmi.version);
 
-        if (not SDL_GetWindowWMInfo(pm_CurrentWindow, &wmi)) 
+        if (not SDL_GetWindowWMInfo(pm_MainWindow, &wmi)) 
         {
             cerr << "Unable to get window info: " << SDL_GetError() << endl;
             throw runtime_error("Failed to get window manager info.");
@@ -163,7 +162,7 @@ namespace PeachEditor {
 
         bgfx::Init bgfxInit;
 
-        #if defined(_WIN32) || (_WIN64)
+        #if defined(_WIN32) || defined(_WIN64)
                     bgfxInit.platformData.nwh = wmi.info.win.window;  // Windows
         #elif defined(__linux__)
                     bgfxInit.platformData.nwh = (void*)wmi.info.x11.window;  // Linux
@@ -298,7 +297,7 @@ namespace PeachEditor {
 
         // Setup ImGui binding
         ImGui_Implbgfx_Init(255);
-        ImGui_ImplSDL2_InitForOpenGL(pm_CurrentWindow, nullptr);
+        ImGui_ImplSDL2_InitForOpenGL(pm_MainWindow, nullptr);
 
         ImGui::StyleColorsDark();
 
@@ -330,7 +329,7 @@ namespace PeachEditor {
                 //    ResizeRenderTexture(event.size.width, event.size.height);
                 //    pm_Camera2D->SetSize(event.size.width, event.size.height); // Adjust camera as well if necessary
                 //    pm_Camera2D->SetCenter(event.size.width * 0.50f, event.size.height * 0.50f);
-                //    pm_CurrentWindow->setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
+                //    pm_MainWindow->setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
                 //}
             }
 
@@ -481,7 +480,7 @@ namespace PeachEditor {
 
             f_MainMenuBarYOffSet = ImGui::GetItemRectSize().y;
             //gets size of window in terms of pixels not screen coordinates
-            SDL_GL_GetDrawableSize(pm_CurrentWindow, &f_CurrentAvailableWindowSpaceX, &f_CurrentAvailableWindowSpaceY);
+            SDL_GL_GetDrawableSize(pm_MainWindow, &f_CurrentAvailableWindowSpaceX, &f_CurrentAvailableWindowSpaceY);
 
             f_CurrentAvailableWindowSpaceY -= f_MainMenuBarYOffSet;
 
