@@ -110,7 +110,6 @@ find_package(nlohmann_json REQUIRED)
 find_package(cereal REQUIRED)
 find_package(ZLIB REQUIRED)
 
-find_package(GLEW REQUIRED)
 find_package(glm REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(bgfx REQUIRED)
@@ -146,7 +145,6 @@ target_link_libraries(peach PUBLIC
     cereal::cereal
     ZLIB::ZLIB
     #opengl
-    GLEW::GLEW
     glm::glm
     #windowing + rendering
     SDL2::SDL2

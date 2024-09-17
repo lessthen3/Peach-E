@@ -81,8 +81,8 @@ namespace PeachEditor {
         PeachEditorRenderingManager::CreateSDLWindow
         (
             const char* fp_WindowTitle, 
-            const int fp_WindowWidth, 
-            const int fp_WindowHeight
+            const unsigned int fp_WindowWidth, 
+            const unsigned int fp_WindowHeight
         )
     {
         if (SDL_Init(SDL_INIT_VIDEO) < 0) 
@@ -113,12 +113,7 @@ namespace PeachEditor {
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
     shared_ptr<PeachCore::CommandQueue>
-        PeachEditorRenderingManager::Initialize
-        (
-            const string& fp_Title, 
-            const int fp_Width, 
-            const int fp_Height
-        )
+        PeachEditorRenderingManager::InitializeQueues()
     {
         if (pm_HasBeenInitialized)
         {
@@ -126,35 +121,83 @@ namespace PeachEditor {
             return nullptr;
         }
 
-        if (not CreateSDLWindow(fp_Title.c_str(), fp_Width, fp_Height))
-        {
-            throw runtime_error("Couldn't even start up a window for the editor oof");
-        }
-        else
-        {
-            InternalLogManager::InternalRenderingLogger().Debug("SDL window successfully created for Peach Editor", "PeachEditorRenderingManager");
-        }
-
-        // Camera Setup
-        //pm_Camera2D = new PeachCore::PeachCamera2D(*pm_CurrentWindow);
-        //pm_Camera2D->SetCenter(400, 300); // Set this dynamically as needed
-        //pm_Camera2D->SetSize(800, 600); // Set this to zoom in or out
-        //pm_Camera2D->Enable();
-
-
         pm_CommandQueue = make_shared<PeachCore::CommandQueue>();
         pm_LoadedResourceQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
 
-        pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_CurrentWindow, false);
+        //pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_CurrentWindow, false);
 
-        InternalLogManager::InternalRenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
+        InternalLogManager::InternalRenderingLogger().Debug("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager");
 
         pm_HasBeenInitialized = true;
 
         CreatePeachEConsole();
-        SetupRenderTexture(fp_Width, fp_Height);
+        //SetupRenderTexture(fp_Width, fp_Height);
 
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
+    }
+
+    bool 
+        PeachEditorRenderingManager::InitializeOpenGL()
+    {
+        if (not pm_CurrentWindow)
+        {
+            InternalLogManager::InternalRenderingLogger().Warn("RenderingManager tried to initialize opengl before creating the main window!", "PeachEditorRenderingManager");
+            return false;
+        }
+
+        int f_WindowWidth, f_WindowHeight;
+        SDL_GetWindowSize(pm_CurrentWindow, &f_WindowWidth, &f_WindowHeight);
+
+        SDL_SysWMinfo wmi;
+        SDL_VERSION(&wmi.version);
+
+        if (not SDL_GetWindowWMInfo(pm_CurrentWindow, &wmi)) 
+        {
+            cerr << "Unable to get window info: " << SDL_GetError() << endl;
+            throw runtime_error("Failed to get window manager info.");
+        }
+        else
+        {
+            InternalLogManager::InternalRenderingLogger().Debug("SDL window info successfully read", "PeachEditorRenderingManager");
+        }
+
+        bgfx::Init bgfxInit;
+
+        #if defined(_WIN32) || (_WIN64)
+                    bgfxInit.platformData.nwh = wmi.info.win.window;  // Windows
+        #elif defined(__linux__)
+                    bgfxInit.platformData.nwh = (void*)wmi.info.x11.window;  // Linux
+        #elif defined(__APPLE__)
+                    bgfxInit.platformData.nwh = wmi.info.cocoa.window;  // macOS
+        #endif
+
+        bgfxInit.platformData.ndt = NULL;
+        bgfxInit.platformData.context = NULL;
+        bgfxInit.platformData.backBuffer = NULL;
+        bgfxInit.platformData.backBufferDS = NULL;
+
+        bgfxInit.type = bgfx::RendererType::OpenGL; // Use the specified type or auto-select
+
+        bgfxInit.resolution.width = f_WindowWidth;
+        bgfxInit.resolution.height = f_WindowHeight;
+        bgfxInit.resolution.reset = BGFX_RESET_VSYNC;
+
+        if (not bgfx::init(bgfxInit))
+        {
+            InternalLogManager::InternalRenderingLogger().Fatal("BGFX failed to initialize. RIP", "PeachRenderer");
+            throw runtime_error("BGFX initialization failed");
+        }
+        else
+        {
+            InternalLogManager::InternalRenderingLogger().Debug("BGFX initialized properly", "PeachRenderer");
+        }
+
+        bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f, 0);
+        bgfx::setViewRect(0, 0, 0, f_WindowWidth, f_WindowHeight);
+
+        bgfx::frame();
+            
+        return true;
     }
 
     void
@@ -224,7 +267,7 @@ namespace PeachEditor {
 
         //sf::Clock f_DeltaClock;
 
-        //PeachCore::RenderingManager::Renderer().Initialize();
+        //PeachCore::RenderingManager::Renderer().InitializeQueues();
         //PeachCore::ResourceLoadingManager::ResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Peach-E/First Texture.png");
 
         int f_MainMenuBarYOffSet = 0; //used for tracking the total y size of the mainmenu bar
@@ -359,8 +402,10 @@ namespace PeachEditor {
                         // Run the game in a new window
                         thread T_CurrentSceneRunnerThread([]()
                             {
-                               // PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
-                                //PeachCore::RenderingManager::Renderer().RenderFrame();
+                                PeachCore::RenderingManager::Renderer().CreateSDLWindow("Peach Game", 800, 600);
+                                PeachCore::RenderingManager::Renderer().CreatePeachRenderer();
+
+                                PeachCore::RenderingManager::Renderer().RenderFrame();
                                 
                                 PeachEditorRenderingManager::PeachEngineRenderer().m_IsSceneCurrentlyRunning = false;
                             });

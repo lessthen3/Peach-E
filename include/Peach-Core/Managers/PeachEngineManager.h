@@ -1,21 +1,11 @@
 #pragma once
 
-#include <string>
-#include <chrono>
-#include <iostream>
-#include <atomic>
-#include <thread>
-#include <variant>
-
-#include <map>
-
 #include "../Peach-Core.hpp"
 
 using namespace std;
 
 #include "LogManager.h"
 
-#include <unordered_map>
 #include <stdexcept>
 
 //SHOULD MANAGE THE ENTIRE GAME ENGINE ON THE MAIN THREAD, IM NOT SURE IF ILL MOVE ALL THE IMPORTANT CODE FROM MAIN INTO HERE TO CLEAN THINGS UP
@@ -206,7 +196,8 @@ namespace PeachEditor {
         // Loading and Running Plugins From DLL'S
         //////////////////////////////////////////////
 
-        void LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad)
+        void 
+            LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad)
             const
         {
             for (int index = 0; index < fp_ListOfPluginsToLoad.size(); index++)
@@ -215,7 +206,8 @@ namespace PeachEditor {
             }
         }
 
-        void RunPlugins()
+        void 
+            RunPlugins()
             const
         {
             PeachCore::PluginManager::ManagePlugins().InitializePlugins();
@@ -228,10 +220,13 @@ namespace PeachEditor {
         //////////////////////////////////////////////
         // 
         //MEANT TO BE CALLED ONCE EVERY FRAME, SO WE BATCH ALL CALLS TOGETHER FOR EACH CATEGORY
-        void PushCommands(
-            const PeachCore::CreateDrawableData& fp_CreateData, 
-            const PeachCore::UpdateActiveDrawableData& fp_UpdateData, 
-            const PeachCore::DeleteDrawableData& fp_DeleteData)
+        void 
+            PushCommands
+            (
+                const PeachCore::CreateDrawableData& fp_CreateData, 
+                const PeachCore::UpdateActiveDrawableData& fp_UpdateData, 
+                const PeachCore::DeleteDrawableData& fp_DeleteData
+            )
         {
             /*if (!createData.objectIDs.empty()) {
                 Command createCmd{ CommandType::CreateAsset, createData };

@@ -20,17 +20,10 @@
 using namespace std;
 using namespace PeachEditor;
 
-atomic<bool> m_Running(true);
+constexpr unsigned int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
+constexpr unsigned int FAILED_TO_INITIALIZE_OPENGL = -1001;
 
-//used for pushing update commands to the Render Thread
-shared_ptr<PeachCore::CommandQueue> m_RenderingManagersCommandQueue; //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
-
-shared_ptr<PeachCore::LoadingQueue> m_AudioResourceLoadingQueue; //used to push load commands that are destined for AudioManager
-shared_ptr<PeachCore::LoadingQueue> m_DrawableResourceLoadingQueue; //used to push load commands that are destined for RenderingManager
-
-// ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
-//map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
-//map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
+static atomic<bool> m_Running(true);
 
 // Function to list all files recursively
 static unordered_map<string, filesystem::file_time_type> 
@@ -203,42 +196,93 @@ static void SetupRenderer()
 
 int main(int argc, char* argv[])
 {
+    ////////////////////////////////////////////////
+    // Setup Loggers
+    ////////////////////////////////////////////////
+
     PeachEngineManager::PeachEngine().SetupLogManagers();
     
     SetupInternalLogManagers();
 
-    int f_WindowWidth = 800;
-    int f_WindowHeight = 600;
+    ////////////////////////////////////////////////
+    // Load Plugins
+    ////////////////////////////////////////////////
+
+    //DLL's
+    vector<string>
+        mf_ListOfWindowsPluginsToLoad =
+    {
+        "../plugins/SimplePlugin.dll",
+        "../plugins/SimplePlugin2.dll"
+    };
+
+    //SO's
+    vector<string>
+        mf_ListOfUnixPluginsToLoad =
+    {
+    };
+
+    #if defined(_WIN32) || defined(_WIN64)
+        PeachEngineManager::PeachEngine().LoadPluginsFromConfigs(mf_ListOfWindowsPluginsToLoad); // Windows
+    #else
+        PeachEngineManager::PeachEngine().LoadPluginsFromConfigs(mf_ListOfUnixPluginsToLoad); // Linux/Unix
+    #endif
+
+    PeachEngineManager::PeachEngine().RunPlugins();
+
+    ////////////////////////////////////////////////
+    // Setup Communication Queues
+    ////////////////////////////////////////////////
+
+    //used for pushing update commands to the Render Thread
+    shared_ptr<PeachCore::CommandQueue> mf_PeachEditorRenderingManagersCommandQueue; //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
+    shared_ptr<PeachCore::LoadingQueue> mf_PeachEditorDrawableResourceLoadingQueue; //used to push load commands that are destined for RenderingManager
+
+    shared_ptr<PeachCore::CommandQueue> mf_AudioManagersCommandQueue; //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
+    shared_ptr<PeachCore::LoadingQueue> mf_AudioResourceLoadingQueue; //used to push load commands that are destined for AudioManager
+
+    // ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
+    //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
+    //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
 
     ////////////////////////////////////////////////
     //// Setup Renderer for 2D
     ////////////////////////////////////////////////
 
-    try 
+    const unsigned int mf_MainWindowWidth = 800;
+    const unsigned int mf_MainWindowHeight = 600;
+
+    //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
+    mf_PeachEditorRenderingManagersCommandQueue = PeachEditorRenderingManager::PeachEngineRenderer().InitializeQueues();
+    mf_PeachEditorDrawableResourceLoadingQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
+
+    if (not PeachEditorRenderingManager::PeachEngineRenderer().CreateSDLWindow("Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
     {
-        //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
-        m_RenderingManagersCommandQueue = PeachEditorRenderingManager::PeachEngineRenderer().Initialize("Peach Engine", f_WindowWidth, f_WindowHeight);
-
-    //    if (!AudioManager::AudioPlayer().Initialize())
-    //    {
-    //        //do something idk
-    //    }
-    // 
-        //maybe do a ResourceLoadingManager initialize if needed, idk feels weird that we dont have one yet and it just works lmao, i guess its the lazy initialization
-        m_DrawableResourceLoadingQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
-    //    m_AudioResourceLoadingQueue = ResourceLoadingManager::ResourceLoader().GetAudioResourceLoadingQueue();
-
-
-        ////////////////////// Texture Setup ////////////////////
-    //PeachEngineResourceLoadingManager::PeachEngineResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
-        PeachEditorRenderingManager::PeachEngineRenderer().RenderFrame();
-
+        InternalLogManager::InternalMainLogger().Fatal("Was not able to create the main window, exiting execution immediately", "main_thread");
+        return FAILED_TO_CREATE_MAIN_WINDOW;
     }
-    catch (const exception& ex) 
+
+    InternalLogManager::InternalMainLogger().Debug("SDL window successfully created for Peach Editor", "main_thread");
+
+    if (not PeachEditorRenderingManager::PeachEngineRenderer().InitializeOpenGL())
     {
-        cerr << "An error occurred: " << ex.what() << endl;
-        return EXIT_FAILURE;
+        InternalLogManager::InternalMainLogger().Fatal("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main_thread");
+        return FAILED_TO_INITIALIZE_OPENGL;
     }
+
+    InternalLogManager::InternalMainLogger().Debug("Peach Editor successfully initialized OpenGL", "main_thread");
+
+    PeachEditorRenderingManager::PeachEngineRenderer().RenderFrame();
+
+//    if (not AudioManager::AudioPlayer().Initialize())
+//    {
+//        //do something idk
+//    }
+// 
+    //maybe do a ResourceLoadingManager initialize if needed, idk feels weird that we dont have one yet and it just works lmao, i guess its the lazy initialization
+//    AudioResourceLoadingQueue = ResourceLoadingManager::ResourceLoader().GetAudioResourceLoadingQueue();
+
+//PeachEngineResourceLoadingManager::PeachEngineResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Random Junk I Like to Keep/Texture-Tests/uwu.png");
 
     //this_thread::sleep_for(chrono::milliseconds(500));
     /*thread T_Audio(AudioThread);
@@ -253,22 +297,8 @@ int main(int argc, char* argv[])
     //ThreadPoolManager::ThreadPool().Shutdown
     //Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule("Test-Function-Read");
 
-    ////////////////////////////////// Plugins ///////////////////////////////////////////
-    //DLL's
-    //vector<string> ListOfWindowsPluginsToLoad = { "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin.dll",
-    //                                                                                           "D:/Game Development/Peach-E/src/Peach-E-Core/plugins/SimplePlugin2.dll" };
-    ////SO's
-    //vector<string> ListOfUnixPluginsToLoad = { };
-
-    //#if defined(_WIN32) || defined(_WIN64)
-    //    PeachEngineManager::PeachEngine().LoadPluginsFromConfigs(ListOfWindowsPluginsToLoad); // Windows
-    //#else
-    //    PeachEngineManager::PeachEngine().LoadPluginsFromConfigs(ListOfUnixPluginsToLoad); // Linux/Unix
-    //#endif
-
-    //PeachEngineManager::PeachEngine().RunPlugins();
   
-    //LogManager::MainLogger().Debug("Exit Success!", "Peach-E");
+    InternalLogManager::InternalMainLogger().Debug("Exit Success!", "Peach-E");
 
     return EXIT_SUCCESS;
 }

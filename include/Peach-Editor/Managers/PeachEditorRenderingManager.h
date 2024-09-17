@@ -89,14 +89,36 @@ namespace PeachEditor {
         void ProcessCommands();
         void ProcessLoadedResourcePackages();
 
-        bool SetupRenderTexture(const unsigned int width, const unsigned int height, bool IsNearestNeighbour = false);
-        bool ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour = false);
+        bool 
+            SetupRenderTexture
+            (
+                const unsigned int width, 
+                const unsigned int height, 
+                const bool IsNearestNeighbour = false
+            );
+
+        bool 
+            ResizeRenderTexture
+            (
+                const unsigned int fp_Width, 
+                const unsigned int fp_Height, 
+                const bool IsNearestNeighbour = false
+            );
 
         bool
-            CreateSDLWindow(const char* title, int width, int height);
+            CreateSDLWindow
+            (
+                const char* fp_Title = "Peach Engine",
+                const unsigned int fp_Width = 800,
+                const unsigned int fp_Height = 600
+            );
 
         shared_ptr<PeachCore::CommandQueue> 
-            Initialize(const string& fp_Title = "Peach Engine", const int fp_Width = 800, const int fp_Height = 600);
+            InitializeQueues();
+
+        //WIP
+        bool
+            InitializeOpenGL();
 
         string 
             GetRendererType() 

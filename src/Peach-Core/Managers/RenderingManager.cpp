@@ -15,11 +15,6 @@ namespace PeachCore {
     void 
         RenderingManager::Shutdown()
     {
-        if (pm_CurrentCamera2D)
-        {
-            delete pm_CurrentCamera2D;
-            pm_CurrentCamera2D = nullptr;
-        }
         if (pm_CurrentWindow)
         {
             SDL_DestroyWindow(pm_CurrentWindow);
@@ -34,8 +29,20 @@ namespace PeachCore {
         }*/
     }
 
-    bool RenderingManager::CreateSDLWindow(const char* fp_WindowTitle, const int fp_WindowWidth, const int fp_WindowHeight)
+    bool 
+        RenderingManager::CreateSDLWindow
+        (
+            const char* fp_WindowTitle, 
+            const unsigned int fp_WindowWidth, 
+            const unsigned int fp_WindowHeight
+        )
     {
+        if (not pm_IsInitialized)
+        {
+            LogManager::RenderingLogger().Warn("Please initialize RenderingManager before trying to create a window!", "RenderingManager");
+            return false;
+        }
+
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
         {
             LogManager::RenderingLogger().Fatal("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "RenderingManager");
@@ -59,9 +66,28 @@ namespace PeachCore {
         return true;
     }
 
+    bool
+        RenderingManager::CreatePeachRenderer()
+    {
+        if (pm_PeachRenderer)
+        {
+            delete pm_PeachRenderer;
+            pm_PeachRenderer = nullptr;
+        }
+
+        if(not pm_CurrentWindow)
+        {
+            LogManager::RenderingLogger().Warn("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager");
+            return false;
+        }
+
+        pm_PeachRenderer = new PeachRenderer(pm_CurrentWindow);
+        return true;
+    }
+
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
     shared_ptr<CommandQueue> 
-        RenderingManager::Initialize()
+        RenderingManager::InitializeQueues()
     {
         if (pm_CommandQueue || pm_LoadedResourceQueue)
         {
@@ -74,7 +100,75 @@ namespace PeachCore {
 
         LogManager::RenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
 
+        pm_IsInitialized = true;
+
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
+    }
+
+    bool 
+        RenderingManager::InitializeOpenGL
+        (
+        )
+    {
+        if (not pm_CurrentWindow)
+        {
+            LogManager::RenderingLogger().Warn("RenderingManager tried to initialize opengl before creating the main window!", "RenderingManager");
+            return false;
+        }
+
+        int f_WindowWidth, f_WindowHeight;
+        SDL_GetWindowSize(pm_CurrentWindow, &f_WindowWidth, &f_WindowHeight);
+
+        SDL_SysWMinfo wmi;
+        SDL_VERSION(&wmi.version);
+
+        if (not SDL_GetWindowWMInfo(pm_CurrentWindow, &wmi)) 
+        {
+            cerr << "Unable to get window info: " << SDL_GetError() << endl;
+            throw runtime_error("Failed to get window manager info.");
+        }
+        else
+        {
+            LogManager::RenderingLogger().Debug("SDL window info successfully read", "PeachRenderer");
+        }
+
+        bgfx::Init bgfxInit;
+
+        #if defined(_WIN32) || (_WIN64)
+                    bgfxInit.platformData.nwh = wmi.info.win.window;  // Windows
+        #elif defined(__linux__)
+                    bgfxInit.platformData.nwh = (void*)wmi.info.x11.window;  // Linux
+        #elif defined(__APPLE__)
+                    bgfxInit.platformData.nwh = wmi.info.cocoa.window;  // macOS
+        #endif
+
+        bgfxInit.platformData.ndt = NULL;
+        bgfxInit.platformData.context = NULL;
+        bgfxInit.platformData.backBuffer = NULL;
+        bgfxInit.platformData.backBufferDS = NULL;
+
+        bgfxInit.type = bgfx::RendererType::OpenGL; // Use the specified type or auto-select
+
+        bgfxInit.resolution.width = f_WindowWidth;
+        bgfxInit.resolution.height = f_WindowHeight;
+        bgfxInit.resolution.reset = BGFX_RESET_VSYNC;
+
+        if (not bgfx::init(bgfxInit))
+        {
+            LogManager::RenderingLogger().Fatal("BGFX failed to initialize. RIP", "PeachRenderer");
+            throw runtime_error("BGFX initialization failed");
+        }
+        else
+        {
+            LogManager::RenderingLogger().Debug("BGFX initialized properly", "PeachRenderer");
+        }
+
+        bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f, 0);
+        bgfx::setViewRect(0, 0, 0, f_WindowWidth, f_WindowHeight);
+
+        bgfx::frame();
+            
+        return true;
     }
 
     void 
@@ -132,9 +226,23 @@ namespace PeachCore {
     void 
         RenderingManager::RenderFrame(bool fp_IsStressTest)
     {
+        if (not pm_IsInitialized)
+        {
+            LogManager::RenderingLogger().Warn("Please initialize RenderingManager before trying to render anything!", "RenderingManager");
+            return;
+        }
+
+        if (not pm_CurrentWindow)
+        {
+            LogManager::RenderingLogger().Warn("Please assign a valid SDL window to pm_CurrentWindow before trying to render!", "RenderingManager");
+            return;
+        }
+
         //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
+
         bool f_IsGameRuntimeOver = false;
+
         // Main loop that continues until the window is closed
         while (!f_IsGameRuntimeOver)
         {
@@ -156,18 +264,16 @@ namespace PeachCore {
                 }
             }
 
-            SDL_GL_SwapWindow(pm_CurrentWindow);
+            bgfx::frame(); //advance the frame
 
-            if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
-            {
-                //pm_CurrentWindow->clear();
-                //pm_CurrentWindow->close();
-                pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
-                break;
-            }
+            //if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
+            //{
+            //    pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
+            //    break;
+            //}
         }
 
-        Shutdown();
+        Shutdown(); //cleanup everything here
     }
 
     void 

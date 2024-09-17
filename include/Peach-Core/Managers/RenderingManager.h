@@ -11,7 +11,6 @@
 #pragma once
 
 #include "../General/PeachRenderer.h"
-#include "../2D/PeachCamera2D.h"
 #include "../2D/PeachTexture2D.h"
 
 #include "ResourceLoadingManager.h"
@@ -67,9 +66,11 @@ namespace PeachCore {
 
     private:
         unsigned int pm_FrameRateLimit = 60;
+        unsigned long int pm_CurrentFrame = 0;
+
         bool pm_IsVSyncEnabled = false;
         bool pm_IsShutDown = false;
-        unsigned long int pm_CurrentFrame = 0;
+        bool pm_IsInitialized = false;
 
         // Object ID : CurrentPosition
         map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
@@ -85,7 +86,6 @@ namespace PeachCore {
         unique_ptr<PeachTexture2D> m_TestTexture = nullptr;
 
         PeachRenderer* pm_PeachRenderer = nullptr;
-        PeachCamera2D* pm_CurrentCamera2D = nullptr;
         SDL_Window* pm_CurrentWindow = nullptr;
 
 
@@ -122,12 +122,18 @@ namespace PeachCore {
             CreateSDLWindow
             (
                 const char* fp_WindowTitle, 
-                const int fp_WindowWidth, 
-                const int fp_WindowHeight
+                const unsigned int fp_WindowWidth, 
+                const unsigned int fp_WindowHeight
+            );
+
+        bool
+            CreatePeachRenderer
+            (
+
             );
 
         shared_ptr<CommandQueue> 
-            Initialize();
+            InitializeQueues();
 
 
         void 
@@ -137,14 +143,14 @@ namespace PeachCore {
             GetRendererType() 
             const;
 
-        void RenderFrame(bool fp_IsStressTest = false);
-        void BeginFrame();
-        void EndFrame();
-        void Clear();
+        void 
+            RenderFrame(bool fp_IsStressTest = false);
 
-        void Shutdown();
+        void 
+            Shutdown();
 
-        void GetCurrentViewPort();
+        void 
+            GetCurrentViewPort();
         //void Draw(const sf::Drawable& fp_Drawable);
         //void DrawTextToScreen(const std::string& fp_Text, const sf::Font& fp_Font, unsigned int fp_Size, const sf::Vector2f& fp_Position, const sf::Color& fp_Color = sf::Color::White);
 
@@ -159,6 +165,19 @@ namespace PeachCore {
         {
             pm_IsShutDown = true;
         }
+
+    private:
+        //WIP
+        bool
+            InitializeOpenGL();
     };
 
 }
+
+
+//
+//if (not InitOpenGL(f_WindowWidth, f_WindowHeight))
+//{
+//    LogManager::RenderingLogger().Fatal("Failed to initialize OpenGL.", "PeachRenderer");
+//    throw runtime_error("Failed to initialize OpenGL.");
+//}

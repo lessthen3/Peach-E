@@ -163,6 +163,4 @@ namespace PeachCore {
             m_ProjectionMatrix = glm::perspective(glm::radians(m_FOV), m_AspectRatio, m_NearClippingPlane, m_FarClippingPlane);
         }
     };
-
-
 }

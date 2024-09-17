@@ -31,7 +31,6 @@ class PeachEBuilder(ConanFile):
         self.requires("zlib/1.3.1")
 
         # opengl + imgui + windowing
-        self.requires("glew/2.2.0")
         self.requires("glm/cci.20230113")
         self.requires("sdl/2.30.5")
         self.requires("bgfx/cci.20230216")
