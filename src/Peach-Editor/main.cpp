@@ -1,74 +1,87 @@
-/*
-    Copyright(c) 2024-present Ranyodh Singh Mandur.
-*/
-
+﻿/*******************************************************************
+ *                                        Peach Editor v0.0.7
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                 Peach Editor is an open source editor for Peach-E
+********************************************************************/
 #define SDL_MAIN_HANDLED
 
 #include <pybind11/pybind11.h>
 
 #include "../../include/Peach-Editor/Managers/PeachEditorRenderingManager.h"
-#include "../../include/Peach-Engine/PeachEngineManager.h"
-
-#include <filesystem>
 
 using namespace std;
 using namespace PeachEditor;
 using namespace PeachEngine;
 
-constexpr unsigned int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
-constexpr unsigned int FAILED_TO_INITIALIZE_OPENGL = -1001;
+namespace fs = filesystem;
+
+constexpr int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
+constexpr int FAILED_TO_INITIALIZE_OPENGL = -1001;
 
 static atomic<bool> m_Running(true);
 
 // Function to list all files recursively
-static unordered_map<string, filesystem::file_time_type> 
-    GetCurrentDirectoryState(const filesystem::path& path) 
+static unordered_map<string, fs::file_time_type> 
+    GetCurrentDirectoryState
+    (
+        const fs::path& fp_Directory
+    ) 
 {
-    unordered_map<string, filesystem::file_time_type> files;
+    unordered_map<string, fs::file_time_type> f_Files;
 
     try 
     {
-        for (const auto& entry : filesystem::recursive_directory_iterator(path)) 
+        for (const auto& _entry : fs::recursive_directory_iterator(fp_Directory))
         {
-            if (filesystem::is_regular_file(entry.status()) || filesystem::is_directory(entry.status()))
+            if (fs::is_regular_file(_entry.status()) || fs::is_directory(_entry.status()))
             {
-                files[entry.path().string()] = filesystem::last_write_time(entry);
+                f_Files[_entry.path().string()] = fs::last_write_time(_entry);
             }
         }
     }
-    catch (const filesystem::filesystem_error& e) 
+    catch (const fs::filesystem_error& e) 
     {
         cerr << "Error: " << e.what() << '\n';
     }
 
-    return files;
+    return f_Files;
 }
 
-// Function to compare two filesystem states, returns true if file_system_1 == file_system_2, returns false otherwise
+// Function to compare two fs states, returns true if file_system_1 == file_system_2, returns false otherwise
 static bool 
-    CompareStates(const unordered_map<string, filesystem::file_time_type>& old_state, const unordered_map<string, filesystem::file_time_type>& new_state) 
+    CompareStates
+    (
+        const unordered_map<string, 
+        fs::file_time_type>& fp_OldState, 
+        const unordered_map <string, fs::file_time_type>& fp_NewState
+    ) 
 {
-    for (const auto& file : new_state) 
+    for (const auto& _file : fp_NewState)
     {
-        auto it = old_state.find(file.first);
+        auto it = fp_OldState.find(_file.first);
 
-        if (it == old_state.end())
+        if (it == fp_OldState.end())
         {
-            cout << "New file: " << file.first << '\n';
+            cout << "New file: " << _file.first << '\n';
             return false;
         }
-        else if (it->second != file.second)
+        else if (it->second != _file.second)
         {
-            cout << "Modified file: " << file.first << '\n';
+            cout << "Modified file: " << _file.first << '\n';
             return false;
         }
     }
 
-    for (const auto& file : old_state)
+    for (const auto& _file : fp_OldState)
     {
-        if (new_state.find(file.first) == new_state.end())
+        if (fp_NewState.find(_file.first) == fp_NewState.end())
         {
-            cout << "Deleted file: " << file.first << '\n';
+            cout << "Deleted file: " << _file.first << '\n';
             return false;
         }
     }
@@ -79,19 +92,20 @@ static bool
 static void 
     CheckAndUpdateFileSystem()
 {
-    auto f_CurrentPath = filesystem::current_path(); //idfk
+    auto f_CurrentPath = fs::current_path(); //idfk
     auto f_InitialPathState = GetCurrentDirectoryState(f_CurrentPath);
 
     while (true)
     {
+        //this is a sleep for testing purposes, itll have an accumulator in the final implementation
         this_thread::sleep_for(chrono::seconds(1)); // Check once every second for any changes
 
-        auto new_state = GetCurrentDirectoryState(f_CurrentPath);
+        auto f_NewState = GetCurrentDirectoryState(f_CurrentPath);
 
-        if (new_state != f_InitialPathState)
+        if (f_NewState != f_InitialPathState)
         {
-            CompareStates(f_InitialPathState, new_state);
-            f_InitialPathState = move(new_state);
+            CompareStates(f_InitialPathState, f_NewState);
+            f_InitialPathState = move(f_NewState);
         }
     }
 }
@@ -99,6 +113,7 @@ static void
 static void 
     SetupInternalLogManagers()
 {
+    //probably should have better error handling for the loggers, especially
     InternalLogManager::InternalMainLogger().Initialize("../logs", "InternalMainLogger");
     InternalLogManager::InternalAudioLogger().Initialize("../logs", "InternalAudioLogger");
     InternalLogManager::InternalRenderingLogger().Initialize("../logs", "InternalRenderingLogger");
@@ -108,12 +123,6 @@ static void
     InternalLogManager::InternalAudioLogger().Debug("InternalAudioLogger successfully initialized", "Peach-E");
     InternalLogManager::InternalRenderingLogger().Debug("InternalRenderingLogger successfully initialized", "Peach-E");
     InternalLogManager::InternalResourceLoadingLogger().Debug("InternalResourceLoadingLogger successfully initialized", "Peach-E");
-}
-
-
-void test()
-{
-
 }
 
 static void RenderThread()
@@ -154,30 +163,6 @@ static void NetworkThread()
         cout << "Handling network...\n";
         this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
     }
-}
-
-
-//////////////////////////////////////////////
-// Setting Up Renderer For Engine
-//////////////////////////////////////////////
-//ARTIFACT FOR MUSEUM VIEWING ONLY
-static void SetupRenderer()
-{
-    return;
-    //RenderingManager::Renderer().Initialize("OpenGL");
-
-   //sf::RenderWindow& m_CurrentRenderWindow = RenderingManager::Renderer().GetRenderWindow();
-
-   // // Set global settings
-   //RenderingManager::Renderer().SetFrameRateLimit(120);
-   //RenderingManager::Renderer().SetVSync(true);
-
-   //string f_PathToFontFile = "D:/Game Development/Fonts I guess/Comic Sans MS";
-
-   // sf::Font font;
-   // if (!font.loadFromFile(f_PathToFontFile)) {
-   //     LogManager::Logger().Warn("Load Error: Unable to load font file from specified path: " + f_PathToFontFile, "Peach-E");
-   // }
 }
 
 //PYBIND11_MODULE(peach_engine, fp_Module)
@@ -241,7 +226,7 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
     //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
 
     ////////////////////////////////////////////////
-    // Setup Renderer for 2D
+    // Setup Peach Editor Renderer
     ////////////////////////////////////////////////
 
     const unsigned int mf_MainWindowWidth = 800;
@@ -299,3 +284,47 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
 
     return EXIT_SUCCESS;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////////////////////////
+// Setting Up Renderer For Engine
+//////////////////////////////////////////////
+//ARTIFACT FOR MUSEUM VIEWING ONLY
+//static void SetupRenderer()
+//{
+//    return;
+//    //RenderingManager::Renderer().Initialize("OpenGL");
+//
+//   //sf::RenderWindow& m_CurrentRenderWindow = RenderingManager::Renderer().GetRenderWindow();
+//
+//   // // Set global settings
+//   //RenderingManager::Renderer().SetFrameRateLimit(120);
+//   //RenderingManager::Renderer().SetVSync(true);
+//
+//   //string f_PathToFontFile = "D:/Game Development/Fonts I guess/Comic Sans MS";
+//
+//   // sf::Font font;
+//   // if (!font.loadFromFile(f_PathToFontFile)) {
+//   //     LogManager::Logger().Warn("Load Error: Unable to load font file from specified path: " + f_PathToFontFile, "Peach-E");
+//   // }
+//}

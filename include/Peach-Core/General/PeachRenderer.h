@@ -22,7 +22,6 @@ namespace PeachCore
         vector<unique_ptr<PeachCamera2D>> pm_ListOfScenePeachCameras2D; //only the renderer cares about cameras
 
         map<string, ShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which ShaderProgram
-        map< string, tuple<int, int, int, int, int> > MapOfVisualElements; //keeps track of the vao,vbo,ebo id's for each element that is registered
 
     public:
 
@@ -61,16 +60,16 @@ namespace PeachCore
             (
                 const string& fp_PeachObjectID, 
                 const unsigned char* fp_Data, 
-                const int fp_Width, 
-                const int fp_Height, 
-                const int fp_Channels
+                const uint32_t fp_Width,
+                const uint32_t fp_Height,
+                const uint32_t fp_Channels
             )
         {
             return 0;
         }
 
         void 
-            DeleteTexture(const int fp_TextureID)
+            DeleteTexture(const uint32_t fp_TextureID)
         {
             //glDeleteBuffers(fp_TextureID);
         }
@@ -92,7 +91,12 @@ namespace PeachCore
         }
 
         void 
-            LoadShadersFromSource(const string& fp_Name, const string& fp_VertexSource, const string& fp_FragmentSource) 
+            LoadShadersFromSource
+            (
+                const string& fp_Name, 
+                const string& fp_VertexSource, 
+                const string& fp_FragmentSource
+            ) 
         {
             ShaderProgram f_Shader;
 
@@ -132,11 +136,11 @@ namespace PeachCore
         void 
             SetupInstancedArray
             (
-                int instanceVBO, 
+                uint32_t instanceVBO,
                 const vector<float>& instanceData, 
-                int attributeIndex, 
-                int size, 
-                int instanceDataLength, 
+                uint32_t attributeIndex,
+                uint32_t size,
+                uint32_t instanceDataLength,
                 int offset
             )
             const

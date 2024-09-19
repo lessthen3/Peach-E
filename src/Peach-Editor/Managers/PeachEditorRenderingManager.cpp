@@ -80,8 +80,8 @@ namespace PeachEditor {
         PeachEditorRenderingManager::CreateSDLWindow
         (
             const char* fp_WindowTitle, 
-            const unsigned int fp_WindowWidth, 
-            const unsigned int fp_WindowHeight
+            const uint32_t fp_WindowWidth,
+            const uint32_t fp_WindowHeight
         )
     {
         if (SDL_Init(SDL_INIT_VIDEO) < 0) 
@@ -592,7 +592,7 @@ namespace PeachEditor {
 
     // Call this method to setup the render texture
     bool 
-        PeachEditorRenderingManager::SetupRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour) //pass in screen width and size, and it scales it to the desired proportions automatically
+        PeachEditorRenderingManager::SetupRenderTexture(const uint32_t fp_Width, const uint32_t fp_Height, bool IsNearestNeighbour) //pass in screen width and size, and it scales it to the desired proportions automatically
     {
  /*       if (pm_ViewportRenderTexture)
         {
@@ -622,7 +622,7 @@ namespace PeachEditor {
     }
 
     bool 
-        PeachEditorRenderingManager::ResizeRenderTexture(const unsigned int fp_Width, const unsigned int fp_Height, bool IsNearestNeighbour)  //pass in screen width and size, and it scales it to the desired proportions automatically
+        PeachEditorRenderingManager::ResizeRenderTexture(const uint32_t fp_Width, const uint32_t fp_Height, bool IsNearestNeighbour)  //pass in screen width and size, and it scales it to the desired proportions automatically
     {
         //if (pm_ViewportRenderTexture->create(fp_Width * 0.70f, fp_Height * 0.60f) && !IsNearestNeighbour)
         //{
@@ -687,7 +687,7 @@ namespace PeachEditor {
 
     }
 
-    unsigned int 
+    uint32_t 
         PeachEditorRenderingManager::GetFrameRateLimit() 
         const
     {
@@ -711,7 +711,7 @@ namespace PeachEditor {
     }
 
     void 
-        PeachEditorRenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
+        PeachEditorRenderingManager::SetFrameRateLimit(uint32_t fp_Limit)
     {
         pm_FrameRateLimit = fp_Limit;
     }

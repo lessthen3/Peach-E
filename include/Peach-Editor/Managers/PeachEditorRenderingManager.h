@@ -1,13 +1,13 @@
-////////////////////////////////////////////////////////
-/***                             [Peach Engine]                              ***/
-////////////////////////////////////////////////////////
-/***                            [Version 0.0.01]                             ***/
-////////////////////////////////////////////////////////
-/***  Copyright(c) 2024-present Ranyodh Singh Mandur  ***/
-/***                               MIT License                                ***/
-/***         Documentation: TBD                                          ***/
-/*** GitHub: https://github.com/iLoveJohnFish/Peach-E ***/
-/////////////////////////////////////////////////////////
+﻿/*******************************************************************
+ *                                        Peach Editor v0.0.7
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                 Peach Editor is an open source editor for Peach-E
+********************************************************************/
 #pragma once
 
 
@@ -39,9 +39,9 @@ namespace PeachEditor {
         string ObjectID;
 
         glm::vec2 Position;
-        uint32_t LayerNumber;
+        uint32_t LayerNumber = 0;
 
-        bool IsVisible;
+        bool IsVisible = true;
         bool IsQueuedForRemoval = false;
 
         variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
@@ -92,16 +92,16 @@ namespace PeachEditor {
         bool 
             SetupRenderTexture
             (
-                const unsigned int width, 
-                const unsigned int height, 
+                const uint32_t width, 
+                const uint32_t height, 
                 const bool IsNearestNeighbour = false
             );
 
         bool 
             ResizeRenderTexture
             (
-                const unsigned int fp_Width, 
-                const unsigned int fp_Height, 
+                const uint32_t fp_Width, 
+                const uint32_t fp_Height, 
                 const bool IsNearestNeighbour = false
             );
 
@@ -109,8 +109,8 @@ namespace PeachEditor {
             CreateSDLWindow
             (
                 const char* fp_Title = "Peach Engine",
-                const unsigned int fp_Width = 800,
-                const unsigned int fp_Height = 600
+                const uint32_t fp_Width = 800,
+                const uint32_t fp_Height = 600
             );
 
         shared_ptr<PeachCore::CommandQueue> 
@@ -142,12 +142,12 @@ namespace PeachEditor {
         void 
             GetCurrentViewPort();
 
-        unsigned int 
+        uint32_t 
             GetFrameRateLimit() 
             const;
 
         void 
-            SetFrameRateLimit(unsigned int fp_Limit);
+            SetFrameRateLimit(uint32_t fp_Limit);
         void 
             SetVSync(const bool fp_IsEnabled);
 
@@ -165,7 +165,7 @@ namespace PeachEditor {
         bool pm_HasViewportRenderTextureBeenInitialized = false;
         bool pm_HasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
 
-        unsigned int pm_FrameRateLimit = 60;
+        uint32_t pm_FrameRateLimit = 60;
         bool pm_IsVSyncEnabled = false;
 
         string pm_RendererType = "None";
