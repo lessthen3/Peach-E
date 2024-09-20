@@ -10,13 +10,15 @@
 ********************************************************************/
 #pragma once
 
-#include <memory>
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
+
+#include <memory>
 #include <filesystem>
 #include <mutex>
-#include <string>
+
+#include "../Editor/PeachConsole.h"
 
 using namespace std;
 
@@ -24,6 +26,24 @@ namespace PeachEditor {
 
     class InternalLogManager 
     {
+    private:
+        ~InternalLogManager() = default;
+
+    private:
+        bool pm_IsInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
+
+        shared_ptr<spdlog::logger> logger;
+        shared_ptr<PeachConsole> pm_EditorConsole = nullptr;
+
+    public:
+        string m_LoggerName;
+
+    private:
+        InternalLogManager() = default;
+
+        InternalLogManager(const InternalLogManager&) = delete;
+        InternalLogManager& operator=(const InternalLogManager&) = delete;
+
     public:
         static InternalLogManager& 
             InternalRenderingLogger() 
@@ -54,7 +74,12 @@ namespace PeachEditor {
         }
 
         void 
-            Initialize(const string& logDirectory, const string& fp_LoggerName);
+            Initialize
+            (
+                const string& logDirectory, 
+                const string& fp_LoggerName,
+                const shared_ptr<PeachConsole> fp_PeachConsole
+            );
 
         void 
             Trace(const string& message, const string& className);
@@ -69,23 +94,15 @@ namespace PeachEditor {
         void 
             Fatal(const string& message, const string& className);
 
-    public:
-        string m_LoggerName;
-
-    private:
-        InternalLogManager() = default;
-        ~InternalLogManager() = default;
-
-        InternalLogManager(const InternalLogManager&) = delete;
-        InternalLogManager& operator=(const InternalLogManager&) = delete;
-
-        shared_ptr<spdlog::logger> logger;
 
         void 
             CreateLogFiles(const string& logDirectory)
                 const;
 
-    private:
-        bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
+        shared_ptr<PeachConsole>
+            GetConsole()
+        {
+            return pm_EditorConsole;
+        }
     };
 }

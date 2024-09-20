@@ -13,20 +13,15 @@
 
 #include <SDL2/SDL.h>
 
+#include "InternalLogManager.h" //has imgui include
+
 #include "../../include/Peach-Core/General/imgui_impl_bgfx.h"
 #include "../../include/Peach-Core/General/imgui_impl_sdl2.h"
 
-#include <imgui.h>
-
 #include "../../include/Peach-Engine/PeachEngineManager.h"
 
-#include "InternalLogManager.h"
 #include "PeachEditorResourceLoadingManager.h"
 
-
-#include "../Editor/PeachConsole.h"
-
-#include <map>
 #include <atomic> //should be used for communicating whether the scene execution thread is currently running or not
 
 using namespace std; 
@@ -57,20 +52,69 @@ namespace PeachEditor {
 
     class PeachEditorRenderingManager 
     {
+    //////////////////////////////////////////////
+    // Destructor
+    //////////////////////////////////////////////
     public:
+        ~PeachEditorRenderingManager();
+
+    //////////////////////////////////////////////
+    // Constructor
+    //////////////////////////////////////////////
+    private:
+        PeachEditorRenderingManager();
+        PeachEditorRenderingManager(const PeachEditorRenderingManager&) = delete;
+        PeachEditorRenderingManager& operator=(const PeachEditorRenderingManager&) = delete;
+
+    //////////////////////////////////////////////
+    // Private Members
+    //////////////////////////////////////////////
+    private:
+        bool pm_HasViewportRenderTextureBeenInitialized = false;
+        bool pm_AreQueuesInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
+        bool pm_IsRenderingInitialized = false;
+
+        bool pm_IsVSyncEnabled = false;
+
+        uint32_t pm_FrameRateLimit = 60;
+
+        string pm_RendererType = "None";
+
+        unsigned long int pm_CurrentFrame = 0;
+
+        // Object ID : CurrentPosition
+        map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
+        
+        //but i could't give less of a fuck right now
+        // Object ID : DeltaPosition
+        map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
+
+        // DrawableObject.ObjectID : DrawableObject dict
+        map<string, DrawableObject> pm_ListOfAllDrawables;
+
+        shared_ptr<PeachCore::CommandQueue> pm_CommandQueue = nullptr;
+        shared_ptr<PeachCore::LoadingQueue> pm_LoadedResourceQueue = nullptr;
+
+        unique_ptr<PeachCore::PeachRenderer> pm_PeachRenderer = nullptr;
+        SDL_Window* pm_MainWindow = nullptr;
+
+        //unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
+
+    //////////////////////////////////////////////
+    // Public Members
+    //////////////////////////////////////////////
+    public:
+        atomic<bool> m_IsSceneCurrentlyRunning = false; //tracks whether the current working scene in the current peach project, is running in the editor
+
         static PeachEditorRenderingManager& PeachEngineRenderer()
         {
             static PeachEditorRenderingManager peach_engine_renderer;
             return peach_engine_renderer;
         }
 
-        ~PeachEditorRenderingManager();
-
-    private:
-        PeachEditorRenderingManager();
-        PeachEditorRenderingManager(const PeachEditorRenderingManager&) = delete;
-        PeachEditorRenderingManager& operator=(const PeachEditorRenderingManager&) = delete;
-
+    //////////////////////////////////////////////
+    // Private Methods
+    //////////////////////////////////////////////
     private:
         inline const float Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
             const
@@ -84,6 +128,9 @@ namespace PeachEditor {
 
         }
 
+    //////////////////////////////////////////////
+    // Public Methods
+    //////////////////////////////////////////////
     public:
 
         void ProcessCommands();
@@ -119,6 +166,12 @@ namespace PeachEditor {
         //WIP
         bool
             InitializeOpenGL();
+        
+        bool
+            InitializePeachEditorConsole
+            (
+                const shared_ptr<PeachConsole> fp_PeachConsole
+            );
 
         string 
             GetRendererType() 
@@ -134,8 +187,6 @@ namespace PeachEditor {
         void 
             Shutdown();
 
-        void 
-            CreatePeachEConsole();
         void 
             CreateSceneTreeViewPanel();
 
@@ -157,41 +208,6 @@ namespace PeachEditor {
 
         void 
             RunCurrentScene();
-
-        atomic<bool> m_IsSceneCurrentlyRunning = false; //tracks whether the current working scene in the current peach project, is running in the editor
-
-
-    private:
-        bool pm_HasViewportRenderTextureBeenInitialized = false;
-        bool pm_HasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
-
-        uint32_t pm_FrameRateLimit = 60;
-        bool pm_IsVSyncEnabled = false;
-
-        string pm_RendererType = "None";
-
-    private:
-        unsigned long int pm_CurrentFrame = 0;
-        shared_ptr<PeachCore::CommandQueue> pm_CommandQueue;
-        shared_ptr<PeachCore::LoadingQueue> pm_LoadedResourceQueue;
-
-        // Object ID : CurrentPosition
-        map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
-                                                                                                    //but i could't give less of a fuck right now
-        // Object ID : DeltaPosition
-        map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
-        // DrawableObject.ObjectID : DrawableObject dict
-        map<string, DrawableObject> pm_ListOfAllDrawables;
-
-        PeachCore::PeachTexture2D m_TestTexture;
-
-        unique_ptr<PeachCore::PeachRenderer> pm_PeachRenderer = nullptr;
-        PeachCore::PeachCamera2D* pm_Camera2D = nullptr;
-        SDL_Window* pm_MainWindow = nullptr;
-
-        unique_ptr<PeachConsole> pm_EditorConsole = nullptr;
-        //unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
-
     };
 
 }

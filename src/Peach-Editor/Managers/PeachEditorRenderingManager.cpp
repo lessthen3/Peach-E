@@ -7,41 +7,6 @@
 
 namespace PeachEditor {
 
-    static void 
-        RunGameInstance()
-    {
-        // Assuming this function sets up, runs, and tears down the game environment
-        //PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
-        //PeachCore::RenderingManager::Renderer().RenderFrame(true); //set IsStressTest to true, renders only one frame then exits immediately
-        PeachCore::RenderingManager::Renderer().Shutdown();
-    }
-
-    static void 
-        StessTest(int numIterations, int delayMs)
-    {
-        for (int i = 0; i < numIterations; ++i)
-        {
-            cout << "Iteration: " << i + 1 << endl;
-
-            // Start the game instance in a thread
-            thread gameThread(RunGameInstance);
-
-            // Allow the thread some time to start and initialize resources
-            this_thread::sleep_for(chrono::milliseconds(delayMs));
-
-            // Assuming the game can be stopped by calling a stop function or similar
-            // If your architecture uses a global or static flag to signal shutdown, set it here
-            PeachCore::RenderingManager::Renderer().ForceQuit();
-
-            // Wait for the thread to finish execution
-            gameThread.join();
-
-            // Allow some time for resources to be fully released
-            this_thread::sleep_for(chrono::milliseconds(delayMs));
-        }
-    }
-
-
     PeachEditorRenderingManager::~PeachEditorRenderingManager()
     {
         //Shutdown();
@@ -50,23 +15,14 @@ namespace PeachEditor {
     void 
         PeachEditorRenderingManager::Shutdown()
     {
-        //bgfx::shutdown();
-
-        if (pm_Camera2D)
-        {
-            delete pm_Camera2D;
-            pm_Camera2D = nullptr;
-        }
         if (pm_PeachRenderer)
         {
             pm_PeachRenderer.reset(nullptr);
         }
         if (pm_MainWindow)
         {
+            //WARNING: DELETING THE CURRENT WINDOW AFTER DESTROYING THE SDL WINDOW AND CALLING SDL_QUIT() CAUSES A HEAP MEMORY VIOLATION
             SDL_DestroyWindow(pm_MainWindow);
-
-           //WARNING: DELETING THE CURRENT WINDOW AFTER DESTROYING THE SDL WINDOW AND CALLING SDL_QUIT() CAUSES A HEAP MEMORY VIOLATION
-           // delete pm_MainWindow; 
             pm_MainWindow = nullptr;
         }
     }
@@ -114,9 +70,9 @@ namespace PeachEditor {
     shared_ptr<PeachCore::CommandQueue>
         PeachEditorRenderingManager::InitializeQueues()
     {
-        if (pm_HasBeenInitialized)
+        if (pm_AreQueuesInitialized)
         {
-            InternalLogManager::InternalRenderingLogger().Warn("RenderingManager already initialized.", "RenderingManager");
+            InternalLogManager::InternalRenderingLogger().Warn("RenderingManager queues have already been initialized.", "PeachEditorRenderingManager");
             return nullptr;
         }
 
@@ -127,9 +83,8 @@ namespace PeachEditor {
 
         InternalLogManager::InternalRenderingLogger().Debug("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager");
 
-        pm_HasBeenInitialized = true;
+        pm_AreQueuesInitialized = true;
 
-        CreatePeachEConsole();
         //SetupRenderTexture(fp_Width, fp_Height);
 
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
@@ -138,9 +93,21 @@ namespace PeachEditor {
     bool 
         PeachEditorRenderingManager::InitializeOpenGL()
     {
+        if (pm_IsRenderingInitialized)
+        {
+            InternalLogManager::InternalRenderingLogger().Warn("PeachEditorRenderingManager tried to initialize OpenGL when rendering has already been initialized", "PeachEditorRenderingManager");
+            return false;
+        }
+
+        if (not pm_AreQueuesInitialized)
+        {
+            InternalLogManager::InternalRenderingLogger().Warn("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager");
+            return false;
+        }
+
         if (not pm_MainWindow)
         {
-            InternalLogManager::InternalRenderingLogger().Warn("RenderingManager tried to initialize opengl before creating the main window!", "PeachEditorRenderingManager");
+            InternalLogManager::InternalRenderingLogger().Warn("PeachEditorRenderingManager tried to initialize OpenGL before creating the main window!", "PeachEditorRenderingManager");
             return false;
         }
 
@@ -195,6 +162,8 @@ namespace PeachEditor {
         bgfx::setViewRect(0, 0, 0, f_WindowWidth, f_WindowHeight);
 
         bgfx::frame();
+
+        pm_IsRenderingInitialized = true;
             
         return true;
     }
@@ -257,7 +226,8 @@ namespace PeachEditor {
     {
         //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
-                // Main loop that continues until the window is closed
+
+        auto rendering_logger = &InternalLogManager::InternalRenderingLogger();
 
         bool f_ShouldConsoleBeOpen = true;
 
@@ -457,7 +427,7 @@ namespace PeachEditor {
                     }
                     if (ImGui::MenuItem("Run Stress Test"))
                     {
-                        StessTest(1000, 50);
+                        //StessTest(1000, 50);
                     }
                     ImGui::EndMenu();
                 }
@@ -570,7 +540,7 @@ namespace PeachEditor {
             ImGui::SetNextWindowPos(ImVec2(0, f_CurrentAvailableWindowSpaceY * 0.60f + f_MainMenuBarYOffSet)); //start at the y point thats right "above" (below in this context) the viewport
             ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.40f + f_MainMenuBarYOffSet)); //SIZE OF PEACH-E CONSOLE
 
-            pm_EditorConsole->Draw("PEACH CONSOLE", console_window_flags, &f_ShouldConsoleBeOpen);
+            rendering_logger->GetConsole()->Draw("PEACH CONSOLE", console_window_flags, &f_ShouldConsoleBeOpen);
 
             ImGui::Render(); // ends the ImGui content mode. Make all ImGui calls before this
 
@@ -659,12 +629,6 @@ namespace PeachEditor {
         PeachEditorRenderingManager::EndFrame()
     {
 
-    }
-
-    void 
-        PeachEditorRenderingManager::CreatePeachEConsole()
-    {
-        pm_EditorConsole = make_unique<PeachConsole>();
     }
 
     void 

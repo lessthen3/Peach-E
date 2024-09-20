@@ -7,10 +7,15 @@ using namespace std;
 namespace PeachEditor {
 
     void 
-        InternalLogManager::Initialize(const string& logDirectory, const string& fp_LoggerName = "Logger") 
+        InternalLogManager::Initialize
+        (
+            const string& logDirectory, 
+            const string& fp_LoggerName = "Logger",
+            const shared_ptr<PeachConsole> fp_PeachConsole = nullptr
+        ) 
     {
 
-        if (hasBeenInitialized) //stops accidental reinitialization of logmanager
+        if (pm_IsInitialized) //stops accidental reinitialization of logmanager
         {
             cout << "InternalLogManager has already been initialized, InternalLogManager is only allowed to initialize once per run\n";
             return;
@@ -57,54 +62,67 @@ namespace PeachEditor {
         // Create and register the logger
         logger = make_shared<spdlog::logger>(fp_LoggerName, sinks.begin(), sinks.end());
         logger->set_level(spdlog::level::trace);  // Set the logger's level to trace
-        logger->flush_on(spdlog::level::trace);   // Flush the logger on every trace log message
+        logger->flush_on(spdlog::level::trace);   // Flush the logger on every trace log message for debugging and early development
 
         spdlog::register_logger(logger);  // Register the logger with spdlog
 
-        hasBeenInitialized = true; //logger should be fully initialized successfully
+        pm_EditorConsole = fp_PeachConsole;
+
+        pm_IsInitialized = true; //logger should be fully initialized successfully
     }
 
     void 
-        InternalLogManager::Trace(const string& message, const string& className) 
+        InternalLogManager::Trace(const string& fp_Message, const string& fp_Sender) 
     {
-        logger->trace("[{}] {}", className, message);
+        logger->trace("[{}] {}", fp_Sender, fp_Message);
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
     }
 
     void 
-        InternalLogManager::Debug(const string& message, const string& className) 
+        InternalLogManager::Debug(const string& fp_Message, const string& fp_Sender) 
     {
-        logger->debug("[{}] {}", className, message);
+        logger->debug("[{}] {}", fp_Sender, fp_Message);
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
     }
 
     void 
-        InternalLogManager::Info(const string& message, const string& className) 
+        InternalLogManager::Info(const string& fp_Message, const string& fp_Sender) 
     {
-        logger->info("[{}] {}", className, message);
+        logger->info("[{}] {}", fp_Sender, fp_Message);
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
     }
 
     void 
-        InternalLogManager::Warn(const string& message, const string& className) 
+        InternalLogManager::Warn(const string& fp_Message, const string& fp_Sender) 
     {
-        logger->warn("[{}] {}", className, message);
+        logger->warn("[{}] {}", fp_Sender, fp_Message);
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
     }
 
     void 
-        InternalLogManager::Error(const string& message, const string& className) 
+        InternalLogManager::Error(const string& fp_Message, const string& fp_Sender) 
     {
-        logger->error("[{}] {}", className, message);
+        logger->error("[{}] {}", fp_Sender, fp_Message);
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
     }
 
     void 
-        InternalLogManager::Fatal(const string& message, const string& className)
+        InternalLogManager::Fatal(const string& fp_Message, const string& fp_Sender)
     {
-        logger->critical("[{}] {}", className, message);
+        logger->critical("[{}] {}", fp_Sender, fp_Message);
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
     }
 
     void 
-        InternalLogManager::CreateLogFiles(const string& logDirectory) 
-            const
+        InternalLogManager::CreateLogFiles
+        (
+            const string& fp_DesiredLogDirectory
+        ) 
+        const
     {
-        vector<string> logFiles = {
+        vector<string> 
+            f_LogFiles = 
+        {
             "trace.log",
             "debug.log",
             "info.log",
@@ -114,12 +132,13 @@ namespace PeachEditor {
             "all-logs.log"
         };
 
-        for (const auto& file : logFiles)
+        for (const auto& _file : f_LogFiles)
         {
-            string filePath = logDirectory + "/" + m_LoggerName + "/" + file;
-            if (!filesystem::exists(filePath)) 
+            string f_FilePath = fp_DesiredLogDirectory + "/" + m_LoggerName + "/" + _file;
+
+            if (!filesystem::exists(f_FilePath))
             {
-                ofstream ofs(filePath); // This will create the file if it doesn't exist
+                ofstream ofs(f_FilePath); // This will create the file if it doesn't exist
             }
         }
     }

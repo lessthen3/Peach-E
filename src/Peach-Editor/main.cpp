@@ -6,7 +6,7 @@
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                 Peach Editor is an open source editor for Peach-E
+ *                 Peach Editor is an open source peach_editor for Peach-E
 ********************************************************************/
 #define SDL_MAIN_HANDLED
 
@@ -113,11 +113,13 @@ static void
 static void 
     SetupInternalLogManagers()
 {
+    shared_ptr<PeachConsole> f_PeachConsole = make_shared<PeachConsole>();
+
     //probably should have better error handling for the loggers, especially
-    InternalLogManager::InternalMainLogger().Initialize("../logs", "InternalMainLogger");
-    InternalLogManager::InternalAudioLogger().Initialize("../logs", "InternalAudioLogger");
-    InternalLogManager::InternalRenderingLogger().Initialize("../logs", "InternalRenderingLogger");
-    InternalLogManager::InternalResourceLoadingLogger().Initialize("../logs", "InternalResourceLoadingLogger");
+    InternalLogManager::InternalMainLogger().Initialize("../logs", "main_thread", f_PeachConsole);
+    InternalLogManager::InternalAudioLogger().Initialize("../logs", "audio_thread", f_PeachConsole);
+    InternalLogManager::InternalRenderingLogger().Initialize("../logs", "render_thread", f_PeachConsole);
+    InternalLogManager::InternalResourceLoadingLogger().Initialize("../logs", "resource_thread", f_PeachConsole);
 
     InternalLogManager::InternalMainLogger().Debug("InternalMainLogger successfully initialized", "Peach-E");
     InternalLogManager::InternalAudioLogger().Debug("InternalAudioLogger successfully initialized", "Peach-E");
@@ -232,11 +234,13 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
     const unsigned int mf_MainWindowWidth = 800;
     const unsigned int mf_MainWindowHeight = 600;
 
+    auto peach_editor = &PeachEditorRenderingManager::PeachEngineRenderer();
+
     //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
-    mf_PeachEditorRenderingManagersCommandQueue = PeachEditorRenderingManager::PeachEngineRenderer().InitializeQueues();
+    mf_PeachEditorRenderingManagersCommandQueue = peach_editor->InitializeQueues();
     mf_PeachEditorDrawableResourceLoadingQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
 
-    if (not PeachEditorRenderingManager::PeachEngineRenderer().CreateSDLWindow("Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
+    if (not peach_editor->CreateSDLWindow("Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
     {
         InternalLogManager::InternalMainLogger().Fatal("Was not able to create the main window, exiting execution immediately", "main_thread");
         return FAILED_TO_CREATE_MAIN_WINDOW;
@@ -244,7 +248,7 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
 
     InternalLogManager::InternalMainLogger().Debug("SDL window successfully created for Peach Editor", "main_thread");
 
-    if (not PeachEditorRenderingManager::PeachEngineRenderer().InitializeOpenGL())
+    if (not peach_editor->InitializeOpenGL())
     {
         InternalLogManager::InternalMainLogger().Fatal("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main_thread");
         return FAILED_TO_INITIALIZE_OPENGL;
@@ -252,7 +256,7 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
 
     InternalLogManager::InternalMainLogger().Debug("Peach Editor successfully initialized OpenGL", "main_thread");
 
-    PeachEditorRenderingManager::PeachEngineRenderer().RenderFrame();
+    peach_editor->RenderFrame();
 
     SDL_Quit(); //just makes more sense to have the main method do this
 
@@ -296,12 +300,39 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
 
 
 
-
-
-
-
-
-
+//static void
+//RunGameInstance()
+//{
+//    // Assuming this function sets up, runs, and tears down the game environment
+//    //PeachCore::RenderingManager::Renderer().CreateWindowAndCamera2D("Peach Game", 800, 600);
+//    //PeachCore::RenderingManager::Renderer().RenderFrame(true); //set IsStressTest to true, renders only one frame then exits immediately
+//    PeachCore::RenderingManager::Renderer().Shutdown();
+//}
+//
+//static void
+//StessTest(int numIterations, int delayMs)
+//{
+//    for (int i = 0; i < numIterations; ++i)
+//    {
+//        cout << "Iteration: " << i + 1 << endl;
+//
+//        // Start the game instance in a thread
+//        thread gameThread(RunGameInstance);
+//
+//        // Allow the thread some time to start and initialize resources
+//        this_thread::sleep_for(chrono::milliseconds(delayMs));
+//
+//        // Assuming the game can be stopped by calling a stop function or similar
+//        // If your architecture uses a global or static flag to signal shutdown, set it here
+//        PeachCore::RenderingManager::Renderer().ForceQuit();
+//
+//        // Wait for the thread to finish execution
+//        gameThread.join();
+//
+//        // Allow some time for resources to be fully released
+//        this_thread::sleep_for(chrono::milliseconds(delayMs));
+//    }
+//}
 
 
 
