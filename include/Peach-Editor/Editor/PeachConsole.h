@@ -15,27 +15,65 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <map>
 #include "EditorObject.h"
+
+using namespace std;
 
 namespace PeachEditor {
 
-    struct PeachConsole : public EditorObject {
+    struct ConsoleObject
+    {
+        unique_ptr<ImGuiTextBuffer> Buffer;
+        unique_ptr<ImVector<int>> LineOffset;
+
+        ConsoleObject(unique_ptr<ImGuiTextBuffer> fp_Buffer, unique_ptr<ImVector<int>> fp_LineOffset)
+        {
+            Buffer = move(fp_Buffer);
+            LineOffset = move(fp_LineOffset);
+        }
+    };
+
+    struct PeachConsole : public EditorObject 
+    {
     public:
         PeachConsole();
         ~PeachConsole();
 
-        void Clear();
+        void 
+            ClearConsole
+            (
+                ConsoleObject* fp_CurrentTab = nullptr
+            );
+        void
+            CreateLogBuffers();
+        void 
+            AddLog
+            (
+                const string& fp_Message,
+                const string& fp_Sender
+            );
 
-        void AddLog(const std::string& message);
+        void 
+            Draw
+            (
+                const char* title, 
+                const ImGuiWindowFlags& console_window_flags, 
+                bool* p_open = nullptr
+            );
 
-        void Draw(const char* title, const ImGuiWindowFlags& console_window_flags, bool* p_open = NULL);
-
-        void SetScrollToBottom() { scrollToBottom = true; }
+        void SetScrollToBottom() 
+        { 
+            pm_IsScrollToBottom = true;
+        }
 
     private:
-        ImGuiTextBuffer buffer;
-        ImGuiTextFilter filter;
-        ImVector<int> lineOffsets;
-        bool scrollToBottom = false;
+        //logs are all related to the current project game logs
+        map<const string, ConsoleObject> pm_Buffers;
+
+        ImGuiTextFilter pm_TextFilter;
+        bool pm_IsScrollToBottom = false;
+
+        ConsoleObject* pm_CurrentBufferObject = nullptr;
     };
 }

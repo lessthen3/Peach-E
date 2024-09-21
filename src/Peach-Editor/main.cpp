@@ -114,6 +114,7 @@ static void
     SetupInternalLogManagers()
 {
     shared_ptr<PeachConsole> f_PeachConsole = make_shared<PeachConsole>();
+    f_PeachConsole->CreateLogBuffers();
 
     //probably should have better error handling for the loggers, especially
     InternalLogManager::InternalMainLogger().Initialize("../logs", "main_thread", f_PeachConsole);
@@ -235,26 +236,28 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
     const unsigned int mf_MainWindowHeight = 600;
 
     auto peach_editor = &PeachEditorRenderingManager::PeachEngineRenderer();
+    auto main_logger = &InternalLogManager::InternalMainLogger();
 
     //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
-    mf_PeachEditorRenderingManagersCommandQueue = peach_editor->InitializeQueues();
     mf_PeachEditorDrawableResourceLoadingQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
+
+    mf_PeachEditorRenderingManagersCommandQueue = peach_editor->InitializeQueues();
 
     if (not peach_editor->CreateSDLWindow("Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
     {
-        InternalLogManager::InternalMainLogger().Fatal("Was not able to create the main window, exiting execution immediately", "main_thread");
+        main_logger->Fatal("Was not able to create the main window, exiting execution immediately", "main_thread");
         return FAILED_TO_CREATE_MAIN_WINDOW;
     }
 
-    InternalLogManager::InternalMainLogger().Debug("SDL window successfully created for Peach Editor", "main_thread");
+    main_logger->Debug("SDL window successfully created for Peach Editor", "main_thread");
 
     if (not peach_editor->InitializeOpenGL())
     {
-        InternalLogManager::InternalMainLogger().Fatal("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main_thread");
+        main_logger->Fatal("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main_thread");
         return FAILED_TO_INITIALIZE_OPENGL;
     }
 
-    InternalLogManager::InternalMainLogger().Debug("Peach Editor successfully initialized OpenGL", "main_thread");
+    main_logger->Debug("Peach Editor successfully initialized OpenGL", "main_thread");
 
     peach_editor->RenderFrame();
 
@@ -284,7 +287,7 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
     //Princess::PythonScriptParser::Parser().ExtractFunctionInformationFromPythonModule("Test-Function-Read");
 
   
-    InternalLogManager::InternalMainLogger().Debug("Exit Success!", "Peach-E");
+    main_logger->Debug("Exit Success!", "Peach-E");
 
     return EXIT_SUCCESS;
 }

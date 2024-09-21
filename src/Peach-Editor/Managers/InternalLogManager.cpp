@@ -75,42 +75,42 @@ namespace PeachEditor {
         InternalLogManager::Trace(const string& fp_Message, const string& fp_Sender) 
     {
         logger->trace("[{}] {}", fp_Sender, fp_Message);
-        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n", m_LoggerName);
     }
 
     void 
         InternalLogManager::Debug(const string& fp_Message, const string& fp_Sender) 
     {
         logger->debug("[{}] {}", fp_Sender, fp_Message);
-        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n", m_LoggerName);
     }
 
     void 
         InternalLogManager::Info(const string& fp_Message, const string& fp_Sender) 
     {
         logger->info("[{}] {}", fp_Sender, fp_Message);
-        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n", m_LoggerName);
     }
 
     void 
         InternalLogManager::Warn(const string& fp_Message, const string& fp_Sender) 
     {
         logger->warn("[{}] {}", fp_Sender, fp_Message);
-        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n", m_LoggerName);
     }
 
     void 
         InternalLogManager::Error(const string& fp_Message, const string& fp_Sender) 
     {
         logger->error("[{}] {}", fp_Sender, fp_Message);
-        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n", m_LoggerName);
     }
 
     void 
         InternalLogManager::Fatal(const string& fp_Message, const string& fp_Sender)
     {
         logger->critical("[{}] {}", fp_Sender, fp_Message);
-        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n");
+        pm_EditorConsole->AddLog("[" + m_LoggerName + "]: " + fp_Message + "\n", m_LoggerName);
     }
 
     void 

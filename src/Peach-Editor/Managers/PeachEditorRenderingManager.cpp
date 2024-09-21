@@ -228,6 +228,7 @@ namespace PeachEditor {
         //ProcessCommands(); //process all updates
 
         auto rendering_logger = &InternalLogManager::InternalRenderingLogger();
+        //auto engine_renderer = &PeachCore::RenderingManager::Renderer();
 
         bool f_ShouldConsoleBeOpen = true;
 
