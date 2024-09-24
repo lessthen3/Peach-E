@@ -18,6 +18,7 @@ namespace PeachCore {
             cout << "Stop playin and input a logger name that isnt an empty string, because it's going to break the directory structure otherwise" << "\n";
             return;
         }
+
         m_LoggerName = fp_LoggerName;
 
         // Ensure log directory exists

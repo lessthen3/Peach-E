@@ -4,6 +4,8 @@
 
 #include <stdexcept>
 
+#include <physfs.h>
+
 //SHOULD MANAGE THE ENTIRE GAME ENGINE ON THE MAIN THREAD, IM NOT SURE IF ILL MOVE ALL THE IMPORTANT CODE FROM MAIN INTO HERE TO CLEAN THINGS UP
 
 //AND MAKE RESPONSIBILITES AND CODE IN GENERAL MORE CLEAN AND EASY TO READ
@@ -16,8 +18,8 @@ namespace PeachEngine {
     {
     public:
         static PeachEngineManager& PeachEngine() {
-            static PeachEngineManager peachengine;
-            return peachengine;
+            static PeachEngineManager peach_engine;
+            return peach_engine;
         }
 
         ~PeachEngineManager()
@@ -70,10 +72,59 @@ namespace PeachEngine {
             PeachCore::LogManager::MainLogger().Trace("Success! This Built Correctly", "Peach-E");
         }
 
-        void
-            SetupVirtualFileSystem()
+        bool
+            InitializePhysFS(const char* argv0)
         {
+            if (not PHYSFS_init(argv0))
+            {
+                cerr << "Failed to initialize PhysFS: " << PHYSFS_getLastError() << endl;
+                return false;
+            }
 
+            // Set the writable directory to the current working directory
+            const char* f_BaseDirectory = PHYSFS_getBaseDir();
+
+            if (not PHYSFS_setWriteDir(f_BaseDirectory))
+            {
+                cerr << "Failed to set write directory: " << PHYSFS_getLastError() << endl;
+                return false;
+            }
+
+            // Add the base directory as a search path
+            if (not PHYSFS_mount(f_BaseDirectory, nullptr, 1))
+            {
+                cerr << "Failed to set search path: " << PHYSFS_getLastError() << endl;
+                return false;
+            }
+
+            return true;
+        }
+
+        void
+            CheckForDirectoryChanges()
+        {
+            static map<string, PHYSFS_sint64> lastModifiedTimes;
+
+            char** rc = PHYSFS_enumerateFiles("/");
+
+            for (char** i = rc; *i != NULL; i++)
+            {
+                string fullPath = string("/") + *i;
+                PHYSFS_Stat stat;
+
+                if (PHYSFS_stat(fullPath.c_str(), &stat))
+                {
+                    if (lastModifiedTimes.find(fullPath) == lastModifiedTimes.end() or lastModifiedTimes[fullPath] != stat.modtime)
+                    {
+                        // File has changed or is new
+                        //processFileChange(fullPath);
+                        // Update the last modified time
+                        lastModifiedTimes[fullPath] = stat.modtime;
+                    }
+                }
+            }
+
+            PHYSFS_freeList(rc);
         }
 
         //////////////////////////////////////////////

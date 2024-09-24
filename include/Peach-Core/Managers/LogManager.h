@@ -7,7 +7,6 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 
 #include <filesystem>
-#include <mutex>
 #include <string>
 
 #include <fstream>
@@ -69,6 +68,8 @@ namespace PeachCore {
         std::shared_ptr<spdlog::logger> logger;
 
         void CreateLogFiles(const std::string& logDirectory);
+
+        //shared_ptr<void*> pm_EditorConsole = nullptr;
 
     private:
         bool hasBeenInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization

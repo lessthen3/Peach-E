@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <filesystem>
-#include <mutex>
 
 #include "../Editor/PeachConsole.h"
 

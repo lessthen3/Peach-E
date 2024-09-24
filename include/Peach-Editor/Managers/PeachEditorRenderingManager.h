@@ -10,16 +10,9 @@
 ********************************************************************/
 #pragma once
 
+//
 
-#include <SDL2/SDL.h>
-
-#include "InternalLogManager.h" //has imgui include
-
-#include "../../include/Peach-Core/General/imgui_impl_bgfx.h"
-#include "../../include/Peach-Core/General/imgui_impl_sdl2.h"
-
-#include "../../include/Peach-Engine/PeachEngineManager.h"
-
+#include "PeachEditorManager.h"
 #include "PeachEditorResourceLoadingManager.h"
 
 #include <atomic> //should be used for communicating whether the scene execution thread is currently running or not
@@ -62,7 +55,7 @@ namespace PeachEditor {
     // Constructor
     //////////////////////////////////////////////
     private:
-        PeachEditorRenderingManager();
+        PeachEditorRenderingManager() = default;
         PeachEditorRenderingManager(const PeachEditorRenderingManager&) = delete;
         PeachEditorRenderingManager& operator=(const PeachEditorRenderingManager&) = delete;
 
@@ -100,6 +93,15 @@ namespace PeachEditor {
 
         //unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
 
+        InternalLogManager* rendering_logger = nullptr;
+        PeachEditorManager* peach_editor = nullptr;
+
+        ImGuiWindowFlags pm_FileSystemWindowFlags;
+        ImGuiWindowFlags pm_ViewportWindowFlags;
+        ImGuiWindowFlags pm_SceneTreeViewWindowFlags;
+        ImGuiWindowFlags pm_PeachConsoleWindowFlags;
+
+
     //////////////////////////////////////////////
     // Public Members
     //////////////////////////////////////////////
@@ -116,17 +118,17 @@ namespace PeachEditor {
     // Private Methods
     //////////////////////////////////////////////
     private:
-        inline const float Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
-            const
-        {
+        void
+            RenderFileBrowser
+            (
+                const std::filesystem::path& directory
+            );
 
-        }
-
-        inline const glm::vec2 Lerp(const glm::vec2& fp_Start, const glm::vec2& fp_End, const glm::vec2& fp_Rate)
-            const
-        {
-
-        }
+        void 
+            UpdateAndRenderFileBrowser
+            (
+                const fs::path& path
+            );
 
     //////////////////////////////////////////////
     // Public Methods
@@ -166,19 +168,16 @@ namespace PeachEditor {
         //WIP
         bool
             InitializeOpenGL();
-        
-        bool
-            InitializePeachEditorConsole
-            (
-                const shared_ptr<PeachConsole> fp_PeachConsole
-            );
 
         string 
             GetRendererType() 
             const;
 
         void 
-            RenderFrame();
+            RenderFrame
+            (
+                bool* fp_IsProgramRuntimeOver
+            );
         void 
             EndFrame();
         void 

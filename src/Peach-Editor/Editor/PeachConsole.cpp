@@ -124,6 +124,7 @@ namespace PeachEditor {
         }
 
         ImGui::SameLine();
+
         bool copy_to_clipboard = ImGui::Button("Copy");
 
         ImGui::SameLine();

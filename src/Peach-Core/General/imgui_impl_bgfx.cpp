@@ -12,7 +12,7 @@
 // examples/README.txt and documentation at the top of imgui.cpp.
 // https://github.com/ocornut/imgui
 
-#include "../../../include/Peach-Core/General/imgui_impl_bgfx.h"
+#include "../../../include/Peach-Core/General/imgui/imgui_impl_bgfx.h"
 #include "imgui.h"
 
 // BGFX/BX
@@ -136,8 +136,8 @@ bool ImGui_Implbgfx_CreateFontsTexture()
     return true;
 }
 
-#include "../../../include/Peach-Core/General/fs_ocornut_imgui.bin.h"
-#include "../../../include/Peach-Core/General/vs_ocornut_imgui.bin.h"
+#include "../../../include/Peach-Core/General/imgui/fs_ocornut_imgui.bin.h"
+#include "../../../include/Peach-Core/General/imgui/vs_ocornut_imgui.bin.h"
 
 static const bgfx::EmbeddedShader s_embeddedShaders[] = {
     BGFX_EMBEDDED_SHADER(vs_ocornut_imgui),

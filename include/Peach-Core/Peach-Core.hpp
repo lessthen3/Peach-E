@@ -1,11 +1,11 @@
 #pragma once
 
-#include "_modules_/Language-Support.h"
-#include "_modules_/Managers.h"
-#include "_modules_/PeachCore2D.h"
-#include "_modules_/PeachCore3D.h"
-#include "_modules_/Shader-Graph.h"
-#include "_modules_/General.h"
+#include "__modules__/Language-Support.h"
+#include "__modules__/Managers.h"
+#include "__modules__/PeachCore2D.h"
+#include "__modules__/PeachCore3D.h"
+#include "__modules__/Shader-Graph.h"
+#include "__modules__/General.h"
 
 
 //////////////////////////////////////////////

@@ -18,119 +18,12 @@ using namespace std;
 using namespace PeachEditor;
 using namespace PeachEngine;
 
-namespace fs = filesystem;
-
 constexpr int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
 constexpr int FAILED_TO_INITIALIZE_OPENGL = -1001;
 
-static atomic<bool> m_Running(true);
-
-// Function to list all files recursively
-static unordered_map<string, fs::file_time_type> 
-    GetCurrentDirectoryState
-    (
-        const fs::path& fp_Directory
-    ) 
-{
-    unordered_map<string, fs::file_time_type> f_Files;
-
-    try 
-    {
-        for (const auto& _entry : fs::recursive_directory_iterator(fp_Directory))
-        {
-            if (fs::is_regular_file(_entry.status()) || fs::is_directory(_entry.status()))
-            {
-                f_Files[_entry.path().string()] = fs::last_write_time(_entry);
-            }
-        }
-    }
-    catch (const fs::filesystem_error& e) 
-    {
-        cerr << "Error: " << e.what() << '\n';
-    }
-
-    return f_Files;
-}
-
-// Function to compare two fs states, returns true if file_system_1 == file_system_2, returns false otherwise
-static bool 
-    CompareStates
-    (
-        const unordered_map<string, 
-        fs::file_time_type>& fp_OldState, 
-        const unordered_map <string, fs::file_time_type>& fp_NewState
-    ) 
-{
-    for (const auto& _file : fp_NewState)
-    {
-        auto it = fp_OldState.find(_file.first);
-
-        if (it == fp_OldState.end())
-        {
-            cout << "New file: " << _file.first << '\n';
-            return false;
-        }
-        else if (it->second != _file.second)
-        {
-            cout << "Modified file: " << _file.first << '\n';
-            return false;
-        }
-    }
-
-    for (const auto& _file : fp_OldState)
-    {
-        if (fp_NewState.find(_file.first) == fp_NewState.end())
-        {
-            cout << "Deleted file: " << _file.first << '\n';
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static void 
-    CheckAndUpdateFileSystem()
-{
-    auto f_CurrentPath = fs::current_path(); //idfk
-    auto f_InitialPathState = GetCurrentDirectoryState(f_CurrentPath);
-
-    while (true)
-    {
-        //this is a sleep for testing purposes, itll have an accumulator in the final implementation
-        this_thread::sleep_for(chrono::seconds(1)); // Check once every second for any changes
-
-        auto f_NewState = GetCurrentDirectoryState(f_CurrentPath);
-
-        if (f_NewState != f_InitialPathState)
-        {
-            CompareStates(f_InitialPathState, f_NewState);
-            f_InitialPathState = move(f_NewState);
-        }
-    }
-}
-
-static void 
-    SetupInternalLogManagers()
-{
-    shared_ptr<PeachConsole> f_PeachConsole = make_shared<PeachConsole>();
-    f_PeachConsole->CreateLogBuffers();
-
-    //probably should have better error handling for the loggers, especially
-    InternalLogManager::InternalMainLogger().Initialize("../logs", "main_thread", f_PeachConsole);
-    InternalLogManager::InternalAudioLogger().Initialize("../logs", "audio_thread", f_PeachConsole);
-    InternalLogManager::InternalRenderingLogger().Initialize("../logs", "render_thread", f_PeachConsole);
-    InternalLogManager::InternalResourceLoadingLogger().Initialize("../logs", "resource_thread", f_PeachConsole);
-
-    InternalLogManager::InternalMainLogger().Debug("InternalMainLogger successfully initialized", "Peach-E");
-    InternalLogManager::InternalAudioLogger().Debug("InternalAudioLogger successfully initialized", "Peach-E");
-    InternalLogManager::InternalRenderingLogger().Debug("InternalRenderingLogger successfully initialized", "Peach-E");
-    InternalLogManager::InternalResourceLoadingLogger().Debug("InternalResourceLoadingLogger successfully initialized", "Peach-E");
-}
-
 static void RenderThread()
 {
-    while (m_Running)
+    while (true)
     {
         // Play audio
         cout << "Playing ur mom LOL...\n";
@@ -140,7 +33,7 @@ static void RenderThread()
 
 static void AudioThread()
 {
-    while (m_Running) 
+    while (true) 
     {
         // Play audio
         cout << "Playing audio...\n";
@@ -150,7 +43,7 @@ static void AudioThread()
 
 static void ResourceLoadingThread() 
 {
-    while (m_Running) 
+    while (true) 
     {
         // Load resources
         cout << "Loading resources...\n";
@@ -160,7 +53,7 @@ static void ResourceLoadingThread()
 
 static void NetworkThread() 
 {
-    while (m_Running) 
+    while (true) 
     {
         // Handle network communication
         cout << "Handling network...\n";
@@ -179,14 +72,20 @@ static void NetworkThread()
 
 int main(int fp_ArgCount, char* fp_ArgVector[])
 {
+    cout << fp_ArgVector[0] << "\n"; //COOL AF
+
     ////////////////////////////////////////////////
     // Setup Loggers
     ////////////////////////////////////////////////
 
-    PeachEngineManager::PeachEngine().SetupLogManagers();
-    
-    SetupInternalLogManagers();
+    auto peach_editor = &PeachEditorManager::PeachEditor();
+    auto peach_engine = &PeachEngineManager::PeachEngine();
 
+    peach_editor->SetupInternalLogManagers();
+    peach_engine->SetupLogManagers();
+
+    peach_engine->InitializePhysFS(fp_ArgVector[0]);
+    
     ////////////////////////////////////////////////
     // Load Plugins
     ////////////////////////////////////////////////
@@ -206,12 +105,12 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
     };
 
     #if defined(_WIN32) || defined(_WIN64)
-        PeachEngineManager::PeachEngine().LoadPluginsFromConfigs(mf_ListOfWindowsPluginsToLoad); // Windows
+        peach_engine->LoadPluginsFromConfigs(mf_ListOfWindowsPluginsToLoad); // Windows
     #else
-        PeachEngineManager::PeachEngine().LoadPluginsFromConfigs(mf_ListOfUnixPluginsToLoad); // Linux/Unix
+        peach_engine->LoadPluginsFromConfigs(mf_ListOfUnixPluginsToLoad); // Linux/Unix
     #endif
 
-    PeachEngineManager::PeachEngine().RunPlugins();
+    peach_engine->RunPlugins();
 
     ////////////////////////////////////////////////
     // Setup Communication Queues
@@ -235,15 +134,15 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
     const unsigned int mf_MainWindowWidth = 800;
     const unsigned int mf_MainWindowHeight = 600;
 
-    auto peach_editor = &PeachEditorRenderingManager::PeachEngineRenderer();
+    auto editor_renderer = &PeachEditorRenderingManager::PeachEngineRenderer();
     auto main_logger = &InternalLogManager::InternalMainLogger();
 
     //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
     mf_PeachEditorDrawableResourceLoadingQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
 
-    mf_PeachEditorRenderingManagersCommandQueue = peach_editor->InitializeQueues();
+    mf_PeachEditorRenderingManagersCommandQueue = editor_renderer->InitializeQueues();
 
-    if (not peach_editor->CreateSDLWindow("Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
+    if (not editor_renderer->CreateSDLWindow("Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
     {
         main_logger->Fatal("Was not able to create the main window, exiting execution immediately", "main_thread");
         return FAILED_TO_CREATE_MAIN_WINDOW;
@@ -251,7 +150,7 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
 
     main_logger->Debug("SDL window successfully created for Peach Editor", "main_thread");
 
-    if (not peach_editor->InitializeOpenGL())
+    if (not editor_renderer->InitializeOpenGL())
     {
         main_logger->Fatal("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main_thread");
         return FAILED_TO_INITIALIZE_OPENGL;
@@ -259,7 +158,14 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
 
     main_logger->Debug("Peach Editor successfully initialized OpenGL", "main_thread");
 
-    peach_editor->RenderFrame();
+    bool mf_IsProgramRuntimeOver = false;
+    
+    while (not mf_IsProgramRuntimeOver)
+    {
+        editor_renderer->RenderFrame(&mf_IsProgramRuntimeOver);
+    }
+
+    editor_renderer->Shutdown();
 
     SDL_Quit(); //just makes more sense to have the main method do this
 

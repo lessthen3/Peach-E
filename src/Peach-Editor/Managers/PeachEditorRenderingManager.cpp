@@ -15,6 +15,12 @@ namespace PeachEditor {
     void 
         PeachEditorRenderingManager::Shutdown()
     {
+        ////////////////////////////////////////////////////////////////////////////////////////////////
+        // cleans up ImGui, OpenGL, and our SDL window context
+        ImGui_ImplSDL2_Shutdown();
+        //ImGui_Implbgfx_Shutdown();
+        ImGui::DestroyContext();
+
         if (pm_PeachRenderer)
         {
             pm_PeachRenderer.reset(nullptr);
@@ -25,11 +31,6 @@ namespace PeachEditor {
             SDL_DestroyWindow(pm_MainWindow);
             pm_MainWindow = nullptr;
         }
-    }
-
-    PeachEditorRenderingManager::PeachEditorRenderingManager()
-    {
-
     }
 
     bool 
@@ -163,6 +164,32 @@ namespace PeachEditor {
 
         bgfx::frame();
 
+        peach_editor = &PeachEditorManager::PeachEditor();
+        rendering_logger = &InternalLogManager::InternalRenderingLogger();
+
+        ImGui::CreateContext();
+        ImGuiIO& io = ImGui::GetIO();
+        //f_ImGuiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
+
+        // Setup ImGui binding
+        ImGui_Implbgfx_Init(255);
+        ImGui_ImplSDL2_InitForOpenGL(pm_MainWindow, nullptr);
+
+        ImGui::StyleColorsDark();
+
+        pm_FileSystemWindowFlags
+            = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+
+        pm_ViewportWindowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
+
+        pm_SceneTreeViewWindowFlags
+            = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+
+        pm_PeachConsoleWindowFlags
+            = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+
         pm_IsRenderingInitialized = true;
             
         return true;
@@ -222,23 +249,20 @@ namespace PeachEditor {
         }
     }
 
-    void PeachEditorRenderingManager::RenderFrame()
+    void 
+        PeachEditorRenderingManager::RenderFrame
+        (
+            bool* fp_IsProgramRuntimeOver
+        )
     {
-        //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
-        //ProcessCommands(); //process all updates
-
-        auto rendering_logger = &InternalLogManager::InternalRenderingLogger();
-        //auto engine_renderer = &PeachCore::RenderingManager::Renderer();
+        if (not pm_IsRenderingInitialized)
+        {
+            //rendering_logger isn't initialized yet if rendering hasn't been initialized yet so we use the full singleton call here instead for safety
+            InternalLogManager::InternalRenderingLogger().Fatal("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager", "PeachEditorRenderingManager");
+            throw runtime_error("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager");
+        }
 
         bool f_ShouldConsoleBeOpen = true;
-
-        //ImGuiIO& f_ImGuiIO = ImGui::GetIO();
-        //f_ImGuiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
-
-        //sf::Clock f_DeltaClock;
-
-        //PeachCore::RenderingManager::Renderer().InitializeQueues();
-        //PeachCore::ResourceLoadingManager::ResourceLoader().LoadTextureFromSpecifiedFilePath("D:/Game Development/Peach-E/First Texture.png");
 
         int f_MainMenuBarYOffSet = 0; //used for tracking the total y size of the mainmenu bar
 
@@ -246,319 +270,283 @@ namespace PeachEditor {
         int f_CurrentAvailableWindowSpaceX = 0; //adjusts for the main menu bar offset
         int f_CurrentAvailableWindowSpaceY = 0;
 
-        ImGuiWindowFlags file_system_window_flags
-            = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-
-        ImGuiWindowFlags viewport_window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
-            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
-            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
-
-        ImGuiWindowFlags scene_tree_view_window_flags
-            = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-
-        ImGuiWindowFlags console_window_flags
-            = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        Clear(); //clears screen and beings drawing
 
         //////////////////////////////////////////////
-        // MAIN RENDER LOOP FOR THE EDITOR
+        // Input Polling for Imgui/SFML
         //////////////////////////////////////////////
 
-        ImGui::CreateContext();
-        ImGuiIO& io = ImGui::GetIO();
+        SDL_Event event;
 
-        // Setup ImGui binding
-        ImGui_Implbgfx_Init(255);
-        ImGui_ImplSDL2_InitForOpenGL(pm_MainWindow, nullptr);
-
-        ImGui::StyleColorsDark();
-
-        bool f_IsProgramRuntimeOver = false;
-
-        while (!f_IsProgramRuntimeOver)
+        while (SDL_PollEvent(&event))
         {
-            Clear(); //clears screen and beings drawing
+            ImGui_ImplSDL2_ProcessEvent(&event);
 
-            //////////////////////////////////////////////
-            // Input Polling for Imgui/SFML
-            //////////////////////////////////////////////
-
-            SDL_Event event;
-
-            while (SDL_PollEvent(&event))
+            if (event.type == SDL_QUIT)
             {
-                ImGui_ImplSDL2_ProcessEvent(&event);
-
-                if (event.type == SDL_QUIT)
-                {
-                    f_IsProgramRuntimeOver = true;
-                }
-
-                // Handle window resize
-                //if (event.type == sf::Event::Resized) 
-                //{
-                //    // Recreate the render texture with new dimensions
-                //    ResizeRenderTexture(event.size.width, event.size.height);
-                //    pm_Camera2D->SetSize(event.size.width, event.size.height); // Adjust camera as well if necessary
-                //    pm_Camera2D->SetCenter(event.size.width * 0.50f, event.size.height * 0.50f);
-                //    pm_MainWindow->setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
-                //}
+                *fp_IsProgramRuntimeOver = true;
             }
 
-            //////////////////////////////////////////////
-            // Update Imgui UI
-            //////////////////////////////////////////////
+            // Handle window resize
+            //if (event.type == sf::Event::Resized) 
+            //{
+            //    // Recreate the render texture with new dimensions
+            //    ResizeRenderTexture(event.size.width, event.size.height);
+            //    pm_Camera2D->SetSize(event.size.width, event.size.height); // Adjust camera as well if necessary
+            //    pm_Camera2D->SetCenter(event.size.width * 0.50f, event.size.height * 0.50f);
+            //    pm_MainWindow->setView(sf::View(sf::FloatRect(0, 0, event.size.width, event.size.height)));
+            //}
+        }
 
-           // Start the Dear ImGui frame
-            ImGui_Implbgfx_NewFrame();
-            ImGui_ImplSDL2_NewFrame();
-            ImGui::NewFrame();
+        //////////////////////////////////////////////
+        // Update Imgui UI
+        //////////////////////////////////////////////
 
-            //////////////////////////////////////////////
-            // Menu Bar Setup
-            //////////////////////////////////////////////
+        // Start the Dear ImGui frame
+        ImGui_Implbgfx_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
 
-            if (ImGui::BeginMainMenuBar())
+        //////////////////////////////////////////////
+        // Menu Bar Setup
+        //////////////////////////////////////////////
+
+        if (ImGui::BeginMainMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
             {
-                if (ImGui::BeginMenu("File"))
+                if (ImGui::MenuItem("New Project"))
                 {
-                    if (ImGui::MenuItem("New Project"))
-                    {
-                        // New action
-                    }
-                    if (ImGui::MenuItem("Open Project"))
-                    {
-                        // Open action
-                    }
-                    if (ImGui::MenuItem("Save Project"))
-                    {
-                        // Save action
-                    }
-                    if (ImGui::MenuItem("Save Project as. . ."))
-                    {
-                        // Save action
-                    }
-                    if (ImGui::MenuItem("Exit")) //THIS CRASHES EVERYTHING BUT I GUESS THAT IS A WAY TO CLOSE STUFF
-                    {
-                        Clear(); // IMPORTANT: NEEDA EXPLICITLY ENDDRAWING() BEFORE CALLING CLOSEWINDOW!
-
-                        if(m_IsSceneCurrentlyRunning)
-                        {
-                            m_IsSceneCurrentlyRunning = false;
-                            PeachCore::RenderingManager::Renderer().ForceQuit();
-                        }
-
-                        break;
-                    }
-                    ImGui::EndMenu();
+                    // New action
                 }
-
-                if (ImGui::BeginMenu("Edit"))
+                if (ImGui::MenuItem("Open Project"))
                 {
-                    if (ImGui::MenuItem("Delete"))
-                    {
-                        // New action
-                    }
-                    if (ImGui::MenuItem("Duplicate"))
-                    {
-                        // Open action
-                    }
-                    ImGui::EndMenu();
+                    // Open action
                 }
-
-                if (ImGui::BeginMenu("Run"))
+                if (ImGui::MenuItem("Save Project"))
                 {
-                    if (ImGui::MenuItem("Run Peach-E Project") && !m_IsSceneCurrentlyRunning)
-                    {
-                        // Run the game in a new window
-                        thread T_CurrentSceneRunnerThread([]()
-                            {
-                                PeachCore::RenderingManager::Renderer().CreateSDLWindow("Peach Game", 800, 600);
-                                PeachCore::RenderingManager::Renderer().CreatePeachRenderer();
+                    // Save action
+                }
+                if (ImGui::MenuItem("Save Project as. . ."))
+                {
+                    // Save action
+                }
+                if (ImGui::MenuItem("Exit")) //THIS CRASHES EVERYTHING BUT I GUESS THAT IS A WAY TO CLOSE STUFF
+                {
+                    Clear(); // IMPORTANT: NEEDA EXPLICITLY ENDDRAWING() BEFORE CALLING CLOSEWINDOW!
 
-                                PeachCore::RenderingManager::Renderer().RenderFrame();
-                                
-                                PeachEditorRenderingManager::PeachEngineRenderer().m_IsSceneCurrentlyRunning = false;
-                            });
-                        T_CurrentSceneRunnerThread.detach();
-                        m_IsSceneCurrentlyRunning = true;
-                    }
-                    if (ImGui::MenuItem("Force Quit Peach-E Project") && m_IsSceneCurrentlyRunning) //only works if a valid scene instance is running
+                    if(m_IsSceneCurrentlyRunning)
                     {
                         m_IsSceneCurrentlyRunning = false;
                         PeachCore::RenderingManager::Renderer().ForceQuit();
                     }
-                    ImGui::EndMenu();
-                }
 
-                if (ImGui::BeginMenu("Project"))
-                {
-                    if (ImGui::MenuItem("Settings"))
-                    {
-                        // New action
-                    }
-                    if (ImGui::MenuItem("Input Map"))
-                    {
-                        // Open action
-                    }
-                    if (ImGui::MenuItem("Refresh Project"))
-                    {
-                        // Open action
-                    }
-                    ImGui::EndMenu();
+                    *fp_IsProgramRuntimeOver = true;
                 }
-
-                if (ImGui::BeginMenu("Editor"))
-                {
-                    if (ImGui::MenuItem("Editor Theme"))
-                    {
-                        // Open action
-                    }
-                    if (ImGui::MenuItem("Editor Settings"))
-                    {
-                        // Open action
-                    }
-                    ImGui::EndMenu();
-                }
-
-                if (ImGui::BeginMenu("Tools"))
-                {
-                    if (ImGui::MenuItem("Open Terminal"))
-                    {
-                        // New action
-                    }
-                    if (ImGui::MenuItem("Run Stress Test"))
-                    {
-                        //StessTest(1000, 50);
-                    }
-                    ImGui::EndMenu();
-                }
-
-                if (ImGui::BeginMenu("Plugins"))
-                {
-                    if (ImGui::MenuItem("Load Plugin"))
-                    {
-                        // New action
-                    }
-                    if (ImGui::MenuItem("List of Active Plugins"))
-                    {
-                        // Open action
-                    }
-                    ImGui::EndMenu();
-                }
-
-                ImGui::EndMainMenuBar();
+                ImGui::EndMenu();
             }
 
-            f_MainMenuBarYOffSet = ImGui::GetItemRectSize().y;
-            //gets size of window in terms of pixels not screen coordinates
-            SDL_GL_GetDrawableSize(pm_MainWindow, &f_CurrentAvailableWindowSpaceX, &f_CurrentAvailableWindowSpaceY);
+            if (ImGui::BeginMenu("Edit"))
+            {
+                if (ImGui::MenuItem("Delete"))
+                {
+                    // New action
+                }
+                if (ImGui::MenuItem("Duplicate"))
+                {
+                    // Open action
+                }
+                ImGui::EndMenu();
+            }
 
-            f_CurrentAvailableWindowSpaceY -= f_MainMenuBarYOffSet;
+            if (ImGui::BeginMenu("Run"))
+            {
+                if (ImGui::MenuItem("Run Peach-E Project") and not m_IsSceneCurrentlyRunning)
+                {
+                    // Run the game in a new window
+                    thread T_CurrentSceneRunnerThread([]()
+                        {
+                            PeachCore::RenderingManager::Renderer().CreateSDLWindow("Peach Game", 800, 600);
+                            PeachCore::RenderingManager::Renderer().CreatePeachRenderer();
 
-            //////////////////////////////////////////////
-           // Render Texture Setup
-           //////////////////////////////////////////////
+                            PeachCore::RenderingManager::Renderer().RenderFrame();
+                                
+                            PeachEditorRenderingManager::PeachEngineRenderer().m_IsSceneCurrentlyRunning = false;
+                        });
+                    T_CurrentSceneRunnerThread.detach();
+                    m_IsSceneCurrentlyRunning = true;
+                }
+                if (ImGui::MenuItem("Force Quit Peach-E Project") && m_IsSceneCurrentlyRunning) //only works if a valid scene instance is running
+                {
+                    m_IsSceneCurrentlyRunning = false;
+                    PeachCore::RenderingManager::Renderer().ForceQuit();
+                }
+                ImGui::EndMenu();
+            }
 
-            //if (pm_ViewportRenderTexture)
-            //{
-            //    pm_ViewportRenderTexture->clear(sf::Color(128, 128, 128)); // Clear with grey >w<, or any color you need
+            if (ImGui::BeginMenu("Project"))
+            {
+                if (ImGui::MenuItem("Settings"))
+                {
+                    // New action
+                }
+                if (ImGui::MenuItem("Input Map"))
+                {
+                    // Open action
+                }
+                if (ImGui::MenuItem("Refresh Project"))
+                {
+                    // Open action
+                }
+                ImGui::EndMenu();
+            }
 
-            //    pm_ViewportRenderTexture->display(); // Updates the texture with what has been drawn
+            if (ImGui::BeginMenu("Editor"))
+            {
+                if (ImGui::MenuItem("Editor Theme"))
+                {
+                    // Open action
+                }
+                if (ImGui::MenuItem("Editor Settings"))
+                {
+                    // Open action
+                }
+                ImGui::EndMenu();
+            }
 
-            //    // Initialize Dockspace
-            //    ImGuiID dockspace_id = ImGui::GetID("ViewportDockspace");
-            //    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+            if (ImGui::BeginMenu("Tools"))
+            {
+                if (ImGui::MenuItem("Open Terminal"))
+                {
+                    // New action
+                }
+                if (ImGui::MenuItem("Run Stress Test"))
+                {
+                    //StessTest(1000, 50);
+                }
+                ImGui::EndMenu();
+            }
 
-            //    //ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.5f); // Adjust border size
-            //    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));  // Set padding to zero for current window
-            //    //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // Set border color to white
+            if (ImGui::BeginMenu("Plugins"))
+            {
+                if (ImGui::MenuItem("Load Plugin"))
+                {
+                    // New action
+                }
+                if (ImGui::MenuItem("List of Active Plugins"))
+                {
+                    // Open action
+                }
+                ImGui::EndMenu();
+            }
 
-
-            //    ImGui::SetNextWindowPos(ImVec2(0, f_MainMenuBarYOffSet));
-            //    ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.60f)); //SIZE OF IMGUI VIEWPORT
-
-            //    if (ImGui::Begin("Viewport", nullptr, viewport_window_flags))
-            //    {
-            //        ImGui::Image(*pm_ViewportRenderTexture);
-            //    }
-
-            //    ImGui::End();
-            //    ImGui::PopStyleVar(); // Pop border size
-            //    //ImGui::PopStyleColor(); // Pop border color
-            //}
-
-            //ImVec2 viewportSize = ImGui::GetContentRegionAvail();
-            //ImVec2 viewportPos = ImGui::GetCursorScreenPos();
-
-            //// Get mouse position in viewport
-            //ImVec2 mousePos = ImGui::GetMousePos();
-            //bool isMouseInViewport = ImGui::IsMouseHoveringRect(viewportPos, ImVec2(viewportPos.x + viewportSize.x, viewportPos.y + viewportSize.y));
-
-            //if (isMouseInViewport)
-            //{
-            //    //// Convert ImGui mouse coordinates to viewport coordinates
-            //    //Vector2 mousePosInViewport = { mousePos.x - viewportPos.x, mousePos.y - viewportPos.y };
-
-            //    //// Handle drag and drop or selection
-            //    //if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
-            //    //    // Handle mouse click
-            //    //}
-            //    //if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
-            //    //    // Handle mouse drag
-            //    //}
-            //}
-
-            //////////////////////////////////////////////
-            // Virtual File System Setup
-            //////////////////////////////////////////////
-
-            //start at the (x,y) that is located at the bottom right corner of the viewport
-            ImGui::SetNextWindowPos(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.60f + f_MainMenuBarYOffSet));
-            //SIZE OF FILE SYSTEM VIEW PANEL
-            ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.30f, f_CurrentAvailableWindowSpaceY * 0.40f + f_MainMenuBarYOffSet));
-
-            // Your ImGui code goes here
-            ImGui::Begin("File System", nullptr, file_system_window_flags);
-            ImGui::Text("Hello PhysFS");
-            ImGui::End();
-
-            //////////////////////////////////////////////
-            // Scene Tree View Panel
-            //////////////////////////////////////////////
-
-            ImGui::SetNextWindowPos(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_MainMenuBarYOffSet)); //start at the x point thats directly to the right of the viewport
-            ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.30f, f_CurrentAvailableWindowSpaceY * 0.60f)); //SIZE OF SCENE TREE VIEW PANEL
-
-            // Panels
-            ImGui::Begin("Hierarchy", nullptr, scene_tree_view_window_flags);
-            ImGui::Text("Scene Hierarchy");
-            ImGui::End();
-
-            //////////////////////////////////////////////
-            // Peach-E Console
-            //////////////////////////////////////////////
-
-            ImGui::SetNextWindowPos(ImVec2(0, f_CurrentAvailableWindowSpaceY * 0.60f + f_MainMenuBarYOffSet)); //start at the y point thats right "above" (below in this context) the viewport
-            ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.40f + f_MainMenuBarYOffSet)); //SIZE OF PEACH-E CONSOLE
-
-            rendering_logger->GetConsole()->Draw("PEACH CONSOLE", console_window_flags, &f_ShouldConsoleBeOpen);
-
-            ImGui::Render(); // ends the ImGui content mode. Make all ImGui calls before this
-
-           // glViewport(0, 0, static_cast<int>(ImGui::GetIO().DisplaySize.x), static_cast<int>(ImGui::GetIO().DisplaySize.y));
-
-            ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
-
-            bgfx::touch(0);
-            bgfx::frame();
+            ImGui::EndMainMenuBar();
         }
 
-        // cleans up ImGui, OpenGL, and our SDL window context
-        ImGui_ImplSDL2_Shutdown();
-        //ImGui_Implbgfx_Shutdown();
-        ImGui::DestroyContext();
+        f_MainMenuBarYOffSet = ImGui::GetItemRectSize().y;
+        //gets size of window in terms of pixels not screen coordinates
+        SDL_GL_GetDrawableSize(pm_MainWindow, &f_CurrentAvailableWindowSpaceX, &f_CurrentAvailableWindowSpaceY);
 
-        Shutdown();
+        f_CurrentAvailableWindowSpaceY -= f_MainMenuBarYOffSet;
+
+        //////////////////////////////////////////////
+        // Render Texture Setup
+        //////////////////////////////////////////////
+
+        //if (pm_ViewportRenderTexture)
+        //{
+        //    pm_ViewportRenderTexture->clear(sf::Color(128, 128, 128)); // Clear with grey >w<, or any color you need
+
+        //    pm_ViewportRenderTexture->display(); // Updates the texture with what has been drawn
+
+        //    // Initialize Dockspace
+        //    ImGuiID dockspace_id = ImGui::GetID("ViewportDockspace");
+        //    ImGui::DockSpaceOverViewport(ImGui::GetMainViewport(), ImGuiDockNodeFlags_PassthruCentralNode);
+
+        //    //ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.5f); // Adjust border size
+        //    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));  // Set padding to zero for current window
+        //    //ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(1.0f, 1.0f, 1.0f, 1.0f)); // Set border color to white
+
+
+        //    ImGui::SetNextWindowPos(ImVec2(0, f_MainMenuBarYOffSet));
+        //    ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.60f)); //SIZE OF IMGUI VIEWPORT
+
+        //    if (ImGui::Begin("Viewport", nullptr, pm_ViewportWindowFlags))
+        //    {
+        //        ImGui::Image(*pm_ViewportRenderTexture);
+        //    }
+
+        //    ImGui::End();
+        //    ImGui::PopStyleVar(); // Pop border size
+        //    //ImGui::PopStyleColor(); // Pop border color
+        //}
+
+        //ImVec2 viewportSize = ImGui::GetContentRegionAvail();
+        //ImVec2 viewportPos = ImGui::GetCursorScreenPos();
+
+        //// Get mouse position in viewport
+        //ImVec2 mousePos = ImGui::GetMousePos();
+        //bool isMouseInViewport = ImGui::IsMouseHoveringRect(viewportPos, ImVec2(viewportPos.x + viewportSize.x, viewportPos.y + viewportSize.y));
+
+        //if (isMouseInViewport)
+        //{
+        //    //// Convert ImGui mouse coordinates to viewport coordinates
+        //    //Vector2 mousePosInViewport = { mousePos.x - viewportPos.x, mousePos.y - viewportPos.y };
+
+        //    //// Handle drag and drop or selection
+        //    //if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        //    //    // Handle mouse click
+        //    //}
+        //    //if (IsMouseButtonDown(MOUSE_LEFT_BUTTON)) {
+        //    //    // Handle mouse drag
+        //    //}
+        //}
+
+        //////////////////////////////////////////////
+        // Virtual File System Setup
+        //////////////////////////////////////////////
+
+        //start at the (x,y) that is located at the bottom right corner of the viewport
+        ImGui::SetNextWindowPos(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.60f + f_MainMenuBarYOffSet));
+        //SIZE OF FILE SYSTEM VIEW PANEL
+        ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.30f, f_CurrentAvailableWindowSpaceY * 0.40f + f_MainMenuBarYOffSet));
+
+        // Your ImGui code goes here
+        ImGui::Begin("File System", nullptr, pm_FileSystemWindowFlags);
+        //static unordered_map<string,filesystem::file_time_type> fileState = peach_editor->GetCurrentDirectoryState(directory);
+
+        RenderFileBrowser("../../");
+        ImGui::End();
+
+        //////////////////////////////////////////////
+        // Scene Tree View Panel
+        //////////////////////////////////////////////
+
+        ImGui::SetNextWindowPos(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_MainMenuBarYOffSet)); //start at the x point thats directly to the right of the viewport
+        ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.30f, f_CurrentAvailableWindowSpaceY * 0.60f)); //SIZE OF SCENE TREE VIEW PANEL
+
+        // Panels
+        ImGui::Begin("Hierarchy", nullptr, pm_SceneTreeViewWindowFlags);
+        ImGui::Text("Scene Hierarchy");
+        ImGui::End();
+
+        //////////////////////////////////////////////
+        // Peach-E Console
+        //////////////////////////////////////////////
+
+        ImGui::SetNextWindowPos(ImVec2(0, f_CurrentAvailableWindowSpaceY * 0.60f + f_MainMenuBarYOffSet)); //start at the y point thats right "above" (below in this context) the viewport
+        ImGui::SetNextWindowSize(ImVec2(f_CurrentAvailableWindowSpaceX * 0.70f, f_CurrentAvailableWindowSpaceY * 0.40f + f_MainMenuBarYOffSet)); //SIZE OF PEACH-E CONSOLE
+
+        rendering_logger->GetConsole()->Draw("PEACH CONSOLE", pm_PeachConsoleWindowFlags, &f_ShouldConsoleBeOpen);
+
+        ImGui::Render(); // ends the ImGui content mode. Make all ImGui calls before this
+
+        // glViewport(0, 0, static_cast<int>(ImGui::GetIO().DisplaySize.x), static_cast<int>(ImGui::GetIO().DisplaySize.y));
+
+        ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
+
+        bgfx::touch(0);
+        bgfx::frame();
     }
 
     // Call this method to setup the render texture
@@ -612,6 +600,45 @@ namespace PeachEditor {
 
         //return true;
         return true;
+    }
+
+    // Helper function to list directories and files
+    void 
+        PeachEditorRenderingManager::RenderFileBrowser(const fs::path& fp_TopLevelDirectoryPath)
+    {
+        // Variable to keep track of open directories
+        static vector<fs::path> f_CurrentlyOpenDirectories;
+
+        for (auto& entry : fs::directory_iterator(fp_TopLevelDirectoryPath))
+        {
+            if (entry.is_directory()) 
+            {
+                string dirName = entry.path().filename().string();
+                bool f_IsOpen = find(f_CurrentlyOpenDirectories.begin(), f_CurrentlyOpenDirectories.end(), entry.path()) != f_CurrentlyOpenDirectories.end();
+
+                if (ImGui::TreeNodeEx(dirName.c_str(), f_IsOpen ? ImGuiTreeNodeFlags_DefaultOpen : 0))
+                {
+                    // Toggle directory open state back to closed
+                    if (ImGui::IsItemClicked() and f_IsOpen)
+                    {
+                        f_CurrentlyOpenDirectories.erase(remove(f_CurrentlyOpenDirectories.begin(), f_CurrentlyOpenDirectories.end(), entry.path()), f_CurrentlyOpenDirectories.end());
+                    }
+                    // if isn't already open then add it to the list
+                    else if (ImGui::IsItemClicked())
+                    {
+                        f_CurrentlyOpenDirectories.push_back(entry.path());
+                    }
+
+                    // Recursively render subdirectories for all open folders
+                    if (f_IsOpen)
+                    {
+                        RenderFileBrowser(entry.path());
+                    }
+
+                    ImGui::TreePop();
+                }
+            }
+        }        
     }
 
     void 

@@ -22,8 +22,10 @@ and for teams that have a mix of sensory preception capabilities
 
 check
 
--FIX BUG: theres a bug where if u force-quit the current running scene when there isnt a scene running, where it causes the 
-first instance of a new scene to insta close, then the 2nd time running it works as expected
+---------------------- Fixed -----------------------------------
+(-FIX BUG: theres a bug where if u force-quit the current running scene when there isnt a scene running, where it causes the 
+first instance of a new scene to insta close, then the 2nd time running it works as expected) 
+-----------------------------------------------------------------
 
 -IMPLEMENT: finalize command queue implementation, where the main thread issues the load commands, and create commands
 at the same time, and batches all update + delete commands into a list to send into the queue for that frame.

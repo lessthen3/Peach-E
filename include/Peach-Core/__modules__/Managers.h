@@ -13,5 +13,5 @@
 #include "../Managers/EventQueueManager.h"
 
 //////////////////////////////////////////////
-// Lazy Umbrella Header For Managers Directory
+// Lazy Umbrella Header For Managers
 //////////////////////////////////////////////

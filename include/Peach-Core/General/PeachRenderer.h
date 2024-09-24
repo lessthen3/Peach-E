@@ -2,6 +2,10 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+
+#include "imgui/imgui_impl_bgfx.h"
+#include "imgui/imgui_impl_sdl2.h"
+
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
 

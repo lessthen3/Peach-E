@@ -81,7 +81,7 @@
 
 #include "imgui.h"
 #ifndef IMGUI_DISABLE
-#include "../../../include/Peach-Core/General/imgui_impl_sdl2.h"
+#include "../../../include/Peach-Core/General/imgui/imgui_impl_sdl2.h"
 
 // Clang warnings with -Weverything
 #if defined(__clang__)
