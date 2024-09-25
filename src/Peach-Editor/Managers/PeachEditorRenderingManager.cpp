@@ -376,7 +376,7 @@ namespace PeachEditor {
                     T_CurrentSceneRunnerThread.detach();
                     m_IsSceneCurrentlyRunning = true;
                 }
-                if (ImGui::MenuItem("Force Quit Peach-E Project") && m_IsSceneCurrentlyRunning) //only works if a valid scene instance is running
+                if (ImGui::MenuItem("Force Quit Peach-E Project") and m_IsSceneCurrentlyRunning) //only works if a valid scene instance is running
                 {
                     m_IsSceneCurrentlyRunning = false;
                     PeachCore::RenderingManager::Renderer().ForceQuit();
@@ -444,7 +444,7 @@ namespace PeachEditor {
         }
 
         f_MainMenuBarYOffSet = ImGui::GetItemRectSize().y;
-        //gets size of window in terms of pixels not screen coordinates
+        //gets size of window in terms of pixels not screen coordinates, we do this everytime in case the screen resizes
         SDL_GL_GetDrawableSize(pm_MainWindow, &f_CurrentAvailableWindowSpaceX, &f_CurrentAvailableWindowSpaceY);
 
         f_CurrentAvailableWindowSpaceY -= f_MainMenuBarYOffSet;
@@ -607,38 +607,67 @@ namespace PeachEditor {
         PeachEditorRenderingManager::RenderFileBrowser(const fs::path& fp_TopLevelDirectoryPath)
     {
         // Variable to keep track of open directories
-        static vector<fs::path> f_CurrentlyOpenDirectories;
+        static unordered_set<string> f_CurrentlyOpenDirectories;
 
-        for (auto& entry : fs::directory_iterator(fp_TopLevelDirectoryPath))
+        for (const auto& entry : fs::directory_iterator(fp_TopLevelDirectoryPath))
         {
+            string f_FileName = entry.path().filename().string();
+
             if (entry.is_directory()) 
             {
-                string dirName = entry.path().filename().string();
-                bool f_IsOpen = find(f_CurrentlyOpenDirectories.begin(), f_CurrentlyOpenDirectories.end(), entry.path()) != f_CurrentlyOpenDirectories.end();
+                // Create a unique ID for the tree node using the path
+                string uniqueID = "##" + entry.path().string();
 
-                if (ImGui::TreeNodeEx(dirName.c_str(), f_IsOpen ? ImGuiTreeNodeFlags_DefaultOpen : 0))
+                bool isOpen = f_CurrentlyOpenDirectories.find(entry.path().string()) != f_CurrentlyOpenDirectories.end();
+
+                if (ImGui::TreeNodeEx((f_FileName + uniqueID).c_str(), isOpen ? ImGuiTreeNodeFlags_DefaultOpen : 0))
                 {
-                    // Toggle directory open state back to closed
-                    if (ImGui::IsItemClicked() and f_IsOpen)
+                    if (ImGui::IsItemClicked()) 
                     {
-                        f_CurrentlyOpenDirectories.erase(remove(f_CurrentlyOpenDirectories.begin(), f_CurrentlyOpenDirectories.end(), entry.path()), f_CurrentlyOpenDirectories.end());
-                    }
-                    // if isn't already open then add it to the list
-                    else if (ImGui::IsItemClicked())
-                    {
-                        f_CurrentlyOpenDirectories.push_back(entry.path());
+                        // Toggle the directory's open state
+                        if (isOpen) 
+                        {
+                            f_CurrentlyOpenDirectories.erase(entry.path().string());
+                        }
+                        else 
+                        {
+                            f_CurrentlyOpenDirectories.insert(entry.path().string());
+                        }
                     }
 
-                    // Recursively render subdirectories for all open folders
-                    if (f_IsOpen)
+                    if (isOpen) 
                     {
-                        RenderFileBrowser(entry.path());
+                        RenderFileBrowser(entry.path());  // Recursively render subdirectories
                     }
 
                     ImGui::TreePop();
                 }
             }
-        }        
+            else
+            {
+                // Files are displayed with the ability to select
+                ImGui::PushID(f_FileName.c_str());  // Ensure unique ID for selectable
+
+                if (ImGui::Selectable(f_FileName.c_str(), false, ImGuiSelectableFlags_AllowDoubleClick))
+                {
+                    if (ImGui::IsMouseDoubleClicked(0))
+                    {
+                        // Handle double-click (e.g., open or edit the file)
+                        HandleFileAction(entry.path());
+                    }
+                }
+
+                ImGui::PopID();
+            }
+        }
+    }
+
+    // Example handler for file actions
+    void 
+        PeachEditorRenderingManager::HandleFileAction(const fs::path& filePath)
+    {
+        // Implement your file handling logic here, e.g., open a dialog, start an editor, etc.
+        std::cout << "File selected: " << filePath << std::endl;
     }
 
     void 

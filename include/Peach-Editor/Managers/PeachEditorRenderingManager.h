@@ -124,10 +124,10 @@ namespace PeachEditor {
                 const std::filesystem::path& directory
             );
 
-        void 
-            UpdateAndRenderFileBrowser
+        void
+            HandleFileAction
             (
-                const fs::path& path
+                const fs::path& filePath
             );
 
     //////////////////////////////////////////////
