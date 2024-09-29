@@ -19,6 +19,7 @@
 #define NK_INCLUDE_DEFAULT_FONT
 
 #define NK_IMPLEMENTATION
+#define NK_SDL_GL3_IMPLEMENTATION
 
 #include <pybind11/pybind11.h>
 
