@@ -10,7 +10,9 @@ namespace PeachCore {
 		virtual ~PeachNode2D();
 
 		//PeachNode2D(){}
-		//PeachNode2D():PeachNode() {}
+		PeachNode2D():PeachNode() {}
+
+		PeachNode2D(const string& fp_Name) : PeachNode(fp_Name) {};
 		
 		virtual void 
 			Initialize() = 0;

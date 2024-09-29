@@ -1,17 +1,17 @@
-////////////////////////////////////////////////////////
-/***                             [Peach Core]                                ***/
-////////////////////////////////////////////////////////
-/***                            [Version 0.0.01]                             ***/
-////////////////////////////////////////////////////////
-/***  Copyright(c) 2024-present Ranyodh Singh Mandur  ***/
-/***                               MIT License                                ***/
-/***         Documentation: TBD                                          ***/
-/*** GitHub: https://github.com/iLoveJohnFish/Peach-E ***/
-/////////////////////////////////////////////////////////
+﻿/*******************************************************************
+ *                                        Peach Core v0.0.3
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                 Peach Core is an open source game making library
+********************************************************************/
 #pragma once
 
 #include "../Managers/LogManager.h"
-#include "../General/PeachObject.h"
+#include "PeachNode2D.h"
 
 #include "../General/LoadingQueue.h"
 
@@ -25,11 +25,11 @@ using namespace std;
 
 namespace PeachCore {
 
-    class PeachTexture2D: public PeachObject
+    class PeachTexture2D: public PeachNode2D
     {
     public:
-        PeachTexture2D() : PeachObject() {};
-        PeachTexture2D(const string& fp_Name) : PeachObject(fp_Name) {};
+        PeachTexture2D() : PeachNode2D() {};
+        PeachTexture2D(const string& fp_Name) : PeachNode2D(fp_Name) {};
 
         PeachTexture2D(const string& fp_Name, TextureData& fp_Texture);
         ~PeachTexture2D();
@@ -94,6 +94,20 @@ namespace PeachCore {
         void 
             CalculateTileUVs();
         
+        nlohmann::json
+            SerializePeachNodeToJSON();
+        void
+            Initialize();
+        void
+            Update(float fp_TimeSinceLastFrame);
+        void
+            ConstantUpdate(float fp_TimeSinceLastFrame);
+        void
+            OnSceneTreeExit();
+        void
+            QueueRemoval();
+        void
+            Draw();
  
         void 
             DeleteTexture();
@@ -116,14 +130,16 @@ namespace PeachCore {
             const;
 
     public:
-        int m_Width, m_Height;
+        int m_Width = -1;
+        int m_Height = -1;
+
         string m_Name;
 
     private:
         TextureData pm_Texture;
 
-        int pm_TileWidth;
-        int pm_TileHeight;
+        int pm_TileWidth = -1;
+        int pm_TileHeight = -1;
 
         bool pm_IsValid = false; //used for tracking whether LoadTexture() was successful/ if a texture is currently loaded
 

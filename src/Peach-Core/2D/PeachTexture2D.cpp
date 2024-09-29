@@ -17,6 +17,48 @@ namespace PeachCore {
         pm_IsValid = true;
     }
 
+    nlohmann::json 
+        PeachTexture2D::SerializePeachNodeToJSON()
+    {
+
+        return nlohmann::json();
+    }
+    void
+        PeachTexture2D::Initialize()
+    {
+
+    }
+
+    void
+        PeachTexture2D::Update(float fp_TimeSinceLastFrame)
+    {
+
+    }
+
+    void
+        PeachTexture2D::ConstantUpdate(float fp_TimeSinceLastFrame)
+    {
+
+    }
+
+    void
+        PeachTexture2D::OnSceneTreeExit()
+    {
+
+    }
+
+    void
+        PeachTexture2D::QueueRemoval()
+    {
+
+    }
+
+    void
+        PeachTexture2D::Draw()
+    {
+
+    }
+
     void PeachTexture2D::DeleteTexture() //resets the texture2D object
     {
         if (pm_IsValid) 

@@ -16,6 +16,8 @@ namespace PeachCore {
 	{
 	public:
 		virtual ~PeachNode();
+		PeachNode(const string& fp_Name) : PeachObject(fp_Name) {};
+		PeachNode() : PeachObject(){};
 
 		virtual void 
 			Initialize() = 0;
@@ -39,7 +41,7 @@ namespace PeachCore {
 
 		vector<unique_ptr<PeachNode>> m_Children;
 
-		PeachNode& GetPeachNode(); //returns a reference to the desired PeachNode
+		PeachNode* GetPeachNode(); //returns a reference to the desired PeachNode
 
 		bool ReparentPeachNode(); //returns true if operation was successful, returns false otherwise
 
@@ -58,7 +60,7 @@ namespace PeachCore {
 		string
 			GetPathInTree();
 
-		PeachNode* 
+		PeachNode*
 			FindChild(string fp_DesiredPeachNode); //returns first instance of child found matching the name
 
 		PeachNode 
