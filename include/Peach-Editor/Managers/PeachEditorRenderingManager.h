@@ -10,10 +10,11 @@
 ********************************************************************/
 #pragma once
 
-//
+#include <GL/glew.h>
 
 #include "PeachEditorManager.h"
 #include "PeachEditorResourceLoadingManager.h"
+#include <SDL2/SDL_opengl.h>
 
 #include <atomic> //should be used for communicating whether the scene execution thread is currently running or not
 
@@ -90,6 +91,7 @@ namespace PeachEditor {
 
         unique_ptr<PeachCore::PeachRenderer> pm_PeachRenderer = nullptr;
         SDL_Window* pm_MainWindow = nullptr;
+        SDL_GLContext pm_OpenGLContext;
 
         //unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
 
@@ -195,6 +197,9 @@ namespace PeachEditor {
         uint32_t 
             GetFrameRateLimit() 
             const;
+
+        SDL_Window*
+            GetMainWindow();
 
         void 
             SetFrameRateLimit(uint32_t fp_Limit);

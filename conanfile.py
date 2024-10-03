@@ -34,6 +34,7 @@ class PeachEBuilder(ConanFile):
         self.requires("glm/cci.20230113")
         self.requires("sdl/2.30.5")
         self.requires("bgfx/cci.20230216")
+        self.requires("glew/2.2.0")
 
         self.requires("imgui/cci.20230105+1.89.2.docking")
         

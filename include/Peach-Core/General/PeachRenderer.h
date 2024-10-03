@@ -1,6 +1,6 @@
 #pragma once
 
-#include "nuklear.h"
+#include "nuklear_impl_opengl3.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>

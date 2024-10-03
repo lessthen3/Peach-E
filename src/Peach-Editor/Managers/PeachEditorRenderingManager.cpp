@@ -10,6 +10,8 @@ namespace PeachEditor {
     PeachEditorRenderingManager::~PeachEditorRenderingManager()
     {
         //Shutdown();
+        SDL_GL_DeleteContext(pm_OpenGLContext);
+        SDL_DestroyWindow(pm_MainWindow);
     }
 
     void 
@@ -54,7 +56,7 @@ namespace PeachEditor {
             SDL_WINDOWPOS_UNDEFINED,
             SDL_WINDOWPOS_UNDEFINED,
             fp_WindowWidth, fp_WindowHeight,
-            SDL_WINDOW_SHOWN
+            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL
         );
 
         if (not pm_MainWindow) 
@@ -112,6 +114,11 @@ namespace PeachEditor {
             return false;
         }
 
+        // Set OpenGL version (e.g., OpenGL 3.3 core profile)
+        //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+        //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
         int f_WindowWidth, f_WindowHeight;
         SDL_GetWindowSize(pm_MainWindow, &f_WindowWidth, &f_WindowHeight);
 
@@ -120,49 +127,33 @@ namespace PeachEditor {
 
         if (not SDL_GetWindowWMInfo(pm_MainWindow, &wmi)) 
         {
-            cerr << "Unable to get window info: " << SDL_GetError() << endl;
-            throw runtime_error("Failed to get window manager info.");
+            InternalLogManager::InternalRenderingLogger().Error("Unable to get window info: " + static_cast<string>(SDL_GetError()), "PeachEditorRenderingManager");
         }
         else
         {
             InternalLogManager::InternalRenderingLogger().Debug("SDL window info successfully read", "PeachEditorRenderingManager");
         }
 
-        bgfx::Init bgfxInit;
+        // Create an OpenGL context associated with the window
+        pm_OpenGLContext = SDL_GL_CreateContext(pm_MainWindow);
 
-        #if defined(_WIN32) || defined(_WIN64)
-                    bgfxInit.platformData.nwh = wmi.info.win.window;  // Windows
-        #elif defined(__linux__)
-                    bgfxInit.platformData.nwh = (void*)wmi.info.x11.window;  // Linux
-        #elif defined(__APPLE__)
-                    bgfxInit.platformData.nwh = wmi.info.cocoa.window;  // macOS
-        #endif
-
-        bgfxInit.platformData.ndt = NULL;
-        bgfxInit.platformData.context = NULL;
-        bgfxInit.platformData.backBuffer = NULL;
-        bgfxInit.platformData.backBufferDS = NULL;
-
-        bgfxInit.type = bgfx::RendererType::OpenGL; // Use the specified type or auto-select
-
-        bgfxInit.resolution.width = f_WindowWidth;
-        bgfxInit.resolution.height = f_WindowHeight;
-        bgfxInit.resolution.reset = BGFX_RESET_VSYNC;
-
-        if (not bgfx::init(bgfxInit))
+        if (not pm_OpenGLContext)
         {
-            InternalLogManager::InternalRenderingLogger().Fatal("BGFX failed to initialize. RIP", "PeachRenderer");
-            throw runtime_error("BGFX initialization failed");
-        }
-        else
-        {
-            InternalLogManager::InternalRenderingLogger().Debug("BGFX initialized properly", "PeachRenderer");
+            InternalLogManager::InternalRenderingLogger().Fatal("Failed to create OpenGL context: " + static_cast<string>(SDL_GetError()), "PeachEditorRenderingManager");
+            SDL_DestroyWindow(pm_MainWindow);
+            return false;
         }
 
-        bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f, 0);
-        bgfx::setViewRect(0, 0, 0, f_WindowWidth, f_WindowHeight);
+        InternalLogManager::InternalRenderingLogger().Debug("OpenGL initialized properly", "PeachEditorRenderingManager");
 
-        bgfx::frame();
+        if (glewInit() != GLEW_OK)
+        {
+            InternalLogManager::InternalRenderingLogger().Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "PeachEditorRenderingManager");
+            SDL_DestroyWindow(pm_MainWindow);
+            return false;
+        }
+
+        InternalLogManager::InternalRenderingLogger().Debug("GLEW initialized properly", "PeachEditorRenderingManager");
 
         peach_editor = &PeachEditorManager::PeachEditor();
         rendering_logger = &InternalLogManager::InternalRenderingLogger();
@@ -172,7 +163,6 @@ namespace PeachEditor {
         //f_ImGuiIO.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
 
         // Setup ImGui binding
-        ImGui_Implbgfx_Init(255);
         ImGui_ImplSDL2_InitForOpenGL(pm_MainWindow, nullptr);
 
         ImGui::StyleColorsDark();
@@ -303,7 +293,6 @@ namespace PeachEditor {
         //////////////////////////////////////////////
 
         // Start the Dear ImGui frame
-        ImGui_Implbgfx_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
@@ -541,7 +530,9 @@ namespace PeachEditor {
 
         ImGui::Render(); // ends the ImGui content mode. Make all ImGui calls before this
 
-        // glViewport(0, 0, static_cast<int>(ImGui::GetIO().DisplaySize.x), static_cast<int>(ImGui::GetIO().DisplaySize.y));
+        glViewport(0, 0, static_cast<int>(ImGui::GetIO().DisplaySize.x), static_cast<int>(ImGui::GetIO().DisplaySize.y));
+        glClearColor(0.45f, 0.55f, 0.60f, 1.00f);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         ImGui_Implbgfx_RenderDrawLists(ImGui::GetDrawData());
 
@@ -713,6 +704,12 @@ namespace PeachEditor {
         const
     {
         return pm_FrameRateLimit;
+    }
+
+    SDL_Window*
+        PeachEditorRenderingManager::GetMainWindow()
+    {
+        return pm_MainWindow;
     }
 
     bool 

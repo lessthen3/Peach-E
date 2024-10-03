@@ -159,6 +159,7 @@ find_package(ZLIB REQUIRED)
 find_package(glm REQUIRED)
 find_package(SDL2 REQUIRED)
 find_package(bgfx REQUIRED)
+find_package(GLEW REQUIRED)
 
 find_package(imgui REQUIRED)
 
@@ -196,6 +197,7 @@ target_link_libraries(peach PUBLIC
     SDL2::SDL2
     bgfx::bgfx
     imgui::imgui
+    GLEW::GLEW
     #audio
     dr_libs::dr_libs
     OpenAL::OpenAL
