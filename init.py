@@ -4,6 +4,8 @@ import argparse
 
 def CreateColouredText(fp_SampleText: str, fp_DesiredColour: str) -> str:
 
+    fp_SampleText = fp_SampleText.lower()
+
     if (fp_DesiredColour == "black"):
         return '\033[30m' + fp_SampleText + '\033[0m'
     
@@ -29,7 +31,8 @@ def CreateColouredText(fp_SampleText: str, fp_DesiredColour: str) -> str:
         return "\033[37m" + fp_SampleText + '\033[0m'
     
     else:
-        return fp_SampleText;
+        print(CreateColouredText("[Warning]: no valid input detected for CreateColouredText, returned original text in all lower-case", "yellow"))
+        return fp_SampleText
     
 def run_conan(fp_BuildType: str) -> bool:
 
@@ -42,9 +45,9 @@ def run_conan(fp_BuildType: str) -> bool:
         )
 
     except subprocess.CalledProcessError as err:
-        print("Failed to run Conan:")
-        print(err.stdout.decode())
-        print(err.stderr.decode())
+        print(CreateColouredText("[ERROR]: Failed to run Conan:", "red"))
+        print(CreateColouredText(err.stdout.decode(), "yellow"))
+        print(CreateColouredText(err.stderr.decode(), "yellow"))
         return False
 
     return True
@@ -85,36 +88,35 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
             )
 
     except subprocess.CalledProcessError as err:
-        print(CreateColouredText("Failed to run CMake:", "red"))
-        print(err.stdout.decode())
-        print(err.stderr.decode())
+        print(CreateColouredText("[ERROR]: Failed to run CMake:", "red"))
+        print(CreateColouredText(err.stdout.decode(), "yellow"))
+        print(CreateColouredText(err.stderr.decode(), "yellow"))
         return False
 
     return True
 
 
-if __name__ == "__main__":
 
-    os.system('color') #enable ANSI colour codes
+def main() -> bool:
 
-    parser = argparse.ArgumentParser(description='Used for Building Peach-E from Source')
+    parser = argparse.ArgumentParser(description=CreateColouredText('Used for Building Peach-E from Source', 'magenta'))
 
     parser.add_argument(
         '--release', 
         action='store_true', 
-        help=CreateColouredText('Used release for only a release build', 'cyan')
+        help=CreateColouredText('Used for a release build', 'cyan')
     )
 
     parser.add_argument(
         '--debug', 
         action='store_true', 
-        help=CreateColouredText('Used debug for only a debug build', 'cyan')
+        help=CreateColouredText('Used for a debug build', 'cyan')
     )
 
     parser.add_argument(
         '--both', 
         action='store_true', 
-        help=CreateColouredText('Used both for a debug and release build', 'cyan')
+        help=CreateColouredText('Used to build both a debug and release build', 'cyan')
     )
 
     parser.add_argument(
@@ -126,19 +128,43 @@ if __name__ == "__main__":
     parser.add_argument(
         'vs2022',
         action='store_true',
-        help=CreateColouredText('Option for project file generation', 'cyan') + CreateColouredText('\n eg. -G vs2022', 'blue')
+        help=CreateColouredText('Generates solution for Visual Studio 17 2022, intended use:', 'cyan') + CreateColouredText('\n -G vs2022', 'blue')
+    )
+
+    parser.add_argument(
+        'ninja',
+        action='store_true',
+        help=CreateColouredText('Generates project files using Ninja, intended use:', 'cyan') + CreateColouredText('\n -G ninja', 'blue')
     )
     
     args = parser.parse_args()
 
     f_IsSetupSuccessful = False
 
+    f_DesiredGenerator = ""
+
+    if(not args.debug or not args.release or not args.both):
+        print(CreateColouredText("[ERROR]: No valid build type input detected, use -h or --help if you're unfamiliar", "red"))
+        return False
+        
+    if(not args.G):
+        print(CreateColouredText("[ERROR]: YOU DIDN'T USE -G FLAG BROTHER", "red"))
+        return False
+
+    if(args.vs2022):
+        f_DesiredGenerator = "vs2022"
+    elif(args.ninja):
+        f_DesiredGenerator = "ninja"
+    else:
+        print(CreateColouredText("[ERROR]: Invalid Generator Selected, PICK A VALID GENERATOR", "red"))
+        return False
+
     if(args.debug):
 
         if run_conan("Debug"):
             print(CreateColouredText("Conan setup and dependencies installation successfully completed for debug", "green"))
 
-        f_IsSetupSuccessful = run_cmake("debug", "vs2022")
+        f_IsSetupSuccessful = run_cmake("debug", f_DesiredGenerator)
 
         if f_IsSetupSuccessful:
             print(CreateColouredText("CMakeLists.txt succesfully read and compiled for debug, your CMake project should be good to go!", "green"))
@@ -148,7 +174,7 @@ if __name__ == "__main__":
         if run_conan("Release"):   # >w>
             print(CreateColouredText("Conan setup and dependencies installation successfully completed for release", "green"))
 
-        f_IsSetupSuccessful = run_cmake("release", "vs2022")
+        f_IsSetupSuccessful = run_cmake("release", f_DesiredGenerator)
 
         if f_IsSetupSuccessful:
             print(CreateColouredText("CMakeLists.txt succesfully read and compiled for release, your CMake project should be good to go!", "green"))
@@ -161,14 +187,24 @@ if __name__ == "__main__":
         if run_conan("Release"):
             print(CreateColouredText("Conan setup and dependencies installation successfully completed for release", "green"))
 
-        f_IsSetupSuccessful = run_cmake("both", "vs2022")
+        f_IsSetupSuccessful = run_cmake("both", f_DesiredGenerator)
         
         if f_IsSetupSuccessful:
             print(CreateColouredText("CMakeLists.txt succesfully read and compiled for debug and release, your CMake project should be good to go!", "green"))
-        
-    else:
-        print(CreateColouredText("No valid input was detected, nothing was done.", "red"))
 
-    if f_IsSetupSuccessful:
-        print(CreateColouredText("done!", "magenta"))
-    
+    if not f_IsSetupSuccessful:
+        return False
+
+    print(CreateColouredText("done!", "magenta"))
+    return True
+
+
+if __name__ == "__main__":
+
+    os.system('color') #enable ANSI colour codes
+
+    if not main():
+        print(CreateColouredText("nothing was done.", "yellow"))
+
+
+#Rawr OwO

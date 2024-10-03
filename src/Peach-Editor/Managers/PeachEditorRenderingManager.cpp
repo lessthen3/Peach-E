@@ -9,9 +9,6 @@ namespace PeachEditor {
 
     PeachEditorRenderingManager::~PeachEditorRenderingManager()
     {
-        //Shutdown();
-        SDL_GL_DeleteContext(pm_OpenGLContext);
-        SDL_DestroyWindow(pm_MainWindow);
     }
 
     void 
@@ -19,9 +16,7 @@ namespace PeachEditor {
     {
         ////////////////////////////////////////////////////////////////////////////////////////////////
         // cleans up ImGui, OpenGL, and our SDL window context
-        ImGui_ImplSDL2_Shutdown();
-        //ImGui_Implbgfx_Shutdown();
-        ImGui::DestroyContext();
+        nk_sdl_shutdown();
 
         if (pm_PeachRenderer)
         {
@@ -33,6 +28,9 @@ namespace PeachEditor {
             SDL_DestroyWindow(pm_MainWindow);
             pm_MainWindow = nullptr;
         }
+
+        SDL_GL_DeleteContext(pm_OpenGLContext);
+        SDL_DestroyWindow(pm_MainWindow);
     }
 
     bool 
@@ -260,8 +258,6 @@ namespace PeachEditor {
         int f_CurrentAvailableWindowSpaceX = 0; //adjusts for the main menu bar offset
         int f_CurrentAvailableWindowSpaceY = 0;
 
-        Clear(); //clears screen and beings drawing
-
         //////////////////////////////////////////////
         // Input Polling for Imgui/SFML
         //////////////////////////////////////////////
@@ -320,10 +316,8 @@ namespace PeachEditor {
                 {
                     // Save action
                 }
-                if (ImGui::MenuItem("Exit")) //THIS CRASHES EVERYTHING BUT I GUESS THAT IS A WAY TO CLOSE STUFF
+                if (ImGui::MenuItem("Exit"))
                 {
-                    Clear(); // IMPORTANT: NEEDA EXPLICITLY ENDDRAWING() BEFORE CALLING CLOSEWINDOW!
-
                     if(m_IsSceneCurrentlyRunning)
                     {
                         m_IsSceneCurrentlyRunning = false;
