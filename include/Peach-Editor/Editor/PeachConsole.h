@@ -10,8 +10,6 @@
 ********************************************************************/
 #pragma once
 
-#include <imgui.h>
-
 #include <vector>
 #include <string>
 #include <sstream>
@@ -22,18 +20,6 @@ using namespace std;
 
 namespace PeachEditor {
 
-    struct ConsoleObject
-    {
-        unique_ptr<ImGuiTextBuffer> Buffer;
-        unique_ptr<ImVector<int>> LineOffset;
-
-        ConsoleObject(unique_ptr<ImGuiTextBuffer> fp_Buffer, unique_ptr<ImVector<int>> fp_LineOffset)
-        {
-            Buffer = move(fp_Buffer);
-            LineOffset = move(fp_LineOffset);
-        }
-    };
-
     struct PeachConsole : public EditorObject 
     {
     public:
@@ -43,7 +29,7 @@ namespace PeachEditor {
         void 
             ClearConsole
             (
-                ConsoleObject* fp_CurrentTab = nullptr
+                const string& fp_DesiredTab
             );
         void
             CreateLogBuffers();
@@ -58,7 +44,6 @@ namespace PeachEditor {
             Draw
             (
                 const char* title, 
-                const ImGuiWindowFlags& console_window_flags, 
                 bool* p_open = nullptr
             );
 
@@ -69,11 +54,19 @@ namespace PeachEditor {
 
     private:
         //logs are all related to the current project game logs
-        map<const string, ConsoleObject> pm_Buffers;
+        map<const string, vector<string>> pm_Buffers = 
+        {
+            {"everything", vector<string>()},
+            {"main_thread", vector<string>()},
+            {"render_thread", vector<string>()},
+            {"audio_thread", vector<string>()},
+            {"resource_thread", vector<string>()},
 
-        ImGuiTextFilter pm_TextFilter;
+            {"editor_warn", vector<string>()},
+            {"editor_error", vector<string>()}
+        };
+
         bool pm_IsScrollToBottom = false;
 
-        ConsoleObject* pm_CurrentBufferObject = nullptr;
     };
 }

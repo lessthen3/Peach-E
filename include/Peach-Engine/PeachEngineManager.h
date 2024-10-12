@@ -2,8 +2,6 @@
 
 #include "../../include/Peach-Core/Peach-Core.hpp"
 
-#include <stdexcept>
-
 #include <physfs.h>
 
 //SHOULD MANAGE THE ENTIRE GAME ENGINE ON THE MAIN THREAD, IM NOT SURE IF ILL MOVE ALL THE IMPORTANT CODE FROM MAIN INTO HERE TO CLEAN THINGS UP
@@ -38,8 +36,7 @@ namespace PeachEngine {
 
 
     public:
-        //atomic<bool> m_Running(true);
-        bool m_Running = false;
+        atomic<bool> m_Running = true;
 
         const float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
         const float USER_DEFINED_UPDATE_FPS = 60.0f;
@@ -53,23 +50,23 @@ namespace PeachEngine {
             SetupLogManagers()
             const
         {
-            PeachCore::LogManager::MainLogger().Initialize("../logs", "MainLogger");
-            PeachCore::LogManager::AudioLogger().Initialize("../logs", "AudioLogger");
-            PeachCore::LogManager::RenderingLogger().Initialize("../logs", "RenderingLogger");
-            PeachCore::LogManager::ResourceLoadingLogger().Initialize("../logs", "ResourceLoadingLogger");
-            PeachCore::LogManager::NetworkLogger().Initialize("../logs", "NetworkLogger");
+            PeachCore::LogManager::MainLogger().Initialize("..\\logs", "MainLogger");
+            PeachCore::LogManager::AudioLogger().Initialize("..\\logs", "AudioLogger");
+            PeachCore::LogManager::RenderingLogger().Initialize("..\\logs", "RenderingLogger");
+            PeachCore::LogManager::ResourceLoadingLogger().Initialize("..\\logs", "ResourceLoadingLogger");
+            PeachCore::LogManager::NetworkLogger().Initialize("..\\logs", "NetworkLogger");
 
-            PeachCore::LogManager::MainLogger().Debug("MainLogger successfully initialized", "Peach-E");
-            PeachCore::LogManager::AudioLogger().Debug("AudioLogger successfully initialized", "Peach-E");
-            PeachCore::LogManager::RenderingLogger().Debug("RenderingLogger successfully initialized", "Peach-E");
-            PeachCore::LogManager::ResourceLoadingLogger().Debug("ResourceLoadingLogger successfully initialized", "Peach-E");
-            PeachCore::LogManager::NetworkLogger().Debug("NetworkLogger successfully initialized", "Peach-E");
+            PeachCore::LogManager::MainLogger().LogAndPrint("MainLogger successfully initialized", "Peach-E", "debug");
+            PeachCore::LogManager::AudioLogger().LogAndPrint("AudioLogger successfully initialized", "Peach-E", "debug");
+            PeachCore::LogManager::RenderingLogger().LogAndPrint("RenderingLogger successfully initialized", "Peach-E", "debug");
+            PeachCore::LogManager::ResourceLoadingLogger().LogAndPrint("ResourceLoadingLogger successfully initialized", "Peach-E", "debug");
+            PeachCore::LogManager::NetworkLogger().LogAndPrint("NetworkLogger successfully initialized", "Peach-E", "debug");
 
             cout << "Hello World!\n"; //>w<
 
-            PeachCore::LogManager::MainLogger().Warn("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
+            PeachCore::LogManager::MainLogger().LogAndPrint("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E", "warn");
 
-            PeachCore::LogManager::MainLogger().Trace("Success! This Built Correctly", "Peach-E");
+            PeachCore::LogManager::MainLogger().LogAndPrint("Success! This Built Correctly", "Peach-E", "trace");
         }
 
         bool
@@ -127,7 +124,7 @@ namespace PeachEngine {
             PHYSFS_freeList(rc);
         }
 
-        //////////////////////////////////////////////
+       //////////////////////////////////////////////
        // Peach Engine Startup Config Setup
        //////////////////////////////////////////////
 

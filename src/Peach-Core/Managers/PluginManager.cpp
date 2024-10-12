@@ -10,34 +10,37 @@
 ********************************************************************/
 #include "../../include/Peach-Core/Managers/PluginManager.h"
 
+using namespace std;
+
 namespace PeachCore {
 
     namespace fs = std::filesystem;
 
-    void PluginManager::LoadPlugin(const std::string& fp_Path)
+    void 
+        PluginManager::LoadPlugin(const string& fp_Path)
     {
         DYNLIB_HANDLE f_Handle;
 
         if (fs::exists(fp_Path) && fs::is_regular_file(fp_Path))
         {
             f_Handle = DYNLIB_LOAD(fp_Path.c_str());
-            LogManager::ResourceLoadingLogger().Debug("Successfully located DLL at: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().LogAndPrint("Successfully located DLL at: " + fp_Path, "PluginManager", "debug");
         }
 
         else
         {
-            LogManager::ResourceLoadingLogger().Error("Failed to locate DLL at: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().LogAndPrint("Failed to locate DLL at: " + fp_Path, "PluginManager", "error");
             return;
         }
 
-        if (!f_Handle)
+        if (not f_Handle)
         {
-            LogManager::ResourceLoadingLogger().Error("Failed to load plugin at path: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().LogAndPrint("Failed to load plugin at path: " + fp_Path, "PluginManager", "error");
             return;
         }
         else
         {
-            LogManager::ResourceLoadingLogger().Debug("Successfully loaded plugin at: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().LogAndPrint("Successfully loaded plugin at: " + fp_Path, "PluginManager", "debug");
         }
 
         auto f_CreateFunc = (CreatePluginFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
@@ -45,13 +48,13 @@ namespace PeachCore {
 
         if (!f_CreateFunc || !f_DestroyFunc)
         {
-            LogManager::ResourceLoadingLogger().Error("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().LogAndPrint("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager", "error");
             DYNLIB_UNLOAD(f_Handle);
             return;
         }
         else
         {
-            LogManager::ResourceLoadingLogger().Debug("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager");
+            LogManager::ResourceLoadingLogger().LogAndPrint("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager", "debug");
         }
 
         std::unique_ptr<Plugin, DestroyPluginFunc> plugin(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;

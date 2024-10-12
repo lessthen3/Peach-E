@@ -17,8 +17,8 @@
 
 #include <GL/glew.h>
 
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_opengl.h>
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_opengl.h>
 
 NK_API struct nk_context* nk_sdl_init(SDL_Window* win);
 NK_API void                 nk_sdl_font_stash_begin(struct nk_font_atlas** atlas);
@@ -203,12 +203,12 @@ nk_sdl_render(enum nk_anti_aliasing AA, int max_vertex_buffer, int max_element_b
         { -1.0f,  1.0f,  0.0f, 1.0f },
     };
 
-    Uint64 now = SDL_GetTicks64();
+    Uint64 now = SDL_GetTicks();
     sdl.ctx.delta_time_seconds = (float)(now - sdl.time_of_last_frame) / 1000;
     sdl.time_of_last_frame = now;
 
     SDL_GetWindowSize(sdl.win, &width, &height);
-    SDL_GL_GetDrawableSize(sdl.win, &display_width, &display_height);
+    SDL_GetWindowSizeInPixels(sdl.win, &display_width, &display_height);
     ortho[0][0] /= (GLfloat)width;
     ortho[1][1] /= (GLfloat)height;
 
@@ -330,7 +330,7 @@ nk_sdl_init(SDL_Window* win)
     sdl.ctx.clip.paste = nk_sdl_clipboard_paste;
     sdl.ctx.clip.userdata = nk_handle_ptr(0);
     nk_sdl_device_create();
-    sdl.time_of_last_frame = SDL_GetTicks64();
+    sdl.time_of_last_frame = SDL_GetTicks();
     return &sdl.ctx;
 }
 
@@ -359,11 +359,11 @@ nk_sdl_handle_grab(void)
 {
     struct nk_context* ctx = &sdl.ctx;
     if (ctx->input.mouse.grab) {
-        SDL_SetRelativeMouseMode(SDL_TRUE);
+        SDL_SetWindowRelativeMouseMode(sdl.win, true);
     }
     else if (ctx->input.mouse.ungrab) {
         /* better support for older SDL by setting mode first; causes an extra mouse motion event */
-        SDL_SetRelativeMouseMode(SDL_FALSE);
+        SDL_SetWindowRelativeMouseMode(sdl.win, false);
         SDL_WarpMouseInWindow(sdl.win, (int)ctx->input.mouse.prev.x, (int)ctx->input.mouse.prev.y);
     }
     else if (ctx->input.mouse.grabbed) {
@@ -377,17 +377,27 @@ nk_sdl_handle_event(SDL_Event* evt)
 {
     struct nk_context* ctx = &sdl.ctx;
 
+    if (evt->window.windowID != SDL_GetWindowID(sdl.win)) //only register input for the window where the nuklear context exists
+    {
+        nk_input_key(ctx, NK_KEY_NONE, SDL_EVENT_KEY_DOWN);
+        return 1;
+    }
+
     switch (evt->type)
     {
-    case SDL_KEYUP: /* KEYUP & KEYDOWN share same routine */
-    case SDL_KEYDOWN:
+    case SDL_EVENT_KEY_UP: /* KEYUP & KEYDOWN share same routine */
+    case SDL_EVENT_KEY_DOWN:
     {
-        int down = evt->type == SDL_KEYDOWN;
-        const Uint8* state = SDL_GetKeyboardState(0);
-        switch (evt->key.keysym.sym)
+        int down = evt->type == SDL_EVENT_KEY_DOWN;
+        const bool* state = SDL_GetKeyboardState(0);
+        switch (evt->key.key)
         {
         case SDLK_RSHIFT: /* RSHIFT & LSHIFT share same routine */
         case SDLK_LSHIFT:    nk_input_key(ctx, NK_KEY_SHIFT, down); break;
+
+        case SDLK_RCTRL:
+        case SDLK_LCTRL: nk_input_key(ctx, NK_KEY_CTRL, state[SDL_SCANCODE_LCTRL] || state[SDL_SCANCODE_RCTRL]); break;
+
         case SDLK_DELETE:    nk_input_key(ctx, NK_KEY_DEL, down); break;
         case SDLK_RETURN:    nk_input_key(ctx, NK_KEY_ENTER, down); break;
         case SDLK_TAB:       nk_input_key(ctx, NK_KEY_TAB, down); break;
@@ -398,13 +408,13 @@ nk_sdl_handle_event(SDL_Event* evt)
             nk_input_key(ctx, NK_KEY_SCROLL_END, down); break;
         case SDLK_PAGEDOWN:  nk_input_key(ctx, NK_KEY_SCROLL_DOWN, down); break;
         case SDLK_PAGEUP:    nk_input_key(ctx, NK_KEY_SCROLL_UP, down); break;
-        case SDLK_z:         nk_input_key(ctx, NK_KEY_TEXT_UNDO, down && state[SDL_SCANCODE_LCTRL]); break;
-        case SDLK_r:         nk_input_key(ctx, NK_KEY_TEXT_REDO, down && state[SDL_SCANCODE_LCTRL]); break;
-        case SDLK_c:         nk_input_key(ctx, NK_KEY_COPY, down && state[SDL_SCANCODE_LCTRL]); break;
-        case SDLK_v:         nk_input_key(ctx, NK_KEY_PASTE, down && state[SDL_SCANCODE_LCTRL]); break;
-        case SDLK_x:         nk_input_key(ctx, NK_KEY_CUT, down && state[SDL_SCANCODE_LCTRL]); break;
-        case SDLK_b:         nk_input_key(ctx, NK_KEY_TEXT_LINE_START, down && state[SDL_SCANCODE_LCTRL]); break;
-        case SDLK_e:         nk_input_key(ctx, NK_KEY_TEXT_LINE_END, down && state[SDL_SCANCODE_LCTRL]); break;
+        case SDLK_Z:         nk_input_key(ctx, NK_KEY_TEXT_UNDO, down && state[SDL_SCANCODE_LCTRL]); break;
+        case SDLK_R:         nk_input_key(ctx, NK_KEY_TEXT_REDO, down && state[SDL_SCANCODE_LCTRL]); break;
+        case SDLK_C:         nk_input_key(ctx, NK_KEY_COPY, down && state[SDL_SCANCODE_LCTRL]); break;
+        case SDLK_V:         nk_input_key(ctx, NK_KEY_PASTE, down && state[SDL_SCANCODE_LCTRL]); break;
+        case SDLK_X:         nk_input_key(ctx, NK_KEY_CUT, down && state[SDL_SCANCODE_LCTRL]); break;
+        case SDLK_B:         nk_input_key(ctx, NK_KEY_TEXT_LINE_START, down && state[SDL_SCANCODE_LCTRL]); break;
+        case SDLK_E:         nk_input_key(ctx, NK_KEY_TEXT_LINE_END, down && state[SDL_SCANCODE_LCTRL]); break;
         case SDLK_UP:        nk_input_key(ctx, NK_KEY_UP, down); break;
         case SDLK_DOWN:      nk_input_key(ctx, NK_KEY_DOWN, down); break;
         case SDLK_LEFT:
@@ -421,10 +431,10 @@ nk_sdl_handle_event(SDL_Event* evt)
     }
     return 1;
 
-    case SDL_MOUSEBUTTONUP: /* MOUSEBUTTONUP & MOUSEBUTTONDOWN share same routine */
-    case SDL_MOUSEBUTTONDOWN:
+    case SDL_EVENT_MOUSE_BUTTON_UP: /* MOUSEBUTTONUP & MOUSEBUTTONDOWN share same routine */
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
     {
-        int down = evt->type == SDL_MOUSEBUTTONDOWN;
+        int down = evt->type == SDL_EVENT_MOUSE_BUTTON_DOWN;
         const int x = evt->button.x, y = evt->button.y;
         switch (evt->button.button)
         {
@@ -438,7 +448,7 @@ nk_sdl_handle_event(SDL_Event* evt)
     }
     return 1;
 
-    case SDL_MOUSEMOTION:
+    case SDL_EVENT_MOUSE_MOTION:
         if (ctx->input.mouse.grabbed) {
             int x = (int)ctx->input.mouse.prev.x, y = (int)ctx->input.mouse.prev.y;
             nk_input_motion(ctx, x + evt->motion.xrel, y + evt->motion.yrel);
@@ -446,7 +456,7 @@ nk_sdl_handle_event(SDL_Event* evt)
         else nk_input_motion(ctx, evt->motion.x, evt->motion.y);
         return 1;
 
-    case SDL_TEXTINPUT:
+    case SDL_EVENT_TEXT_INPUT:
     {
         nk_glyph glyph;
         memcpy(glyph, evt->text.text, NK_UTF_SIZE);
@@ -454,7 +464,7 @@ nk_sdl_handle_event(SDL_Event* evt)
     }
     return 1;
 
-    case SDL_MOUSEWHEEL:
+    case SDL_EVENT_MOUSE_WHEEL:
         nk_input_scroll(ctx, nk_vec2((float)evt->wheel.x, (float)evt->wheel.y));
         return 1;
     }

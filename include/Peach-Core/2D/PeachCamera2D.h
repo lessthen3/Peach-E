@@ -142,11 +142,14 @@ namespace PeachCore {
             UpdateCameraOrientationVectors() //book keeping for the camera orientation vectors
         {
             // Calculate the new front vector
-            glm::vec3 f_Front({ 
-                cos(glm::radians(m_HorizontalRotation)) * cos(glm::radians(m_VerticalRotation)),
-                sin(glm::radians(m_VerticalRotation)),
-                sin(glm::radians(m_HorizontalRotation))* cos(glm::radians(m_VerticalRotation))
-                });
+            glm::vec3 f_Front
+            (
+                { 
+                    cos(glm::radians(m_HorizontalRotation)) * cos(glm::radians(m_VerticalRotation)),
+                    sin(glm::radians(m_VerticalRotation)),
+                    sin(glm::radians(m_HorizontalRotation))* cos(glm::radians(m_VerticalRotation))
+                }
+            );
              
             m_Forwards = glm::normalize(f_Front);
 

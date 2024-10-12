@@ -1,21 +1,25 @@
 ﻿/*******************************************************************
- *                                        Peach Editor v0.0.7
+ *                                             Peach-E v0.1
  *                           Created by Ranyodh Mandur - � 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                 Peach Editor is an open source editor for Peach-E
+ *                         Peach-E is an open-source game engine
 ********************************************************************/
 #pragma once
 
-#include <spdlog/spdlog.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
-
-#include <memory>
+#include <string>
+#include <iostream>
 #include <filesystem>
+#include <fstream>
+
+#include <chrono>
+#include <iomanip>
+#include <sstream>
+
+#include <map>
 
 #include "../Editor/PeachConsole.h"
 
@@ -23,81 +27,419 @@ using namespace std;
 
 namespace PeachEditor {
 
-    class InternalLogManager 
+    static string
+        CreateColouredText
+        (
+            const string& fp_SampleText,
+            const string& fp_DesiredColour
+        )
     {
-    private:
-        ~InternalLogManager() = default;
+        //////////////////// Regular Colours ////////////////////
 
-    private:
-        bool pm_IsInitialized = false; //set to false intially, and will be set to true once intialized to prevent more than one initialization
+        if (fp_DesiredColour == "black")
+        {
+            return "\x1B[30m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "red")
+        {
+            return "\x1B[31m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "green")
+        {
+            return "\x1B[32m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "yellow")
+        {
+            return "\x1B[33m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "blue")
+        {
+            return "\x1B[34m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "magenta")
+        {
+            return "\x1B[35m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "cyan")
+        {
+            return "\x1B[36m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "white")
+        {
+            return "\x1B[37m" + fp_SampleText + "\033[0m";
+        }
 
-        shared_ptr<spdlog::logger> logger;
-        shared_ptr<PeachConsole> pm_EditorConsole = nullptr;
+        //////////////////// Bright Colours ////////////////////
 
+        else if (fp_DesiredColour == "bright black")
+        {
+            return "\x1B[90m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "bright red")
+        {
+            return "\x1B[91m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "bright green")
+        {
+            return "\x1B[92m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "bright yellow")
+        {
+            return "\x1B[93m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "bright blue")
+        {
+            return "\x1B[94m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "bright magenta")
+        {
+            return "\x1B[95m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "bright cyan")
+        {
+            return "\x1B[96m" + fp_SampleText + "\033[0m";
+        }
+        else if (fp_DesiredColour == "bright white")
+        {
+            return "\x1B[97m" + fp_SampleText + "\033[0m";
+        }
+
+        //////////////////// Just Return the Input Text Unaltered Otherwise ////////////////////
+
+        else
+        {
+            return fp_SampleText;
+        }
+    }
+
+    static void
+        Print
+        (
+            const string& fp_Message,
+            const string& fp_DesiredColour = "white"
+        )
+    {
+        cout << CreateColouredText(fp_Message, fp_DesiredColour) << "\n";
+    }
+
+    static void
+        PrintError
+        (
+            const string& fp_Message,
+            const string& fp_DesiredColour = "red"
+        )
+    {
+        cerr << CreateColouredText(fp_Message, fp_DesiredColour) << "\n";
+    }
+
+    class InternalLogManager
+    {
+
+        //////////////////////////////////////////////
+        // Class Destructor
+        //////////////////////////////////////////////
     public:
-        string m_LoggerName;
+        ~InternalLogManager()
+        {
+            FlushAllLogs();  // Ensure all logs are flushed before destruction
 
-    private:
-        InternalLogManager() = default;
+            for (auto& _f : pm_LogFiles)
+            {
+                if (_f.second.is_open())
+                {
+                    _f.second.close();
+                }
+            }
+        }
 
-        InternalLogManager(const InternalLogManager&) = delete;
-        InternalLogManager& operator=(const InternalLogManager&) = delete;
-
-    public:
-        static InternalLogManager& 
-            InternalRenderingLogger() 
+        static InternalLogManager&
+            InternalRenderingLogger()
         {
             static InternalLogManager internal_rendering_logger;
             return internal_rendering_logger;
         }
 
-        static InternalLogManager& 
-            InternalMainLogger() 
+        static InternalLogManager&
+            InternalMainLogger()
         {
             static InternalLogManager internal_main_logger;
             return internal_main_logger;
         }
 
-        static InternalLogManager& 
-            InternalAudioLogger() 
+        static InternalLogManager&
+            InternalAudioLogger()
         {
             static InternalLogManager internal_audio_logger;
             return internal_audio_logger;
         }
 
-        static InternalLogManager& 
-            InternalResourceLoadingLogger() 
+        static InternalLogManager&
+            InternalResourceLoadingLogger()
         {
             static InternalLogManager internal_resource_loader_logger;
             return internal_resource_loader_logger;
         }
 
-        void 
+        //////////////////////////////////////////////
+        // Private Class Members
+        //////////////////////////////////////////////
+
+    private:
+        bool pm_HasBeenInitialized = false;
+
+        map<string, ofstream> pm_LogFiles;
+        shared_ptr<PeachConsole> pm_EditorConsole = nullptr;
+        
+        string pm_LoggerName = "No_Name";
+
+        InternalLogManager() {}
+
+        //////////////////////////////////////////////
+        // Public Methods
+        //////////////////////////////////////////////
+
+    public:
+
+        void
             Initialize
             (
-                const string& logDirectory, 
-                const string& fp_LoggerName,
-                const shared_ptr<PeachConsole> fp_PeachConsole
-            );
+                const string& fp_DesiredOutputDirectory,
+                const string& fp_DesiredLoggerName,
+                shared_ptr<PeachConsole> fp_EditorConsole,
+                const string& fp_MinLogLevel = "trace",
+                const string& fp_MaxLogLevel = "fatal"
+            )
+        {
+            if (pm_HasBeenInitialized) //stops accidental reinitialization of logmanager
+            {
+                PrintError("LogManager has already been initialized, LogManager is only allowed to initialize once per run");
+                return;
+            }
 
-        void 
-            Trace(const string& message, const string& className);
-        void 
-            Debug(const string& message, const string& className);
-        void 
-            Info(const string& message, const string& className);
-        void 
-            Warn(const string& message, const string& className);
-        void 
-            Error(const string& message, const string& className);
-        void 
-            Fatal(const string& message, const string& className);
+            // Ensure log directory exists
+            if (not filesystem::exists(fp_DesiredOutputDirectory))
+            {
+                try
+                {
+                    filesystem::create_directories(fp_DesiredOutputDirectory);
+                }
+                catch (const exception& ex)
+                {
+                    PrintError("An error occurred inside LogManager: " + static_cast<string>(ex.what()));
+                    return;
+                }
+            }
 
+            vector<string> f_LogLevels = { "trace", "debug", "info", "warn", "error", "fatal", "all-logs" };
+            bool f_ShouldInclude = false;
 
-        void 
-            CreateLogFiles(const string& logDirectory)
-                const;
+            for (const auto& _level : f_LogLevels)
+            {
+                if (_level == fp_MinLogLevel)
+                {
+                    f_ShouldInclude = true;
+                }
+                else if (_level == fp_MaxLogLevel and fp_MaxLogLevel != "fatal")
+                {
+                    f_ShouldInclude = false;
+                }
 
+                if
+                    (
+                        f_ShouldInclude or
+                        (_level == "all-logs" and fp_MinLogLevel != fp_MaxLogLevel) //we do this because we don't need all-logs if only one level is desired for some reason lol
+                        )
+                {
+                    CreateLogFile(fp_DesiredOutputDirectory, _level + ".log");
+                }
+            }
+            pm_EditorConsole = fp_EditorConsole;
+            pm_LoggerName = fp_DesiredLoggerName;
+
+            pm_HasBeenInitialized = true; //well if everything went as planned we should be good to set this to true uwu
+        }
+
+        void
+            Initialize
+            (
+                const string& fp_DesiredOutputDirectory,
+                const vector<string>* fp_DesiredLogLevels
+            )
+        {
+            if (not fp_DesiredLogLevels)
+            {
+                PrintError("LogManager tried to initialize with a null'd value for specific log filtering");
+                return;
+            }
+
+            if (pm_HasBeenInitialized) //stops accidental reinitialization of logmanager
+            {
+                PrintError("LogManager has already been initialized, LogManager is only allowed to initialize once per run");
+                return;
+            }
+
+            // Ensure log directory exists
+            if (not filesystem::exists(fp_DesiredOutputDirectory))
+            {
+                try
+                {
+                    filesystem::create_directories(fp_DesiredOutputDirectory);
+                }
+                catch (const exception& ex)
+                {
+                    PrintError("An error occurred inside LogManager: " + static_cast<string>(ex.what()));
+                    return;
+                }
+            }
+
+            const vector<string> f_AllowedLogLevels = { "trace", "debug", "info", "warn", "error", "fatal", "all-logs" };
+
+            for (const auto& _level : *fp_DesiredLogLevels)
+            {
+                CreateLogFile(fp_DesiredOutputDirectory, _level + ".log");
+
+                if (count(f_AllowedLogLevels.begin(), f_AllowedLogLevels.end(), _level) == 0)
+                {
+                    PrintError("Invalid log level was input when filtering for individual log files");
+                    return;
+                }
+            }
+
+            pm_HasBeenInitialized = true; //well if everything went as planned we should be good to set this to true uwu
+        }
+
+        //////////////////// Flush All Logs ////////////////////
+
+        void
+            FlushAllLogs()
+        {
+            for (auto& _f : pm_LogFiles)
+            {
+                if (_f.second.is_open())
+                {
+                    _f.second.flush();
+                }
+            }
+        }
+
+        //////////////////// Logging Functions  ////////////////////
+
+        void
+            Log
+            (
+                const string& fp_Message,
+                const string& fp_Sender,
+                const string& fp_LogLevel
+            )
+        {
+            string f_TimeStamp = GetCurrentTimestamp();
+            string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + fp_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
+
+            // Log to specific file and all-logs file
+            string f_LogFileName = fp_LogLevel + ".log";
+
+            if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+            {
+                pm_LogFiles[f_LogFileName] << f_LogEntry;
+            }
+            if (pm_LogFiles.find("all-logs.log") != pm_LogFiles.end() and pm_LogFiles["all-logs.log"].is_open())
+            {
+                pm_LogFiles["all-logs.log"] << f_LogEntry;
+            }
+
+            pm_EditorConsole->AddLog("[" + pm_LoggerName + "]: " + fp_Message + "\n", pm_LoggerName);
+        }
+
+        void
+            LogAndPrint
+            (
+                const string& fp_Message,
+                const string& fp_Sender,
+                const string& fp_LogLevel
+            )
+        {
+            string f_LogEntry = fp_LogLevel + ": [" + fp_Sender + "] " + fp_Message + "\n";
+
+            // Log to console
+            if (fp_LogLevel == "trace")
+            {
+                Print(fp_Message, "bright white");
+            }
+            else if (fp_LogLevel == "debug")
+            {
+                Print(fp_Message, "bright blue");
+            }
+            else if (fp_LogLevel == "info")
+            {
+                Print(fp_Message, "bright green");
+            }
+            else if (fp_LogLevel == "warn")
+            {
+                Print(fp_Message, "bright yellow");
+            }
+            else if (fp_LogLevel == "error")
+            {
+                PrintError(fp_Message, "red"); //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
+            }
+            else if (fp_LogLevel == "fatal")
+            {
+                PrintError(fp_Message, "magenta");
+            }
+            else
+            {
+                Log("Did not input a valid option for log level in LogAndPrint()", "LogManager", "error");
+                Print(fp_Message);
+            }
+
+            Log(fp_Message, fp_Sender, fp_LogLevel);
+        }
+
+        //////////////////////////////////////////////
+        // Private Methods
+        //////////////////////////////////////////////
+
+    private:
+
+        void
+            CreateLogFile
+            (
+                const string& fp_FilePath,
+                const string& fp_FileName
+            )
+        {
+            ofstream f_File;
+
+            f_File.open(fp_FilePath + "/" + fp_FileName, ios::out | ios::app);
+
+            if (!f_File.is_open())
+            {
+                cerr << "Failed to open log file: " << fp_FileName << "\n";
+            }
+            else
+            {
+                pm_LogFiles[fp_FileName] = move(f_File);
+            }
+        }
+
+        string //thank you chat-gpt uwu
+            GetCurrentTimestamp()
+        {
+            auto now = chrono::system_clock::now();
+            auto time_t_now = chrono::system_clock::to_time_t(now);
+            auto local_time = *localtime(&time_t_now);
+
+            stringstream ss;
+            ss << put_time(&local_time, "%Y-%m-%d %H:%M:%S");
+
+            auto since_epoch = now.time_since_epoch();
+            auto milliseconds = chrono::duration_cast<chrono::milliseconds>(since_epoch).count() % 1000;
+
+            ss << '.' << setfill('0') << setw(3) << milliseconds;
+
+            return ss.str();
+        }
+
+    public:
         shared_ptr<PeachConsole>
             GetConsole()
         {

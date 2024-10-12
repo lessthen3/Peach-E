@@ -46,16 +46,14 @@ file(
 ####################################### Library Target
 
 # Create a static library
-add_library(
-    peach 
-    STATIC 
+add_library(peach STATIC 
+
     ${PEACH_CORE_SOURCES}
 )
 
 # Specify include directories for the library
-target_include_directories(
-    peach 
-    PUBLIC 
+target_include_directories(peach PUBLIC 
+
     include/Peach-Core
 )
 
@@ -117,15 +115,11 @@ set_target_properties(GGPO PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
 )
 
-#
-# BGFX STATIC LINKING
-#
+add_library(SDL3 STATIC IMPORTED)
 
-add_library(bimg STATIC IMPORTED)
-
-set_target_properties(bimg PROPERTIES
-    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/BGFX-stuff/bimg/lib/bimg.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/BGFX-stuff/bimg/include"
+set_target_properties(SDL3 PROPERTIES
+    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib/SDL3.lib"
+    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
 )
 
 # Link Statically Compiled External Libraries
@@ -134,12 +128,11 @@ target_link_libraries(peach PUBLIC
     libsodium 
     python312 
     GGPO
-    bimg
+    SDL3
 )
 
 ####################################### Dependency Linking
 
-find_package(spdlog REQUIRED)
 find_package(TBB REQUIRED)
 find_package(PhysFS REQUIRED)
 
@@ -157,13 +150,8 @@ find_package(cereal REQUIRED)
 find_package(ZLIB REQUIRED)
 
 find_package(glm REQUIRED)
-find_package(SDL2 REQUIRED)
-find_package(bgfx REQUIRED)
 find_package(GLEW REQUIRED)
 
-find_package(imgui REQUIRED)
-
-find_package(dr_libs REQUIRED)
 find_package(OpenAL REQUIRED)
 
 find_package(assimp REQUIRED)
@@ -172,8 +160,6 @@ find_package(cgltf REQUIRED)
 
 # Peach Core
 target_link_libraries(peach PUBLIC
-    #logging
-    spdlog::spdlog
     #threading
     onetbb::onetbb
     #file system
@@ -193,13 +179,8 @@ target_link_libraries(peach PUBLIC
     ZLIB::ZLIB
     #opengl
     glm::glm
-    #windowing + rendering
-    SDL2::SDL2
-    bgfx::bgfx
-    imgui::imgui
     GLEW::GLEW
     #audio
-    dr_libs::dr_libs
     OpenAL::OpenAL
 )
 

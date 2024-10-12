@@ -11,7 +11,7 @@ namespace PeachCore {
         
         if (!m_Device)
         {
-            LogManager::AudioLogger().Error("Failed to open audio device", "AudioManager");
+            LogManager::AudioLogger().LogAndPrint("Failed to open audio device", "AudioManager", "error");
             return false;
         }
         
@@ -21,7 +21,7 @@ namespace PeachCore {
         
         if (!m_Context || !alcMakeContextCurrent(m_Context))
         {
-            LogManager::AudioLogger().Error("Failed to create or set audio context", "AudioManager");
+            LogManager::AudioLogger().LogAndPrint("Failed to create or set audio context", "AudioManager", "error");
 
             if (m_Context) 
             {
@@ -54,7 +54,7 @@ namespace PeachCore {
         // Load WAV file into buffer
         // Assuming LoadWAVFile is a function that loads a WAV file into an OpenAL buffer
         if (!LoadWAVFile(fp_SoundFile, f_Buffer)) {
-            LogManager::AudioLogger().Error("Failed to load sound: " + fp_SoundFile, "AudioManager");
+            LogManager::AudioLogger().LogAndPrint("Failed to load sound: " + fp_SoundFile, "AudioManager", "error");
             return;
         }
 
@@ -175,7 +175,7 @@ namespace PeachCore {
                 [](auto&&)
                 {
                     // Default handler for any unhandled types
-                    LogManager::AudioLogger().Warn("Unhandled type in variant for ProcessLoadedResourcePackage", "AudioManager");
+                    LogManager::AudioLogger().LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "AudioManager", "warn");
                 }
                 }, ResourcePackage.get()->ResourceData);
         }

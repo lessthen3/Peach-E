@@ -121,21 +121,11 @@ def main() -> bool:
 
     parser.add_argument(
         '-G', 
-        action='store_true', 
-        help=CreateColouredText('Used to set the project file generator', 'cyan') + CreateColouredText('\n eg. -G vs2022', 'blue')
-    )
-
-    parser.add_argument(
-        'vs2022',
-        action='store_true',
-        help=CreateColouredText('Generates solution for Visual Studio 17 2022, intended use:', 'cyan') + CreateColouredText('\n -G vs2022', 'blue')
-    )
-
-    parser.add_argument(
-        'ninja',
-        action='store_true',
-        help=CreateColouredText('Generates project files using Ninja, intended use:', 'cyan') + CreateColouredText('\n -G ninja', 'blue')
-    )
+        nargs=1,
+        help=CreateColouredText('Used to set the project file generator\n', 'cyan')  + \
+                "\t" + CreateColouredText('Generates solution for Visual Studio 17 2022, intended use:', 'cyan') + CreateColouredText('-G vs2022', 'blue') + "\n" + \
+                "\t" + CreateColouredText('Generates project files using Ninja, intended use:', 'cyan') + CreateColouredText('-G ninja', 'blue')
+    )   
     
     args = parser.parse_args()
 
@@ -143,7 +133,7 @@ def main() -> bool:
 
     f_DesiredGenerator = ""
 
-    if(not args.debug or not args.release or not args.both):
+    if(not args.debug and not args.release and not args.both):
         print(CreateColouredText("[ERROR]: No valid build type input detected, use -h or --help if you're unfamiliar", "red"))
         return False
         
@@ -151,9 +141,11 @@ def main() -> bool:
         print(CreateColouredText("[ERROR]: YOU DIDN'T USE -G FLAG BROTHER", "red"))
         return False
 
-    if(args.vs2022):
+    args.G[0].lower() #convert to all lower case for easier handling
+
+    if(args.G[0] == "vs2022"):
         f_DesiredGenerator = "vs2022"
-    elif(args.ninja):
+    elif(args.G[0] == "ninja"):
         f_DesiredGenerator = "ninja"
     else:
         print(CreateColouredText("[ERROR]: Invalid Generator Selected, PICK A VALID GENERATOR", "red"))

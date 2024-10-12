@@ -1,4 +1,14 @@
 PeachEngineRenderingManager:
+\
+
+FIX BUG: SHIFT CLICK HAS A weird bug where it just keeps thinking its pressed even though its not, and even weirder it only
+happens when we open another SDL window and immediately stops when the 2nd SDL Window is closed.
+
+but its whatever i dont wanna let users access the editor while running the game instance anyways lmfao
+
+The WEIRDEST PART is that the file browser works completely as expected otherwise, like it works perfect when its only
+one window for some reason lmfao, im thinking its nk_impl_opengl3 but im not bothered enough to fix it lol i just wanna work
+on something more productive ahhhhhhh
 
 check
 

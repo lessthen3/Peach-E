@@ -14,11 +14,13 @@
 
 #include "PeachEditorManager.h"
 #include "PeachEditorResourceLoadingManager.h"
-#include <SDL2/SDL_opengl.h>
+
+#include <SDL3/SDL_opengl.h>
 
 #include <atomic> //should be used for communicating whether the scene execution thread is currently running or not
 
 using namespace std; 
+namespace PC = PeachCore;
 
 namespace PeachEditor {
 
@@ -35,13 +37,56 @@ namespace PeachEditor {
 
         variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
             <
-            PeachCore::TextureData, //used for parsing raw byte information, mainly for audio at the moment
+            PC::TextureData, //used for parsing raw byte information, mainly for audio at the moment
             unique_ptr<nlohmann::json> //used for parsing JSON metadata if required
 
             > DrawableResourceData; //actual data for graphic
 
-        PeachCore::Drawable GraphicsType;
+        PC::Drawable GraphicsType;
         //ShaderProgram Shaders;
+    };
+
+    struct Viewport
+    {
+        unique_ptr<PC::PeachRenderer> pm_ViewportRenderer = nullptr;
+
+        Viewport(SDL_Window* fp_Window, const bool fp_Is3DEnabled);
+        Viewport() = default;
+
+        void
+            ResizeViewport
+            (
+                const unsigned int fp_Width,
+                const unsigned int fp_Height
+            );
+
+        void
+            RenderViewport
+            (
+                const glm::vec2& fp_Position,
+                const unsigned int fp_Width,
+                const unsigned int fp_Height
+            );
+
+        PC::PeachRenderer*
+            GetViewportRenderer()
+            const;
+
+    private:
+        GLuint pm_RenderTexture = 0;
+        GLuint pm_FrameBuffer = 0;
+
+        unsigned int pm_CurrentViewportHeight = 0;
+        unsigned int pm_CurrentViewportWidth = 0;
+
+        vector<SDL_Event> pm_CurrentPolledEvents;
+
+        bool
+            CreateRenderTexture
+            (
+                const unsigned int fp_Width,
+                const unsigned int fp_Height
+            );
     };
 
     class PeachEditorRenderingManager 
@@ -86,28 +131,61 @@ namespace PeachEditor {
         // DrawableObject.ObjectID : DrawableObject dict
         map<string, DrawableObject> pm_ListOfAllDrawables;
 
-        shared_ptr<PeachCore::CommandQueue> pm_CommandQueue = nullptr;
-        shared_ptr<PeachCore::LoadingQueue> pm_LoadedResourceQueue = nullptr;
+        shared_ptr<PC::CommandQueue> pm_CommandQueue = nullptr;
+        shared_ptr<PC::LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
-        unique_ptr<PeachCore::PeachRenderer> pm_PeachRenderer = nullptr;
         SDL_Window* pm_MainWindow = nullptr;
         SDL_GLContext pm_OpenGLContext;
 
-        //unique_ptr<sf::RenderTexture> pm_ViewportRenderTexture = nullptr;
+        struct nk_context* pm_NuklearCtx = nullptr;
 
         InternalLogManager* rendering_logger = nullptr;
         PeachEditorManager* peach_editor = nullptr;
 
-        ImGuiWindowFlags pm_FileSystemWindowFlags;
-        ImGuiWindowFlags pm_ViewportWindowFlags;
-        ImGuiWindowFlags pm_SceneTreeViewWindowFlags;
-        ImGuiWindowFlags pm_PeachConsoleWindowFlags;
+        Viewport pm_Viewport;
 
+        SDL_Window* pm_GameInstanceWindow = nullptr;
+
+        const glm::vec4 pm_ClearColour = { 0.10f, 0.18f, 0.24f, 1.0f };
+
+    public:
+        SDL_Window*
+            GetGameInstanceWindow()
+            const
+        {
+            return pm_GameInstanceWindow;
+        }
+
+        struct nk_colorf pm_BackgroundColour;
+
+        unordered_set<string> pm_CurrentlyOpenDirectories;
+
+        struct pm_FileSelectionState 
+        {
+            unordered_set<string> SelectedFiles;
+            string LastSelectedItem;
+        };
+
+        pm_FileSelectionState pm_SelectionState;
+
+        bool pm_IsCtrlPressed = false;
+        bool pm_IsShiftPressed = false;
+
+
+        void
+            RenderDirectory
+            (
+                struct nk_context* ctx, 
+                const fs::path& path
+            );
 
     //////////////////////////////////////////////
     // Public Members
     //////////////////////////////////////////////
     public:
+        static constexpr float MAIN_MENU_BAR_SCALE = 0.03f;
+        static constexpr unsigned int NUMBER_OF_HORIZONTAL_MAIN_MENU_BAR_ELEMENTS = 7;
+
         atomic<bool> m_IsSceneCurrentlyRunning = false; //tracks whether the current working scene in the current peach project, is running in the editor
 
         static PeachEditorRenderingManager& PeachEngineRenderer()
@@ -123,13 +201,25 @@ namespace PeachEditor {
         void
             RenderFileBrowser
             (
-                const std::filesystem::path& directory
+                const filesystem::path& directory, 
+                float x, 
+                float y, 
+                float width, 
+                float height,
+                struct nk_context* ctx
             );
 
         void
-            HandleFileAction
+            HandleFileSelection
             (
-                const fs::path& filePath
+                const string& fp_FileItemSelected
+            );
+
+        void
+            HandleRangeSelection
+            (
+                const string& fp_FirstItemSelected,
+                const string& fp_SecondItemSelected
             );
 
     //////////////////////////////////////////////
@@ -140,31 +230,23 @@ namespace PeachEditor {
         void ProcessCommands();
         void ProcessLoadedResourcePackages();
 
-        bool 
-            SetupRenderTexture
-            (
-                const uint32_t width, 
-                const uint32_t height, 
-                const bool IsNearestNeighbour = false
-            );
-
-        bool 
-            ResizeRenderTexture
-            (
-                const uint32_t fp_Width, 
-                const uint32_t fp_Height, 
-                const bool IsNearestNeighbour = false
-            );
-
         bool
-            CreateSDLWindow
+            CreateMainSDLWindow
             (
                 const char* fp_Title = "Peach Engine",
                 const uint32_t fp_Width = 800,
                 const uint32_t fp_Height = 600
             );
 
-        shared_ptr<PeachCore::CommandQueue> 
+        SDL_Window*
+            CreateSDLWindow
+            (
+                const char* fp_WindowTitle,
+                const unsigned int fp_WindowWidth,
+                const unsigned int fp_WindowHeight
+            );
+
+        shared_ptr<PC::CommandQueue> 
             InitializeQueues();
 
         //WIP
@@ -180,10 +262,6 @@ namespace PeachEditor {
             (
                 bool* fp_IsProgramRuntimeOver
             );
-        void 
-            EndFrame();
-        void 
-            Clear();
 
         void 
             Shutdown();
@@ -200,6 +278,9 @@ namespace PeachEditor {
 
         SDL_Window*
             GetMainWindow();
+
+        Viewport*
+            GetViewport();
 
         void 
             SetFrameRateLimit(uint32_t fp_Limit);

@@ -10,79 +10,71 @@ namespace PeachCore {
 
     RenderingManager::~RenderingManager() 
     {
+        if (pm_PeachRenderer)
+        {
+            pm_PeachRenderer.reset(nullptr);
+        }
     }
 
     void 
         RenderingManager::Shutdown()
     {
-        if (pm_MainWindow)
+        if (pm_PeachRenderer)
         {
-            SDL_DestroyWindow(pm_MainWindow);
-            //SDL_Quit();
+            //SDL_DestroyWindow(pm_MainWindow);
 
-            //delete pm_MainWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
-            pm_MainWindow = nullptr;
+            ////delete pm_MainWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
+            //pm_MainWindow = nullptr;
         }
- /*       if (m_TestTexture)
-        {
-            m_TestTexture.reset(nullptr);
-        }*/
     }
 
-    bool 
+    SDL_Window*
         RenderingManager::CreateSDLWindow
         (
-            const char* fp_WindowTitle, 
-            const unsigned int fp_WindowWidth, 
+            const char* fp_WindowTitle,
+            const unsigned int fp_WindowWidth,
             const unsigned int fp_WindowHeight
         )
+        const
     {
         if (not pm_IsInitialized)
         {
-            LogManager::RenderingLogger().Warn("Please initialize RenderingManager before trying to create a window!", "RenderingManager");
-            return false;
+            LogManager::RenderingLogger().LogAndPrint("Please initialize RenderingManager before trying to create a window!", "RenderingManager", "warn");
+            return nullptr;
         }
 
-        if (SDL_Init(SDL_INIT_VIDEO) < 0)
-        {
-            LogManager::RenderingLogger().Fatal("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "RenderingManager");
-            return false;
-        }
-
-        pm_MainWindow = SDL_CreateWindow(
-            fp_WindowTitle,
-            SDL_WINDOWPOS_UNDEFINED,
-            SDL_WINDOWPOS_UNDEFINED,
-            fp_WindowWidth, fp_WindowHeight,
-            SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
-
-        if (!pm_MainWindow)
-        {
-            LogManager::RenderingLogger().Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager");
-            SDL_Quit();
-            return false;
-        }
-
-        return true;
+        return SDL_CreateWindow
+                (
+                    fp_WindowTitle,
+                    fp_WindowWidth, 
+                    fp_WindowHeight,
+                    SDL_WINDOW_OPENGL
+                );
     }
 
     bool
-        RenderingManager::CreatePeachRenderer()
+        RenderingManager::CreatePeachRenderer(SDL_Window* fp_Window)
     {
-        if (pm_PeachRenderer)
+        if (not fp_Window)
         {
-            delete pm_PeachRenderer;
-            pm_PeachRenderer = nullptr;
-        }
-
-        if(not pm_MainWindow)
-        {
-            LogManager::RenderingLogger().Warn("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager");
+            LogManager::RenderingLogger().LogAndPrint("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager", "warn");
             return false;
         }
 
-        pm_PeachRenderer = new PeachRenderer(pm_MainWindow);
+        if (pm_PeachRenderer)
+        {
+            pm_PeachRenderer.reset(nullptr);
+        }
+
+        pm_PeachRenderer = make_unique<PeachRenderer>(fp_Window);
         return true;
+    }
+
+    void
+        RenderingManager::DestroyPeachRenderer()
+    {
+        //pm_PeachRenderer->Destroy();
+        pm_PeachRenderer.reset(nullptr);
     }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
@@ -91,83 +83,54 @@ namespace PeachCore {
     {
         if (pm_CommandQueue || pm_LoadedResourceQueue)
         {
-            LogManager::RenderingLogger().Warn("RenderingManager already initialized.", "RenderingManager");
+            LogManager::RenderingLogger().LogAndPrint("RenderingManager already initialized.", "RenderingManager", "warn");
             return nullptr;
         }
 
         pm_CommandQueue = make_shared<CommandQueue>();
         pm_LoadedResourceQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
 
-        LogManager::RenderingLogger().Debug("RenderingManager successfully initialized >w<", "RenderingManager");
+        LogManager::RenderingLogger().LogAndPrint("RenderingManager successfully initialized >w<", "RenderingManager", "debug");
 
-        pm_IsInitialized = true;
+        pm_AreQueuesInitialized = true;
 
         return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
-    bool 
-        RenderingManager::InitializeOpenGL
-        (
-        )
+    bool
+        RenderingManager::InitializeOpenGL()
     {
-        if (not pm_MainWindow)
+        if (pm_IsInitialized)
         {
-            LogManager::RenderingLogger().Warn("RenderingManager tried to initialize opengl before creating the main window!", "RenderingManager");
+            LogManager::RenderingLogger().LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL when rendering has already been initialized", "PeachEditorRenderingManager", "warn");
             return false;
         }
 
-        int f_WindowWidth, f_WindowHeight;
-        SDL_GetWindowSize(pm_MainWindow, &f_WindowWidth, &f_WindowHeight);
-
-        SDL_SysWMinfo wmi;
-        SDL_VERSION(&wmi.version);
-
-        if (not SDL_GetWindowWMInfo(pm_MainWindow, &wmi)) 
+        if (not pm_AreQueuesInitialized)
         {
-            cerr << "Unable to get window info: " << SDL_GetError() << endl;
-            throw runtime_error("Failed to get window manager info.");
-        }
-        else
-        {
-            LogManager::RenderingLogger().Debug("SDL window info successfully read", "PeachRenderer");
+            LogManager::RenderingLogger().LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", "warn");
+            return false;
         }
 
-        bgfx::Init bgfxInit;
-
-        #if defined(_WIN32) || defined(_WIN64)
-                    bgfxInit.platformData.nwh = wmi.info.win.window;  // Windows
-        #elif defined(__linux__)
-                    bgfxInit.platformData.nwh = (void*)wmi.info.x11.window;  // Linux
-        #elif defined(__APPLE__)
-                    bgfxInit.platformData.nwh = wmi.info.cocoa.window;  // macOS
-        #endif
-
-        bgfxInit.platformData.ndt = NULL;
-        bgfxInit.platformData.context = NULL;
-        bgfxInit.platformData.backBuffer = NULL;
-        bgfxInit.platformData.backBufferDS = NULL;
-
-        bgfxInit.type = bgfx::RendererType::OpenGL; // Use the specified type or auto-select
-
-        bgfxInit.resolution.width = f_WindowWidth;
-        bgfxInit.resolution.height = f_WindowHeight;
-        bgfxInit.resolution.reset = BGFX_RESET_VSYNC;
-
-        if (not bgfx::init(bgfxInit))
+        if (not pm_PeachRenderer->GetMainWindow())
         {
-            LogManager::RenderingLogger().Fatal("BGFX failed to initialize. RIP", "PeachRenderer");
-            throw runtime_error("BGFX initialization failed");
-        }
-        else
-        {
-            LogManager::RenderingLogger().Debug("BGFX initialized properly", "PeachRenderer");
+            LogManager::RenderingLogger().LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before creating the main window!", "PeachEditorRenderingManager", "warn");
+            return false;
         }
 
-        bgfx::setViewClear(0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f, 0);
-        bgfx::setViewRect(0, 0, 0, f_WindowWidth, f_WindowHeight);
+        if (glewInit() != GLEW_OK)
+        {
+            LogManager::RenderingLogger().LogAndPrint("Failed to create GLEW context: " + static_cast<string>("OWO"), "PeachEditorRenderingManager", "fatal");
+            SDL_DestroyWindow(pm_PeachRenderer->GetMainWindow());
+            return false;
+        }
 
-        bgfx::frame();
-            
+        LogManager::RenderingLogger().LogAndPrint("GLEW initialized properly", "PeachEditorRenderingManager", "debug");
+
+        rendering_logger = &LogManager::RenderingLogger();
+
+        pm_IsInitialized = true;
+
         return true;
     }
 
@@ -217,7 +180,7 @@ namespace PeachCore {
                 [](auto&&)
                 {
                     // Default handler for any unhandled types
-                    LogManager::RenderingLogger().Warn("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager");
+                    LogManager::RenderingLogger().LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", "warn");
                 }
                 }, ResourcePackage.get()->ResourceData);
         }
@@ -228,13 +191,13 @@ namespace PeachCore {
     {
         if (not pm_IsInitialized)
         {
-            LogManager::RenderingLogger().Warn("Please initialize RenderingManager before trying to render anything!", "RenderingManager");
+            LogManager::RenderingLogger().LogAndPrint("Please initialize RenderingManager before trying to render anything!", "RenderingManager", "warn");
             return;
         }
 
-        if (not pm_MainWindow)
+        if (not pm_PeachRenderer->GetMainWindow())
         {
-            LogManager::RenderingLogger().Warn("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager");
+            LogManager::RenderingLogger().LogAndPrint("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager", "warn");
             return;
         }
 
@@ -258,13 +221,11 @@ namespace PeachCore {
             {
                 //ImGui_ImplSDL2_ProcessEvent(&event);
 
-                if (event.type == SDL_QUIT)
+                if (event.type == SDL_EVENT_QUIT)
                 {
                     f_IsGameRuntimeOver = true;
                 }
             }
-
-            bgfx::frame(); //advance the frame
 
             //if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
             //{
@@ -315,5 +276,11 @@ namespace PeachCore {
         RenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
     {
         pm_FrameRateLimit = fp_Limit;
+    }
+
+    PeachRenderer*
+        RenderingManager::GetPeachRenderer()
+    {
+        return pm_PeachRenderer.get();
     }
 }

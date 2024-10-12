@@ -51,18 +51,17 @@ namespace PeachEditor{
             SetupInternalLogManagers()
         {
             shared_ptr<PeachConsole> f_PeachConsole = make_shared<PeachConsole>();
-            f_PeachConsole->CreateLogBuffers();
 
             //probably should have better error handling for the loggers, especially
-            InternalLogManager::InternalMainLogger().Initialize("../logs", "main_thread", f_PeachConsole);
-            InternalLogManager::InternalAudioLogger().Initialize("../logs", "audio_thread", f_PeachConsole);
-            InternalLogManager::InternalRenderingLogger().Initialize("../logs", "render_thread", f_PeachConsole);
-            InternalLogManager::InternalResourceLoadingLogger().Initialize("../logs", "resource_thread", f_PeachConsole);
+            InternalLogManager::InternalMainLogger().Initialize("..\\logs", "main_thread", f_PeachConsole);
+            InternalLogManager::InternalAudioLogger().Initialize("..\\logs", "audio_thread", f_PeachConsole);
+            InternalLogManager::InternalRenderingLogger().Initialize("..\\logs", "render_thread", f_PeachConsole);
+            InternalLogManager::InternalResourceLoadingLogger().Initialize("..\\logs", "resource_thread", f_PeachConsole);
 
-            InternalLogManager::InternalMainLogger().Debug("InternalMainLogger successfully initialized", "Peach-E");
-            InternalLogManager::InternalAudioLogger().Debug("InternalAudioLogger successfully initialized", "Peach-E");
-            InternalLogManager::InternalRenderingLogger().Debug("InternalRenderingLogger successfully initialized", "Peach-E");
-            InternalLogManager::InternalResourceLoadingLogger().Debug("InternalResourceLoadingLogger successfully initialized", "Peach-E");
+            InternalLogManager::InternalMainLogger().LogAndPrint("InternalMainLogger successfully initialized", "Peach-E", "debug");
+            InternalLogManager::InternalAudioLogger().LogAndPrint("InternalAudioLogger successfully initialized", "Peach-E", "debug");
+            InternalLogManager::InternalRenderingLogger().LogAndPrint("InternalRenderingLogger successfully initialized", "Peach-E", "debug");
+            InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("InternalResourceLoadingLogger successfully initialized", "Peach-E", "debug");
         }
 
         // Function to list all files recursively
@@ -86,7 +85,7 @@ namespace PeachEditor{
             }
             catch (const fs::filesystem_error& e)
             {
-                InternalLogManager::InternalMainLogger().Error("Error while checking current directory state: " + static_cast<string>(e.what()), "main");
+                InternalLogManager::InternalMainLogger().LogAndPrint("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "main", "error");
             }
 
             return f_Files;
@@ -112,12 +111,12 @@ namespace PeachEditor{
 
                 if (it == fp_OldState.end())
                 {
-                    main_logger->Debug("New file found in working directory: " + _file.first, "main");
+                    main_logger->LogAndPrint("New file found in working directory: " + _file.first, "main", "debug");
                     return false;
                 }
                 else if (it->second != _file.second)
                 {
-                    main_logger->Trace("Modified file found in working directory: " + _file.first, "main");
+                    main_logger->LogAndPrint("Modified file found in working directory: " + _file.first, "main", "trace");
                     return false;
                 }
             }
@@ -126,7 +125,7 @@ namespace PeachEditor{
             {
                 if (fp_NewState.find(_file.first) == fp_NewState.end())
                 {
-                    main_logger->Debug("Deleted file from working directory: " + _file.first, "main");
+                    main_logger->LogAndPrint("Deleted file from working directory: " + _file.first, "main", "debug");
                     return false;
                 }
             }

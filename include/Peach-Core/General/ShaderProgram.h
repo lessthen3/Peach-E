@@ -2,10 +2,13 @@
 
 #include "../Managers/LogManager.h"
 
-#include <map>
+#include <GL/glew.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+
+#include <map>
+
 
 using namespace std;
 
@@ -14,89 +17,226 @@ namespace PeachCore {
     class ShaderProgram 
     {
     public:
-        ShaderProgram()
-        {
-        }
-
         ~ShaderProgram()
         {
             CleanUp();
         }
 
-        ////////////////////////////////////////////////////////////
-        //SHADER CREATOR FOR FRAGMENT AND VERTEX SHADERS
-        ////////////////////////////////////////////////////////////
+    private:
+        map<string, GLuint> pm_Shaders; //stores references to all shader IDs that have been registered with the ShaderProgram
+        map<string, GLuint> pm_Uniforms; //stores all information relevant to program uniforms
+
+        string pm_ProgramName;
+
+        GLuint pm_ProgramID = 0;
+
+    public:
+        ShaderProgram
+            (
+                const string& fp_ShaderName, 
+                const string& fp_VertexSourceFilePath, 
+                const string& fp_FragmentSourceFilePath
+            )
+        {
+            pm_ProgramName = fp_ShaderName;
+            pm_ProgramID = glCreateProgram();
+
+            string f_VertexSourceCode, f_FragmentSourceCode;
+            
+            ReadFileIntoString(fp_VertexSourceFilePath, &f_VertexSourceCode);
+            ReadFileIntoString(fp_FragmentSourceFilePath, &f_FragmentSourceCode);
+
+            CreateVertexShader(f_VertexSourceCode);
+            CreateFragmentShader(f_FragmentSourceCode);
+
+            Link();
+        }
+
+        ///////////////////////////////////////////////
+        // Create Shaders
+        ///////////////////////////////////////////////
 
         void CreateVertexShader(const string& fp_ShaderCode)
         {
-            //pm_Shaders.insert({"VertexShader", CreateShader(fp_ShaderCode, GL_VERTEX_SHADER) });
+            pm_Shaders.insert({"VertexShader", CreateShader(fp_ShaderCode, GL_VERTEX_SHADER) });
         }
 
         void CreateFragmentShader(const string& fp_ShaderCode)
         {
-            //pm_Shaders.insert({"FragmentShader", CreateShader(fp_ShaderCode, GL_FRAGMENT_SHADER) });
+            pm_Shaders.insert({"FragmentShader", CreateShader(fp_ShaderCode, GL_FRAGMENT_SHADER) });
         }
 
         int 
             CreateShader
             (
-                string fp_ShaderSourceCode, 
-                int fp_ShaderType
+                const string& fp_ShaderSourceCode, 
+                GLuint fp_ShaderType
             ) //creates, compiles and attaches desired shader type to current shaderprogram
             const
         {
-            //glUseProgram(pm_ProgramID);
-            //int f_ShaderID = glCreateShader(fp_ShaderType);
+            int f_ShaderID = glCreateShader(fp_ShaderType);
 
-            //if (f_ShaderID == 0) 
-            //    {return 0;}
+            if (f_ShaderID == 0) 
+            {
+                return 0;
+            }
 
-            //const char* f_Cstr = fp_ShaderSourceCode.c_str(); //idk why cpp makes me do this in two lines but whatever
+            const char* f_Cstr = fp_ShaderSourceCode.c_str(); //idk why cpp makes me do this in two lines but whatever
 
-            //glShaderSource(f_ShaderID, 1, &f_Cstr, NULL);
-            //glCompileShader(f_ShaderID);
+            glShaderSource(f_ShaderID, 1, &f_Cstr, NULL);
+            glCompileShader(f_ShaderID);
 
-            //int success;
-            //GLchar infoLog[512];
+            int success;
+            GLchar infoLog[512];
 
-            //// After glCompileShader(f_ShaderID);
-            //glGetShaderiv(f_ShaderID, GL_COMPILE_STATUS, &success);
-            //if (!success)
-            //{
-            //    glGetShaderInfoLog(f_ShaderID, 512, NULL, infoLog);
-            //    cerr << "Shader compilation error: " << infoLog << endl;
-            //    return 0; // Or handle the error appropriately
-           // }
+            // After glCompileShader(f_ShaderID);
+            glGetShaderiv(f_ShaderID, GL_COMPILE_STATUS, &success);
 
-            //glAttachShader(pm_ProgramID, f_ShaderID);
+            if (not success)
+            {
+                glGetShaderInfoLog(f_ShaderID, 512, NULL, infoLog);
+                LogManager::RenderingLogger().LogAndPrint("Shader compilation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, "error");
+                return 0; // Or handle the error appropriately
+            }
 
-            //return f_ShaderID;
-            return 0;
+            return f_ShaderID;
         }
 
         ///////////////////////////////////////////////
         // Generic Uniform Setters 
         ///////////////////////////////////////////////
 
-        void SetUniformMat4(const string& fp_UniformName, glm::mat4 matrix) 
+        /// Matrices 
+        void 
+            SetUniform(const string& fp_UniformName, const glm::mat4& fp_Matrix) 
         {
-            //glUniformMatrix4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(matrix));
+            glUniformMatrix4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
         }
 
-        void SetUniform1i(const string& fp_UniformName, const int value) { //retrieves uniform and its associated int and sets it
-            //glUniform1i(pm_Uniforms[fp_UniformName], value);
+        void
+            SetUniform(const string& fp_UniformName, const glm::mat3& fp_Matrix)
+        {
+            glUniformMatrix3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
         }
 
-        void SetUniform1f(const string& fp_UniformName, const float value) {
-            //glUniform1f(pm_Uniforms[fp_UniformName], value);
+        void
+            SetUniform(const string& fp_UniformName, const glm::mat2& fp_Matrix)
+        {
+            glUniformMatrix2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
         }
 
-        void SetUniform3f(const string& fp_UniformName, glm::vec3 value) {
-            //glUniform3f(pm_Uniforms[fp_UniformName], value.x, value.y, value.z);
+        void
+            SetUniform(const string& fp_UniformName, const glm::mat2x3& fp_Matrix)
+        {
+            glUniformMatrix2x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
         }
 
-        void SetUniform4f(const string& fp_UniformName, glm::vec4 value) {
-            //glUniform4f(pm_Uniforms[fp_UniformName], value.x, value.y, value.z, value.w);
+        void
+            SetUniform(const string& fp_UniformName, const glm::mat3x2& fp_Matrix)
+        {
+            glUniformMatrix3x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::mat2x4& fp_Matrix)
+        {
+            glUniformMatrix2x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::mat4x2& fp_Matrix)
+        {
+            glUniformMatrix4x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::mat3x4& fp_Matrix)
+        {
+            glUniformMatrix3x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::mat4x3& fp_Matrix)
+        {
+            glUniformMatrix4x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+        }
+
+        /// int vecs 
+
+        void 
+            SetUniform(const string& fp_UniformName, const int fp_Value)
+        {
+            glUniform1i(pm_Uniforms.at(fp_UniformName), fp_Value);
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::ivec2& fp_Value)
+        {
+            glUniform2i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y);
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::ivec3& fp_Value)
+        {
+            glUniform3i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z);
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::ivec4& fp_Value)
+        {
+            glUniform4i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z, fp_Value.w);
+        }
+
+        /// bool vecs 
+
+        void
+            SetUniform(const string& fp_UniformName, const bool fp_Value)
+        {
+            glUniform1i(pm_Uniforms.at(fp_UniformName), fp_Value);
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::bvec2& fp_Value)
+        {
+            glUniform2i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y);
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::bvec3& fp_Value)
+        {
+            glUniform3i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z);
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::bvec4& fp_Value)
+        {
+            glUniform4i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z, fp_Value.w);
+        }
+
+        /// float vecs 
+
+        void 
+            SetUniform(const string& fp_UniformName, const float fp_Value) 
+        {
+            glUniform1f(pm_Uniforms.at(fp_UniformName), fp_Value);
+        }
+
+        void
+            SetUniform(const string& fp_UniformName, const glm::vec2& fp_Value)
+        {
+            glUniform2f(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y);
+        }
+
+        void 
+            SetUniform(const string& fp_UniformName, const glm::vec3& fp_Value) 
+        {
+            glUniform3f(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z);
+        }
+
+        void 
+            SetUniform(const string& fp_UniformName, const glm::vec4& fp_Value) 
+        {
+            glUniform4f(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z, fp_Value.w);
         }
 
         //////////////////////////////////////////////
@@ -140,104 +280,129 @@ namespace PeachCore {
         // Shader Linker 
         //////////////////////////////////////////////
 
-        void Link()   
+        void 
+            Link()
         {
-            AutoCaptureActiveUniforms(); //Does what it says on the tin. please dont ask how many times i cried while writing this class, please just dont'.
+            for (auto& shader : pm_Shaders)
+            {
+                glAttachShader(pm_ProgramID, shader.second);
+            }
+
+            glLinkProgram(pm_ProgramID);
+
+            LogManager::RenderingLogger().LogAndPrint("Successfully Linked!", "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, "debug");
+
+            GLint success;
+            GLchar infoLog[512];
+
+            glGetProgramiv(pm_ProgramID, GL_LINK_STATUS, &success);
+            if (not success)
+            {
+                glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
+                LogManager::RenderingLogger().LogAndPrint("ERROR::SHADER::PROGRAM::LINKING_FAILED" + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, "error");
+            }
+
+            for (auto& shader : pm_Shaders)
+            {
+                glDetachShader(pm_ProgramID, shader.second);
+                glDeleteShader(shader.second);  // Delete the shader as it's no longer needed
+            }
+
+            glValidateProgram(pm_ProgramID);
+
+            glGetProgramiv(pm_ProgramID, GL_VALIDATE_STATUS, &success);
+            if (not success)
+            {
+                glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
+                LogManager::RenderingLogger().LogAndPrint("Shader validation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, "error");
+            }
+
+            AutoCaptureActiveUniforms();
+
+            pm_Shaders.clear(); //don't need the contents anymore since they are stored inside the GL context currently
         }
 
-        void AutoCaptureActiveUniforms() //gets uniforms detected by current glContext, then puts them into a map of the form <uniform-name, uniformLocation>
+        void 
+            AutoCaptureActiveUniforms() //gets uniforms detected by current glContext, then puts them into a map of the form <uniform-name, uniformLocation>
         {
+            int total = -1;
+            glGetProgramiv(pm_ProgramID, GL_ACTIVE_UNIFORMS, &total);
+
+            for (int i = 0; i < total; ++i)
+            {
+                int name_len = -1, num = -1;
+                GLenum type = GL_ZERO;
+                char name[100];
+
+                glGetActiveUniform(pm_ProgramID, GLuint(i), sizeof(name) - 1,
+                    &name_len, &num, &type, name);
+
+                name[name_len] = 0;
+                GLuint location = glGetUniformLocation(pm_ProgramID, name);
+
+                const char* f_temp = name;
+
+                pm_Uniforms.insert({ f_temp, location });
+
+                LogManager::RenderingLogger().LogAndPrint("Uniform #: " + to_string(i) + ", Type(GLenum): " + to_string(type) + ", Name: " + f_temp + ", Location(GLuint): " + to_string(location), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, "debug");
+            }
         }
 
        //////////////////////////////////////////////
        // Shader Cleanup
        //////////////////////////////////////////////
 
-        void Bind() 
+        void 
+            CleanUp()
             const
         {
+            glDeleteProgram(pm_ProgramID);
         }
 
-        void Unbind() 
-            const
-        {
-        }
+       //////////////////////////////////////////////
+       // Utility Functions
+       //////////////////////////////////////////////
 
-        void CleanUp() 
-            const
-        {
-        }
-
-        //////////////////////////////////////////////
-        // load/compilation functions
-        //////////////////////////////////////////////
-
-        //loads and compiles one shader, also attaches it to the current ShaderProgram
-        bool 
-            LoadAndCompileShader
+        static bool
+            ReadFileIntoString
             (
-                const string& kind, 
-                const string& filePath
-            ) 
+                const string& fp_ScriptFilePath,
+                string* fp_SourceCode
+            )
         {
-            //// Load the file into a string
-            //ifstream shaderFile(filePath);
+            // Extract file extension assuming format "filename.ext"
+            size_t lastDotIndex = fp_ScriptFilePath.rfind('.');
 
-            //if (!shaderFile)
-            //{
-            //    LogManager::RenderingLogger().Warn("Failed to open shader file: " + filePath, "ShaderProgram");
-            //    return false;
-            //}
-            //string source((istreambuf_iterator<char>(shaderFile)), istreambuf_iterator<char>());
-           
-            //if (kind == "VertexShader")
-            //{
-            //    CreateVertexShader(source);
-            //}
+            if (lastDotIndex == string::npos)
+            {
+                PeachCore::LogManager::RenderingLogger().LogAndPrint("Compiler LogAndPrint: No file extension found", "Compiler", "error");
+                return false;
+            }
 
-            //else if (kind == "FragmentShader")
-            //{
-            //    CreateFragmentShader(source);
-            //}
-            //else
-            //{
-            //    LogManager::RenderingLogger().Warn("Failed to associate loaded shader with pre-defined shader types", "ShaderProgram");
-            //    return false;
-            //}
+            string f_FileExtension = fp_ScriptFilePath.substr(lastDotIndex);
 
-            //// Compile the source code
-            //return true;
+            if (f_FileExtension != ".fs" and f_FileExtension != ".vs" and f_FileExtension != ".glsl")
+            {
+                PeachCore::LogManager::RenderingLogger().LogAndPrint("Shader Read LogAndPrint: Invalid file type found at specified filepath: " + fp_ScriptFilePath, "Compiler", "error");
+                return false;
+            }
+
+            ifstream f_FileStream(fp_ScriptFilePath);
+
+            if (not f_FileStream)
+            {
+                PeachCore::LogManager::RenderingLogger().LogAndPrint("Compiler LogAndPrint: Failed to open bongojam script for reading.", "Compiler", "error");
+                return false;
+            }
+
+            stringstream f_Buffer;
+            f_Buffer << f_FileStream.rdbuf();
+            *fp_SourceCode = f_Buffer.str();
+            return true;
         }
 
-        //compiles multiple shaders
-        bool 
-            LoadAndCompileShaders
-            (
-                const map<string, string>& fp_ShadersToLoadAndCompile
-            ) //takes a map of "Shader Type" : "Shader Paths"
-        {
-           // glUseProgram(pm_ProgramID);
-            //for (auto& shader : fp_ShadersToLoadAndCompile)
-            //{
-            //    LoadAndCompileShader(shader.first, shader.second); //loads shader type from shader path in map
-            //}
-
-            //if (false) {
-            //    cerr << "Failed to compile shaders." << endl;
-            //    return false;
-            //}
-
-
-            //return true;
-        }
-
-        //BROKEN DO NOT USE, WIP
-        void PrintShaderProgramDebugVerbose()
-            const
-        {
-        }
-
-        void PrintShaderProgramUniformList()
+        void 
+            PrintShaderProgramUniformList()
         {
             for (auto& uniform : pm_Uniforms)
             {
@@ -246,30 +411,26 @@ namespace PeachCore {
             }
         }
 
-        int GetUniformLocation(const string& fp_UniformName)
+        int 
+            GetUniformLocation(const string& fp_UniformName)
         {
             return pm_Uniforms.at(fp_UniformName);
         }
 
-        string GetProgramName() const {
+        string 
+            GetProgramName() 
+            const 
+        {
             return pm_ProgramName;
         }
 
-        int GetProgramID() 
+        int 
+            GetProgramID() 
             const
         {
             return pm_ProgramID;
         }
-    
-private:
-        map<string, int> pm_Shaders; //stores references to all shader IDs that have been registered with the ShaderProgram
-        map<string, int> pm_Uniforms; //stores all information relevant to program uniforms
-
-        string pm_ProgramName;
-
-        int pm_ProgramID = 0;
     };
-
 }
 
 

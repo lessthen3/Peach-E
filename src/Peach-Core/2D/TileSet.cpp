@@ -21,9 +21,9 @@ namespace PeachCore {
     void 
         TileSet::CreateTilesFromTexture2D()
     {
-        if (!pm_Texture.IsValid())
+        if (not pm_Texture.IsValid())
         {
-            LogManager::MainLogger().Warn("Attempted to create tiles for tile set when no texture was loaded", m_Name);
+            LogManager::MainLogger().LogAndPrint("Attempted to create tiles for tile set when no texture was loaded", m_Name, "warn");
             return;
         }
 
@@ -82,9 +82,9 @@ namespace PeachCore {
     void 
         TileSet::SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight)
     {
-        if (!pm_Texture.IsValid())
+        if (not pm_Texture.IsValid())
         {
-            LogManager::MainLogger().Warn("Attempted to set UV's for tile set when no texture was loaded", m_Name);
+            LogManager::MainLogger().LogAndPrint("Attempted to set UV's for tile set when no texture was loaded", m_Name, "warn");
             return;
         }
 
@@ -147,7 +147,7 @@ namespace PeachCore {
     {
         if (fp_Index < 0 || fp_Index >= m_Tiles.size())
         {
-            LogManager::MainLogger().Warn("Attempted to access invalid index number for tile set list", m_Name);
+            LogManager::MainLogger().LogAndPrint("Attempted to access invalid index number for tile set list", m_Name, "warn");
             throw out_of_range("Tile index is out of range.");
         }
     }

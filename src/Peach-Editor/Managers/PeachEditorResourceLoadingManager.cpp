@@ -22,7 +22,7 @@ namespace PeachEditor {
 
 		if (pm_AudioQueueReferenceCount == 2)  //stops unwanted extra references from being created accidentally
 		{
-			InternalLogManager::InternalResourceLoadingLogger().Warn("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's AudioResourceLoadingQueue", "PeachEditorResourceLoadingManager");
+			InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's AudioResourceLoadingQueue", "PeachEditorResourceLoadingManager", "warn");
 			return nullptr;
 		}
 		else if (pm_AudioResourceLoadingQueue == 0) //lazy initialization for LoadingQueue cause why not
@@ -42,7 +42,7 @@ namespace PeachEditor {
 
 		if (pm_DrawableQueueReferenceCount == 2) //stops unwanted extra references from being created accidentally
 		{
-			InternalLogManager::InternalResourceLoadingLogger().Warn("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's DrawableResourceLoadingQueue", "PeachEditorResourceLoadingManager");
+			InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's DrawableResourceLoadingQueue", "PeachEditorResourceLoadingManager", "warn");
 			return nullptr;
 		}
 		else if (pm_DrawableQueueReferenceCount == 0) //lazy initialization for LoadingQueue cause why not
@@ -91,7 +91,7 @@ namespace PeachEditor {
 
 		if (!pm_DrawableResourceLoadingQueue->PushLoadedResourcePackage(pm_WaitingFullyLoadedResourcePackages))
 		{
-			InternalLogManager::InternalResourceLoadingLogger().Debug("Load deferred until later", "PeachEditorResourceLoadingManager");
+			InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("Load deferred until later", "PeachEditorResourceLoadingManager", "debug");
 			return false;
 		}
 

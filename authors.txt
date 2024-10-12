@@ -1,5 +1,12 @@
-All programmers that have their code in this codebase (as far as I know currently):
+All programmers that have their code in this codebase (as far as I know currently and in no particular order):
+(going to add maintainers first, then all contributors afterwards )
 
-Me
+Me - Creator/Maintainer for Peach-E
 
-Micha Mettke
+Micha Mettke - Creator of Nuklear Immediate Mode Graphics
+
+Tony Cannon - Creator of GGPO aka Rollback Netcode, general GOAT
+
+Sam Lantinga - Co-Creator of SDL
+Ryan C. Gordon - Co-Creator of SDL (no explanation needed)
+

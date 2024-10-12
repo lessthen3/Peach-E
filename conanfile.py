@@ -9,7 +9,6 @@ class PeachEBuilder(ConanFile):
 
     def requirements(self):
         # just chillin
-        self.requires("spdlog/1.14.1")
         self.requires("onetbb/2021.12.0")
         self.requires("physfs/3.2.0")
 
@@ -30,16 +29,11 @@ class PeachEBuilder(ConanFile):
         self.requires("cereal/1.3.2")
         self.requires("zlib/1.3.1")
 
-        # opengl + imgui + windowing
+        # opengl
         self.requires("glm/cci.20230113")
-        self.requires("sdl/2.30.5")
-        self.requires("bgfx/cci.20230216")
         self.requires("glew/2.2.0")
-
-        self.requires("imgui/cci.20230105+1.89.2.docking")
         
-        # audio decoder and playback
-        self.requires("dr_libs/cci.20230529")
+        # audio playback
         self.requires("openal-soft/1.22.2")
 
         # 3D asset importing

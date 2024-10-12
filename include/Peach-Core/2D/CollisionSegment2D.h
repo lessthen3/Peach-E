@@ -42,7 +42,7 @@ namespace PeachCore {
 		{
 			if(pm_ListOfPoints.size() == 0)
 			{
-				LogManager::MainLogger().Warn("Tried to optimize line segment when line segment has 0 points to optimize out at segment ID: " + pm_SegmentID, "CollisionSegment2D");
+				LogManager::MainLogger().LogAndPrint("Tried to optimize line segment when line segment has 0 points to optimize out at segment ID: " + pm_SegmentID, "CollisionSegment2D", "warn");
 				return;
 			}
 

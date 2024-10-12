@@ -37,6 +37,8 @@
     #define DYNLIB_UNLOAD dlclose
 #endif
 
+using namespace std;
+
 namespace PeachCore {
 
     typedef Plugin* (*CreatePluginFunc)();
@@ -64,5 +66,91 @@ namespace PeachCore {
 
         std::vector<std::unique_ptr<Plugin, DestroyPluginFunc>> pm_PluginInstances;
         std::vector<DYNLIB_HANDLE> pm_PluginHandles;
+    };
+
+    struct DynamicLoader
+    {
+    public:
+        DynamicLoader(const string& dllPath)
+        {
+            if (filesystem::exists(dllPath))
+            {
+                pm_LibraryHandle = DYNLIB_LOAD(dllPath.c_str());
+
+                if (not pm_LibraryHandle)
+                {
+                    cerr << "Failed to load library: " << dllPath << " Error: " << GetLastErrorAsString() << endl;
+                }
+                else
+                {
+                    cout << "Library loaded successfully: " << dllPath << endl;
+                }
+            }
+            else
+            {
+                cerr << "Library path does not exist: " << dllPath << endl;
+            }
+        }
+
+        ~DynamicLoader()
+        {
+            if (pm_LibraryHandle)
+            {
+                if (not DYNLIB_UNLOAD(pm_LibraryHandle))
+                {
+                    cerr << "Failed to unload library. Error: " << GetLastErrorAsString() << endl;
+                }
+                else
+                {
+                    cout << "Library unloaded successfully." << endl;
+                }
+            }
+        }
+
+        // Function to retrieve symbols (functions/variables) from the library
+        void* GetSymbol(const string& symbolName)
+        {
+            void* symbol = nullptr;
+
+            if (pm_LibraryHandle)
+            {
+                symbol = (void*)DYNLIB_GETSYM(pm_LibraryHandle, symbolName.c_str());
+
+                if (not symbol)
+                {
+                    cerr << "Failed to locate symbol: " << symbolName << " Error: " << GetLastErrorAsString() << endl;
+                }
+                else
+                {
+                    cout << "Symbol located: " << symbolName << endl;
+                }
+            }
+            return symbol;
+        }
+
+    private:
+        DYNLIB_HANDLE pm_LibraryHandle = nullptr;
+
+        // Helper function to get the error message string
+        string GetLastErrorAsString()
+        {
+#if defined(_WIN32) || defined(_WIN64)
+            // Windows error message
+            DWORD errorMessageID = ::GetLastError();
+            if (errorMessageID == 0)
+                return string(); // No error message has been recorded
+
+            LPSTR messageBuffer = nullptr;
+            size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+
+            string message(messageBuffer, size);
+            LocalFree(messageBuffer);
+            return message;
+#else
+            // POSIX error message
+            return string(dlerror());
+#endif
+        }
     };
 }

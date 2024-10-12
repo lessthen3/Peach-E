@@ -70,7 +70,9 @@ namespace PeachCore {
 
         bool pm_IsVSyncEnabled = false;
         bool pm_IsShutDown = false;
+
         bool pm_IsInitialized = false;
+        bool pm_AreQueuesInitialized = false;
 
         // Object ID : CurrentPosition
         map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
@@ -85,9 +87,9 @@ namespace PeachCore {
 
         unique_ptr<PeachTexture2D> m_TestTexture = nullptr;
 
-        PeachRenderer* pm_PeachRenderer = nullptr;
-        SDL_Window* pm_MainWindow = nullptr;
+        unique_ptr<PeachRenderer> pm_PeachRenderer = nullptr;
 
+        LogManager* rendering_logger = nullptr;
 
     private:
         inline const float 
@@ -111,26 +113,24 @@ namespace PeachCore {
 
         void ProcessCommands();
         void ProcessLoadedResourcePackages();
-        
-        void SetupRenderTexture(unsigned int width, unsigned int height);
 
-        const PeachTexture2D& 
-            GetRenderTexture()
-            const;
-
-        bool
+        SDL_Window*
             CreateSDLWindow
             (
-                const char* fp_WindowTitle, 
-                const unsigned int fp_WindowWidth, 
+                const char* fp_WindowTitle,
+                const unsigned int fp_WindowWidth,
                 const unsigned int fp_WindowHeight
-            );
+            )
+            const;
 
         bool
             CreatePeachRenderer
             (
-
+                SDL_Window* fp_Window
             );
+
+        void
+            DestroyPeachRenderer();
 
         shared_ptr<CommandQueue> 
             InitializeQueues();
@@ -147,8 +147,9 @@ namespace PeachCore {
 
         void 
             GetCurrentViewPort();
-        //void Draw(const sf::Drawable& fp_Drawable);
-        //void DrawTextToScreen(const std::string& fp_Text, const sf::Font& fp_Font, unsigned int fp_Size, const sf::Vector2f& fp_Position, const sf::Color& fp_Color = sf::Color::White);
+
+        PeachRenderer*
+            GetPeachRenderer();
 
         unsigned int GetFrameRateLimit() const;
 
