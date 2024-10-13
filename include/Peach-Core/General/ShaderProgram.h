@@ -22,6 +22,8 @@ namespace PeachCore {
             CleanUp();
         }
 
+        ShaderProgram() = default;
+
     private:
         map<string, GLuint> pm_Shaders; //stores references to all shader IDs that have been registered with the ShaderProgram
         map<string, GLuint> pm_Uniforms; //stores all information relevant to program uniforms
@@ -107,6 +109,7 @@ namespace PeachCore {
         ///////////////////////////////////////////////
 
         /// Matrices 
+
         void 
             SetUniform(const string& fp_UniformName, const glm::mat4& fp_Matrix) 
         {
@@ -363,19 +366,20 @@ namespace PeachCore {
        // Utility Functions
        //////////////////////////////////////////////
 
-        static bool
+        bool
             ReadFileIntoString
             (
                 const string& fp_ScriptFilePath,
                 string* fp_SourceCode
             )
+            const
         {
             // Extract file extension assuming format "filename.ext"
             size_t lastDotIndex = fp_ScriptFilePath.rfind('.');
 
             if (lastDotIndex == string::npos)
             {
-                PeachCore::LogManager::RenderingLogger().LogAndPrint("Compiler LogAndPrint: No file extension found", "Compiler", "error");
+                PeachCore::LogManager::RenderingLogger().LogAndPrint("No file extension found for GLSL Shader at specified filepath: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, "error");
                 return false;
             }
 
@@ -383,7 +387,7 @@ namespace PeachCore {
 
             if (f_FileExtension != ".fs" and f_FileExtension != ".vs" and f_FileExtension != ".glsl")
             {
-                PeachCore::LogManager::RenderingLogger().LogAndPrint("Shader Read LogAndPrint: Invalid file type found at specified filepath: " + fp_ScriptFilePath, "Compiler", "error");
+                PeachCore::LogManager::RenderingLogger().LogAndPrint("Invalid file extension found when GLSL Shader was expected at specified filepath: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, "error");
                 return false;
             }
 
@@ -391,13 +395,16 @@ namespace PeachCore {
 
             if (not f_FileStream)
             {
-                PeachCore::LogManager::RenderingLogger().LogAndPrint("Compiler LogAndPrint: Failed to open bongojam script for reading.", "Compiler", "error");
+                PeachCore::LogManager::RenderingLogger().LogAndPrint("Shader failed to load at file path: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, "error");
                 return false;
             }
 
             stringstream f_Buffer;
             f_Buffer << f_FileStream.rdbuf();
             *fp_SourceCode = f_Buffer.str();
+
+            PeachCore::LogManager::RenderingLogger().LogAndPrint("Shader successfully loaded at file path: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, "debug");
+
             return true;
         }
 

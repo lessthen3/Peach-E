@@ -145,16 +145,7 @@ namespace PeachEditor {
         SDL_GetWindowSize(pm_MainWindow, &f_WindowWidth, &f_WindowHeight);
 
         // Create an OpenGL context associated with the window
-        pm_OpenGLContext = SDL_GL_CreateContext(pm_MainWindow);
-
-        if (not pm_OpenGLContext)
-        {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("Failed to create OpenGL context: " + static_cast<string>(SDL_GetError()), "PeachEditorRenderingManager", "fatal");
-            SDL_DestroyWindow(pm_MainWindow);
-            return false;
-        }
-
-        InternalLogManager::InternalRenderingLogger().LogAndPrint("OpenGL initialized properly", "PeachEditorRenderingManager", "debug");
+        pm_EditorRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, true);
 
         if (glewInit() != GLEW_OK)
         {
@@ -171,7 +162,7 @@ namespace PeachEditor {
         ////////////////////////////////////////////////
         // Create Viewport
         ////////////////////////////////////////////////
-        pm_Viewport = Viewport(pm_MainWindow, true);
+        //pm_Viewport = Viewport(100, 100, true, pm_EditorRenderer.get());
 
         ////////////////////////////////////////////////
         // Setup Nuklear GUI
@@ -312,13 +303,6 @@ namespace PeachEditor {
         }
         nk_sdl_handle_grab();
         nk_input_end(pm_NuklearCtx);
-
-        ////////////////////////////////////////////////
-        // Clear Screen
-        ////////////////////////////////////////////////
-
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(pm_ClearColour.x, pm_ClearColour.y, pm_ClearColour.z, pm_ClearColour.w);
 
         ////////////////////////////////////////////////
         // Draw GUI
@@ -518,7 +502,7 @@ namespace PeachEditor {
 
                             SDL_GL_SwapWindow(t_GameWindow);
 
-                            glClear(GL_COLOR_BUFFER_BIT);
+                            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                             glClearColor(0.10f, 0.18f, 0.24f, 1.0f);
                         }
 
@@ -625,13 +609,6 @@ namespace PeachEditor {
 
         RenderFileBrowser("../", f_CurrentWindowWidth * 0.85f, f_CurrentWindowHeight*0.70f, f_CurrentWindowWidth*0.15f, f_CurrentWindowHeight*0.30f, pm_NuklearCtx);
 
-        ////////////////////////////////////////////////
-        // Clear and Render
-        ////////////////////////////////////////////////
-
-        nk_sdl_render(NK_ANTI_ALIASING_ON, 512 * 1024, 128 * 1024);
-
-        SDL_GL_SwapWindow(pm_MainWindow);
 
         ////////////////////////////////////////////////
         // Render Viewport
@@ -642,7 +619,22 @@ namespace PeachEditor {
 
         glm::vec2 mf_ViewportPosition = glm::vec2(0.0f, f_CurrentWindowHeight - mf_ViewportHeight - f_MainMenuBarHeight); //glViewPort x and y args arent based on the 4th quadrant scheme for some reason lmfao it treats the screen as the first quadrant?_?
 
-        pm_Viewport.RenderViewport(mf_ViewportPosition, mf_ViewportWidth, mf_ViewportHeight);
+        //pm_Viewport.RenderViewport(mf_ViewportPosition, 100, 100);
+
+        ////////////////////////////////////////////////
+        // Render Nuklear Context
+        ////////////////////////////////////////////////
+
+        nk_sdl_render(NK_ANTI_ALIASING_ON, 512 * 1024, 128 * 1024);
+
+        SDL_GL_SwapWindow(pm_MainWindow);
+
+        ////////////////////////////////////////////////
+        // Clear Screen
+        ////////////////////////////////////////////////
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //PLEASE GOD DO NOT MOVE THIS HOLY FUCK
+        glClearColor(pm_ClearColour.x, pm_ClearColour.y, pm_ClearColour.z, pm_ClearColour.w);
     }
 
     void 
@@ -866,10 +858,7 @@ namespace PeachEditor {
     void 
         PeachEditorRenderingManager::SetVSync(const bool fp_IsEnabled)
     {
-        if (fp_IsEnabled)
-        {
-            pm_IsVSyncEnabled = fp_IsEnabled;
-        }
+        pm_IsVSyncEnabled = fp_IsEnabled;
     }
 
     void 
@@ -881,14 +870,49 @@ namespace PeachEditor {
 
 namespace PeachEditor {
 
-    Viewport::Viewport(SDL_Window* fp_Window, const bool fp_Is3DEnabled)
+    Viewport::Viewport
+        (
+            unsigned int fp_Width, 
+            unsigned int fp_Height, 
+            const bool fp_Is3DEnabled,
+            PC::PeachRenderer* fp_Renderer
+        )
     {
-        pm_ViewportRenderer = make_unique<PeachCore::PeachRenderer>(fp_Window, fp_Is3DEnabled);
+        CreateRenderTexture(fp_Width, fp_Height);
 
-        int f_WindowWidth, f_WindowHeight;
-        SDL_GetWindowSizeInPixels(fp_Window, &f_WindowWidth, &f_WindowHeight);
+        ////////////////////////////////////////////////
+        // Generate Buffers
+        ////////////////////////////////////////////////
 
-        CreateRenderTexture(f_WindowWidth, f_WindowHeight);
+        //vector<float> vertices =
+        //{
+        //    // positions          
+        //    0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+        //    0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+        //   -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
+        //   -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
+        //};
+
+        //vector<unsigned int> indices =
+        //{  // note that we start from 0!
+        //    0, 1, 3,   // first triangle
+        //    1, 2, 3    // second triangle
+        //};
+
+        //pm_VAO = fp_Renderer->Generate2DBuffers(vertices, indices);
+
+        //////////////////////////////////////////////////
+        //// Shaders
+        //////////////////////////////////////////////////
+
+        //pm_ViewportShader = PC::ShaderProgram
+        //(
+        //    "Viewport_Shader",
+        //    "..\\shaders\\viewport.vs",
+        //    "..\\shaders\\viewport.fs"
+        //);
+
+        pm_Render = fp_Renderer;
     }
 
     void
@@ -901,7 +925,17 @@ namespace PeachEditor {
         pm_CurrentViewportWidth = fp_Width;
         pm_CurrentViewportHeight = fp_Height;
 
+        glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
+
+        ////////////////////////////////////////////////
+        // Delete Old Render Texture
+        ////////////////////////////////////////////////
+
         glDeleteTextures(1, &pm_RenderTexture);
+
+        ////////////////////////////////////////////////
+        // Generate New Render Texture
+        ////////////////////////////////////////////////
 
         glGenTextures(1, &pm_RenderTexture);
 
@@ -912,19 +946,9 @@ namespace PeachEditor {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, pm_RenderTexture, 0);
+
         glBindTexture(GL_TEXTURE_2D, 0);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pm_RenderTexture, 0);
-
-        // Check if framebuffer is complete
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            cerr << "Error: Framebuffer is not complete!" << endl;
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            return;
-        }
-
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
@@ -936,22 +960,34 @@ namespace PeachEditor {
             const unsigned int fp_Height
         )
     {
-        if (pm_CurrentViewportWidth != fp_Width or pm_CurrentViewportHeight != fp_Height)
-        {
-            ResizeViewport(fp_Width, fp_Height);
-        }
+        //if (pm_CurrentViewportWidth != fp_Width or pm_CurrentViewportHeight != fp_Height)
+        //{
+        //    ResizeViewport(fp_Width, fp_Height);
+        //}
+        //glActiveTexture(pm_RenderTexture);
 
         glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
-        glActiveTexture(pm_RenderTexture); // activate the texture unit first before binding texture
-        glBindTexture(GL_TEXTURE_2D, pm_RenderTexture);
-        glViewport(fp_Position.x, fp_Position.y, fp_Width, fp_Height);
+        ////glBindRenderbuffer(GL_RENDERBUFFER, pm_DepthRenderBuffer);
+        ////glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, pm_RenderTexture, 0);
 
-        // Add rendering code here
-        glClear(GL_COLOR_BUFFER_BIT);
-        glClearColor(0.69f, 0.18f, 0.64f, 1.0f);
+        //glViewport(0, 0, fp_Width, fp_Height);
+
+        //// Enable scissor test and set the scissor rectangle
+        //glEnable(GL_SCISSOR_TEST);
+        //glScissor(0, 0, fp_Width, fp_Height); // Set this to the area you want to clear
+
+        //// Add rendering code here
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //glClearColor(0.69f, 0.18f, 0.64f, 1.0f);
+
+        glViewport(0, 0, fp_Width, fp_Height);
+
+        //glClearColor(0.69f, 1.0f, 0.64f, 1.0f);
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        //pm_Render->DrawShapePrimitive(pm_ViewportShader, pm_VAO);
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind to default framebuffer
-        glBindTexture(GL_TEXTURE_2D, 0);
 
     }
 
@@ -966,38 +1002,60 @@ namespace PeachEditor {
         pm_CurrentViewportWidth = fp_Width;
         pm_CurrentViewportHeight = fp_Height;
 
+        ////////////////////////////////////////////////
+        // Generate Frame Buffer
+        ////////////////////////////////////////////////
+
+        glGenFramebuffers(1, &pm_FrameBuffer);
+        glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
+
+        ////////////////////////////////////////////////
+        // Generate Render Texture
+        ////////////////////////////////////////////////
+
         glGenTextures(1, &pm_RenderTexture);
 
         glBindTexture(GL_TEXTURE_2D, pm_RenderTexture);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fp_Width, fp_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fp_Width, fp_Height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        glBindTexture(GL_TEXTURE_2D, 0);
+        ////////////////////////////////////////////////
+        // Generate Render Buffer
+        ////////////////////////////////////////////////
 
-        glGenFramebuffers(1, &pm_FrameBuffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pm_RenderTexture, 0);
+        //glGenRenderbuffers(1, &pm_DepthRenderBuffer);
+        //glBindRenderbuffer(GL_RENDERBUFFER, pm_DepthRenderBuffer);
+        //glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, fp_Width, fp_Height);
+
+        ////////////////////////////////////////////////
+        // Setup Frame Buffer
+        ////////////////////////////////////////////////
+
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, pm_RenderTexture, 0);
+        //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, pm_DepthRenderBuffer);
+
+        // Set the list of draw buffers.
+        GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+        glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
 
         // Check if framebuffer is complete
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            cerr << "Error: Framebuffer is not complete!" << endl;
+            InternalLogManager::InternalRenderingLogger().LogAndPrint("Error: Framebuffer is not complete!", "PeachEditorRenderingManager", "error");
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             return false;
         }
+       
+        ////////////////////////////////////////////////
+        // Unbind Buffers and Reset GL state
+        ////////////////////////////////////////////////
 
+        //glBindRenderbuffer(GL_RENDERBUFFER, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         return true;
-    }
-
-    PeachCore::PeachRenderer*
-        Viewport::GetViewportRenderer()
-        const
-    {
-        return pm_ViewportRenderer.get();
     }
 }

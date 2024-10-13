@@ -9,7 +9,7 @@
  *                 Peach Editor is an open source peach_editor for Peach-E
 ********************************************************************/
 #define SDL_MAIN_HANDLED
-#include <SDL3/SDL_main.h>;
+#include <SDL3/SDL_main.h>
 
 #define NK_SDL_GL3_IMPLEMENTATION
 #define NK_IMPLEMENTATION
@@ -150,10 +150,32 @@ int main(int fp_ArgCount, char* fp_ArgVector[])
 
     bool mf_IsEditorOpen = true;
 
+    vector<float> vertices =
+    {
+        // positions             // texture coords
+        0.5f,  0.5f, 0.0f,   1.0f, 1.0f,   // top right
+        0.5f, -0.5f, 0.0f,   1.0f, 0.0f,   // bottom right
+       -0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
+       -0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
+    };
+
+    vector<unsigned int> indices =
+    {  // note that we start from 0!
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
+    };
+
+    auto peach_renderer = editor_renderer->GetPeachRenderer();
+
+
     while(mf_IsEditorOpen)
     {
         this_thread::sleep_for(chrono::milliseconds(16)); //60 fps oh i just realized the fps flickers by 1 because the floating point conversion isnt exact
         editor_renderer->RenderFrame(&mf_IsEditorOpen);
+        //SDL_GL_SwapWindow(peach_renderer->GetMainWindow());
+
+        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        //glClearColor(0.10f, 0.18f, 0.24f, 1.0f);
     }
 
     editor_renderer->Shutdown();

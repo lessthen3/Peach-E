@@ -48,9 +48,7 @@ namespace PeachEditor {
 
     struct Viewport
     {
-        unique_ptr<PC::PeachRenderer> pm_ViewportRenderer = nullptr;
-
-        Viewport(SDL_Window* fp_Window, const bool fp_Is3DEnabled);
+        Viewport(unsigned int fp_Width, unsigned int fp_Height, const bool fp_Is3DEnabled, PC::PeachRenderer* fp_Renderer);
         Viewport() = default;
 
         void
@@ -68,18 +66,21 @@ namespace PeachEditor {
                 const unsigned int fp_Height
             );
 
-        PC::PeachRenderer*
-            GetViewportRenderer()
-            const;
-
     private:
         GLuint pm_RenderTexture = 0;
         GLuint pm_FrameBuffer = 0;
+        GLuint pm_DepthRenderBuffer = 0;
+
+        GLuint pm_VAO = 0;
+
+        PC::ShaderProgram pm_ViewportShader;
 
         unsigned int pm_CurrentViewportHeight = 0;
         unsigned int pm_CurrentViewportWidth = 0;
 
         vector<SDL_Event> pm_CurrentPolledEvents;
+
+        PC::PeachRenderer* pm_Render = nullptr;
 
         bool
             CreateRenderTexture
@@ -135,7 +136,8 @@ namespace PeachEditor {
         shared_ptr<PC::LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
         SDL_Window* pm_MainWindow = nullptr;
-        SDL_GLContext pm_OpenGLContext;
+
+        unique_ptr<PC::PeachRenderer> pm_EditorRenderer = nullptr;
 
         struct nk_context* pm_NuklearCtx = nullptr;
 
@@ -148,12 +150,23 @@ namespace PeachEditor {
 
         const glm::vec4 pm_ClearColour = { 0.10f, 0.18f, 0.24f, 1.0f };
 
+        GLuint pm_TestTexture = 0;
+        GLuint pm_TestVAO = 0;
+        PC::ShaderProgram pm_TestShader;
+
     public:
         SDL_Window*
             GetGameInstanceWindow()
             const
         {
             return pm_GameInstanceWindow;
+        }
+
+        PC::PeachRenderer*
+            GetPeachRenderer()
+            const
+        {
+            return pm_EditorRenderer.get();
         }
 
         struct nk_colorf pm_BackgroundColour;

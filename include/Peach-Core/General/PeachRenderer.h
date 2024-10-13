@@ -239,12 +239,10 @@ namespace PeachCore
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-            glBindVertexArray(0); //IMPORTANT: REMEMBER TO ALWAYS UNBIND VERTEX ARRAY FIRST SINCE UNBINDING ANYTHING INSIDE OF IT BEFOREHAND WILL DE CONFIGURE IT
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            glBindVertexArray(0);
             glUseProgram(0);
-
             glBindTexture(GL_TEXTURE_2D, 0);
+            //glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
         }
 
         void
@@ -268,6 +266,7 @@ namespace PeachCore
 
         GLuint //returns the vao id
             Generate2DBuffers(const vector<float>& fp_Vertices, const vector<unsigned int>& fp_Indices)
+            const
         {
             GLuint vbo;
             glGenBuffers(1, &vbo);
