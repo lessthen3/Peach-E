@@ -28,6 +28,29 @@ namespace PeachCore {
         }
     }
 
+    bool 
+        RenderingManager::Initialize
+        (
+            const string& fp_LogOutputDirectory,
+            shared_ptr<Console> fp_Console
+        )   
+    {
+        if (not fp_Console.get())
+        {
+            PrintError("Tried to initialize RenderingManager with a nullptr reference to the Console");
+            return false;
+        }
+
+        rendering_logger = make_shared<LogManager>(); 
+        rendering_logger->Initialize(fp_LogOutputDirectory, "RenderingManager", fp_Console);
+        rendering_logger->LogAndPrint("RenderingLogger successfully initialized", "RenderingManager", "debug", "render_thread");
+
+        //InitializeQueues(); IM NOT SURE IF THIS SHOULD BE HERE AHHHHHHHHH WHY DID I REMAKE THE LOGGING SYSTEM I SHOULDA HIT A COMMIT THEN DID THIS AHHHH IM RETARDED
+
+        pm_IsInitialized = true;
+        return true;
+    }
+
     SDL_Window*
         RenderingManager::CreateSDLWindow
         (
@@ -37,9 +60,9 @@ namespace PeachCore {
         )
         const
     {
-        if (not pm_IsInitialized)
+        if (not pm_IsRenderingInitialized)
         {
-            LogManager::RenderingLogger().LogAndPrint("Please initialize RenderingManager before trying to create a window!", "RenderingManager", "warn");
+            rendering_logger->LogAndPrint("Please initialize RenderingManager before trying to create a window!", "RenderingManager", "warn", "render_thread");
             return nullptr;
         }
 
@@ -53,20 +76,23 @@ namespace PeachCore {
     }
 
     bool
-        RenderingManager::CreatePeachRenderer(SDL_Window* fp_Window)
+        RenderingManager::CreatePeachRenderer
+        (
+            SDL_Window* fp_Window
+        )
     {
         if (not fp_Window)
         {
-            LogManager::RenderingLogger().LogAndPrint("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager", "warn");
+            rendering_logger->LogAndPrint("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager", "warn", "render_thread");
             return false;
         }
 
-        if (pm_PeachRenderer)
+        if (pm_PeachRenderer.get())
         {
             pm_PeachRenderer.reset(nullptr);
         }
 
-        pm_PeachRenderer = make_unique<PeachRenderer>(fp_Window);
+        pm_PeachRenderer = make_unique<PeachRenderer>(fp_Window, rendering_logger);
         return true;
     }
 
@@ -83,14 +109,14 @@ namespace PeachCore {
     {
         if (pm_CommandQueue || pm_LoadedResourceQueue)
         {
-            LogManager::RenderingLogger().LogAndPrint("RenderingManager already initialized.", "RenderingManager", "warn");
+            rendering_logger->LogAndPrint("RenderingManager already initialized.", "RenderingManager", "warn", "render_thread");
             return nullptr;
         }
 
         pm_CommandQueue = make_shared<CommandQueue>();
         pm_LoadedResourceQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
 
-        LogManager::RenderingLogger().LogAndPrint("RenderingManager successfully initialized >w<", "RenderingManager", "debug");
+        rendering_logger->LogAndPrint("RenderingManager successfully initialized >w<", "RenderingManager", "debug", "render_thread");
 
         pm_AreQueuesInitialized = true;
 
@@ -100,37 +126,34 @@ namespace PeachCore {
     bool
         RenderingManager::InitializeOpenGL()
     {
-        if (pm_IsInitialized)
+        if (pm_IsRenderingInitialized)
         {
-            LogManager::RenderingLogger().LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL when rendering has already been initialized", "PeachEditorRenderingManager", "warn");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL when rendering has already been initialized", "PeachEditorRenderingManager", "warn", "render_thread");
             return false;
         }
 
         if (not pm_AreQueuesInitialized)
         {
-            LogManager::RenderingLogger().LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", "warn");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", "warn", "render_thread");
             return false;
         }
 
         if (not pm_PeachRenderer->GetMainWindow())
         {
-            LogManager::RenderingLogger().LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before creating the main window!", "PeachEditorRenderingManager", "warn");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before creating the main window!", "PeachEditorRenderingManager", "warn", "render_thread");
             return false;
         }
 
         if (glewInit() != GLEW_OK)
         {
-            LogManager::RenderingLogger().LogAndPrint("Failed to create GLEW context: " + static_cast<string>("OWO"), "PeachEditorRenderingManager", "fatal");
+            rendering_logger->LogAndPrint("Failed to create GLEW context: " + static_cast<string>("OWO"), "PeachEditorRenderingManager", "fatal", "render_thread");
             SDL_DestroyWindow(pm_PeachRenderer->GetMainWindow());
             return false;
         }
 
-        LogManager::RenderingLogger().LogAndPrint("GLEW initialized properly", "PeachEditorRenderingManager", "debug");
+        rendering_logger->LogAndPrint("GLEW initialized properly", "PeachEditorRenderingManager", "debug", "render_thread");
 
-        rendering_logger = &LogManager::RenderingLogger();
-
-        pm_IsInitialized = true;
-
+        pm_IsRenderingInitialized = true;
         return true;
     }
 
@@ -179,8 +202,9 @@ namespace PeachCore {
                 },
                 [](auto&&)
                 {
+                    //THIS DOESN'T WORK AND IDK Y LAMBDA SMTH IDK FUCK IT ill come back to it later
                     // Default handler for any unhandled types
-                    LogManager::RenderingLogger().LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", "warn");
+                    //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "RenderingManager", "warn");
                 }
                 }, ResourcePackage.get()->ResourceData);
         }
@@ -189,15 +213,15 @@ namespace PeachCore {
     void 
         RenderingManager::RenderFrame(bool fp_IsStressTest)
     {
-        if (not pm_IsInitialized)
+        if (not pm_IsRenderingInitialized)
         {
-            LogManager::RenderingLogger().LogAndPrint("Please initialize RenderingManager before trying to render anything!", "RenderingManager", "warn");
+            rendering_logger->LogAndPrint("Please initialize RenderingManager before trying to render anything!", "RenderingManager", "warn", "render_thread");
             return;
         }
 
         if (not pm_PeachRenderer->GetMainWindow())
         {
-            LogManager::RenderingLogger().LogAndPrint("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager", "warn");
+            rendering_logger->LogAndPrint("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager", "warn", "render_thread");
             return;
         }
 

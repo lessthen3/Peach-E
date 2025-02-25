@@ -1,10 +1,20 @@
+﻿/*******************************************************************
+ *                                             Peach-E v0.1
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                         Peach-E is an open-source game engine
+********************************************************************/
 #pragma once
 
-#include "box2d.h"
-#include <unordered_map>
-#include <string>
-#include <glm/glm.hpp>
+#include "../2D/CollisionSegment2D.h"
+#include "../2D/CollisionPolygon2D.h"
+#include "../2D/CollisionShape2D.h"
 
+#include <unordered_map>
 
 using namespace std;
 
@@ -39,29 +49,82 @@ namespace PeachCore {
         Layer_29 = 0x00000029, Layer_30 = 0x00000030, Layer_31 = 0x00000031, Layer_32 = 0x00000032,
     };
 
+    ////////////////////////////////////////////////
+    // PhysicsManager2D Class
+    ////////////////////////////////////////////////
     class PhysicsManager2D 
     {
 
-    public:
-        static PhysicsManager2D& PhysicsWorld() {
-            static PhysicsManager2D physicsworld;
-            return physicsworld;
-        }
-
-
+    ////////////////////////////////////////////////
+    // Destructor
+    ////////////////////////////////////////////////
     private:
-        PhysicsManager2D() = default;
-
-    public:
-        ~PhysicsManager2D() 
+        ~PhysicsManager2D()
         {
             //in box2D 3.0 destroying the world automatically cleans up all resources linked to the world including: bodies, joints and shapes
             b2DestroyWorld(pm_World);
             pm_World = b2_nullWorldId; //what is C
         }
 
-        void Initialize(const float fp_GravityX = 0.0f, const float fp_GravityY = -9.8f)
+    ////////////////////////////////////////////////
+    // Singleton Instance
+    ////////////////////////////////////////////////
+    public:
+        static PhysicsManager2D& PhysicsWorld() 
         {
+            static PhysicsManager2D physicsworld;
+            return physicsworld;
+        }
+
+    ////////////////////////////////////////////////
+    // Private Constructor
+    ////////////////////////////////////////////////
+    private:
+        PhysicsManager2D() = default;
+
+    ////////////////////////////////////////////////
+    // Private Members
+    ////////////////////////////////////////////////
+    private:
+        b2WorldId pm_World;
+
+        unordered_map<string, b2BodyId> pm_Bodies;
+        unordered_map<string, b2Vec2*> pm_CurrentPositionOfAllBodies;
+
+        glm::vec2 pm_WorldOrigin = glm::vec2(0.0f, 0.0f); // Current world origin in meters
+        //This conversion maps [0 pixels, 5000 pixels] --> [0 meters, 50 meters] which aligns well with the size of current monitors and Box2D's preferred size range
+        const float PIXELS_PER_METER = 100.0f;  // Pixels to meters conversion factor, 100 pixels : 1 meter
+
+        const float PHYSICS_ORIGIN_MAXIMUM_PLAYER_DISTANCE = ConvertMetersToPixels(2000); //should be under 2km, converts 2km to pixels
+
+        unique_ptr<LogManager> physics_logger;
+
+    ////////////////////////////////////////////////
+    // Public Members
+    ////////////////////////////////////////////////
+    public:
+
+    ////////////////////////////////////////////////
+    // Public Methods
+    ////////////////////////////////////////////////
+    public:
+        bool 
+            Initialize
+            (
+                const string& fp_LogOutputDirectory,
+                shared_ptr<Console> fp_Console,
+                const float fp_GravityX = 0.0f, 
+                const float fp_GravityY = -9.8f
+            )
+        {
+            physics_logger = make_unique<LogManager>();
+            if (not physics_logger->Initialize(fp_LogOutputDirectory, "PhysicsManager2D", fp_Console))
+            {
+                PrintError("PhysicsManager2D failed to initialize the physics_thread logger >w<");
+                return false;
+            }
+            physics_logger->LogAndPrint("PhysicsLogger successfully initialized", "PhysicsManager2D", "debug", "physics_thread");
+
             b2Vec2 f_Gravity = { fp_GravityX, fp_GravityY };
             b2WorldDef f_WorldDefinition = b2DefaultWorldDef();
             f_WorldDefinition.gravity = (f_Gravity);
@@ -73,6 +136,8 @@ namespace PeachCore {
             //f_WorldDefinition.enableSleep = false;
 
             pm_World = b2CreateWorld(&f_WorldDefinition);
+
+            return true;
         }
 
         void RegisterCollisionPolygon2D()
@@ -218,19 +283,6 @@ namespace PeachCore {
         //    }
         //    return false;
         //}
-
-    private:
-        b2WorldId pm_World;
-
-        unordered_map<string, b2BodyId> pm_Bodies;
-        unordered_map<string, b2Vec2*> pm_CurrentPositionOfAllBodies;
-
-        glm::vec2 pm_WorldOrigin = glm::vec2(0.0f, 0.0f); // Current world origin in meters
-        //This conversion maps [0 pixels, 5000 pixels] --> [0 meters, 50 meters] which aligns well with the size of current monitors and Box2D's preferred size range
-        const float PIXELS_PER_METER = 100.0f;  // Pixels to meters conversion factor, 100 pixels : 1 meter
-
-        const float PHYSICS_ORIGIN_MAXIMUM_PLAYER_DISTANCE = ConvertMetersToPixels(2000); //should be under 2km, converts 2km to pixels
-
     };
 
 } // namespace PeachCore

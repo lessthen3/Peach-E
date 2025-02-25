@@ -1,6 +1,17 @@
+﻿/*******************************************************************
+ *                                             Peach-E v0.1
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                         Peach-E is an open-source game engine
+********************************************************************/
 #include "../../include/Peach-Core/Managers/ResourceLoadingManager.h"
 
 namespace PeachCore {
+
 	ResourceLoadingManager::~ResourceLoadingManager()
 	{
 
@@ -11,15 +22,32 @@ namespace PeachCore {
 
 	}
 
+	bool
+		ResourceLoadingManager::Initialize
+		(
+			const string& fp_LogOutputDirectory,
+			shared_ptr<Console> fp_Console
+		)
+	{
+		resource_logger = make_unique<LogManager>();
+		resource_logger->Initialize(fp_LogOutputDirectory, "ResourceLoadingManager", fp_Console);
+		resource_logger->LogAndPrint("ResourceLoadingLogger successfully initialized", "ResourceLoadingManager", "debug", "resource_thread");
+
+		return true;
+	}
+
 	//THESE METHODS ONLY ALLOW A MAXIMUM OF TWO REFERENCES PASSED OUT TO ANYONE ASKING THIS IS MEANT FOR THE MAIN THREAD AND AUDIO/RENDER THREAD
 
-	shared_ptr<LoadingQueue> ResourceLoadingManager::GetAudioResourceLoadingQueue() //This method should be one of the first methods called on startup
+	shared_ptr<LoadingQueue> 
+		ResourceLoadingManager::GetAudioResourceLoadingQueue
+		(
+		) //This method should be one of the first methods called on startup
 	{
 		assert(pm_AudioQueueReferenceCount <= 2);
 
 		if (pm_AudioQueueReferenceCount == 2)  //stops unwanted extra references from being created accidentally
 		{
-			LogManager::ResourceLoadingLogger().LogAndPrint("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's AudioResourceLoadingQueue", "PeachEngineResourceLoadingManager", "warn");
+			resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's AudioResourceLoadingQueue", "ResourceLoadingManager", "warn", "resource_thread");
 			return nullptr;
 		}
 		else if (pm_AudioResourceLoadingQueue == 0) //lazy initialization for LoadingQueue cause why not
@@ -32,13 +60,15 @@ namespace PeachCore {
 	}
 
 	shared_ptr<LoadingQueue> 
-		ResourceLoadingManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
+		ResourceLoadingManager::GetDrawableResourceLoadingQueue
+		(
+		) //This method should be one of the first methods called on startup
 	{
 		assert(pm_DrawableQueueReferenceCount <= 2);
 
 		if (pm_DrawableQueueReferenceCount == 2) //stops unwanted extra references from being created accidentally
 		{
-			LogManager::ResourceLoadingLogger().LogAndPrint("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's DrawableResourceLoadingQueue", "PeachEngineResourceLoadingManager", "warn");
+			resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's DrawableResourceLoadingQueue", "ResourceLoadingManager", "warn", "resource_thread");
 			return nullptr;
 		}
 		else if (pm_DrawableQueueReferenceCount == 0) //lazy initialization for LoadingQueue cause why not
@@ -87,7 +117,7 @@ namespace PeachCore {
 
 		if (!pm_DrawableResourceLoadingQueue->PushLoadedResourcePackage(pm_WaitingFullyLoadedResourcePackages))
 		{
-			LogManager::ResourceLoadingLogger().LogAndPrint("Load put off until later", "ResourceLoadingManager", "debug");
+			resource_logger->LogAndPrint("Load put off until later", "ResourceLoadingManager", "debug", "resource_thread");
 			return false;
 		}
 

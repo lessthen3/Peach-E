@@ -12,6 +12,20 @@ namespace PeachEditor {
 
 	}
 
+	bool
+		PeachEditorResourceLoadingManager::InitializeLogger
+		(
+			const string& fp_LogOutputDirectory,
+			shared_ptr<PC::Console> fp_Console
+		)
+	{
+		editor_resource_logger = make_unique<PC::LogManager>();
+		editor_resource_logger->Initialize(fp_LogOutputDirectory, "PeachEditorResourceLoadingManager", fp_Console);
+		editor_resource_logger->LogAndPrint("PeachEditorResourceLoadingLogger successfully initialized", "PeachEditorResourceLoadingManager", "debug", "resource_thread");
+
+		return true;
+	}
+
 	//THESE METHODS ONLY ALLOW A MAXIMUM OF TWO REFERENCES PASSED OUT TO ANYONE ASKING THIS IS MEANT FOR THE MAIN THREAD AND AUDIO/RENDER THREAD
 
 	shared_ptr<PeachCore::LoadingQueue> PeachEditorResourceLoadingManager::GetAudioResourceLoadingQueue() //This method should be one of the first methods called on startup
@@ -22,7 +36,7 @@ namespace PeachEditor {
 
 		if (pm_AudioQueueReferenceCount == 2)  //stops unwanted extra references from being created accidentally
 		{
-			InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's AudioResourceLoadingQueue", "PeachEditorResourceLoadingManager", "warn");
+			editor_resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's AudioResourceLoadingQueue", "PeachEditorResourceLoadingManager", "warn", "resource_thread");
 			return nullptr;
 		}
 		else if (pm_AudioResourceLoadingQueue == 0) //lazy initialization for LoadingQueue cause why not
@@ -42,7 +56,7 @@ namespace PeachEditor {
 
 		if (pm_DrawableQueueReferenceCount == 2) //stops unwanted extra references from being created accidentally
 		{
-			InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's DrawableResourceLoadingQueue", "PeachEditorResourceLoadingManager", "warn");
+			editor_resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's DrawableResourceLoadingQueue", "PeachEditorResourceLoadingManager", "warn", "resource_thread");
 			return nullptr;
 		}
 		else if (pm_DrawableQueueReferenceCount == 0) //lazy initialization for LoadingQueue cause why not
@@ -73,7 +87,7 @@ namespace PeachEditor {
 	//	
 	//	else
 	//	{
-	//		InternalLogManager::InternalResourceLoadingLogger().Error("Failed to load texture image!", "ResourceLoadingManager");
+	//		editor_resource_logger->Error("Failed to load texture image!", "ResourceLoadingManager");
 	//		return false;
 	//	}
 	//	
@@ -91,7 +105,7 @@ namespace PeachEditor {
 
 		if (!pm_DrawableResourceLoadingQueue->PushLoadedResourcePackage(pm_WaitingFullyLoadedResourcePackages))
 		{
-			InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("Load deferred until later", "PeachEditorResourceLoadingManager", "debug");
+			editor_resource_logger->LogAndPrint("Load deferred until later", "PeachEditorResourceLoadingManager", "debug", "resource_thread");
 			return false;
 		}
 

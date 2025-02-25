@@ -26,6 +26,9 @@ using namespace std;
 
 namespace PeachCore {
 
+    //////////////////////////////////////////////
+    // Drawable Object Struct
+    //////////////////////////////////////////////
     //holds all relevant information that the renderer needs to know
     struct DrawableObject
     {
@@ -49,21 +52,37 @@ namespace PeachCore {
         ShaderProgram Shaders;
     };
 
+    //////////////////////////////////////////////
+    // Rendering Manager Class
+    //////////////////////////////////////////////
     class RenderingManager 
     {
+    //////////////////////////////////////////////
+    // Private Destructor
+    //////////////////////////////////////////////
+    private:
+        ~RenderingManager();
+
+    //////////////////////////////////////////////
+    // Singleton Instance
+    //////////////////////////////////////////////
     public:
         static RenderingManager& Renderer() 
         {
             static RenderingManager instance;
             return instance;
         }
-        ~RenderingManager();
-
+    //////////////////////////////////////////////
+    // Private Constructor
+    //////////////////////////////////////////////
     private:
         explicit RenderingManager() = default;
         RenderingManager(const RenderingManager&) = delete;
         RenderingManager& operator=(const RenderingManager&) = delete;
 
+    //////////////////////////////////////////////
+    // Private Members
+    //////////////////////////////////////////////
     private:
         unsigned int pm_FrameRateLimit = 60;
         unsigned long int pm_CurrentFrame = 0;
@@ -71,8 +90,9 @@ namespace PeachCore {
         bool pm_IsVSyncEnabled = false;
         bool pm_IsShutDown = false;
 
-        bool pm_IsInitialized = false;
+        bool pm_IsRenderingInitialized = false;
         bool pm_AreQueuesInitialized = false;
+        bool pm_IsInitialized = false;
 
         // Object ID : CurrentPosition
         map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
@@ -85,34 +105,28 @@ namespace PeachCore {
         shared_ptr<CommandQueue> pm_CommandQueue = nullptr;
         shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
-        unique_ptr<PeachTexture2D> m_TestTexture = nullptr;
-
         unique_ptr<PeachRenderer> pm_PeachRenderer = nullptr;
+    public: //DOING THIS FOR NOW TO TEST RUNNING GAME INSTANCE FROM EDITOR NEEDS TO BE PRIVATE IN MY OPINION
+        shared_ptr<LogManager> rendering_logger = nullptr;
 
-        LogManager* rendering_logger = nullptr;
-
-    private:
-        inline const float 
-            Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
-            const
-        {
-
-        }
-
-        inline const glm::vec2 
-            Lerp(const glm::vec2& fp_Start, const glm::vec2& fp_End, const glm::vec2& fp_Rate)
-            const
-        {
-
-        }
-
-        PeachNode* CreateNode(); //used for instantiating a rendering related node
-
-
+    //////////////////////////////////////////////
+    // Public Methods
+    //////////////////////////////////////////////
     public:
+        bool 
+            Initialize
+        (
+            const string& fp_LogOutputDirectory,
+            shared_ptr<Console> fp_Console
+        );
 
-        void ProcessCommands();
-        void ProcessLoadedResourcePackages();
+        shared_ptr<CommandQueue>
+            InitializeQueues();
+
+        void 
+            ProcessCommands();
+        void 
+            ProcessLoadedResourcePackages();
 
         SDL_Window*
             CreateSDLWindow
@@ -131,10 +145,6 @@ namespace PeachCore {
 
         void
             DestroyPeachRenderer();
-
-        shared_ptr<CommandQueue> 
-            InitializeQueues();
-
 
         void 
             ResizeWindow();
@@ -163,8 +173,27 @@ namespace PeachCore {
             pm_IsShutDown = true;
         }
 
+    //////////////////////////////////////////////
+    // Private Methods
+    //////////////////////////////////////////////
     private:
-        //WIP
+        inline const float
+            Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
+            const
+        {
+
+        }
+
+        inline const glm::vec2
+            Lerp(const glm::vec2& fp_Start, const glm::vec2& fp_End, const glm::vec2& fp_Rate)
+            const
+        {
+
+        }
+
+        PeachNode* CreateNode(); //used for instantiating a rendering related node
+
+        //wip?
         bool
             InitializeOpenGL();
     };

@@ -18,6 +18,8 @@
 
 #include "stb/stb_image.h"
 
+#include <memory>
+
 using namespace std;
 
 namespace PeachCore
@@ -46,6 +48,8 @@ namespace PeachCore
 
         SDL_GLContext pm_OpenGLContext;
 
+        shared_ptr<LogManager> pm_RenderingLogger = nullptr;
+
 
     public:
 
@@ -67,22 +71,41 @@ namespace PeachCore
             PeachRenderer //peach renderer is never supposed to create an sdl window, it only manages closing it
             (
                 SDL_Window* fp_CurrentWindow, 
+                shared_ptr<LogManager> fp_RenderingLogger,
                 const bool fp_Is3DEnabled = false
             )
         {
+            if (not fp_RenderingLogger.get())
+            {
+                PrintError("Tried to initialize PeachRenderer with a nullptr for the Rendering Logger doofus");
+            }
+
+            if (not fp_CurrentWindow)
+            {
+                PrintError("Tried to initialize PeachRenderer with a nullptr for the SDL Window doofus");
+            }
+
+            pm_RenderingLogger = fp_RenderingLogger;
             pm_MainWindow = fp_CurrentWindow;
             pm_Is3DEnabled = fp_Is3DEnabled;
+
+            ////Set Core Profile for OpenGL Context whatever the fuck that means
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+
+            //// Set OpenGL version (e.g., OpenGL 3.3 core profile)
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
             // Create an OpenGL context associated with the window
             pm_OpenGLContext = SDL_GL_CreateContext(pm_MainWindow);
 
             if (not pm_OpenGLContext)
             {
-                LogManager::RenderingLogger().LogAndPrint("Failed to create OpenGL context: " + static_cast<string>(SDL_GetError()), "PeachRenderer", "fatal");
+                pm_RenderingLogger->LogAndPrint("Failed to create OpenGL context: " + static_cast<string>(SDL_GetError()), "PeachRenderer", "fatal", "render_thread");
                 SDL_DestroyWindow(pm_MainWindow);
             }
 
-            LogManager::RenderingLogger().LogAndPrint("OpenGL initialized properly", "PeachRenderer", "debug");
+            pm_RenderingLogger->LogAndPrint("OpenGL initialized properly", "PeachRenderer", "debug", "render_thread");
 
             if (pm_Is3DEnabled) 
             {
@@ -105,7 +128,10 @@ namespace PeachCore
         }
 
         bool 
-            DeleteShaderProgram(const string& fp_ShaderProgramName)
+            DeleteShaderProgram
+            (
+                const string& fp_ShaderProgramName            
+            )
         {
             try //idk lazy way of dealing with repeated deletes of a shader program
             {
@@ -115,7 +141,7 @@ namespace PeachCore
             }
             catch (const exception& ex)
             {
-                LogManager::RenderingLogger().LogAndPrint("An error occurred: " + string(ex.what()), "PeachRenderer", "warn"); //this might not work LOL
+                pm_RenderingLogger->LogAndPrint("An error occurred: " + string(ex.what()), "PeachRenderer", "warn", "render_thread"); //this might not work LOL
                 return false;
             }
         }
@@ -144,7 +170,12 @@ namespace PeachCore
 
         }
 
-        void SetTextureFiltering(GLuint fp_TextureID, TextureFiltering fp_Filter) 
+        void 
+            SetTextureFiltering
+            (
+                GLuint fp_TextureID, 
+                TextureFiltering fp_Filter
+            ) 
         {
             glBindTexture(GL_TEXTURE_2D, fp_TextureID);
 
@@ -212,10 +243,11 @@ namespace PeachCore
                 glTexImage2D(GL_TEXTURE_2D, 0, f_ColourFormat, fp_Width, fp_Height, 0, f_ColourFormat, GL_UNSIGNED_BYTE, fp_Data);
                 glGenerateMipmap(GL_TEXTURE_2D);
                 stbi_image_free(fp_Data);
+                pm_RenderingLogger->LogAndPrint("Successfully freed data from: " + fp_PeachObjectID, "PeachRenderer", "info", "render_thread");
             }
             else
             {
-                LogManager::RenderingLogger().LogAndPrint("Failed to Register Texture", "PeachRenderer", "error");
+                pm_RenderingLogger->LogAndPrint("Failed to Register Texture", "PeachRenderer", "info", "render_thread");
             }
 
             glBindTexture(GL_TEXTURE_2D, 0);
@@ -231,11 +263,11 @@ namespace PeachCore
                 GLuint fp_Texture
             )
         {
-            glActiveTexture(fp_Texture); // activate the texture unit first before binding texture
+            glUseProgram(fp_Shader.GetProgramID());
+            //glEnable(GL_TEXTURE_2D);
+            //glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
             glBindTexture(GL_TEXTURE_2D, fp_Texture);
             glBindVertexArray(fp_VAO);
-
-            glUseProgram(fp_Shader.GetProgramID());
 
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -243,6 +275,7 @@ namespace PeachCore
             glUseProgram(0);
             glBindTexture(GL_TEXTURE_2D, 0);
             //glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+            //glDisable(GL_TEXTURE_2D);
         }
 
         void

@@ -29,6 +29,26 @@ namespace PeachEditor {
     }
 
     bool 
+        PeachEditorRenderingManager::InitializeLogger
+        (
+            const string& fp_LogOutputDirectory,
+            shared_ptr<PC::Console> fp_EditorConsole
+        )
+    {
+        //////////////////////////////////////////////
+        // Initialize Logger
+        //////////////////////////////////////////////
+        rendering_logger = make_shared<PC::LogManager>();
+        if (not rendering_logger->Initialize(fp_LogOutputDirectory, "PeachEditorRenderingManager", fp_EditorConsole))
+        {
+            return false;
+        }
+        rendering_logger->LogAndPrint("PeachEditorRenderingLogger successfully initialized", "PeachEditorRenderingManager", "debug", "render_thread");
+
+        return true;
+    }
+
+    bool 
         PeachEditorRenderingManager::CreateMainSDLWindow
         (
             const char* fp_WindowTitle, 
@@ -36,9 +56,9 @@ namespace PeachEditor {
             const uint32_t fp_WindowHeight
         )
     {
-        if (SDL_Init(SDL_INIT_VIDEO) < 0)
+        if (not SDL_Init(SDL_INIT_VIDEO))
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager", "fatal");
+            rendering_logger->LogAndPrint("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager", "fatal", "render_thread");
             return false;
         }
 
@@ -53,7 +73,7 @@ namespace PeachEditor {
 
         if (not pm_MainWindow) 
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager", "fatal");
+            rendering_logger->LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager", "fatal", "render_thread");
             SDL_Quit();
             return false;
         }
@@ -71,13 +91,13 @@ namespace PeachEditor {
     {
         if (not pm_IsRenderingInitialized)
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("Please initialize RenderingManager before trying to create a window!", "RenderingManager", "warn");
+            rendering_logger->LogAndPrint("Please initialize RenderingManager before trying to create a window!", "RenderingManager", "warn", "render_thread");
             return nullptr;
         }
 
         if (not pm_MainWindow)
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager", "fatal");
+            rendering_logger->LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager", "fatal", "render_thread");
             SDL_Quit();
             return nullptr;
         }
@@ -97,7 +117,7 @@ namespace PeachEditor {
     {
         if (pm_AreQueuesInitialized)
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("RenderingManager queues have already been initialized.", "PeachEditorRenderingManager", "warn");
+            rendering_logger->LogAndPrint("RenderingManager queues have already been initialized.", "PeachEditorRenderingManager", "warn", "render_thread");
             return nullptr;
         }
 
@@ -106,7 +126,7 @@ namespace PeachEditor {
 
         //pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, false);
 
-        InternalLogManager::InternalRenderingLogger().LogAndPrint("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager", "debug");
+        rendering_logger->LogAndPrint("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager", "debug", "render_thread");
 
         pm_AreQueuesInitialized = true;
 
@@ -120,49 +140,33 @@ namespace PeachEditor {
     {
         if (pm_IsRenderingInitialized)
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL when rendering has already been initialized", "PeachEditorRenderingManager", "warn");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL when rendering has already been initialized", "PeachEditorRenderingManager", "warn", "render_thread");
             return false;
         }
 
         if (not pm_AreQueuesInitialized)
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", "warn");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", "warn", "render_thread");
             return false;
         }
 
         if (not pm_MainWindow)
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before creating the main window!", "PeachEditorRenderingManager", "warn");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before creating the main window!", "PeachEditorRenderingManager", "warn", "render_thread");
             return false;
         }
 
-        // Set OpenGL version (e.g., OpenGL 3.3 core profile)
-        //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-        //SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-        //SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
-        int f_WindowWidth, f_WindowHeight;
-        SDL_GetWindowSize(pm_MainWindow, &f_WindowWidth, &f_WindowHeight);
-
         // Create an OpenGL context associated with the window
-        pm_EditorRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, true);
+        pm_EditorRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, rendering_logger, true);
 
         if (glewInit() != GLEW_OK)
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("Failed to create GLEW context: " + static_cast<string>("OWO"), "PeachEditorRenderingManager", "fatal");
+            rendering_logger->LogAndPrint("Failed to create GLEW context: OWO", "PeachEditorRenderingManager", "fatal", "render_thread");
             SDL_DestroyWindow(pm_MainWindow);
             return false;
         }
 
-        InternalLogManager::InternalRenderingLogger().LogAndPrint("GLEW initialized properly", "PeachEditorRenderingManager", "debug");
-
-        peach_editor = &PeachEditorManager::PeachEditor();
-        rendering_logger = &InternalLogManager::InternalRenderingLogger();
-
-        ////////////////////////////////////////////////
-        // Create Viewport
-        ////////////////////////////////////////////////
-        //pm_Viewport = Viewport(100, 100, true, pm_EditorRenderer.get());
+        rendering_logger->LogAndPrint("GLEW initialized properly", "PeachEditorRenderingManager", "debug", "render_thread");
 
         ////////////////////////////////////////////////
         // Setup Nuklear GUI
@@ -183,6 +187,17 @@ namespace PeachEditor {
         }
 
         pm_BackgroundColour = { 0.10f, 0.18f, 0.24f, 1.0f };
+
+        ////////////////////////////////////////////////
+        // Create Viewport
+        ////////////////////////////////////////////////
+
+        int f_CurrentWindowWidth, f_CurrentWindowHeight;
+
+        SDL_GetWindowSizeInPixels(pm_MainWindow, &f_CurrentWindowWidth, &f_CurrentWindowHeight);
+
+        pm_Viewport = Viewport();
+        pm_Viewport.SetupViewport(0, 0, pm_EditorRenderer.get(), rendering_logger);
 
         pm_IsRenderingInitialized = true;
             
@@ -237,7 +252,7 @@ namespace PeachEditor {
                 [](auto&&) 
                 {
                     // Default handler for any unhandled types
-                    InternalLogManager::InternalRenderingLogger().LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", "warn");
+                    //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", "warn");
                 }
                 }, ResourcePackage.get()->ResourceData);
         }
@@ -252,13 +267,13 @@ namespace PeachEditor {
         if (not pm_IsRenderingInitialized)
         {
             //rendering_logger isn't initialized yet if rendering hasn't been initialized yet so we use the full singleton call here instead for safety
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", "fatal");
+            rendering_logger->LogAndPrint("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", "fatal", "render_thread");
             throw runtime_error("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager");
         }
 
         if (not fp_IsProgramRuntimeOver)
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("Tried to pass nullptr bool to RenderFrame inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", "fatal");
+            rendering_logger->LogAndPrint("Tried to pass nullptr bool to RenderFrame inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", "fatal", "render_thread");
             throw runtime_error("Tried to pass nullptr bool to RenderFrame");
         }
 
@@ -274,6 +289,7 @@ namespace PeachEditor {
         f_MainMenuBarHeight = clamp(f_MainMenuBarHeight, 30, 40);
 
         //f_CurrentWindowHeight -= f_MainMenuBarHeight; //subtract menu bar since we want the available 
+        glViewport(0, 0, f_CurrentWindowWidth, f_CurrentWindowHeight);
 
         ////////////////////////////////////////////////
         // Input Handling
@@ -285,10 +301,6 @@ namespace PeachEditor {
             if (f_Event.window.windowID == SDL_GetWindowID(pm_MainWindow) and f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
             {
                 *fp_IsProgramRuntimeOver = false;
-            }
-            if(f_Event.window.windowID == SDL_GetWindowID(pm_MainWindow))
-            {
-                //if (f_Event)
             }
             if (pm_GameInstanceWindow and f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
             {
@@ -307,27 +319,21 @@ namespace PeachEditor {
         ////////////////////////////////////////////////
         // Draw GUI
         ////////////////////////////////////////////////
-        if (nk_begin(pm_NuklearCtx, "Colour Picker", nk_rect(50, 50, 230, 250),
-            NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE |
-            NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE))
+        if 
+            (
+                nk_begin
+                (
+                    pm_NuklearCtx, 
+                    "Colour Picker", 
+                    nk_rect(50, 50, 200, 100),
+                    NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE
+                )
+            )
         {
-            enum { EASY, HARD };
-            static int op = EASY;
-            static int property = 20;
-
-            nk_layout_row_static(pm_NuklearCtx, 30, 80, 1);
-            if (nk_button_label(pm_NuklearCtx, "button"))
-                printf("button pressed!\n");
-            nk_layout_row_dynamic(pm_NuklearCtx, 30, 2);
-            if (nk_option_label(pm_NuklearCtx, "easy", op == EASY)) op = EASY;
-            if (nk_option_label(pm_NuklearCtx, "hard", op == HARD)) op = HARD;
-            nk_layout_row_dynamic(pm_NuklearCtx, 22, 1);
-            nk_property_int(pm_NuklearCtx, "Compression:", 0, &property, 100, 10, 1);
-
-            nk_layout_row_dynamic(pm_NuklearCtx, 20, 1);
-            nk_label(pm_NuklearCtx, "background:", NK_TEXT_LEFT);
             nk_layout_row_dynamic(pm_NuklearCtx, 25, 1);
-            if (nk_combo_begin_color(pm_NuklearCtx, nk_rgb_cf(pm_BackgroundColour), nk_vec2(nk_widget_width(pm_NuklearCtx), 400))) {
+
+            if (nk_combo_begin_color(pm_NuklearCtx, nk_rgb_cf(pm_BackgroundColour), nk_vec2(nk_widget_width(pm_NuklearCtx), 400))) 
+            {
                 nk_layout_row_dynamic(pm_NuklearCtx, 120, 1);
                 pm_BackgroundColour = nk_color_picker(pm_NuklearCtx, pm_BackgroundColour, NK_RGBA);
                 nk_layout_row_dynamic(pm_NuklearCtx, 25, 1);
@@ -423,7 +429,7 @@ namespace PeachEditor {
                     // Run the game in a new window
                     thread T_CurrentSceneRunnerThread([]()
                     {
-                        auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEngineRenderer();
+                        auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
                         auto engine_renderer = &PeachCore::RenderingManager::Renderer();
 
                         SDL_Window* t_GameWindow = editor_renderer->GetGameInstanceWindow();
@@ -460,8 +466,9 @@ namespace PeachEditor {
                         PeachCore::ShaderProgram mf_CatShader = PeachCore::ShaderProgram
                         (
                             "Cat_Shader",
-                            "..\\tests\\vert.vs",
-                            "..\\tests\\frag.fs"
+                            "D:\\Game Development\\Peach-E\\tests\\vert.vs",
+                            "D:\\Game Development\\Peach-E\\tests\\frag.fs",
+                            engine_renderer->rendering_logger.get()
                         );
 
                         ////////////////////////////////////////////////
@@ -471,7 +478,7 @@ namespace PeachEditor {
                         stbi_set_flip_vertically_on_load(true);
 
                         int width, height, nrChannels;
-                        unsigned char* data = stbi_load("..\\First Texture.png", &width, &height, &nrChannels, 0);
+                        unsigned char* data = stbi_load("D:\\Game Development\\Peach-E\\First Texture.png", &width, &height, &nrChannels, 0);
 
                         GLuint texture = t_GameInstanceRenderer->RegisterTexture("Texture", data, width, height, nrChannels);
 
@@ -483,6 +490,7 @@ namespace PeachEditor {
                         while (editor_renderer->m_IsSceneCurrentlyRunning)
                         {
                             this_thread::sleep_for(chrono::milliseconds(16));
+
                             SDL_GetWindowSizeInPixels(t_GameWindow, &t_CurrentWindowWidth, &t_CurrentWindowHeight);
                             glViewport(0, 0, t_CurrentWindowWidth, t_CurrentWindowHeight);
 
@@ -609,7 +617,6 @@ namespace PeachEditor {
 
         RenderFileBrowser("../", f_CurrentWindowWidth * 0.85f, f_CurrentWindowHeight*0.70f, f_CurrentWindowWidth*0.15f, f_CurrentWindowHeight*0.30f, pm_NuklearCtx);
 
-
         ////////////////////////////////////////////////
         // Render Viewport
         ////////////////////////////////////////////////
@@ -619,7 +626,7 @@ namespace PeachEditor {
 
         glm::vec2 mf_ViewportPosition = glm::vec2(0.0f, f_CurrentWindowHeight - mf_ViewportHeight - f_MainMenuBarHeight); //glViewPort x and y args arent based on the 4th quadrant scheme for some reason lmfao it treats the screen as the first quadrant?_?
 
-        //pm_Viewport.RenderViewport(mf_ViewportPosition, 100, 100);
+        pm_Viewport.RenderViewport(mf_ViewportPosition, mf_ViewportWidth, mf_ViewportHeight);
 
         ////////////////////////////////////////////////
         // Render Nuklear Context
@@ -629,9 +636,9 @@ namespace PeachEditor {
 
         SDL_GL_SwapWindow(pm_MainWindow);
 
-        ////////////////////////////////////////////////
-        // Clear Screen
-        ////////////////////////////////////////////////
+        //////////////////////////////////////////////////
+        //// Clear Screen
+        //////////////////////////////////////////////////
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //PLEASE GOD DO NOT MOVE THIS HOLY FUCK
         glClearColor(pm_ClearColour.x, pm_ClearColour.y, pm_ClearColour.z, pm_ClearColour.w);
@@ -823,12 +830,6 @@ namespace PeachEditor {
         return pm_RendererType;
     }
 
-    void 
-        PeachEditorRenderingManager::GetCurrentViewPort()
-    {
-
-    }
-
     uint32_t 
         PeachEditorRenderingManager::GetFrameRateLimit() 
         const
@@ -870,49 +871,92 @@ namespace PeachEditor {
 
 namespace PeachEditor {
 
-    Viewport::Viewport
+    void
+        Viewport::SetupViewport
         (
-            unsigned int fp_Width, 
-            unsigned int fp_Height, 
-            const bool fp_Is3DEnabled,
-            PC::PeachRenderer* fp_Renderer
+            unsigned int fp_Width,
+            unsigned int fp_Height,
+            PC::PeachRenderer* fp_Renderer,
+            shared_ptr<PC::LogManager> fp_EditorRenderingLogger
         )
     {
-        CreateRenderTexture(fp_Width, fp_Height);
+        ////////////////////////////////////////////////
+        // Get Reference to Current Renderer
+        ////////////////////////////////////////////////
+
+        pm_Render = fp_Renderer;
+
+        editor_rendering_logger = fp_EditorRenderingLogger;
 
         ////////////////////////////////////////////////
         // Generate Buffers
         ////////////////////////////////////////////////
 
-        //vector<float> vertices =
-        //{
-        //    // positions          
-        //    0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
-        //    0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-        //   -0.5f, -0.5f, 0.0f, 0.0f, 0.0f,
-        //   -0.5f,  0.5f, 0.0f, 0.0f, 0.0f,
-        //};
+        vector<float> vertices =
+        {
+            // positions             // texture coords
+            0.5f,  0.5f, 0.0f,   1.0f, 1.0f,   // top right
+            0.5f, -0.5f, 0.0f,   1.0f, 0.0f,   // bottom right
+           -0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
+           -0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
+        };
 
-        //vector<unsigned int> indices =
-        //{  // note that we start from 0!
-        //    0, 1, 3,   // first triangle
-        //    1, 2, 3    // second triangle
-        //};
+        vector<unsigned int> indices =
+        {  // note that we start from 0!
+            0, 1, 3,   // first triangle
+            1, 2, 3    // second triangle
+        };
 
-        //pm_VAO = fp_Renderer->Generate2DBuffers(vertices, indices);
+        pm_VAO = pm_Render->Generate2DBuffers(vertices, indices);
 
-        //////////////////////////////////////////////////
-        //// Shaders
-        //////////////////////////////////////////////////
+        PeachCore::Print("The VAO ID for the Viewport Shader is: " + to_string(pm_VAO), "magenta");
 
-        //pm_ViewportShader = PC::ShaderProgram
-        //(
-        //    "Viewport_Shader",
-        //    "..\\shaders\\viewport.vs",
-        //    "..\\shaders\\viewport.fs"
-        //);
+        ////////////////////////////////////////////////
+        // Shaders
+        ////////////////////////////////////////////////
 
-        pm_Render = fp_Renderer;
+        pm_ViewportShader = new PeachCore::ShaderProgram
+        (
+            "Viewport Shader",
+            "D:\\Game Development\\Peach-E\\tests\\vert.vs",
+            "D:\\Game Development\\Peach-E\\tests\\frag.fs",
+            editor_rendering_logger.get()
+        );
+
+        PeachCore::Print("The program ID for the Viewport Shader is: " + to_string(pm_ViewportShader->GetProgramID()), "magenta");
+
+        ////////////////////////////////////////////////
+        // Loading and Registering Texture
+        ////////////////////////////////////////////////
+
+        stbi_set_flip_vertically_on_load(true);
+
+        int width, height, nrChannels;
+        unsigned char* data = stbi_load("D:\\Game Development\\Peach-E\\First Texture.png", &width, &height, &nrChannels, 4);
+
+        PeachCore::Print(to_string(nrChannels) + " Number of channels", "magenta");
+
+        pm_RenderTexture = pm_Render->RegisterTexture("Test_Viewport_Texture", data, width, height, nrChannels);
+
+        PeachCore::Print("The Texture ID for the Viewport Shader is: " + to_string(pm_RenderTexture), "magenta");
+
+        glm::mat4 f_Transform = glm::mat4(1.0f);
+
+        glUseProgram(pm_ViewportShader->GetProgramID());
+
+        pm_ViewportShader->SetUniform("colourUniform", glm::vec4(0.0f, 0.1f, 0.1f, 0.5f));
+        pm_ViewportShader->SetUniform("transform", f_Transform);
+
+        glUseProgram(0);
+
+        ////////////////////////////////////////////////
+        // Create Render Texture
+        ////////////////////////////////////////////////
+
+        if (not CreateRenderTexture(fp_Width, fp_Height))
+        {
+            PeachCore::PrintError("Was not able to create render texture");
+        }
     }
 
     void
@@ -964,30 +1008,45 @@ namespace PeachEditor {
         //{
         //    ResizeViewport(fp_Width, fp_Height);
         //}
+
         //glActiveTexture(pm_RenderTexture);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
-        ////glBindRenderbuffer(GL_RENDERBUFFER, pm_DepthRenderBuffer);
-        ////glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, pm_RenderTexture, 0);
+        //glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
+        //glBindRenderbuffer(GL_RENDERBUFFER, pm_DepthRenderBuffer);
+        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, pm_RenderTexture, 0);
 
-        //glViewport(0, 0, fp_Width, fp_Height);
+        if (not pm_Render)
+        {
+            throw runtime_error("no valid renderer for viewport");
+        }
 
         //// Enable scissor test and set the scissor rectangle
         //glEnable(GL_SCISSOR_TEST);
         //glScissor(0, 0, fp_Width, fp_Height); // Set this to the area you want to clear
 
-        //// Add rendering code here
-        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        //glClearColor(0.69f, 0.18f, 0.64f, 1.0f);
+        glViewport(fp_Position.x, fp_Position.y, fp_Width, fp_Height);
 
-        glViewport(0, 0, fp_Width, fp_Height);
+        auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
 
-        //glClearColor(0.69f, 1.0f, 0.64f, 1.0f);
-        //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        nk_colorf f_Temp = editor_renderer->pm_BackgroundColour;
+        glm::vec4 f_Colour = { f_Temp.r, f_Temp.g, f_Temp.b, f_Temp.a };
+
+        glm::mat4 f_Transform = glm::mat4(1.0f);
+
+        glUseProgram(pm_ViewportShader->GetProgramID());
+
+        pm_ViewportShader->SetUniform("colourUniform", f_Colour);
+        pm_ViewportShader->SetUniform("transform", f_Transform);
+
+        glUseProgram(0);
+
+        pm_Render->DrawTexture(*pm_ViewportShader, pm_VAO, pm_RenderTexture);
 
         //pm_Render->DrawShapePrimitive(pm_ViewportShader, pm_VAO);
+        //glDisable(GL_SCISSOR_TEST);
 
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind to default framebuffer
+        //glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind to default framebuffer
+        //glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     }
 
@@ -1013,14 +1072,14 @@ namespace PeachEditor {
         // Generate Render Texture
         ////////////////////////////////////////////////
 
-        glGenTextures(1, &pm_RenderTexture);
+        //glGenTextures(1, &pm_RenderTexture);
 
-        glBindTexture(GL_TEXTURE_2D, pm_RenderTexture);
+        //glBindTexture(GL_TEXTURE_2D, pm_RenderTexture);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, fp_Width, fp_Height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, fp_Width, fp_Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         ////////////////////////////////////////////////
         // Generate Render Buffer
@@ -1034,17 +1093,17 @@ namespace PeachEditor {
         // Setup Frame Buffer
         ////////////////////////////////////////////////
 
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, pm_RenderTexture, 0);
+        //glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, pm_RenderTexture, 0);
         //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, pm_DepthRenderBuffer);
 
         // Set the list of draw buffers.
-        GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
-        glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+        //GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+        //glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
 
         // Check if framebuffer is complete
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("Error: Framebuffer is not complete!", "PeachEditorRenderingManager", "error");
+            editor_rendering_logger->LogAndPrint("Error: Framebuffer is not complete!", "Viewport", "error", "render_thread");
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             return false;
         }
@@ -1055,6 +1114,7 @@ namespace PeachEditor {
 
         //glBindRenderbuffer(GL_RENDERBUFFER, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        //glBindTexture(GL_TEXTURE_2D, 0);
 
         return true;
     }

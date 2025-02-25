@@ -1,27 +1,24 @@
 ﻿/*******************************************************************
- *                                        Peach Editor v0.0.7
+ *                                             Peach-E v0.1
  *                           Created by Ranyodh Mandur - � 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                 Peach Editor is an open source editor for Peach-E
+ *                         Peach-E is an open-source game engine
 ********************************************************************/
-#include "../../include/Peach-Editor/Editor/PeachConsole.h"
+#include "../../include/Peach-Core/General/PeachConsole.h"
 
-namespace PeachEditor {
+namespace PeachCore {
 
-    PeachConsole::PeachConsole()
+    PeachConsole::PeachConsole() 
     {
+        pm_PeachLogConsole = make_shared<Console>();
     }
 
     PeachConsole::~PeachConsole()
     {
-        for (auto& _log : pm_Buffers)
-        {
-            _log.second.clear(); //clear all vectors owo
-        }
     }
 
     void 
@@ -31,16 +28,6 @@ namespace PeachEditor {
         )
     {
 
-    }
-
-    void 
-        PeachConsole::AddLog
-        (
-            const string& fp_Message,
-            const string& fp_Sender
-        ) 
-    {
-        pm_Buffers.at(fp_Sender).push_back(fp_Message);
     }
 
     void 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Managers/LogManager.h"
+#include "box2d.h"
 
 
 #include <vector>
@@ -38,11 +39,15 @@ namespace PeachCore {
 	private:
 
 		//this is called everytime after the tilemap tiles are placed onto a cluster/island of tiles to create an outline for the collision
-		void OptimizeLineSegment()
+		void 
+			OptimizeLineSegment
+			(
+				LogManager* fp_Logger //idk if i need the physics logger for any other part of this class
+			)
 		{
 			if(pm_ListOfPoints.size() == 0)
 			{
-				LogManager::MainLogger().LogAndPrint("Tried to optimize line segment when line segment has 0 points to optimize out at segment ID: " + pm_SegmentID, "CollisionSegment2D", "warn");
+				fp_Logger->LogAndPrint("Tried to optimize line segment when line segment has 0 points to optimize out at segment ID: " + pm_SegmentID, "CollisionSegment2D", "warn", "physics_thread");
 				return;
 			}
 

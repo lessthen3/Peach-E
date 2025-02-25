@@ -1,40 +1,52 @@
+﻿/*******************************************************************
+ *                                             Peach-E v0.1
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                         Peach-E is an open-source game engine
+********************************************************************/
 #pragma once
 
 #include "LogManager.h"
 
 #include "../General/LoadingQueue.h"
+#include <memory>
 
 namespace PeachCore {
 
-	class ResourceLoadingManager {
+	class ResourceLoadingManager 
+	{
+	//////////////////////////////////////////////
+	// Private Destructor
+	//////////////////////////////////////////////
+	private:
+		~ResourceLoadingManager();
+
+	//////////////////////////////////////////////
+	// Singleton Instance
+	//////////////////////////////////////////////
 	public:
-		static ResourceLoadingManager& ResourceLoader() {
+		static ResourceLoadingManager& ResourceLoader() 
+		{
 			static ResourceLoadingManager resourceloader;
 			return resourceloader;
 		}
 
-		~ResourceLoadingManager();
-
-	public:
-		mutex resourceMutex;
-
+	//////////////////////////////////////////////
+	// Private Constructor
+	//////////////////////////////////////////////
 	private:
 		ResourceLoadingManager();
 
 		ResourceLoadingManager(const ResourceLoadingManager&) = delete;
 		ResourceLoadingManager& operator=(const ResourceLoadingManager&) = delete;
 
-
-
-
-	public:
-		shared_ptr<LoadingQueue> GetAudioResourceLoadingQueue();
-		shared_ptr<LoadingQueue> GetDrawableResourceLoadingQueue();
-
-	public: //PUBLIC FOR TESTING
-		bool TryPushingLoadedResourcePackage(unique_ptr<LoadedResourcePackage> fp_LoadedPackage);
-		bool LoadTextureFromSpecifiedFilePath(const string& fp_FilePath);
-
+	//////////////////////////////////////////////
+	// Private Members
+	//////////////////////////////////////////////
 	private:
 		shared_ptr<LoadingQueue> pm_AudioResourceLoadingQueue; //used to push load commands that are destined for AudioManager
 		shared_ptr<LoadingQueue> pm_DrawableResourceLoadingQueue; //used to push load commands that are destined for RenderingManager
@@ -43,6 +55,38 @@ namespace PeachCore {
 		unsigned int pm_DrawableQueueReferenceCount = 0;
 
 		vector<unique_ptr<LoadedResourcePackage>> pm_WaitingFullyLoadedResourcePackages;
-	};
 
+		unique_ptr<LogManager> resource_logger = nullptr;
+
+	//////////////////////////////////////////////
+	// Public Members
+	//////////////////////////////////////////////
+	public:
+		mutex resourceMutex;
+
+	//////////////////////////////////////////////
+	// Public Methods
+	//////////////////////////////////////////////
+	public:
+		bool 
+			Initialize
+		(
+			const string& fp_LogOutputDirectory,
+			shared_ptr<Console> fp_Console
+		);
+
+		shared_ptr<LoadingQueue> GetAudioResourceLoadingQueue();
+		shared_ptr<LoadingQueue> GetDrawableResourceLoadingQueue();
+
+	public: //PUBLIC FOR TESTING
+		bool TryPushingLoadedResourcePackage(unique_ptr<LoadedResourcePackage> fp_LoadedPackage);
+		bool LoadTextureFromSpecifiedFilePath(const string& fp_FilePath);
+
+	//////////////////////////////////////////////
+	// Private Methods
+	//////////////////////////////////////////////
+	private:
+
+
+	};
 }

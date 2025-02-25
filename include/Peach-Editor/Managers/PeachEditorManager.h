@@ -1,11 +1,12 @@
 #pragma once
 
-#include "InternalLogManager.h"
 #include "../Peach-Engine/PeachEngineManager.h"
+#include "PeachEditorRenderingManager.h"
 
 using namespace std;
 
 namespace fs = filesystem;
+namespace PC = PeachCore;
 
 namespace PeachEditor{
 
@@ -30,12 +31,16 @@ namespace PeachEditor{
     // Private Members
     //////////////////////////////////////////////
     private:
+        shared_ptr<PC::Console> pm_PeachEditorConsole = nullptr;
+    public: //IDK PUBLIC FOR NOW CAUSE OF MAIN.CPP FAQQ im tried man i just wanna compile again
+        shared_ptr<PC::LogManager> main_editor_logger = nullptr;
 
     //////////////////////////////////////////////
     // Public Members
     //////////////////////////////////////////////
     public:
-        static PeachEditorManager& PeachEditor() {
+        static PeachEditorManager& PeachEditor() 
+        {
             static PeachEditorManager peach_editor;
             return peach_editor;
         }
@@ -47,21 +52,30 @@ namespace PeachEditor{
     //////////////////////////////////////////////
 
     public:
-        static void
+        void
             SetupInternalLogManagers()
         {
-            shared_ptr<PeachConsole> f_PeachConsole = make_shared<PeachConsole>();
+            pm_PeachEditorConsole = make_shared<PC::Console>();
+
+            main_editor_logger = make_unique<PC::LogManager>();
+            main_editor_logger->Initialize("..\\logs", "PeachEditorManager", pm_PeachEditorConsole);
+            main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", "debug", "main_thread");
 
             //probably should have better error handling for the loggers, especially
-            InternalLogManager::InternalMainLogger().Initialize("..\\logs", "main_thread", f_PeachConsole);
-            InternalLogManager::InternalAudioLogger().Initialize("..\\logs", "audio_thread", f_PeachConsole);
-            InternalLogManager::InternalRenderingLogger().Initialize("..\\logs", "render_thread", f_PeachConsole);
-            InternalLogManager::InternalResourceLoadingLogger().Initialize("..\\logs", "resource_thread", f_PeachConsole);
+            //main_editor_logger->Initialize("..\\logs", "main_thread", f_PeachConsole);
+            //InternalLogManager::InternalAudioLogger().Initialize("..\\logs", "audio_thread", f_PeachConsole);
+            PeachEditorRenderingManager::PeachEditorRenderer().InitializeLogger("..\\logs", pm_PeachEditorConsole);
+            PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger("..\\logs", pm_PeachEditorConsole);
 
-            InternalLogManager::InternalMainLogger().LogAndPrint("InternalMainLogger successfully initialized", "Peach-E", "debug");
-            InternalLogManager::InternalAudioLogger().LogAndPrint("InternalAudioLogger successfully initialized", "Peach-E", "debug");
-            InternalLogManager::InternalRenderingLogger().LogAndPrint("InternalRenderingLogger successfully initialized", "Peach-E", "debug");
-            InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("InternalResourceLoadingLogger successfully initialized", "Peach-E", "debug");
+            //main_editor_logger->LogAndPrint("InternalMainLogger successfully initialized", "Peach-E", "debug");
+            //InternalLogManager::InternalAudioLogger().LogAndPrint("InternalAudioLogger successfully initialized", "Peach-E", "debug");
+            //InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("InternalResourceLoadingLogger successfully initialized", "Peach-E", "debug");
+        }
+
+        void
+            AdjustGameStartupJSONConfigs() //this is here for adjusting the JSON configs from the Peach Editor
+        {
+
         }
 
         // Function to list all files recursively
@@ -85,7 +99,7 @@ namespace PeachEditor{
             }
             catch (const fs::filesystem_error& e)
             {
-                InternalLogManager::InternalMainLogger().LogAndPrint("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "main", "error");
+                main_editor_logger->LogAndPrint("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "main", "error", "main_thread");
             }
 
             return f_Files;
@@ -103,20 +117,18 @@ namespace PeachEditor{
                 const unordered_map <string, fs::file_time_type>& fp_NewState
             )
         {
-            auto main_logger = &InternalLogManager::InternalMainLogger();
-
             for (const auto& _file : fp_NewState)
             {
                 auto it = fp_OldState.find(_file.first);
 
                 if (it == fp_OldState.end())
                 {
-                    main_logger->LogAndPrint("New file found in working directory: " + _file.first, "main", "debug");
+                    main_editor_logger->LogAndPrint("New file found in working directory: " + _file.first, "main", "debug", "main_thread");
                     return false;
                 }
                 else if (it->second != _file.second)
                 {
-                    main_logger->LogAndPrint("Modified file found in working directory: " + _file.first, "main", "trace");
+                    main_editor_logger->LogAndPrint("Modified file found in working directory: " + _file.first, "main", "trace", "main_thread");
                     return false;
                 }
             }
@@ -125,7 +137,7 @@ namespace PeachEditor{
             {
                 if (fp_NewState.find(_file.first) == fp_NewState.end())
                 {
-                    main_logger->LogAndPrint("Deleted file from working directory: " + _file.first, "main", "debug");
+                    main_editor_logger->LogAndPrint("Deleted file from working directory: " + _file.first, "main", "debug", "main_thread");
                     return false;
                 }
             }

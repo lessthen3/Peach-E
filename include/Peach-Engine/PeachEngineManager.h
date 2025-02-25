@@ -1,3 +1,13 @@
+﻿/*******************************************************************
+ *                                             Peach-E v0.1
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                         Peach-E is an open-source game engine
+********************************************************************/
 #pragma once
 
 #include "../../include/Peach-Core/Peach-Core.hpp"
@@ -8,33 +18,49 @@
 
 //AND MAKE RESPONSIBILITES AND CODE IN GENERAL MORE CLEAN AND EASY TO READ
 
-using namespace std;
+using namespace std; 
 
 namespace PeachEngine {
 
+    namespace PC = PeachCore;
+
     class PeachEngineManager 
     {
+    //////////////////////////////////////////////
+    // Private Destructor
+    //////////////////////////////////////////////
+    private:
+        ~PeachEngineManager() {}
+
+    //////////////////////////////////////////////
+    // Singleton Instance
+    //////////////////////////////////////////////
     public:
-        static PeachEngineManager& PeachEngine() {
+        static PeachEngineManager& PeachEngine() 
+        {
             static PeachEngineManager peach_engine;
             return peach_engine;
         }
 
-        ~PeachEngineManager()
-        {
-
-        }
-
+    //////////////////////////////////////////////
+    // Private Constructor
+    //////////////////////////////////////////////
     private:
-        PeachEngineManager()
-        {
-
-        }
+        PeachEngineManager() {}
 
         PeachEngineManager(const PeachEngineManager&) = delete;
         PeachEngineManager& operator=(const PeachEngineManager&) = delete;
 
+    //////////////////////////////////////////////
+    // Private Members
+    //////////////////////////////////////////////
+    private:
+        unique_ptr<PC::LogManager> main_logger = nullptr;
+        PC::PeachConsole peach_engine_console;
 
+    //////////////////////////////////////////////
+    // Public Members
+    //////////////////////////////////////////////
     public:
         atomic<bool> m_Running = true;
 
@@ -42,33 +68,90 @@ namespace PeachEngine {
         const float USER_DEFINED_UPDATE_FPS = 60.0f;
         float        USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game so no const >w<
 
-        //////////////////////////////////////////////
-        // Setting Up and Setting Output Directory
-        //////////////////////////////////////////////
-
-        void 
-            SetupLogManagers()
-            const
+    //////////////////////////////////////////////
+    // Public Methods
+    //////////////////////////////////////////////
+    public:
+        bool //WIP IM NOT SURE IF INITIALIZE OPENGL SHOULD BE HERE OR ANOTHER METHOD WHATEVER
+            InitializePeachEngine
+            (
+                const char* fp_ArgVector[], 
+                const vector<string>& fp_ListOfPluginsToLoad,
+                const string& fp_RenderingBackend
+            )
         {
-            PeachCore::LogManager::MainLogger().Initialize("..\\logs", "MainLogger");
-            PeachCore::LogManager::AudioLogger().Initialize("..\\logs", "AudioLogger");
-            PeachCore::LogManager::RenderingLogger().Initialize("..\\logs", "RenderingLogger");
-            PeachCore::LogManager::ResourceLoadingLogger().Initialize("..\\logs", "ResourceLoadingLogger");
-            PeachCore::LogManager::NetworkLogger().Initialize("..\\logs", "NetworkLogger");
+            main_logger = make_unique<PC::LogManager>();
+            main_logger->Initialize("..\\logs", "MainLogger", peach_engine_console.GetConsoleLogger());
+            main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", "debug", "main_thread");
 
-            PeachCore::LogManager::MainLogger().LogAndPrint("MainLogger successfully initialized", "Peach-E", "debug");
-            PeachCore::LogManager::AudioLogger().LogAndPrint("AudioLogger successfully initialized", "Peach-E", "debug");
-            PeachCore::LogManager::RenderingLogger().LogAndPrint("RenderingLogger successfully initialized", "Peach-E", "debug");
-            PeachCore::LogManager::ResourceLoadingLogger().LogAndPrint("ResourceLoadingLogger successfully initialized", "Peach-E", "debug");
-            PeachCore::LogManager::NetworkLogger().LogAndPrint("NetworkLogger successfully initialized", "Peach-E", "debug");
+            LoadGameStartupConfigsFromJSON();
+
+            if (not InitalizeManagers())
+            {
+                main_logger->LogAndPrint("Failed to initialize Peach Engine managers, ending engine program execution immediately", "PeachEngineManager", "fatal", "main_thread");
+                return false;
+            }
+
+            if (not InitializePhysFS(fp_ArgVector[0]))
+            {
+                main_logger->LogAndPrint("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "PeachEngineManager", "fatal", "main_thread");
+                return false;
+            }
+
+            //////////////////////////////////////////////
+            // Load and Setup Plugins
+            //////////////////////////////////////////////
+            #if defined(_WIN32) || defined(_WIN64)
+                LoadPluginsFromConfigs(fp_ListOfPluginsToLoad); // Windows
+            #else
+                LoadPluginsFromConfigs(fp_ListOfPluginsToLoad); // Linux/Unix
+            #endif
+
+            PeachCore::PluginManager::ManagePlugins().InitializePlugins();
+
+            //////////////////////////////////////////////
+            // Start the Game Engine UwU
+            //////////////////////////////////////////////
+            //MainGameLoop();
+
+            //////////////////////////////////////////////
+            // Shutdown and Cleanup OwO
+            //////////////////////////////////////////////
+            //CLEAN-UP AND ANY CLOSING THINGS THAT SHOULD BE LOGGED TO CHECK THE STATE OF THE ENGINE AS IT EXITS
+            PeachCore::PluginManager::ManagePlugins().ShutdownPlugins();
+
+            return true;
+        }
+
+    //////////////////////////////////////////////
+    // Private Methods
+    //////////////////////////////////////////////
+    private:
+        bool
+            InitalizeManagers()
+        {
+            PeachCore::PhysicsManager2D::PhysicsWorld().Initialize("..\\logs", peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
+            PeachCore::PluginManager::ManagePlugins().Initialize("..\\logs", peach_engine_console.GetConsoleLogger());
+            PeachCore::AudioManager::AudioPlayer().Initialize("..\\logs", peach_engine_console.GetConsoleLogger());
+            PeachCore::RenderingManager::Renderer().Initialize("..\\logs", peach_engine_console.GetConsoleLogger());
+            PeachCore::ResourceLoadingManager::ResourceLoader().Initialize("..\\logs", peach_engine_console.GetConsoleLogger());
+
+            //PeachCore::LogManager::NetworkLogger().Initialize("..\\logs", "NetworkLogger");
+
+            //PeachCore::LogManager::NetworkLogger().LogAndPrint("NetworkLogger successfully initialized", "Peach-E", "debug");
 
             cout << "Hello World!\n"; //>w<
 
-            PeachCore::LogManager::MainLogger().LogAndPrint("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E", "warn");
+            main_logger->LogAndPrint("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E", "warn", "main_thread");
 
-            PeachCore::LogManager::MainLogger().LogAndPrint("Success! This Built Correctly", "Peach-E", "trace");
+            main_logger->LogAndPrint("Success! This Built Correctly", "Peach-E", "trace", "main_thread");
+
+            return true;
         }
 
+        //////////////////////////////////////////////
+        // Setting Up and Setting Output Directory
+        //////////////////////////////////////////////
         bool
             InitializePhysFS(const char* argv0)
         {
@@ -128,12 +211,8 @@ namespace PeachEngine {
        // Peach Engine Startup Config Setup
        //////////////////////////////////////////////
 
-        void LoadGameStartupConfigsFromJSON()
-        {
-
-        }
-
-        void AdjustGameStartupJSONConfigs() //this is here for adjusting the JSON configs from the Peach Editor
+        void 
+            LoadGameStartupConfigsFromJSON()
         {
 
         }
@@ -216,6 +295,7 @@ namespace PeachEngine {
                 // User-defined game logic updates
                 while (f_GeneralUpdateAccumulator >= f_UserDefinedDeltaTime)
                 {
+                    PC::PluginManager::ManagePlugins().UpdatePlugins(f_UserDefinedDeltaTime); //run loaded plugins alongside player scripts uwu
                     Update(f_UserDefinedDeltaTime);
                     f_GeneralUpdateAccumulator -= f_UserDefinedDeltaTime;
                 }
@@ -228,16 +308,6 @@ namespace PeachEngine {
             }
         }
 
-        void StartGameLoop()
-        {
-            LoadGameStartupConfigsFromJSON();
-            SetupLogManagers(); //only need to setup Peach-core loggers since this is run assuming the editor doesn't exist
-
-            MainGameLoop();
-
-            //CLEAN-UP AND ANY CLOSING THINGS THAT SHOULD BE LOGGED TO CHECK THE STATE OF THE ENGINE AS IT EXITS
-
-        }
         //////////////////////////////////////////////
         // Loading and Running Plugins From DLL'S
         //////////////////////////////////////////////
@@ -250,15 +320,6 @@ namespace PeachEngine {
             {
                 PeachCore::PluginManager::ManagePlugins().LoadPlugin(fp_ListOfPluginsToLoad[index]);
             }
-        }
-
-        void 
-            RunPlugins()
-            const
-        {
-            PeachCore::PluginManager::ManagePlugins().InitializePlugins();
-            PeachCore::PluginManager::ManagePlugins().UpdatePlugins(0.1f);
-            PeachCore::PluginManager::ManagePlugins().ShutdownPlugins();
         }
 
         //////////////////////////////////////////////

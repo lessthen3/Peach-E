@@ -23,6 +23,33 @@
 
 using namespace std;
 
+#if defined(_WIN32) || defined(_WIN64)
+
+    #define NOMINMAX
+    #define WIN32_LEAN_AND_MEAN
+
+    #include <windows.h>
+
+    static bool
+        EnableColors()
+    {
+        DWORD f_ConsoleMode;
+        HANDLE f_OutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+        if (GetConsoleMode(f_OutputHandle, &f_ConsoleMode))
+        {
+            SetConsoleMode(f_OutputHandle, f_ConsoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            return true;
+        }
+        else
+        {
+            cout << ("Was not able to set console mode to allow windows to display ANSI escape codes") << "\n";
+            return false;
+        }
+    }
+
+#endif
+
 namespace PeachCore {
 
     static string
@@ -130,13 +157,163 @@ namespace PeachCore {
         cerr << CreateColouredText(fp_Message, fp_DesiredColour) << "\n";
     }
 
+    //////////////////////////////////////////////
+    // LogMessage Struct
+    //////////////////////////////////////////////
+
+    struct LogMessage
+    {
+        string m_Log;
+        string m_Sender;
+
+        LogMessage(const string& fp_Log, const string& fp_Sender)
+        {
+            m_Log = fp_Log;
+            m_Sender = fp_Sender;
+        }
+    };
+
+    //////////////////////////////////////////////
+    // Console Struct
+    //////////////////////////////////////////////
+
+    struct Console
+    {
+    public:
+        Console() //should heap alloc these since they can get large and me no want stack overflow uwu xxdxdxdxd rawr so random
+        {
+            pm_MainThreadLogBuffer = make_unique< vector<LogMessage> >();
+            pm_RenderThreadLogBuffer = make_unique< vector<LogMessage> >();
+            pm_AudioThreadLogBuffer = make_unique< vector<LogMessage> >();
+            pm_ResourceThreadLogBuffer = make_unique< vector<LogMessage> >();
+            pm_PhysicsThreadLogBuffer = make_unique< vector<LogMessage> >();
+            pm_NetworkThreadLogBuffer = make_unique< vector<LogMessage> >();
+        }
+
+        ~Console() //idk i think windows heap cleanup is more efficient but whatever this feels better uwu
+        {
+            pm_MainThreadLogBuffer.reset(nullptr);
+            pm_RenderThreadLogBuffer.reset(nullptr);
+            pm_AudioThreadLogBuffer.reset(nullptr);
+            pm_ResourceThreadLogBuffer.reset(nullptr);
+            pm_PhysicsThreadLogBuffer.reset(nullptr);
+            pm_NetworkThreadLogBuffer.reset(nullptr);
+        }
+
+        void
+            ClearConsoleBuffer
+            (
+                const string& fp_DesiredTab
+            )
+        {
+
+        }
+
+        //WIP NEED TO LOCK THE THREAD SO THAT WE CAN SAFELY QUERY THE LOG BUFFERS SINCE THEY CAN BE WRITTEN TOO WHILE
+        vector<string>
+            QueryLogBufferByLevel
+            (
+                const string& fp_DesiredLogLevelQuery,
+                const string& fp_NameOfLogBuffer
+            )
+        {
+            //if (fp_NameOfLogBuffer == "main_thread")
+            //{
+            //    pm_MainThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            //}
+            //else if (fp_NameOfLogBuffer == "render_thread")
+            //{
+            //    pm_RenderThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            //}
+            //else if (fp_NameOfLogBuffer == "audio_thread")
+            //{
+            //    pm_AudioThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            //}
+            //else if (fp_NameOfLogBuffer == "resource_thread")
+            //{
+            //    pm_ResourceThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            //}
+            //else if (fp_NameOfLogBuffer == "physics_thread")
+            //{
+            //    pm_PhysicsThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            //}
+            //else if (fp_NameOfLogBuffer == "network_thread")
+            //{
+            //    pm_NetworkThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            //}
+            //else
+            //{
+            //    PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
+            //}
+        }
+
+        void
+            AddLog
+            (
+                const string& fp_Message,
+                const string& fp_Sender,
+                const string& fp_ThreadName
+            )
+        {
+            if (fp_ThreadName == "main_thread")
+            {
+                pm_MainThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            }
+            else if (fp_ThreadName == "render_thread")
+            {
+                pm_RenderThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            }
+            else if (fp_ThreadName == "audio_thread")
+            {
+                pm_AudioThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            }
+            else if (fp_ThreadName == "resource_thread")
+            {
+                pm_ResourceThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            }
+            else if (fp_ThreadName == "physics_thread")
+            {
+                pm_PhysicsThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            }
+            else if (fp_ThreadName == "network_thread")
+            {
+                pm_NetworkThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+            }
+            else
+            {
+                PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
+            }
+        }
+
+    private:
+
+        unique_ptr<vector<LogMessage>> pm_MainThreadLogBuffer = nullptr;
+        unique_ptr<vector<LogMessage>> pm_RenderThreadLogBuffer = nullptr;
+        unique_ptr<vector<LogMessage>> pm_AudioThreadLogBuffer = nullptr;
+        unique_ptr<vector<LogMessage>> pm_ResourceThreadLogBuffer = nullptr;
+        unique_ptr<vector<LogMessage>> pm_PhysicsThreadLogBuffer = nullptr;
+        unique_ptr<vector<LogMessage>> pm_NetworkThreadLogBuffer = nullptr;
+
+
+        //logs are all related to the current project game logs
+        //map<const string, vector<string>> pm_Buffers = 
+        //{
+        //    {"everything", vector<string>()},
+
+        //    {"editor_warn", vector<string>()},
+        //    {"editor_error", vector<string>()}
+        //};
+    };
+
+    //////////////////////////////////////////////
+    // LogManager Class
+    //////////////////////////////////////////////
+
     class LogManager
     {
-
-        //////////////////////////////////////////////
-        // Class Destructor
-        //////////////////////////////////////////////
-
+    //////////////////////////////////////////////
+    // Public Destructor
+    //////////////////////////////////////////////
     public:
         ~LogManager()
         {
@@ -150,60 +327,35 @@ namespace PeachCore {
                 }
             }
         }
+    //////////////////////////////////////////////
+    // Public Constructor
+    //////////////////////////////////////////////
+    public:
+        LogManager() = default;
 
-        static LogManager& UserLogger() { //defined for the game programmer to use if desired lmfao
-            static LogManager logger;
-            return logger;
-        }
-
-        static LogManager& RenderingLogger() {
-            static LogManager rendering_logger;
-            return rendering_logger;
-        }
-
-        static LogManager& MainLogger() {
-            static LogManager main_logger;
-            return main_logger;
-        }
-
-        static LogManager& AudioLogger() {
-            static LogManager audio_logger;
-            return audio_logger;
-        }
-
-        static LogManager& NetworkLogger() {
-            static LogManager network_logger;
-            return network_logger;
-        }
-
-        static LogManager& ResourceLoadingLogger() {
-            static LogManager resourceloader_logger;
-            return resourceloader_logger;
-        }
-
-        //////////////////////////////////////////////
-        // Private Class Members
-        //////////////////////////////////////////////
-
-    private:
+    //////////////////////////////////////////////
+    // Protected Class Members
+    //////////////////////////////////////////////
+    protected:
         bool pm_HasBeenInitialized = false;
 
         map<string, ofstream> pm_LogFiles;
 
         string pm_LoggerName = "No_Logger_Name";
-        LogManager() {}
+        string pm_CurrentWorkingDirectory = "nothing";
 
-        //////////////////////////////////////////////
-        // Public Methods
-        //////////////////////////////////////////////
+        shared_ptr<Console> pm_Console = nullptr;
 
+    //////////////////////////////////////////////
+    // Public Methods
+    //////////////////////////////////////////////
     public:
-
-        void
+        bool
             Initialize
             (
                 const string& fp_DesiredOutputDirectory,
                 const string& fp_DesiredLoggerName,
+                shared_ptr<Console> fp_Console,
                 const string& fp_MinLogLevel = "trace",
                 const string& fp_MaxLogLevel = "fatal"
             )
@@ -211,98 +363,114 @@ namespace PeachCore {
             if (pm_HasBeenInitialized) //stops accidental reinitialization of logmanager
             {
                 PrintError("LogManager has already been initialized, LogManager is only allowed to initialize once per run");
-                return;
+                return false;
             }
 
+            pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + fp_DesiredLoggerName;
+
             // Ensure log directory exists
-            if (not filesystem::exists(fp_DesiredOutputDirectory))
+            if (not filesystem::exists(pm_CurrentWorkingDirectory))
             {
                 try
                 {
-                    filesystem::create_directories(fp_DesiredOutputDirectory);
+                    filesystem::create_directories(pm_CurrentWorkingDirectory);
                 }
                 catch (const exception& ex)
                 {
                     PrintError("An error occurred inside LogManager: " + static_cast<string>(ex.what()));
-                    return;
+                    return false;
                 }
             }
 
-            vector<string> f_LogLevels = { "trace", "debug", "info", "warn", "error", "fatal", "all-logs" };
-            bool f_ShouldInclude = false;
-
-            for (const auto& _level : f_LogLevels)
+            if (fp_MinLogLevel == fp_MaxLogLevel)
             {
-                if (_level == fp_MinLogLevel)
-                {
-                    f_ShouldInclude = true;
-                }
-                else if (_level == fp_MaxLogLevel and fp_MaxLogLevel != "fatal")
-                {
-                    f_ShouldInclude = false;
-                }
+                CreateLogFile(pm_CurrentWorkingDirectory, fp_MinLogLevel + ".log"); //could be min or max just chose min cause y not
+            }
+            else
+            {
+                const vector<string> f_LogLevels = { "trace", "debug", "info", "warn", "error", "fatal", "all-logs" };
+                bool f_ShouldInclude = false;
 
-                if
-                (
-                    f_ShouldInclude or
-                    (_level == "all-logs" and fp_MinLogLevel != fp_MaxLogLevel) //we do this because we don't need all-logs if only one level is desired for some reason lol
-                )
+                for (const auto& _level : f_LogLevels)
                 {
-                    CreateLogFile(fp_DesiredOutputDirectory, _level + ".log");
+                    if (_level == fp_MinLogLevel)
+                    {
+                        f_ShouldInclude = true;
+                    }
+                    else if (_level == fp_MaxLogLevel and fp_MaxLogLevel != "fatal")
+                    {
+                        f_ShouldInclude = false;
+                    }
+
+                    if(f_ShouldInclude or _level == "all-logs")
+                    {
+                        CreateLogFile(pm_CurrentWorkingDirectory, _level + ".log");
+                    }
                 }
             }
 
             pm_LoggerName = fp_DesiredLoggerName;
+            pm_Console = fp_Console;
+
             pm_HasBeenInitialized = true; //well if everything went as planned we should be good to set this to true uwu
+
+            return true;
         }
 
-        void
+        bool
             Initialize
             (
                 const string& fp_DesiredOutputDirectory,
-                const vector<string>* fp_DesiredLogLevels
+                const string& fp_DesiredLoggerName,
+                shared_ptr<Console> fp_Console,
+                const vector<string>& fp_DesiredLogLevels
             )
         {
-            if (not fp_DesiredLogLevels)
+            if (fp_DesiredLogLevels.size() == 0)
             {
-                PrintError("LogManager tried to initialize with a null'd value for specific log filtering");
-                return;
+                PrintError("LogManager tried to initialize with no value for specific log filtering");
+                return false;
             }
 
             if (pm_HasBeenInitialized) //stops accidental reinitialization of logmanager
             {
                 PrintError("LogManager has already been initialized, LogManager is only allowed to initialize once per run");
-                return;
+                return false;
             }
 
+            pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + fp_DesiredLoggerName;
+
             // Ensure log directory exists
-            if (not filesystem::exists(fp_DesiredOutputDirectory))
+            if (not filesystem::exists(pm_CurrentWorkingDirectory))
             {
                 try
                 {
-                    filesystem::create_directories(fp_DesiredOutputDirectory);
+                    filesystem::create_directories(pm_CurrentWorkingDirectory);
                 }
                 catch (const exception& ex)
                 {
                     PrintError("An error occurred inside LogManager: " + static_cast<string>(ex.what()));
-                    return;
+                    return false;
                 }
             }
 
             const vector<string> f_AllowedLogLevels = { "trace", "debug", "info", "warn", "error", "fatal", "all-logs" };
 
-            for (const auto& _level : *fp_DesiredLogLevels)
+            for (const auto& _level : fp_DesiredLogLevels)
             {
-                CreateLogFile(fp_DesiredOutputDirectory, _level + ".log");
+                CreateLogFile(pm_CurrentWorkingDirectory, _level + ".log");
 
                 if (count(f_AllowedLogLevels.begin(), f_AllowedLogLevels.end(), _level) == 0)
                 {
                     PrintError("Invalid log level was input when filtering for individual log files");
-                    return;
+                    return false;
                 }
             }
 
+            pm_Console = fp_Console;
             pm_HasBeenInitialized = true; //well if everything went as planned we should be good to set this to true uwu
+
+            return true;
         }
 
         //////////////////// Flush All Logs ////////////////////
@@ -321,28 +489,35 @@ namespace PeachCore {
 
         //////////////////// Logging Functions  ////////////////////
 
-        void
+        string
             Log
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const string& fp_LogLevel
+                const string& fp_LogLevel,
+                const string& fp_ThreadName
             )
         {
             string f_TimeStamp = GetCurrentTimestamp();
             string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + fp_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
 
             // Log to specific file and all-logs file
-            string f_LogFileName = fp_LogLevel + ".log";
+            const string f_LogFileName = fp_LogLevel + ".log";
+            const string f_AllLogsName = "all-logs.log";
 
             if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
             {
                 pm_LogFiles[f_LogFileName] << f_LogEntry;
             }
-            if (pm_LogFiles.find("all-logs.log") != pm_LogFiles.end() and pm_LogFiles["all-logs.log"].is_open())
+
+            if (pm_LogFiles.find(f_AllLogsName) != pm_LogFiles.end() and pm_LogFiles[f_AllLogsName].is_open())
             {
-                pm_LogFiles["all-logs.log"] << f_LogEntry;
+                pm_LogFiles[f_AllLogsName] << f_LogEntry;
             }
+
+            pm_Console->AddLog("[" + pm_LoggerName + "]: " + fp_Message + "\n", pm_LoggerName, fp_ThreadName);
+
+            return f_LogEntry;
         }
 
         void
@@ -350,7 +525,8 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const string& fp_LogLevel
+                const string& fp_LogLevel,
+                const string& fp_ThreadName
             )
         {
             string f_LogEntry = fp_LogLevel + ": [" + fp_Sender + "] " + fp_Message + "\n";
@@ -358,43 +534,39 @@ namespace PeachCore {
             // Log to console
             if (fp_LogLevel == "trace")
             {
-                Print(fp_Message, "bright white");
+                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "bright white");
             }
             else if (fp_LogLevel == "debug")
             {
-                Print(fp_Message, "bright blue");
+                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "bright blue");
             }
             else if (fp_LogLevel == "info")
             {
-                Print(fp_Message, "bright green");
+                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "bright green");
             }
             else if (fp_LogLevel == "warn")
             {
-                Print(fp_Message, "bright yellow");
+                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "bright yellow");
             }
             else if (fp_LogLevel == "error")
             {
-                PrintError(fp_Message, "red"); //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
+                PrintError(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "red"); //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
             }
             else if (fp_LogLevel == "fatal")
             {
-                PrintError(fp_Message, "magenta");
+                PrintError(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "magenta");
             }
             else
             {
-                Log("Did not input a valid option for log level in LogAndPrint()", "LogManager", "error");
-                Print(fp_Message);
+                Print(Log("Did not input a valid option for log level in LogAndPrint()", "LogManager", "error", fp_ThreadName));
+                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName));
             }
-
-            Log(fp_Message, fp_Sender, fp_LogLevel);
         }
 
-        //////////////////////////////////////////////
-        // Private Methods
-        //////////////////////////////////////////////
-
-    private:
-
+    //////////////////////////////////////////////
+    // Protected Methods
+    //////////////////////////////////////////////
+    protected:
         void
             CreateLogFile
             (
@@ -406,7 +578,7 @@ namespace PeachCore {
 
             f_File.open(fp_FilePath + "/" + fp_FileName, ios::out | ios::app);
 
-            if (!f_File.is_open())
+            if (not f_File.is_open())
             {
                 cerr << "Failed to open log file: " << fp_FileName << "\n";
             }

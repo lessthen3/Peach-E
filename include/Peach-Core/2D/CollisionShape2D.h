@@ -4,12 +4,13 @@
 #include <string>
 #include <memory>
 
-#include "../Managers/Physics2DManager.h"
 #include "../Managers/LogManager.h"
 #include "PeachNode2D.h"
 
 
 #include "Sensor2D.h"
+
+#include "box2d.h"
 
 using namespace std;
 

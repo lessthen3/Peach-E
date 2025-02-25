@@ -1,4 +1,16 @@
+﻿/*******************************************************************
+ *                                             Peach-E v0.1
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                         Peach-E is an open-source game engine
+********************************************************************/
 #pragma once
+
+#include "../Managers/LogManager.h"
 
 #include <CGAL/Cartesian/point_constructions_2.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -6,15 +18,10 @@
 #include <CGAL/partition_2.h>
 
 
-#include <glm/glm.hpp>
-#include <string>
 #include <vector>
 #include <list>
-#include <memory>
 #include <stdexcept>
-
-#include "../Managers/LogManager.h"
-#include "../Managers/Physics2DManager.h"
+#include "box2d.h"
 
 
 using namespace std;
@@ -52,12 +59,13 @@ namespace PeachCore {
                 const b2WorldId& fp_World, 
                 const glm::vec2& fp_Position, 
                 const vector<glm::vec2>& fp_Vertices, 
+                LogManager* fp_Logger, //idk if i need the physics logger for any other part of this class
                 const bool fp_IsDynamic = true
             ) 
         {
             if (fp_Vertices.size() < 3)
             {
-                LogManager::MainLogger().LogAndPrint("Tried to create a CollisionPolygon2D with less than 3 vertices", "CollisionPolygon2D", "warn");
+                fp_Logger->LogAndPrint("Tried to create a CollisionPolygon2D with less than 3 vertices", "CollisionPolygon2D", "warn", "physics_thread");
                 return false;
             }
 

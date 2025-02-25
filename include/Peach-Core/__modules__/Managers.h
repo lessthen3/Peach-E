@@ -7,7 +7,7 @@
 #include "../Managers/RenderingManager.h"
 //#include "../Managers/ResourceLoadingManager.h"
 #include "../Managers/SceneTreeManager.h"
-#include "../Managers/Physics2DManager.h"
+#include "../Managers/PhysicsManager2D.h"
 //#include "Managers/PythonScriptManager.h"
 
 #include "../Managers/EventQueueManager.h"

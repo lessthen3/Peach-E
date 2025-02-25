@@ -10,21 +10,13 @@
 ********************************************************************/
 #pragma once
 
+#include "LogManager.h"
+
 #include <vector>
-#include <string>
 #include <memory>
 #include "../General/Plugin.h"
 
-#include <filesystem>
-#include <iostream>
-#include <string>
-#include "LogManager.h"
-
-
 #if defined(_WIN32) || defined(_WIN64)
-    #define WIN32_LEAN_AND_MEAN
-    #define NOMINMAX
-    #include <windows.h>
     #define DYNLIB_HANDLE HINSTANCE
     #define DYNLIB_LOAD LoadLibraryA
     #define DYNLIB_GETSYM GetProcAddress
@@ -39,35 +31,86 @@
 
 using namespace std;
 
+//TODO: add support for scripted plugins that dont require AOT lmfao that might be a good idea uwu and also move all the loading code to ResourceLoadingManager uwu
+
 namespace PeachCore {
 
     typedef Plugin* (*CreatePluginFunc)();
     typedef void (*DestroyPluginFunc)(Plugin*);
 
+    //////////////////////////////////////////////
+    // Plugin Manager Class
+    //////////////////////////////////////////////
+
     class PluginManager
     {
+    //////////////////////////////////////////////
+    // Class Destructor
+    //////////////////////////////////////////////
+    private:
+        ~PluginManager() = default;
+
+    //////////////////////////////////////////////
+    // Singleton Instance
+    //////////////////////////////////////////////
     public:
         static PluginManager& ManagePlugins() {
             static PluginManager instance;
             return instance;
         }
 
-        void LoadPlugin(const std::string& path);
-        void InitializePlugins();
-        void UpdatePlugins(float fp_TimeSinceLastFrame);
-        void ConstantUpdatePlugins(float fp_TimeSinceLastFrame);
-        void ShutdownPlugins();
-
+    //////////////////////////////////////////////
+    // Private Constructor
+    //////////////////////////////////////////////
     private:
         PluginManager() = default;
-        ~PluginManager() = default;
         PluginManager(const PluginManager&) = delete;
         PluginManager& operator=(const PluginManager&) = delete;
 
-        std::vector<std::unique_ptr<Plugin, DestroyPluginFunc>> pm_PluginInstances;
-        std::vector<DYNLIB_HANDLE> pm_PluginHandles;
+    //////////////////////////////////////////////
+    // Private Members
+    //////////////////////////////////////////////
+    private:
+        vector<unique_ptr<Plugin, DestroyPluginFunc>> pm_PluginInstances;
+        vector<DYNLIB_HANDLE> pm_PluginHandles;
+
+        unique_ptr<LogManager> plugin_logger = nullptr;
+
+    //////////////////////////////////////////////
+    // Public Methods
+    //////////////////////////////////////////////
+    public:
+        bool
+            Initialize
+            (
+                const string& fp_LogOutputDirectory,
+                shared_ptr<Console> fp_Console
+            );
+
+        void 
+            LoadPlugin
+            (
+                const string& path
+            );
+        void 
+            InitializePlugins();
+        void 
+            UpdatePlugins
+            (
+                float fp_TimeSinceLastFrame
+            );
+        void 
+            ConstantUpdatePlugins
+            (
+                float fp_TimeSinceLastFrame
+            );
+        void 
+            ShutdownPlugins();
     };
 
+    //////////////////////////////////////////////
+    // DLL Loader Struct
+    //////////////////////////////////////////////
     struct DynamicLoader
     {
     public:
@@ -134,23 +177,23 @@ namespace PeachCore {
         // Helper function to get the error message string
         string GetLastErrorAsString()
         {
-#if defined(_WIN32) || defined(_WIN64)
-            // Windows error message
-            DWORD errorMessageID = ::GetLastError();
-            if (errorMessageID == 0)
-                return string(); // No error message has been recorded
+            #if defined(_WIN32) || defined(_WIN64)
+                // Windows error message
+                DWORD errorMessageID = ::GetLastError();
+                if (errorMessageID == 0)
+                    return string(); // No error message has been recorded
 
-            LPSTR messageBuffer = nullptr;
-            size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
+                LPSTR messageBuffer = nullptr;
+                size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                    NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
 
-            string message(messageBuffer, size);
-            LocalFree(messageBuffer);
-            return message;
-#else
-            // POSIX error message
-            return string(dlerror());
-#endif
+                string message(messageBuffer, size);
+                LocalFree(messageBuffer);
+                return message;
+            #else
+                // POSIX error message
+                return string(dlerror());
+            #endif
         }
     };
 }

@@ -10,23 +10,23 @@ namespace PeachCore {
 
         lua.script_file(fp_Script);
 
-        if (lua["initialize"].valid()) 
-        {
-            lua["initialize"]();
-            LogManager::MainLogger().LogAndPrint("Successfully initialized script at: " + fp_ScriptName, "LuaScriptManager", "debug");
-        }
-        else
-        { //only an error if the 
-            LogManager::MainLogger().LogAndPrint("Failed to locate Lua Initialize() function at: " + fp_ScriptName, "LuaScriptManager", "error");
-        }
+        //if (lua["initialize"].valid()) 
+        //{
+        //    lua["initialize"]();
+        //    LogManager::MainLogger().LogAndPrint("Successfully initialized script at: " + fp_ScriptName, "LuaScriptManager", "debug");
+        //}
+        //else
+        //{ //only an error if the 
+        //    LogManager::MainLogger().LogAndPrint("Failed to locate Lua Initialize() function at: " + fp_ScriptName, "LuaScriptManager", "error");
+        //}
 
-        if (lua["update"].valid())
-        {
-            lua["update"]();
-        }
-        else
-        {
-            LogManager::MainLogger().LogAndPrint("Successfully located DLL at: " + fp_ScriptName, "LuaScriptManager", "error");
-        }
+        //if (lua["update"].valid())
+        //{
+        //    lua["update"]();
+        //}
+        //else
+        //{
+        //    LogManager::MainLogger().LogAndPrint("Successfully located DLL at: " + fp_ScriptName, "LuaScriptManager", "error");
+        //}
     }
 }

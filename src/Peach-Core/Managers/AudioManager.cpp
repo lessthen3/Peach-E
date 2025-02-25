@@ -1,3 +1,13 @@
+﻿/*******************************************************************
+ *                                             Peach-E v0.1
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                         Peach-E is an open-source game engine
+********************************************************************/
 #include "../../include/Peach-Core/Managers/AudioManager.h"
 
 using namespace std;
@@ -5,30 +15,42 @@ using namespace std;
 namespace PeachCore {
 
     bool 
-        AudioManager::Initialize()
+        AudioManager::Initialize
+        (
+            const string& fp_LogOutputDirectory,
+            shared_ptr<Console> fp_Console
+        )
     {
-        m_Device = alcOpenDevice(nullptr); // Open default device
+
+        //////////////////////////////////////////////
+        // Initialize Logger
+        //////////////////////////////////////////////
+        audio_logger = make_unique<LogManager>();
+        audio_logger->Initialize(fp_LogOutputDirectory, "AudioManager", fp_Console);
+        audio_logger->LogAndPrint("AudioLogger successfully initialized", "AudioManager", "debug", "audio_thread");
+
+        pm_Device = alcOpenDevice(nullptr); // Open default device
         
-        if (!m_Device)
+        if (!pm_Device)
         {
-            LogManager::AudioLogger().LogAndPrint("Failed to open audio device", "AudioManager", "error");
+            audio_logger->LogAndPrint("Failed to open audio device", "AudioManager", "error", "audio_thread");
             return false;
         }
         
-        m_Context = alcCreateContext(m_Device, nullptr);
+        pm_Context = alcCreateContext(pm_Device, nullptr);
 
         shared_ptr<LoadingQueue> pm_LoadedAudioResourceQueue = ResourceLoadingManager::ResourceLoader().GetAudioResourceLoadingQueue();
         
-        if (!m_Context || !alcMakeContextCurrent(m_Context))
+        if (!pm_Context || !alcMakeContextCurrent(pm_Context))
         {
-            LogManager::AudioLogger().LogAndPrint("Failed to create or set audio context", "AudioManager", "error");
+            audio_logger->LogAndPrint("Failed to create or set audio context", "AudioManager", "error", "audio_thread");
 
-            if (m_Context) 
+            if (pm_Context) 
             {
-                alcDestroyContext(m_Context);
+                alcDestroyContext(pm_Context);
             }
 
-            alcCloseDevice(m_Device);
+            alcCloseDevice(pm_Device);
 
             return false;
         }
@@ -39,8 +61,8 @@ namespace PeachCore {
         AudioManager::Shutdown() 
     {
         alcMakeContextCurrent(nullptr);
-        if (m_Context) {alcDestroyContext(m_Context);}
-        if (m_Device) {alcCloseDevice(m_Device);}
+        if (pm_Context) {alcDestroyContext(pm_Context);}
+        if (pm_Device) {alcCloseDevice(pm_Device);}
     }
 
     void 
@@ -54,7 +76,7 @@ namespace PeachCore {
         // Load WAV file into buffer
         // Assuming LoadWAVFile is a function that loads a WAV file into an OpenAL buffer
         if (!LoadWAVFile(fp_SoundFile, f_Buffer)) {
-            LogManager::AudioLogger().LogAndPrint("Failed to load sound: " + fp_SoundFile, "AudioManager", "error");
+            audio_logger->LogAndPrint("Failed to load sound: " + fp_SoundFile, "AudioManager", "error", "audio_thread");
             return;
         }
 
@@ -62,21 +84,21 @@ namespace PeachCore {
         alSourcePlay(f_Source);
 
         // Store source for cleanup
-        m_Sources.push_back(f_Source);
+        pm_Sources.push_back(f_Source);
     }
 
     string 
         AudioManager::GetCurrentTrack() const 
     {
         shared_lock<shared_mutex> lock(mutex_);
-        return m_CurrentTrack;
+        return pm_CurrentTrack;
     }
 
     void 
         AudioManager::SetCurrentTrack(const string& track)
  {
         unique_lock<shared_mutex> lock(mutex_);
-        m_CurrentTrack = track;
+        pm_CurrentTrack = track;
     }
 
     bool 
@@ -175,7 +197,7 @@ namespace PeachCore {
                 [](auto&&)
                 {
                     // Default handler for any unhandled types
-                    LogManager::AudioLogger().LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "AudioManager", "warn");
+                    //audio_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "AudioManager", "warn");
                 }
                 }, ResourcePackage.get()->ResourceData);
         }

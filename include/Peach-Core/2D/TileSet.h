@@ -7,7 +7,7 @@
 #include <vector>
 #include <tuple>
 
-#include "../Managers/Physics2DManager.h"
+#include "../Managers/PhysicsManager2D.h"
 
 using namespace std;
 
@@ -63,10 +63,10 @@ namespace PeachCore {
         void 
             SetCurrentTexture(TextureData& fp_NewTexture);
 
-        void 
+        bool
             SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight);
 
-        void 
+        bool
             CreateTilesFromTexture2D();
 
         vector<Tile> m_Tiles;
@@ -76,8 +76,8 @@ namespace PeachCore {
             GetTileUV(const int index)
             const;
 
-        void
-            ValidateTileIndex(int fp_Index)
+        bool
+            IsValidTileIndex(int fp_Index)
             const;
         
     private:

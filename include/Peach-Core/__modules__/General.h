@@ -6,3 +6,5 @@
 
 #include "../General/PeachRenderer.h"
 #include "../General/ShaderProgram.h"
+
+#include "../General/PeachConsole.h"
