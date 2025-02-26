@@ -65,8 +65,8 @@ namespace PeachEditor {
         void
             SetupViewport
             (
-                unsigned int fp_Width,
-                unsigned int fp_Height,
+                const unsigned int fp_Width,
+                const unsigned int fp_Height,
                 PC::PeachRenderer* fp_Renderer,
                 shared_ptr<PC::LogManager> fp_EditorRenderingLogger
             );

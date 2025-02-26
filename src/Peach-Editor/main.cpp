@@ -111,19 +111,19 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
 
     if (not editor_renderer->CreateMainSDLWindow("Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
     {
-        main_logger->LogAndPrint("Was not able to create the main window, exiting execution immediately", "main_thread", "fatal", "main_thread");
+        main_logger->LogAndPrint("Was not able to create the main window, exiting execution immediately", "main", "fatal", "main_thread");
         return FAILED_TO_CREATE_MAIN_WINDOW;
     }
 
-    main_logger->LogAndPrint("SDL window successfully created for Peach Editor", "main_thread", "debug", "main_thread");
+    main_logger->LogAndPrint("SDL window successfully created for Peach Editor", "main", "debug", "main_thread");
 
     if (not editor_renderer->InitializeOpenGL())
     {
-        main_logger->LogAndPrint("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main_thread", "fatal", "main_thread");
+        main_logger->LogAndPrint("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main", "fatal", "main_thread");
         return FAILED_TO_INITIALIZE_OPENGL;
     }
 
-    main_logger->LogAndPrint("Peach Editor successfully initialized OpenGL", "main_thread", "debug", "main_thread");
+    main_logger->LogAndPrint("Peach Editor successfully initialized OpenGL", "main", "debug", "main_thread");
 
     bool mf_IsEditorOpen = true;
 
