@@ -1,6 +1,7 @@
 import subprocess
 import os
 import argparse
+import platform
 
 def CreateColouredText(fp_SampleText: str, fp_DesiredColour: str) -> str:
 
@@ -242,7 +243,8 @@ def main() -> bool:
 
 if __name__ == "__main__":
 
-    os.system('color') #enable ANSI colour codes
+    if platform.system() == "Windows":
+        os.system('color') #enable ANSI colour codes
 
     if not main():
         print(CreateColouredText("nothing was done.", "yellow"))
