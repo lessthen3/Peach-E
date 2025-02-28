@@ -70,6 +70,51 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
+        
+        elif fp_Generator == "ninja mc":
+            subprocess.run(
+                ['cmake', '-S', '.', '-B', 'build', '-G', 'Ninja Multi-Config'],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        
+        elif fp_Generator == "unix":
+            subprocess.run(
+                ['cmake', '-S', '.', '-B', 'build', '-G', 'Unix Makefiles'],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        
+        elif fp_Generator == "unix-cd":
+            subprocess.run(
+                ['cmake', '-S', '.', '-B', 'build', '-G', 'CodeBlocks - Unix Makefiles'],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        
+        elif fp_Generator == "unix-eclipse":
+            subprocess.run(
+                ['cmake', '-S', '.', '-B', 'build', '-G', 'Eclipse CDT4 - Unix Makefiles'],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        
+        elif fp_Generator == "xcode":
+            subprocess.run(
+                ['cmake', '-S', '.', '-B', 'build', '-G', 'Xcode'],
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE
+            )
+        
+        else:
+            print(CreateColouredText("[ERROR]: Invalid Generator Selected, PICK A VALID GENERATOR", "red"))
+            return False
+
 
         if( fp_BuildType == "debug" or fp_BuildType == "both" ):
             subprocess.run(
@@ -124,14 +169,17 @@ def main() -> bool:
         nargs=1,
         help=CreateColouredText('Used to set the project file generator\n', 'cyan')  + \
                 "\t" + CreateColouredText('Generates solution for Visual Studio 17 2022, intended use:', 'cyan') + CreateColouredText('-G vs2022', 'blue') + "\n" + \
-                "\t" + CreateColouredText('Generates project files using Ninja, intended use:', 'cyan') + CreateColouredText('-G ninja', 'blue')
+                "\t" + CreateColouredText('Generates project files for Xcode, intended use:', 'cyan') + CreateColouredText('-G xcode', 'blue') + "\n" + \
+                "\t" + CreateColouredText('Generates project files using Ninja, intended use:', 'cyan') + CreateColouredText('-G ninja', 'blue') + "\n" + \
+                "\t" + CreateColouredText('For Ninja Multi-Config, intended use:', 'cyan') + CreateColouredText('-G ninja-mc', 'blue') + "\n" + \
+                "\t" + CreateColouredText('For Unix Makefiles, intended use:', 'cyan') + CreateColouredText('-G unix', 'blue') + "\n" + \
+                "\t" + CreateColouredText('Generate Unix Makefiles for Eclipse CDT, intended use:', 'cyan') + CreateColouredText('-G unix-eclipse', 'blue') + "\n" + \
+                "\t" + CreateColouredText('Generates Unix Makefiles for CodeBlocks, intended use:', 'cyan') + CreateColouredText('-G unix-cd', 'blue') + "\n" + \
     )   
     
     args = parser.parse_args()
 
     f_IsSetupSuccessful = False
-
-    f_DesiredGenerator = ""
 
     if(not args.debug and not args.release and not args.both):
         print(CreateColouredText("[ERROR]: No valid build type input detected, use -h or --help if you're unfamiliar", "red"))
@@ -141,15 +189,7 @@ def main() -> bool:
         print(CreateColouredText("[ERROR]: YOU DIDN'T USE -G FLAG BROTHER", "red"))
         return False
 
-    args.G[0].lower() #convert to all lower case for easier handling
-
-    if(args.G[0] == "vs2022"):
-        f_DesiredGenerator = "vs2022"
-    elif(args.G[0] == "ninja"):
-        f_DesiredGenerator = "ninja"
-    else:
-        print(CreateColouredText("[ERROR]: Invalid Generator Selected, PICK A VALID GENERATOR", "red"))
-        return False
+    f_DesiredGenerator = args.G[0].lower() #convert to all lower case for easier handling
 
     if(args.debug):
 

@@ -37,8 +37,8 @@ namespace PeachCore
     class PeachRenderer
     {
     private:
-        SDL_Window* pm_MainWindow;
-        bool pm_Is3DEnabled;
+        SDL_Window* pm_MainWindow = nullptr;
+        bool pm_Is3DEnabled = false;
 
         vector<unique_ptr<PeachCamera2D>> pm_ListOfScenePeachCameras2D; //only the renderer cares about cameras
 
@@ -65,6 +65,8 @@ namespace PeachCore
 
             pm_ListOfScenePeachCameras2D.clear();
             pm_ShaderPrograms.clear();
+            pm_ListOfRegisteredTextures.clear();
+            pm_RenderingLogger.reset();
         }
 
         explicit 
@@ -75,18 +77,22 @@ namespace PeachCore
                 const bool fp_Is3DEnabled = false
             )
         {
-            if (not fp_RenderingLogger.get())
+            if (not fp_RenderingLogger.get()) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
             {
                 PrintError("Tried to initialize PeachRenderer with a nullptr for the Rendering Logger doofus");
-            }
-
-            if (not fp_CurrentWindow)
-            {
-                PrintError("Tried to initialize PeachRenderer with a nullptr for the SDL Window doofus");
+                throw runtime_error("Ending program execution immediately since no valid logger was found"); //idk how else to stop the rest of initialization
             }
 
             pm_RenderingLogger = fp_RenderingLogger;
+
+            if (not fp_CurrentWindow)
+            {
+                pm_RenderingLogger->LogAndPrint("Tried to initialize PeachRenderer with a nullptr for the SDL Window doofus", "PeachRenderer", "fatal", "render_thread");
+                throw runtime_error("Ending program execution immediately since no valid SDL Window was found"); //idk how else to stop the rest of initialization
+            }
+
             pm_MainWindow = fp_CurrentWindow;
+            
             pm_Is3DEnabled = fp_Is3DEnabled;
 
             ////Set Core Profile for OpenGL Context whatever the fuck that means

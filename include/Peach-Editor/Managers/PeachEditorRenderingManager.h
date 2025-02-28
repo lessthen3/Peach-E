@@ -343,6 +343,12 @@ namespace PeachEditor {
                 const string& fp_FirstItemSelected,
                 const string& fp_SecondItemSelected
             );
+
+        void
+            RenderConsole
+            (
+                struct nk_context* ctx
+            );
     };
 
 }

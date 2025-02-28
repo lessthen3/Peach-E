@@ -624,6 +624,12 @@ namespace PeachEditor {
         RenderFileBrowser("../", f_CurrentWindowWidth * 0.85f, f_CurrentWindowHeight*0.70f, f_CurrentWindowWidth*0.15f, f_CurrentWindowHeight*0.30f, pm_NuklearCtx);
 
         ////////////////////////////////////////////////
+        // Render Console
+        ////////////////////////////////////////////////
+
+        RenderConsole(pm_NuklearCtx);
+
+        ////////////////////////////////////////////////
         // Render Viewport
         ////////////////////////////////////////////////
 
@@ -807,6 +813,56 @@ namespace PeachEditor {
         nk_style_pop_style_item(ctx);
         nk_style_pop_style_item(ctx);
         nk_style_pop_style_item(ctx);
+    }
+
+    void 
+        PeachEditorRenderingManager::RenderConsole
+        (
+            struct nk_context* ctx
+        )
+    {
+        static int activeTab = 0; // 0 = Logs, 1 = Warnings, 2 = Errors
+
+        if (nk_begin(ctx, "Developer Console", nk_rect(50, 50, 600, 400),
+            NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE))
+        {
+            // Tabs for Log Types
+            nk_layout_row_static(ctx, 30, 80, 3);
+            if (nk_button_label(ctx, "Logs")) activeTab = 0;
+            if (nk_button_label(ctx, "Warnings")) activeTab = 1;
+            if (nk_button_label(ctx, "Errors")) activeTab = 2;
+
+            // Scrollable Console Output
+            nk_layout_row_dynamic(ctx, 250, 1);
+            if (nk_group_begin(ctx, "ConsoleOutput", NK_WINDOW_BORDER))
+            {
+                nk_layout_row_dynamic(ctx, 18, 1);
+
+                std::vector<std::string>* selectedLog = nullptr;
+                //if (activeTab == 0) selectedLog = &consoleLogs;
+                //else if (activeTab == 1) selectedLog = &consoleWarnings;
+                //else selectedLog = &consoleErrors;
+
+                //for (const auto& msg : *selectedLog)
+                //{
+                //    nk_label(ctx, msg.c_str(), NK_TEXT_LEFT);
+                //}
+
+                nk_group_end(ctx);
+            }
+
+            // Input Box for Commands
+            nk_layout_row_dynamic(ctx, 25, 2);
+            //nk_edit_string_zero_terminated(ctx, NK_EDIT_SIMPLE, commandBuffer, sizeof(commandBuffer), nk_filter_default);
+            //if (nk_button_label(ctx, "Run"))
+            //{
+            //    // Add command to logs and clear buffer
+            //    consoleLogs.push_back(std::string("> ") + commandBuffer);
+            //    std::cout << "Command Entered: " << commandBuffer << std::endl;
+            //    memset(commandBuffer, 0, sizeof(commandBuffer));
+            //}
+        }
+        nk_end(ctx);
     }
 
     void 

@@ -23,8 +23,8 @@
 #include "../../../include/Peach-Core/General/stb/stb_image.h"
 
 using namespace std;
-using namespace PeachEditor;
-using namespace PeachEngine;
+namespace PED = PeachEditor;
+namespace PEN = PeachEngine;
 
 namespace PC = PeachCore;
 
@@ -66,8 +66,8 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
     // Setup Loggers
     ////////////////////////////////////////////////
 
-    auto peach_editor = &PeachEditorManager::PeachEditor();
-    auto peach_engine = &PeachEngineManager::PeachEngine();
+    auto peach_editor = &PED::PeachEditorManager::PeachEditor();
+    auto peach_engine = &PEN::PeachEngineManager::PeachEngine();
 
     peach_editor->SetupInternalLogManagers();
 
@@ -101,11 +101,11 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
     const unsigned int mf_MainWindowWidth = 800;
     const unsigned int mf_MainWindowHeight = 600;
 
-    auto editor_renderer = &PeachEditorRenderingManager::PeachEditorRenderer();
-    shared_ptr<PC::LogManager> main_logger = PeachEditorManager::PeachEditor().main_editor_logger;
+    auto editor_renderer = &PED::PeachEditorRenderingManager::PeachEditorRenderer();
+    shared_ptr<PC::LogManager> main_logger = PED::PeachEditorManager::PeachEditor().main_editor_logger;
 
     //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
-    mf_PeachEditorDrawableResourceLoadingQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
+    mf_PeachEditorDrawableResourceLoadingQueue = PED::PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
 
     mf_PeachEditorRenderingManagersCommandQueue = editor_renderer->InitializeQueues();
 
