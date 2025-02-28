@@ -205,6 +205,9 @@ def main() -> bool:
 
         if run_conan("Debug"):
             print(CreateColouredText("Conan setup and dependencies installation successfully completed for debug", "green"))
+        else:
+            print(CreateColouredText("[ERROR]: Conan wasn't able to complete getting/building dependencies for debug, stopping build immediately", "red"))
+            return False
 
         f_IsSetupSuccessful = run_cmake("debug", f_DesiredGenerator)
 
@@ -215,6 +218,9 @@ def main() -> bool:
 
         if run_conan("Release"):   # >w>
             print(CreateColouredText("Conan setup and dependencies installation successfully completed for release", "green"))
+        else:
+            print(CreateColouredText("[ERROR]: Conan wasn't able to complete getting/building dependencies for release, stopping build immediately", "red"))
+            return False
 
         f_IsSetupSuccessful = run_cmake("release", f_DesiredGenerator)
 
@@ -225,9 +231,15 @@ def main() -> bool:
 
         if run_conan("Debug"):
             print(CreateColouredText("Conan setup and dependencies installation successfully completed for debug", "green"))
+        else:
+            print(CreateColouredText("[ERROR]: Conan wasn't able to complete getting/building dependencies for debug, stopping build immediately", "red"))
+            return False
 
         if run_conan("Release"):
             print(CreateColouredText("Conan setup and dependencies installation successfully completed for release", "green"))
+        else:
+            print(CreateColouredText("[ERROR]: Conan wasn't able to complete getting/building dependencies for release, stopping build immediately", "red"))
+            return False
 
         f_IsSetupSuccessful = run_cmake("both", f_DesiredGenerator)
         
