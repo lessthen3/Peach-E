@@ -21,3 +21,6 @@
 # individual files
 /TODO.txt
 /CMakeUserPresets.json
+
+#MacOS specific
+**.DS_Store
