@@ -4,7 +4,7 @@ import argparse
 
 def CreateColouredText(fp_SampleText: str, fp_DesiredColour: str) -> str:
 
-    fp_SampleText = fp_SampleText.lower()
+    fp_DesiredColour = fp_DesiredColour.lower()
 
     if (fp_DesiredColour == "black"):
         return '\033[30m' + fp_SampleText + '\033[0m'
@@ -140,41 +140,50 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
     return True
 
-
+def usage_message() -> str:
+    return ""
 
 def main() -> bool:
 
-    parser = argparse.ArgumentParser(description=CreateColouredText('Used for Building Peach-E from Source', 'magenta'))
+    usage_message = "init.py --[build_type: release, debug or both] -G [desired_generator]"
+
+    parser = argparse.ArgumentParser(
+        description=CreateColouredText('Used for Building Peach-E from Source', 'magenta'), 
+        usage=usage_message, 
+        add_help=True,
+        formatter_class=argparse.RawTextHelpFormatter
+    )
 
     parser.add_argument(
         '--release', 
         action='store_true', 
-        help=CreateColouredText('Used for a release build', 'cyan')
+        help=CreateColouredText('Used for a release build', 'magenta')
     )
 
     parser.add_argument(
         '--debug', 
         action='store_true', 
-        help=CreateColouredText('Used for a debug build', 'cyan')
+        help=CreateColouredText('Used for a debug build', 'magenta')
     )
 
     parser.add_argument(
         '--both', 
         action='store_true', 
-        help=CreateColouredText('Used to build both a debug and release build', 'cyan')
+        help=CreateColouredText('Used to build both a debug and release build', 'magenta')
     )
 
     parser.add_argument(
         '-G', 
         nargs=1,
-        help=CreateColouredText('Used to set the project file generator\n', 'cyan')  + \
-                "\t" + CreateColouredText('Generates solution for Visual Studio 17 2022, intended use:', 'cyan') + CreateColouredText('-G vs2022', 'blue') + "\n" + \
-                "\t" + CreateColouredText('Generates project files for Xcode, intended use:', 'cyan') + CreateColouredText('-G xcode', 'blue') + "\n" + \
-                "\t" + CreateColouredText('Generates project files using Ninja, intended use:', 'cyan') + CreateColouredText('-G ninja', 'blue') + "\n" + \
-                "\t" + CreateColouredText('For Ninja Multi-Config, intended use:', 'cyan') + CreateColouredText('-G ninja-mc', 'blue') + "\n" + \
-                "\t" + CreateColouredText('For Unix Makefiles, intended use:', 'cyan') + CreateColouredText('-G unix', 'blue') + "\n" + \
-                "\t" + CreateColouredText('Generate Unix Makefiles for Eclipse CDT, intended use:', 'cyan') + CreateColouredText('-G unix-eclipse', 'blue') + "\n" + \
-                "\t" + CreateColouredText('Generates Unix Makefiles for CodeBlocks, intended use:', 'cyan') + CreateColouredText('-G unix-cd', 'blue') + "\n" + \
+        metavar="[generator]",
+        help=CreateColouredText('Used to set the project file generator, options are as follows:', 'magenta') + "\n" + \
+                "\t" + CreateColouredText('-G vs2022 ', 'blue') + CreateColouredText('Generates solution for Visual Studio 17 2022', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G xcode ', 'blue') + CreateColouredText('Generates project files for Xcode', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G ninja ', 'blue') + CreateColouredText('Generates project files using Ninja', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G ninja-mc ', 'blue') + CreateColouredText('For Ninja Multi-Config', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G unix ', 'blue') + CreateColouredText('For Unix Makefiles', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G unix-eclipse ', 'blue') + CreateColouredText('Generate Unix Makefiles for Eclipse CDT', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G unix-cd ', 'blue') + CreateColouredText('Generates Unix Makefiles for CodeBlocks', 'cyan')
     )   
     
     args = parser.parse_args()
