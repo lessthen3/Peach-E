@@ -210,6 +210,6 @@ endif()
 # Set Peach_Editor as the startup project for Visual Studio
 
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
-    set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT Peach_Editor)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Peach_Editor)
     message(STATUS "🔥 Setting Peach_Editor as the default startup project for VS2022")
 endif()
