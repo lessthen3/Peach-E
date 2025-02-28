@@ -9,7 +9,7 @@
  *                         Peach-E is an open-source game engine
 ********************************************************************/
 #define SDL_MAIN_HANDLED
-#include <SDL3/SDL_main.h>;
+#include <SDL3/SDL_main.h>
 
 #include "../../include/Peach-Engine/PeachEngineManager.h"
 
@@ -80,9 +80,9 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
 {
     cout << "Hello World!\n";
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0)
+    if (not SDL_Init(SDL_INIT_VIDEO))
     {
-        PC::LogManager::RenderingLogger().LogAndPrint("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "RenderingManager", "fatal");
+        //PC::LogManager::RenderingLogger().LogAndPrint("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "RenderingManager", "fatal");
         return false;
     }
 

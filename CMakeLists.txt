@@ -7,10 +7,17 @@ project(Peach_Engine VERSION 1.0 DESCRIPTION "Peach Engine" LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-####################################### Conan Setup
+####################################### Conan Toolchain Setup
 
-# Conan toolchain setup
-include (build/build/generators/conan_toolchain.cmake)
+# Try to find `conan_toolchain.cmake` inside the build directory automatically
+file(GLOB_RECURSE CONAN_TOOLCHAIN_FILE "${CMAKE_BINARY_DIR}/**/conan_toolchain.cmake")
+
+if(EXISTS "${CONAN_TOOLCHAIN_FILE}")
+    message(STATUS "Using Conan toolchain: ${CONAN_TOOLCHAIN_FILE}")
+    include(${CONAN_TOOLCHAIN_FILE})
+else()
+    message(FATAL_ERROR "Error: conan_toolchain.cmake not found. Run `conan install` first.")
+endif()
 
 ####################################### Source Files
 
@@ -190,3 +197,19 @@ target_link_libraries(Peach_Editor PUBLIC
     assimp::assimp
     cgltf::cgltf
 )
+
+####################################### Set Startup Project (Visual Studio & Xcode)
+
+# Set Peach_Editor as the default scheme in Xcode
+
+if(CMAKE_GENERATOR STREQUAL "Xcode")
+    set(CMAKE_XCODE_SCHEME_EXECUTABLE Peach_Editor)
+    message(STATUS "🔥 Setting Peach_Editor as the default startup project for Xcode")
+endif()
+
+# Set Peach_Editor as the startup project for Visual Studio
+
+if(CMAKE_GENERATOR MATCHES "Visual Studio")
+    set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT Peach_Editor)
+    message(STATUS "🔥 Setting Peach_Editor as the default startup project for VS2022")
+endif()
