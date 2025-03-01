@@ -7,6 +7,14 @@ project(Peach_Engine VERSION 1.0 DESCRIPTION "Peach Engine" LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+####################################### Check For Multi/Single Configs
+
+# Only set CMAKE_BUILD_TYPE if it's NOT a multi-config generator
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    message(FATAL_ERROR "No build type specified, ending build. CMAKE WILL NOW EXIT")
+endif()
+
+
 ####################################### Conan Toolchain Setup
 
 # Try to find `conan_toolchain.cmake` inside the build directory automatically

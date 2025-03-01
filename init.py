@@ -55,69 +55,77 @@ def run_conan(fp_BuildType: str) -> bool:
 
 def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
+    f_GeneratorMap = {
+        "vs2022": "Visual Studio 17 2022",
+        "xcode": "Xcode",
+        "ninja": "Ninja",
+        "ninja-mc": "Ninja Multi-Config",
+        "unix": "Unix Makefiles",
+        "unix-cd": "CodeBlocks - Unix Makefiles",
+        "unix-eclipse": "Eclipse CDT4 - Unix Makefiles"
+    }
+
+    if fp_Generator not in f_GeneratorMap:
+        print(CreateColouredText("[ERROR]: Invalid Generator Selected, PLEASE PICK A VALID GENERATOR", "red"))
+        return False
+    
+    #Determine if we need `--config`
+    f_IsMultiConfig = fp_Generator in ["vs2022", "xcode", "ninja-mc"]
+
+    f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator]]
+
+    if not f_IsMultiConfig:
+        if fp_BuildType == "both":
+            print(CreateColouredText("[ERROR]: Invalid build type selected: YOU CANNOT USE BOTH WHEN GENERATING FOR A SINGLE CONFIG GENERATOR", "red"))
+            return False
+        else:
+            f_CMakeConfigCommand += ['-DCMAKE_BUILD_TYPE=' + fp_BuildType.capitalize()]
+
+    #Step 1: CMake Project Generation
     try:
-        if fp_Generator == "vs2022":
+        print(CreateColouredText("[INFO]: Running CMake project generation for " + f_GeneratorMap[fp_Generator] +  "...", "green"))
+
+        subprocess.run(
+            f_CMakeConfigCommand,
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+
+    except subprocess.CalledProcessError as err:
+        print(CreateColouredText("[ERROR]: CMake project generation failed!", "red"))
+        print(CreateColouredText(err.stdout.decode(), "yellow"))
+        print(CreateColouredText(err.stderr.decode(), "yellow"))
+        return False
+
+    print(CreateColouredText("[SUCCESS]: CMake project generation completed!", "cyan"))
+
+    #Step 2: Run CMake Build Process
+    if not f_IsMultiConfig:
+        try:
+            print(CreateColouredText("[INFO]: Running CMake single config build for " + fp_BuildType +  "...", "green"))
+
             subprocess.run(
-                ['cmake', '-S', '.', '-B', 'build', '-G', 'Visual Studio 17 2022'],
+                ['cmake', '--build', 'build'],
                 check=True,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
 
-        elif fp_Generator == "ninja":
-            subprocess.run(
-                ['cmake', '-S', '.', '-B', 'build', '-G', 'Ninja'],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-        
-        elif fp_Generator == "ninja mc":
-            subprocess.run(
-                ['cmake', '-S', '.', '-B', 'build', '-G', 'Ninja Multi-Config'],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-        
-        elif fp_Generator == "unix":
-            subprocess.run(
-                ['cmake', '-S', '.', '-B', 'build', '-G', 'Unix Makefiles'],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-        
-        elif fp_Generator == "unix-cd":
-            subprocess.run(
-                ['cmake', '-S', '.', '-B', 'build', '-G', 'CodeBlocks - Unix Makefiles'],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-        
-        elif fp_Generator == "unix-eclipse":
-            subprocess.run(
-                ['cmake', '-S', '.', '-B', 'build', '-G', 'Eclipse CDT4 - Unix Makefiles'],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-        
-        elif fp_Generator == "xcode":
-            subprocess.run(
-                ['cmake', '-S', '.', '-B', 'build', '-G', 'Xcode'],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
-        
-        else:
-            print(CreateColouredText("[ERROR]: Invalid Generator Selected, PICK A VALID GENERATOR", "red"))
+        except subprocess.CalledProcessError as err:
+            print(CreateColouredText("[ERROR]: CMake single config " + fp_BuildType +  " build process failed!", "red"))
+            print(CreateColouredText(err.stdout.decode(), "yellow"))
+            print(CreateColouredText(err.stderr.decode(), "yellow"))
             return False
 
+        print(CreateColouredText("[SUCCESS]: " + fp_BuildType +  " build completed!", "cyan"))
 
-        if( fp_BuildType == "debug" or fp_BuildType == "both" ):
+        return True #return immediately since we don't need to go through the --config commands for single config generators
+
+    if( fp_BuildType == "debug" or fp_BuildType == "both" ):
+        try:
+            print(CreateColouredText("[INFO]: Running CMake build for Debug...", "green"))
+
             subprocess.run(
                 ['cmake', '--build', 'build', '--config', 'Debug'],
                 check=True,
@@ -125,7 +133,18 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
                 stderr=subprocess.PIPE
             )
 
-        if( fp_BuildType == "release" or fp_BuildType == "both" ):
+        except subprocess.CalledProcessError as err:
+            print(CreateColouredText("[ERROR]: CMake debug build process failed!", "red"))
+            print(CreateColouredText(err.stdout.decode(), "yellow"))
+            print(CreateColouredText(err.stderr.decode(), "yellow"))
+            return False
+
+        print(CreateColouredText("[SUCCESS]: Debug build completed!", "cyan"))
+
+    if( fp_BuildType == "release" or fp_BuildType == "both" ):
+        try:
+            print(CreateColouredText("[INFO]: Running CMake build for Release...", "green"))
+
             subprocess.run(
                 ['cmake', '--build', 'build', '--config', 'Release'],
                 check=True,
@@ -133,11 +152,13 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
                 stderr=subprocess.PIPE
             )
 
-    except subprocess.CalledProcessError as err:
-        print(CreateColouredText("[ERROR]: Failed to run CMake:", "red"))
-        print(CreateColouredText(err.stdout.decode(), "yellow"))
-        print(CreateColouredText(err.stderr.decode(), "yellow"))
-        return False
+        except subprocess.CalledProcessError as err:
+            print(CreateColouredText("[ERROR]: CMake release build process failed!", "red"))
+            print(CreateColouredText(err.stdout.decode(), "yellow"))
+            print(CreateColouredText(err.stderr.decode(), "yellow"))
+            return False
+
+        print(CreateColouredText("[SUCCESS]: Release build completed!", "cyan"))
 
     return True
 
