@@ -211,13 +211,14 @@ target_link_libraries(Peach_Editor PUBLIC
 # Set Peach_Editor as the default scheme in Xcode
 
 if(CMAKE_GENERATOR STREQUAL "Xcode")
+    set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
     set(CMAKE_XCODE_SCHEME_EXECUTABLE Peach_Editor)
-    message(STATUS "🔥 Setting Peach_Editor as the default startup project for Xcode")
+    message(STATUS "Setting Peach_Editor as the default startup project for Xcode")
 endif()
 
 # Set Peach_Editor as the startup project for Visual Studio
 
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Peach_Editor)
-    message(STATUS "🔥 Setting Peach_Editor as the default startup project for VS2022")
+    message(STATUS "Setting Peach_Editor as the default startup project for VS2022")
 endif()
