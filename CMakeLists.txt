@@ -101,26 +101,58 @@ target_link_libraries(
 )
 
 ####################################### Static Imports
-add_library(python313 STATIC IMPORTED)
 
-set_target_properties(python313 PROPERTIES
-    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib_winx86/python313.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_winx86"
-)
+if(WIN32 )
+    add_library(python313 STATIC IMPORTED)
 
-add_library(GGPO STATIC IMPORTED)
+    set_target_properties(python313 PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib_winx86/python313.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_winx86"
+    )
 
-set_target_properties(GGPO PROPERTIES
-    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
-)
+    add_library(GGPO STATIC IMPORTED)
 
-add_library(SDL3 STATIC IMPORTED)
+    set_target_properties(GGPO PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
+    )
 
-set_target_properties(SDL3 PROPERTIES
-    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib/SDL3.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
-)
+    add_library(SDL3 STATIC IMPORTED)
+
+    set_target_properties(SDL3 PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_winx86/SDL3.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
+    )
+
+elseif(APPLE)
+    add_library(python313 STATIC IMPORTED)
+
+    set_target_properties(python313 PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib_osxARM64/python313.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_osxARM64"
+    )
+
+    add_library(GGPO STATIC IMPORTED) #THIS IS NOT SUPPORTED ON MAC ATM RIP
+
+    set_target_properties(GGPO PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
+    )
+
+    add_library(SDL3 STATIC IMPORTED)
+
+    set_target_properties(SDL3 PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_osxARM64/SDL3.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
+    )
+
+elseif(UNIX)
+    message(FATAL_ERROR "nothing for unix/linux just yet oof >w<")
+
+else()
+    message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
+
+endif()
 
 # Link Statically Compiled External Libraries
 target_link_libraries(peach PUBLIC
