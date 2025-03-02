@@ -101,11 +101,11 @@ target_link_libraries(
 )
 
 ####################################### Static Imports
-add_library(python312 STATIC IMPORTED)
+add_library(python313 STATIC IMPORTED)
 
-set_target_properties(python312 PROPERTIES
-    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib/python312.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include"
+set_target_properties(python313 PROPERTIES
+    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib_winx86/python313.lib"
+    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_winx86"
 )
 
 add_library(GGPO STATIC IMPORTED)
@@ -124,7 +124,7 @@ set_target_properties(SDL3 PROPERTIES
 
 # Link Statically Compiled External Libraries
 target_link_libraries(peach PUBLIC
-    python312 
+    python313 
     GGPO
     SDL3
 )
