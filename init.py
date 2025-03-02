@@ -162,9 +162,6 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
     return True
 
-def usage_message() -> str:
-    return ""
-
 def main() -> bool:
 
     usage_message = "init.py --[build_type: release, debug or both] -G [desired_generator]"
@@ -280,7 +277,6 @@ if __name__ == "__main__":
         os.system('color') #enable ANSI colour codes
 
     if not main():
-        print(CreateColouredText("nothing was done.", "yellow"))
-
+        print(CreateColouredText("[ERROR]: execution of full build process was unsuccessful", "red"))
 
 #Rawr OwO
