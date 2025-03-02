@@ -21,7 +21,6 @@ namespace PeachCore {
             shared_ptr<Console> fp_Console
         )
     {
-
         //////////////////////////////////////////////
         // Initialize Logger
         //////////////////////////////////////////////
