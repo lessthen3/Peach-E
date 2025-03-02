@@ -101,26 +101,11 @@ target_link_libraries(
 )
 
 ####################################### Static Imports
-
-add_library(box2d STATIC IMPORTED)
-
-set_target_properties(box2d PROPERTIES
-    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/box2d/lib/box2d.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/box2d/include"
-)
-
 add_library(python312 STATIC IMPORTED)
 
 set_target_properties(python312 PROPERTIES
     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib/python312.lib"
     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include"
-)
-
-add_library(libsodium STATIC IMPORTED)
-
-set_target_properties(libsodium PROPERTIES
-    IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/lib/libsodium.lib"
-    INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/include"
 )
 
 add_library(GGPO STATIC IMPORTED)
@@ -139,8 +124,6 @@ set_target_properties(SDL3 PROPERTIES
 
 # Link Statically Compiled External Libraries
 target_link_libraries(peach PUBLIC
-    box2d 
-    libsodium 
     python312 
     GGPO
     SDL3
@@ -155,10 +138,10 @@ find_package(cgal REQUIRED)
 find_package(clipper2 REQUIRED)
 
 find_package(Bullet REQUIRED)
+find_package(box2d REQUIRED)
 
 find_package(pybind11 REQUIRED)
 find_package(sol2 REQUIRED)
-find_package(Angelscript REQUIRED)
 
 find_package(nlohmann_json REQUIRED)
 find_package(cereal REQUIRED)
@@ -172,6 +155,7 @@ find_package(OpenAL REQUIRED)
 find_package(assimp REQUIRED)
 find_package(cgltf REQUIRED)
 
+find_package(libsodium REQUIRED)
 
 # Peach Core
 target_link_libraries(peach PUBLIC
@@ -182,12 +166,12 @@ target_link_libraries(peach PUBLIC
     #geometry manipulation
     CGAL::CGAL
     clipper2::clipper2
-    #3D physics
-    Bullet::Bullet
+    #physics
+    Bullet::Bullet #3D
+    box2d::box2d #2D
     #lang support
     pybind11::pybind11
     sol2::sol2
-    Angelscript::angelscript
     #data handling
     nlohmann_json::nlohmann_json
     cereal::cereal
@@ -197,6 +181,8 @@ target_link_libraries(peach PUBLIC
     GLEW::GLEW
     #audio
     OpenAL::OpenAL
+    #cryptography
+    libsodium::libsodium
 )
 
 # Peach Editor

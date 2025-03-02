@@ -18,11 +18,11 @@ class PeachEBuilder(ConanFile):
 
         # physics
         self.requires("bullet3/3.25")
+        self.requires("box2d/3.0.0")
 
         # language support
         self.requires("pybind11/2.12.0")
         self.requires("sol2/3.3.1")
-        self.requires("angelscript/2.36.1")
 
         # serialization and compression
         self.requires("nlohmann_json/3.11.3")
@@ -39,6 +39,9 @@ class PeachEBuilder(ConanFile):
         # 3D asset importing
         self.requires("assimp/5.4.1")
         self.requires("cgltf/1.13")
+
+        #encryption/decryption
+        self.requires("libsodium/1.0.20")
 
     def generate(self):
         cmake = CMakeDeps(self)

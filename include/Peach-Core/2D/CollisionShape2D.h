@@ -10,7 +10,7 @@
 
 #include "Sensor2D.h"
 
-#include "box2d.h"
+#include <box2d/box2d.h>
 
 using namespace std;
 
@@ -81,7 +81,7 @@ namespace PeachCore {
             CreatePhysicsBody(fp_World, pm_Body2D, fp_Position, fp_IsDynamic);
 
             b2Circle f_Circle;
-            f_Circle.center = static_cast<b2Vec2>( fp_Position.x, fp_Position.y );
+            f_Circle.center = { fp_Position.x, fp_Position.y };
             f_Circle.radius = fp_Radius;
 
             b2CreateCircleShape(pm_Body2D, &CreateShapeDefinition(), &f_Circle);
@@ -102,8 +102,8 @@ namespace PeachCore {
             CreatePhysicsBody(fp_World, pm_Body2D, f_Midpoint, fp_IsDynamic);
 
             b2Capsule f_Capsule;
-            f_Capsule.center1 = static_cast<b2Vec2>( fp_Center1.x, fp_Center1.y );
-            f_Capsule.center2 = static_cast<b2Vec2>( fp_Center2.x, fp_Center2.y );
+            f_Capsule.center1 = {fp_Center1.x, fp_Center1.y};
+            f_Capsule.center2 = { fp_Center2.x, fp_Center2.y };
             f_Capsule.radius = fp_Radius;
 
             b2CreateCapsuleShape(pm_Body2D, &CreateShapeDefinition(), &f_Capsule);
