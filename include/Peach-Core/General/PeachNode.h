@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <nlohmann/json.hpp>
+#include <cereal/cereal.hpp>
 
 #include <string>
 #include <vector>
@@ -30,7 +30,7 @@ namespace PeachCore {
 		virtual void
 			QueueRemoval() = 0; //queues for removal from scene tree at end of frame or whenever is convenient idk
 
-		virtual nlohmann::json 
+		virtual void //nlohmann::json WE'RE USING CEREAL FOR THIS NOW SINCE WE DONT NEED DYNAMIC JSON CREATION JUST SERIALIZATION USING WELL DEFINED STRUCTURES
 			SerializePeachNodeToJSON() = 0;
 
 		bool IsPausable = true;

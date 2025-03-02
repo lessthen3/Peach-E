@@ -17,11 +17,11 @@ namespace PeachCore {
         pm_IsValid = true;
     }
 
-    nlohmann::json 
+    void //nlohmann::json 
         PeachTexture2D::SerializePeachNodeToJSON()
     {
 
-        return nlohmann::json();
+        //return nlohmann::json();
     }
     void
         PeachTexture2D::Initialize()

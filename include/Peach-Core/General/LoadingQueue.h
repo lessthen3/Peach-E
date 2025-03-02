@@ -16,7 +16,7 @@
 #include <variant>
 
 
-#include <nlohmann/json.hpp>
+#include <cereal/cereal.hpp>
 
 using namespace std;
 
@@ -59,8 +59,8 @@ namespace PeachCore {
             <
             //unique_ptr<unsigned const char>, //used for parsins byte info that is supposed to be immutable, mainly for preference not really required -- NOT SURE IF NEEDED OR NOT
             TextureData, //used for parsing raw byte information, mainly for audio at the moment
-            AudioData,
-            unique_ptr<nlohmann::json> //used for parsing JSON metadata if required
+            AudioData
+            //unique_ptr<nlohmann::json> //used for parsing JSON metadata if required WARNING: CHANGING TO JUST CEREAL SINCE WE DESERIALIZE IN CHUNKS AND SERIALIZE IN KNOWN CHUNKS
 
             > ResourceData;
 
@@ -70,8 +70,8 @@ namespace PeachCore {
         LoadedResourcePackage(const string& fp_ID, AudioData& fp_AudioData)
             : PeachObjectID((fp_ID)), ResourceData(move(fp_AudioData)) {}
 
-        LoadedResourcePackage(const string& fp_ID, unique_ptr<nlohmann::json> fp_JSONData)
-            : PeachObjectID((fp_ID)), ResourceData(move(fp_JSONData)) {}
+        //LoadedResourcePackage(const string& fp_ID, unique_ptr<nlohmann::json> fp_JSONData) WARNING: TOOL FOR CEREAL 
+        //    : PeachObjectID((fp_ID)), ResourceData(move(fp_JSONData)) {}
 
         LoadedResourcePackage() = default;
     };

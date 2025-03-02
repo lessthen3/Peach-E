@@ -14,6 +14,7 @@
 
 #include "../General/LoadingQueue.h"
 #include <memory>
+#include <assert.h>
 
 namespace PeachCore {
 

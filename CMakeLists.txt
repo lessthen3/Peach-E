@@ -132,12 +132,12 @@ elseif(APPLE)
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_osxARM64"
     )
 
-    add_library(GGPO STATIC IMPORTED) #THIS IS NOT SUPPORTED ON MAC ATM RIP
+    # add_library(GGPO STATIC IMPORTED) #THIS IS NOT SUPPORTED ON MAC ATM RIP
 
-    set_target_properties(GGPO PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
-    )
+    # set_target_properties(GGPO PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
+    # )
 
     add_library(SDL3 STATIC IMPORTED)
 
@@ -154,12 +154,20 @@ else()
 
 endif()
 
-# Link Statically Compiled External Libraries
-target_link_libraries(peach PUBLIC
+if(WIN32 )
+    # Link Statically Compiled External Libraries
+    target_link_libraries(peach PUBLIC
+        python313 
+        GGPO
+        SDL3
+    )
+else()
+    # Link Statically Compiled External Libraries
+    target_link_libraries(peach PUBLIC
     python313 
-    GGPO
     SDL3
-)
+    )
+endif()
 
 ####################################### Dependency Linking
 
@@ -175,7 +183,6 @@ find_package(box2d REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(sol2 REQUIRED)
 
-find_package(nlohmann_json REQUIRED)
 find_package(cereal REQUIRED)
 find_package(ZLIB REQUIRED)
 
@@ -205,7 +212,6 @@ target_link_libraries(peach PUBLIC
     pybind11::pybind11
     sol2::sol2
     #data handling
-    nlohmann_json::nlohmann_json
     cereal::cereal
     ZLIB::ZLIB
     #opengl

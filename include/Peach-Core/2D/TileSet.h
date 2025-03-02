@@ -50,7 +50,7 @@ namespace PeachCore {
         void
             QueueRemoval();
 
-        nlohmann::json
+        void //nlohmann::json
             SerializePeachNodeToJSON();
 
     //Class Specific Methods

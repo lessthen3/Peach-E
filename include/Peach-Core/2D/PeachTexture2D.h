@@ -94,7 +94,7 @@ namespace PeachCore {
         void 
             CalculateTileUVs();
         
-        nlohmann::json
+        void //nlohmann::json NEEDS TO BE REWRITTED USING CEREAL
             SerializePeachNodeToJSON();
         void
             Initialize();

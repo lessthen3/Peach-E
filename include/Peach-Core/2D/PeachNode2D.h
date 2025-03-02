@@ -32,7 +32,7 @@ namespace PeachCore {
 		virtual void 
 			Draw() = 0;
 
-		virtual nlohmann::json 
+		virtual void //nlohmann::json 
 			SerializePeachNodeToJSON() = 0;
 	};
 }

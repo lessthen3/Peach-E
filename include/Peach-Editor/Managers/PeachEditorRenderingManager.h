@@ -44,8 +44,8 @@ namespace PeachEditor {
 
         variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
             <
-            PC::TextureData, //used for parsing raw byte information, mainly for audio at the moment
-            unique_ptr<nlohmann::json> //used for parsing JSON metadata if required
+            PC::TextureData //used for parsing raw byte information, mainly for audio at the moment
+            //unique_ptr<nlohmann::json> //used for parsing JSON metadata if required WARNING: NEEDS TO BE REWRITTED FOR CEREAL UWU
 
             > DrawableResourceData; //actual data for graphic
 

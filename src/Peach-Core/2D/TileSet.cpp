@@ -63,16 +63,16 @@ namespace PeachCore {
 
     }
 
-    nlohmann::json
+    void //nlohmann::json
         TileSet::SerializePeachNodeToJSON()
     {
-        nlohmann::json f_TileSetJSONData;
+        //nlohmann::json f_TileSetJSONData;
 
 
 
 
 
-        return f_TileSetJSONData;
+        //return f_TileSetJSONData;
     }
 
    
