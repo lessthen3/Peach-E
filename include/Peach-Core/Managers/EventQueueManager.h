@@ -64,7 +64,7 @@ namespace PeachCore {
                     handlersList.end(),
                     [&func](const auto& handler)
                     {
-                        return handler.target<Func>() == func.target<Func>();
+                        //return handler.target<Func>() == func.target<Func>(); NOT SURE WHY THIS IS RETURNING SMTH LMFAO
                     }
                 ), 
                 handlersList.end()
