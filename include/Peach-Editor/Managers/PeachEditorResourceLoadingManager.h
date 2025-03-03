@@ -15,6 +15,8 @@
 #include "../../include/Peach-Core/General/CommandQueue.h"
 #include "../../include/Peach-Core/General/LoadingQueue.h"
 
+#include <physfs.h>
+
 namespace PC = PeachCore;
 
 namespace PeachEditor {

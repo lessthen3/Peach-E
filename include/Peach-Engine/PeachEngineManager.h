@@ -157,26 +157,44 @@ namespace PeachEngine {
         {
             if (not PHYSFS_init(argv0))
             {
-                cerr << "Failed to initialize PhysFS: " << PHYSFS_getLastError() << endl;
+                main_logger->LogAndPrint("Failed to initialize PhysFS: " + (PHYSFS_getLastErrorCode()), "PeachEngineManger", "fatal", "main_thread");
                 return false;
             }
 
-            // Set the writable directory to the current working directory
-            const char* f_BaseDirectory = PHYSFS_getBaseDir();
+            //WARNING: WE ONLY USE THIS FOR DEVELOPMENT, FOR DEPLOYMENT WE NEED THIS DIRECTORY TO BE THE BASE DIR OF THE EXECUTABLE
+            // Get the full path of the executable
+            filesystem::path exePath = filesystem::absolute(argv0);
+            filesystem::path topLevelDir = exePath.parent_path();  // Start from the executable directory
 
-            if (not PHYSFS_setWriteDir(f_BaseDirectory))
+            // Traverse upwards until we find the "Peach-E" directory
+            while (not topLevelDir.empty() && topLevelDir.filename() != "Peach-E") 
             {
-                cerr << "Failed to set write directory: " << PHYSFS_getLastError() << endl;
-                return false;
+                topLevelDir = topLevelDir.parent_path();
             }
 
-            // Add the base directory as a search path
-            if (not PHYSFS_mount(f_BaseDirectory, nullptr, 1))
+            if (topLevelDir.empty()) 
             {
-                cerr << "Failed to set search path: " << PHYSFS_getLastError() << endl;
+                main_logger->LogAndPrint("Failed to find the top-level directory 'Peach-E'!", "PeachEngineManger", "fatal", "main_thread");
                 return false;
             }
 
+            string rootPath = topLevelDir.string();
+
+            // Set the writable directory to the repo root
+            if (not PHYSFS_setWriteDir(rootPath.c_str())) 
+            {
+                main_logger->LogAndPrint("Failed to set write directory: " + PHYSFS_getLastErrorCode(), "PeachEngineManger", "fatal", "main_thread");
+                return false;
+            }
+
+            // Mount the root directory for asset loading
+            if (not PHYSFS_mount(rootPath.c_str(), nullptr, 1))
+            {
+                main_logger->LogAndPrint("Failed to set search path: " + PHYSFS_getLastErrorCode(), "PeachEngineManger", "fatal", "main_thread");
+                return false;
+            }
+
+            main_logger->LogAndPrint("PhysFS initialized at root: " + rootPath, "PeachEngineManger", "debug", "main_thread");
             return true;
         }
 

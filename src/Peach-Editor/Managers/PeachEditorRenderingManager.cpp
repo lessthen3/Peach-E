@@ -74,7 +74,7 @@ namespace PeachEditor {
         if (not pm_MainWindow) 
         {
             rendering_logger->LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager", "fatal", "render_thread");
-            SDL_Quit();
+            SDL_Quit(); //WARNING: NOT SURE IF I DO THIS HERE LMFAO I ALREADY DO IT IN MAIN.CPP ME DONT WANT A HEAP MEMORY VIOLATION THEY HURT MY SOUL
             return false;
         }
 
@@ -98,7 +98,7 @@ namespace PeachEditor {
         if (not pm_MainWindow)
         {
             rendering_logger->LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager", "fatal", "render_thread");
-            SDL_Quit();
+            SDL_Quit(); //WARNING: NOT SURE IF I DO THIS HERE LMFAO I ALREADY DO IT IN MAIN.CPP ME DONT WANT A HEAP MEMORY VIOLATION THEY HURT MY SOUL
             return nullptr;
         }
 
@@ -469,11 +469,13 @@ namespace PeachEditor {
                         // Shaders
                         ////////////////////////////////////////////////
 
+                        string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
+
                         PeachCore::ShaderProgram mf_CatShader = PeachCore::ShaderProgram
                         (
                             "Cat_Shader",
-                            "D:\\Game Development\\Peach-E\\tests\\vert.vs",
-                            "D:\\Game Development\\Peach-E\\tests\\frag.fs",
+                            f_BaseDir + "/tests/vert.vs",
+                            f_BaseDir + "/tests/frag.fs",
                             engine_renderer->rendering_logger.get()
                         );
 
@@ -481,10 +483,11 @@ namespace PeachEditor {
                         // Loading and Registering Texture
                         ////////////////////////////////////////////////
 
+                        string f_TexturePath = f_BaseDir + "/First Texture.png";
                         stbi_set_flip_vertically_on_load(true);
 
                         int width, height, nrChannels;
-                        unsigned char* data = stbi_load("D:\\Game Development\\Peach-E\\First Texture.png", &width, &height, &nrChannels, 0);
+                        unsigned char* data = stbi_load(f_TexturePath.c_str(), &width, &height, &nrChannels, 0);
 
                         GLuint texture = t_GameInstanceRenderer->RegisterTexture("Texture", data, width, height, nrChannels);
 
@@ -978,11 +981,13 @@ namespace PeachEditor {
         // Shaders
         ////////////////////////////////////////////////
 
+        string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
+
         pm_ViewportShader = new PeachCore::ShaderProgram
         (
             "Viewport Shader",
-            "D:\\Game Development\\Peach-E\\shaders\\viewport.vs",
-            "D:\\Game Development\\Peach-E\\shaders\\viewport.fs",
+            f_BaseDir + "/shaders/viewport.vs",
+            f_BaseDir + "/shaders/viewport.fs",
             editor_rendering_logger.get()
         );
 
