@@ -12,11 +12,11 @@
 
 #include <SDL3/SDL_system.h>
 
-#include "../General/ShaderProgram.h"
+#include "../Rendering/ShaderProgram.h"
 
 #include "../2D/PeachCamera2D.h"
 
-#include "stb/stb_image.h"
+#include "../General/stb/stb_image.h"
 
 #include <memory>
 

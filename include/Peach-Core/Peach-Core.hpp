@@ -6,6 +6,7 @@
 #include "__modules__/PeachCore3D.h"
 #include "__modules__/Shader-Graph.h"
 #include "__modules__/General.h"
+#include "__modules__/Rendering.h"
 
 
 //////////////////////////////////////////////

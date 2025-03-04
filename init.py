@@ -38,6 +38,8 @@ def CreateColouredText(fp_SampleText: str, fp_DesiredColour: str) -> str:
 def run_conan(fp_BuildType: str) -> bool:
 
     try:
+        print(CreateColouredText("[INFO]: Running Conan for dependencies setup...", "green"))
+
         subprocess.run(
             ['conan', 'install', '.', '-s', 'build_type=' + fp_BuildType, '-s', 'compiler.cppstd=20', '--output-folder=build', "--build=missing"],
             check=True,
@@ -50,6 +52,8 @@ def run_conan(fp_BuildType: str) -> bool:
         print(CreateColouredText(err.stdout.decode(), "yellow"))
         print(CreateColouredText(err.stderr.decode(), "yellow"))
         return False
+
+    print(CreateColouredText("[SUCCESS]: " + fp_BuildType +  " dependencies are fully handled!", "cyan"))
 
     return True
 

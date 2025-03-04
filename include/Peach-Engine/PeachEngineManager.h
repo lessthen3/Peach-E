@@ -157,10 +157,9 @@ namespace PeachEngine {
         {
             if (not PHYSFS_init(argv0))
             {
-                main_logger->LogAndPrint("Failed to initialize PhysFS: " + (PHYSFS_getLastErrorCode()), "PeachEngineManger", "fatal", "main_thread");
+                main_logger->LogAndPrint("Failed to initialize PhysFS: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", "fatal", "main_thread");
                 return false;
             }
-
             //WARNING: WE ONLY USE THIS FOR DEVELOPMENT, FOR DEPLOYMENT WE NEED THIS DIRECTORY TO BE THE BASE DIR OF THE EXECUTABLE
             // Get the full path of the executable
             filesystem::path exePath = filesystem::absolute(argv0);
@@ -183,14 +182,14 @@ namespace PeachEngine {
             // Set the writable directory to the repo root
             if (not PHYSFS_setWriteDir(rootPath.c_str())) 
             {
-                main_logger->LogAndPrint("Failed to set write directory: " + PHYSFS_getLastErrorCode(), "PeachEngineManger", "fatal", "main_thread");
+                main_logger->LogAndPrint("Failed to set write directory: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", "fatal", "main_thread");
                 return false;
             }
 
             // Mount the root directory for asset loading
             if (not PHYSFS_mount(rootPath.c_str(), nullptr, 1))
             {
-                main_logger->LogAndPrint("Failed to set search path: " + PHYSFS_getLastErrorCode(), "PeachEngineManger", "fatal", "main_thread");
+                main_logger->LogAndPrint("Failed to set search path: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", "fatal", "main_thread");
                 return false;
             }
 

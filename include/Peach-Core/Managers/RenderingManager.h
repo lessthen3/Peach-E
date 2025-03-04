@@ -10,11 +10,11 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
-#include "../General/PeachRenderer.h"
+#include "../Rendering/PeachRenderer.h"
 #include "../2D/PeachTexture2D.h"
 
 #include "ResourceLoadingManager.h"
-#include "../General/ShaderProgram.h"
+#include "../Rendering/ShaderProgram.h"
 #include "../General/CommandQueue.h"
 #include "../General/LoadingQueue.h"
 
