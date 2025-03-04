@@ -3,7 +3,7 @@ Hey! This is a game engine that you are free to do whatever with!
 
 Peach-E is an open-source game engine licensed under the permissive MIT License. 
 
-Currently you can target Windows, Linux, and MacOS.
+Currently you can target Windows and OSX.
 
 ## Building Peach-E From Source
 
@@ -13,11 +13,11 @@ If you want to build Peach-E for yourself:
 
 1. Clone the repo
 
-2. Run: __python init.py --debug or --release or --both__ in your terminal and your done!
+2. Run: __python init.py --debug or --release or --both -G [desired_generator]__ in your terminal and your done!
 
 __Note:__ Fuck you
 
-## Conan Profile Settings
+## Conan Profile Settings Successfully Tested
 
 ```ini
 [settings]
@@ -28,6 +28,17 @@ compiler.cppstd=20
 compiler.runtime=dynamic
 compiler.version=193
 os=Windows
+```
+
+```ini
+​​[settings]
+arch=armv8
+build_type=Release
+compiler=apple-clang
+compiler.cppstd=20
+compiler.libcxx=libc++
+compiler.version=16
+os=Macos
 ```
 
 ## Resources:

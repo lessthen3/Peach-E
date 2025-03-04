@@ -75,24 +75,24 @@ namespace PeachEngine {
         bool //WIP IM NOT SURE IF INITIALIZE OPENGL SHOULD BE HERE OR ANOTHER METHOD WHATEVER
             InitializePeachEngine
             (
-                const char* fp_ArgVector[], 
+                const string& fp_RootPath,
                 const vector<string>& fp_ListOfPluginsToLoad,
                 const string& fp_RenderingBackend
             )
         {
             main_logger = make_unique<PC::LogManager>();
-            main_logger->Initialize("..\\logs", "MainLogger", peach_engine_console.GetConsoleLogger());
+            main_logger->Initialize(fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger());
             main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", "debug", "main_thread");
 
             LoadGameStartupConfigsFromJSON();
 
-            if (not InitalizeManagers())
+            if (not InitalizeManagers(fp_RootPath))
             {
                 main_logger->LogAndPrint("Failed to initialize Peach Engine managers, ending engine program execution immediately", "PeachEngineManager", "fatal", "main_thread");
                 return false;
             }
 
-            if (not InitializePhysFS(fp_ArgVector[0]))
+            if (not InitializePhysFS(fp_RootPath.c_str()))
             {
                 main_logger->LogAndPrint("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "PeachEngineManager", "fatal", "main_thread");
                 return false;
@@ -128,15 +128,17 @@ namespace PeachEngine {
     //////////////////////////////////////////////
     private:
         bool
-            InitalizeManagers()
+            InitalizeManagers(const string& fp_RootPath)
         {
-            PeachCore::PhysicsManager2D::PhysicsWorld().Initialize("..\\logs", peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
-            PeachCore::PluginManager::ManagePlugins().Initialize("..\\logs", peach_engine_console.GetConsoleLogger());
-            PeachCore::AudioManager::AudioPlayer().Initialize("..\\logs", peach_engine_console.GetConsoleLogger());
-            PeachCore::RenderingManager::Renderer().Initialize("..\\logs", peach_engine_console.GetConsoleLogger());
-            PeachCore::ResourceLoadingManager::ResourceLoader().Initialize("..\\logs", peach_engine_console.GetConsoleLogger());
+            const string f_LogDir = fp_RootPath + "/logs";
 
-            //PeachCore::LogManager::NetworkLogger().Initialize("..\\logs", "NetworkLogger");
+            PeachCore::PhysicsManager2D::PhysicsWorld().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
+            PeachCore::PluginManager::ManagePlugins().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
+            PeachCore::AudioManager::AudioPlayer().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
+            PeachCore::RenderingManager::Renderer().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
+            PeachCore::ResourceLoadingManager::ResourceLoader().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
+
+            //PeachCore::LogManager::NetworkLogger().Initialize(f_LogDir, "NetworkLogger");
 
             //PeachCore::LogManager::NetworkLogger().LogAndPrint("NetworkLogger successfully initialized", "Peach-E", "debug");
 
@@ -153,47 +155,29 @@ namespace PeachEngine {
         // Setting Up and Setting Output Directory
         //////////////////////////////////////////////
         bool
-            InitializePhysFS(const char* argv0)
+            InitializePhysFS(const char* fp_RootPath)
         {
-            if (not PHYSFS_init(argv0))
+            if (not PHYSFS_init(fp_RootPath))
             {
                 main_logger->LogAndPrint("Failed to initialize PhysFS: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", "fatal", "main_thread");
                 return false;
             }
-            //WARNING: WE ONLY USE THIS FOR DEVELOPMENT, FOR DEPLOYMENT WE NEED THIS DIRECTORY TO BE THE BASE DIR OF THE EXECUTABLE
-            // Get the full path of the executable
-            filesystem::path exePath = filesystem::absolute(argv0);
-            filesystem::path topLevelDir = exePath.parent_path();  // Start from the executable directory
-
-            // Traverse upwards until we find the "Peach-E" directory
-            while (not topLevelDir.empty() && topLevelDir.filename() != "Peach-E") 
-            {
-                topLevelDir = topLevelDir.parent_path();
-            }
-
-            if (topLevelDir.empty()) 
-            {
-                main_logger->LogAndPrint("Failed to find the top-level directory 'Peach-E'!", "PeachEngineManger", "fatal", "main_thread");
-                return false;
-            }
-
-            string rootPath = topLevelDir.string();
 
             // Set the writable directory to the repo root
-            if (not PHYSFS_setWriteDir(rootPath.c_str())) 
+            if (not PHYSFS_setWriteDir(fp_RootPath))
             {
                 main_logger->LogAndPrint("Failed to set write directory: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", "fatal", "main_thread");
                 return false;
             }
 
             // Mount the root directory for asset loading
-            if (not PHYSFS_mount(rootPath.c_str(), nullptr, 1))
+            if (not PHYSFS_mount(fp_RootPath, nullptr, 1))
             {
                 main_logger->LogAndPrint("Failed to set search path: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", "fatal", "main_thread");
                 return false;
             }
 
-            main_logger->LogAndPrint("PhysFS initialized at root: " + rootPath, "PeachEngineManger", "debug", "main_thread");
+            main_logger->LogAndPrint("PhysFS initialized at root: " + static_cast<string>(fp_RootPath), "PeachEngineManger", "debug", "main_thread");
             return true;
         }
 
