@@ -98,10 +98,15 @@ namespace PeachCore
             ////Set Core Profile for OpenGL Context whatever the fuck that means
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
+#if defined(_WIN32) || defined(_WIN64) || defined(__linux__) //Using this in place for now since apple and opengl are kinda janky
             //// Set OpenGL version (e.g., OpenGL 3.3 core profile)
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-
+#elif defined(__APPLE__) // need core profile 3 but even then still kinda doesnt work because apple idk whatever we write metal backend
+            //// Set OpenGL version (e.g., OpenGL 3.3 core profile)
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+#endif
             // Create an OpenGL context associated with the window
             pm_OpenGLContext = SDL_GL_CreateContext(pm_MainWindow);
 
