@@ -87,7 +87,7 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
         vector<string>
             mf_ListOfUnixPluginsToLoad =
         {
-        }
+        };
         if (mf_ListOfUnixPluginsToLoad.size() > 0)
         {
             mf_ListOfPluginsToLoad.insert(mf_ListOfPluginsToLoad.end(), mf_ListOfUnixPluginsToLoad.begin(), mf_ListOfUnixPluginsToLoad.end());

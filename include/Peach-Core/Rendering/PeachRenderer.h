@@ -55,13 +55,13 @@ namespace PeachCore
 
         ~PeachRenderer()
         {
+            SDL_GL_DestroyContext(pm_OpenGLContext);
+
             if (pm_MainWindow) //RenderingManager handles bookeeping and creation, after though each PeachRenderer takes exclusive control over its SDL window
             {
                 SDL_DestroyWindow(pm_MainWindow);
                 pm_MainWindow = nullptr;
             }
-
-            SDL_GL_DestroyContext(pm_OpenGLContext);
 
             pm_ListOfScenePeachCameras2D.clear();
             pm_ShaderPrograms.clear();
@@ -109,6 +109,7 @@ namespace PeachCore
 #endif
             // Create an OpenGL context associated with the window
             pm_OpenGLContext = SDL_GL_CreateContext(pm_MainWindow);
+            SDL_GL_MakeCurrent(pm_MainWindow, pm_OpenGLContext);
 
             if (not pm_OpenGLContext)
             {
