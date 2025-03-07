@@ -1,19 +1,21 @@
+####################################### Enforce CMake Version
+
 cmake_minimum_required(VERSION 3.20)
 
-# Project definition
+####################################### Project definition
+
 project(Peach_Engine VERSION 1.0 DESCRIPTION "Peach Engine" LANGUAGES CXX)
 
-# Enforcing C++20 standard
+####################################### Enforcing C++20 standard
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-####################################### Check For Multi/Single Configs
+####################################### Check For No Config Set
 
-# Only set CMAKE_BUILD_TYPE if it's NOT a multi-config generator
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     message(FATAL_ERROR "No build type specified, ending build. CMAKE WILL NOW EXIT")
 endif()
-
 
 ####################################### Conan Toolchain Setup
 
@@ -27,9 +29,7 @@ else()
     message(FATAL_ERROR "Error: conan_toolchain.cmake not found. Run `conan install` first.")
 endif()
 
-####################################### Source Files
-
-# Automatically find all the source files in the source directory
+####################################### Find All Source Files
 
 # Peach Core
 file(
