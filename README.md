@@ -5,6 +5,9 @@ Peach-E is an open-source game engine licensed under the permissive MIT License.
 
 Currently you can target Windows and OSX.
 
+### PEACH-E IS STILL IN EARLY ALPHA AND IS A WORK IN PROGRESS AND STILL REQUIRES EXTENSIVE TESTING 
+### WORK IS BEING DONE TO ADD FEATURES CONSTANTLY AND THE API IS SUBJECT TO BREAKING CHANGES AT ANY MOMENT
+
 ## Building Peach-E From Source
 
 If you want to build Peach-E for yourself:

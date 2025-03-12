@@ -14,7 +14,6 @@
 #define NK_SDL3_GL3_IMPLEMENTATION
 #define NK_IMPLEMENTATION
 
-
 #include <pybind11/pybind11.h>
 
 #include "../../include/Peach-Editor/Managers/PeachEditorManager.h"
@@ -23,9 +22,9 @@
 #include "../../../include/Peach-Core/General/stb/stb_image.h"
 
 using namespace std;
+
 namespace PED = PeachEditor;
 namespace PEN = PeachEngine;
-
 namespace PC = PeachCore;
 
 constexpr int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
@@ -162,8 +161,6 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
 
     auto peach_renderer = editor_renderer->GetPeachRenderer();
     auto editor_viewport = editor_renderer->GetViewport();
-
-    int mf_CurrentWindowWidth, mf_CurrentWindowHeight;
 
     while(mf_IsEditorOpen)
     {

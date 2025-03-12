@@ -7,33 +7,22 @@ def CreateColouredText(fp_SampleText: str, fp_DesiredColour: str) -> str:
 
     fp_DesiredColour = fp_DesiredColour.lower()
 
-    if (fp_DesiredColour == "black"):
-        return '\033[30m' + fp_SampleText + '\033[0m'
-    
-    elif (fp_DesiredColour == "red"):
-        return '\033[31m' + fp_SampleText + '\033[0m'
-    
-    elif (fp_DesiredColour == "green"):
-        return '\033[32m' + fp_SampleText + '\033[0m'
-    
-    elif (fp_DesiredColour == "yellow"):
-        return "\033[33m" + fp_SampleText + '\033[0m'
-    
-    elif (fp_DesiredColour == "blue"):
-        return "\033[34m" + fp_SampleText + '\033[0m'
-    
-    elif (fp_DesiredColour == "magenta"):
-        return "\033[35m" + fp_SampleText + '\033[0m'
-    
-    elif (fp_DesiredColour == "cyan"):
-        return "\033[36m" + fp_SampleText + '\033[0m'
-    
-    elif (fp_DesiredColour == "white"):
-        return "\033[37m" + fp_SampleText + '\033[0m'
-    
-    else:
+    f_ListOfColours = {
+        "black": '\033[30m', "red": '\033[31m', "green": '\033[32m',
+        "yellow": '\033[33m', "blue": '\033[34m', "magenta": '\033[35m',
+        "cyan": '\033[36m', "white": '\033[37m',
+
+        "bright black": '\033[90m', "bright red": '\033[91m', "bright green": '\033[92m',
+        "bright yellow": '\033[93m', "bright blue": '\033[94m', "bright magenta": '\033[95m',
+        "bright cyan": '\033[96m', "bright white": '\033[97m'
+    }
+
+    if fp_DesiredColour not in f_ListOfColours:
         print(CreateColouredText("[Warning]: no valid input detected for CreateColouredText, returned original text in all lower-case", "yellow"))
         return fp_SampleText
+    
+    else:
+        return f"{f_ListOfColours.get(fp_DesiredColour, '')}{fp_SampleText}\033[0m"
     
 def run_conan(fp_BuildType: str) -> bool:
 
@@ -48,12 +37,12 @@ def run_conan(fp_BuildType: str) -> bool:
         )
 
     except subprocess.CalledProcessError as err:
-        print(CreateColouredText("[ERROR]: Failed to run Conan:", "red"))
+        print(CreateColouredText(f"[ERROR]: Conan wasn't able to complete getting/building dependencies for {fp_BuildType}, stopping build immediately", "red"))
         print(CreateColouredText(err.stdout.decode(), "yellow"))
         print(CreateColouredText(err.stderr.decode(), "yellow"))
         return False
 
-    print(CreateColouredText("[SUCCESS]: " + fp_BuildType +  " dependencies are fully handled!", "cyan"))
+    print(CreateColouredText(f"[SUCCESS]: Conan setup and dependencies installation successfully completed for {fp_BuildType}", "cyan"))
 
     return True
 
@@ -61,12 +50,23 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
     f_GeneratorMap = {
         "vs2022": "Visual Studio 17 2022",
+        "vs2019": "Visual Studio 16 2019",
+        "vs2017": "Visual Studio 15 2017",
+        "vs2015": "Visual Studio 14 2015",
+
         "xcode": "Xcode",
-        "ninja": "Ninja",
+
+        "ninja": "Ninja", #everything under here is untested so uh goodluck w that uwu
         "ninja-mc": "Ninja Multi-Config",
+
         "unix": "Unix Makefiles",
-        "unix-cd": "CodeBlocks - Unix Makefiles",
-        "unix-eclipse": "Eclipse CDT4 - Unix Makefiles"
+        "unix-cb": "CodeBlocks - Unix Makefiles",
+        "unix-eclipse": "Eclipse CDT4 - Unix Makefiles",
+
+        "mingw": "MinGW Makefiles",
+        "msys": "MSYS Makefiles",
+        "nmake": "NMake Makefiles",
+        "nmake-jom": "NMake Makefiles JOM"
     }
 
     if fp_Generator not in f_GeneratorMap:
@@ -74,7 +74,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
         return False
     
     #Determine if we need `--config`
-    f_IsMultiConfig = fp_Generator in ["vs2022", "xcode", "ninja-mc"]
+    f_IsMultiConfig = fp_Generator in ["vs2022", "vs2019", "vs2017", "vs2015", "xcode", "ninja-mc"]
 
     f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator]]
 
@@ -164,14 +164,16 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
         print(CreateColouredText("[SUCCESS]: Release build completed!", "cyan"))
 
+    print(CreateColouredText("[INFO]: Your CMake project should be good to go!", "green"))
+
     return True
 
 def main() -> bool:
 
-    usage_message = "init.py --[build_type: release, debug or both] -G [desired_generator]"
+    usage_message = CreateColouredText("init.py ", 'bright magenta') + CreateColouredText("--[build_type: release, debug or both] ", "bright blue") + CreateColouredText("-G [desired_generator]", "blue")
 
     parser = argparse.ArgumentParser(
-        description=CreateColouredText('Used for Building Peach-E from Source', 'magenta'), 
+        description=CreateColouredText('Used for Building Peach-E from Source', 'bright green'), 
         usage=usage_message, 
         add_help=True,
         formatter_class=argparse.RawTextHelpFormatter
@@ -180,38 +182,44 @@ def main() -> bool:
     parser.add_argument(
         '--release', 
         action='store_true', 
-        help=CreateColouredText('Used for a release build', 'magenta')
+        help=CreateColouredText('Used for a release build', 'bright magenta')
     )
 
     parser.add_argument(
         '--debug', 
         action='store_true', 
-        help=CreateColouredText('Used for a debug build', 'magenta')
+        help=CreateColouredText('Used for a debug build', 'bright magenta')
     )
 
     parser.add_argument(
         '--both', 
         action='store_true', 
-        help=CreateColouredText('Used to build both a debug and release build', 'magenta')
+        help=CreateColouredText('Used to build both a debug and release build', 'bright magenta')
     )
 
     parser.add_argument(
         '-G', 
         nargs=1,
         metavar="[generator]",
-        help=CreateColouredText('Used to set the project file generator, options are as follows:', 'magenta') + "\n" + \
-                "\t" + CreateColouredText('-G vs2022 ', 'blue') + CreateColouredText('Generates solution for Visual Studio 17 2022', 'cyan') + "\n" + \
+        help=CreateColouredText('Used to set the project file generator, options are as follows:', 'bright magenta') + "\n" + \
+                "\t" + CreateColouredText('-G vs2015 --> vs2022 ', 'blue') + CreateColouredText('Generates solution for Visual Studio 2015 - 2022', 'cyan') + "\n" + \
+                
                 "\t" + CreateColouredText('-G xcode ', 'blue') + CreateColouredText('Generates project files for Xcode', 'cyan') + "\n" + \
+                
                 "\t" + CreateColouredText('-G ninja ', 'blue') + CreateColouredText('Generates project files using Ninja', 'cyan') + "\n" + \
                 "\t" + CreateColouredText('-G ninja-mc ', 'blue') + CreateColouredText('For Ninja Multi-Config', 'cyan') + "\n" + \
+                
                 "\t" + CreateColouredText('-G unix ', 'blue') + CreateColouredText('For Unix Makefiles', 'cyan') + "\n" + \
                 "\t" + CreateColouredText('-G unix-eclipse ', 'blue') + CreateColouredText('Generate Unix Makefiles for Eclipse CDT', 'cyan') + "\n" + \
-                "\t" + CreateColouredText('-G unix-cd ', 'blue') + CreateColouredText('Generates Unix Makefiles for CodeBlocks', 'cyan')
+                "\t" + CreateColouredText('-G unix-cb ', 'blue') + CreateColouredText('Generates Unix Makefiles for CodeBlocks', 'cyan') + "\n" + \
+
+                "\t" + CreateColouredText('-G mingw ', 'blue') + CreateColouredText('Generates MinGW Makefiles', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G msys ', 'blue') + CreateColouredText('Generates MSYS Makefiles', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G nmake ', 'blue') + CreateColouredText('Generates NMake Makefiles', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G nmake-jom ', 'blue') + CreateColouredText('Generates JOM Makefiles', 'cyan')
     )   
     
     args = parser.parse_args()
-
-    f_IsSetupSuccessful = False
 
     if(not args.debug and not args.release and not args.both):
         print(CreateColouredText("[ERROR]: No valid build type input detected, use -h or --help if you're unfamiliar", "red"))
@@ -225,51 +233,30 @@ def main() -> bool:
 
     if(args.debug):
 
-        if run_conan("Debug"):
-            print(CreateColouredText("Conan setup and dependencies installation successfully completed for debug", "green"))
-        else:
-            print(CreateColouredText("[ERROR]: Conan wasn't able to complete getting/building dependencies for debug, stopping build immediately", "red"))
+        if not run_conan("Debug"):
             return False
 
-        f_IsSetupSuccessful = run_cmake("debug", f_DesiredGenerator)
-
-        if f_IsSetupSuccessful:
-            print(CreateColouredText("CMakeLists.txt succesfully read and compiled for debug, your CMake project should be good to go!", "green"))
+        if not run_cmake("debug", f_DesiredGenerator):
+            return False
         
     elif(args.release):
 
-        if run_conan("Release"):   # >w>
-            print(CreateColouredText("Conan setup and dependencies installation successfully completed for release", "green"))
-        else:
-            print(CreateColouredText("[ERROR]: Conan wasn't able to complete getting/building dependencies for release, stopping build immediately", "red"))
+        if not run_conan("Release"): # >w>
             return False
 
-        f_IsSetupSuccessful = run_cmake("release", f_DesiredGenerator)
-
-        if f_IsSetupSuccessful:
-            print(CreateColouredText("CMakeLists.txt succesfully read and compiled for release, your CMake project should be good to go!", "green"))
+        if not run_cmake("release", f_DesiredGenerator):
+            return False
 
     elif(args.both):
 
-        if run_conan("Debug"):
-            print(CreateColouredText("Conan setup and dependencies installation successfully completed for debug", "green"))
-        else:
-            print(CreateColouredText("[ERROR]: Conan wasn't able to complete getting/building dependencies for debug, stopping build immediately", "red"))
+        if not run_conan("Debug"):
             return False
 
-        if run_conan("Release"):
-            print(CreateColouredText("Conan setup and dependencies installation successfully completed for release", "green"))
-        else:
-            print(CreateColouredText("[ERROR]: Conan wasn't able to complete getting/building dependencies for release, stopping build immediately", "red"))
+        if not run_conan("Release"):
             return False
-
-        f_IsSetupSuccessful = run_cmake("both", f_DesiredGenerator)
         
-        if f_IsSetupSuccessful:
-            print(CreateColouredText("CMakeLists.txt succesfully read and compiled for debug and release, your CMake project should be good to go!", "green"))
-
-    if not f_IsSetupSuccessful:
-        return False
+        if not run_cmake("both", f_DesiredGenerator):
+            return False
 
     print(CreateColouredText("done!", "magenta"))
     return True
