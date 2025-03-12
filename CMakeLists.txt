@@ -93,10 +93,8 @@ add_executable(
     ${PEACH_EDITOR_SOURCES}
 )
 
-# Link Peach Editor
-target_link_libraries(
-    Peach_Editor 
-    PRIVATE 
+# Link Peach Core to Peach_Editor
+target_link_libraries(Peach_Editor PRIVATE 
     peach
 )
 
@@ -122,6 +120,43 @@ if(WIN32 )
     set_target_properties(SDL3 PROPERTIES
         IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_winx86/SDL3.lib"
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
+    )
+
+    ############ Vulkan Specific Imports
+
+    add_library(vulkan STATIC IMPORTED)
+
+    set_target_properties(vulkan PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/vulkan-1.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/vulkan"
+    )
+
+    add_library(shaderC STATIC IMPORTED)
+
+    set_target_properties(shaderC PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/shaderc.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
+    )
+
+    add_library(volk STATIC IMPORTED)
+
+    set_target_properties(volk PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/volk.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
+    )
+
+    add_library(SPIRV_Tools STATIC IMPORTED)
+
+    set_target_properties(SPIRV_Tools PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/SPIRV-Tools.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    )
+
+    add_library(SPIRV_Cross STATIC IMPORTED)
+
+    set_target_properties(SPIRV_Cross PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/spirv-cross-cpp.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
 elseif(APPLE)
@@ -160,6 +195,9 @@ if(WIN32 )
         python313 
         GGPO
         SDL3
+        vulkan
+        volk
+        SPIRV_Cross
     )
 else()
     # Link Statically Compiled External Libraries
@@ -228,6 +266,8 @@ target_link_libraries(Peach_Editor PUBLIC
     #asset importing
     assimp::assimp
     cgltf::cgltf
+    SPIRV_Tools
+    shaderC
 )
 
 ####################################### Set Startup Project (Visual Studio & Xcode)
