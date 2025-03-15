@@ -81,6 +81,8 @@ namespace PeachCore {
     ////////////////////////////////////////////////
     private:
         PhysicsManager2D() = default;
+        PhysicsManager2D(const PhysicsManager2D&) = delete;
+        PhysicsManager2D& operator=(const PhysicsManager2D&) = delete;
 
     ////////////////////////////////////////////////
     // Private Members
