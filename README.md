@@ -16,9 +16,9 @@ If you want to build Peach-E for yourself:
 
 1. Clone the repo
 
-2. Run: __python init.py --debug or --release or --both -G [desired_generator]__ in your terminal and your done!
+2. Run: __python init.py [--debug or --release or --both] -G [desired_generator]__ in your terminal and your done!
 
-__Note:__ Fuck you
+__Note:__ The build output will be generated in __/build/(Debug or Release)__ as an executable for Peach_Editor and Peach_Engine and a static lib for Peach_Core
 
 ## Conan Profile Settings Successfully Tested
 
@@ -34,7 +34,7 @@ os=Windows
 ```
 
 ```ini
-​​[settings]
+[settings]
 arch=armv8
 build_type=Release
 compiler=apple-clang
