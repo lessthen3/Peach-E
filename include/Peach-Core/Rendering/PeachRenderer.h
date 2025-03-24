@@ -8,7 +8,7 @@
 #define NK_INCLUDE_FONT_BAKING
 #define NK_INCLUDE_DEFAULT_FONT
 
-#include "nuklear_impl_opengl3.h"
+#include "nuklear/nuklear_impl_opengl3.h"
 
 #include <SDL3/SDL_system.h>
 
