@@ -29,7 +29,9 @@ The engine still has memory leaks and weird jank in core systems, and they just 
 Bitching aside—yeah, all these engines contributed in one way or another to the creation of Peach-E. However Godot was the straw that broke the camel's back grumble grumble. 
 
 My goal with Peach-E is simple:
+
 👉 Make a game engine that doesn’t feel awful to use
+
 👉 Doesn’t explode when you breathe on it wrong
 
 That's it. Plain and simple.
