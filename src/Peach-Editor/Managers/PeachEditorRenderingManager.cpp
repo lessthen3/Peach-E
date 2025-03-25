@@ -48,69 +48,6 @@ namespace PeachEditor {
         return true;
     }
 
-    bool 
-        PeachEditorRenderingManager::CreateMainSDLWindow
-        (
-            const char* fp_WindowTitle, 
-            const uint32_t fp_WindowWidth,
-            const uint32_t fp_WindowHeight
-        )
-    {
-        if (not SDL_Init(SDL_INIT_VIDEO))
-        {
-            rendering_logger->LogAndPrint("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager", "fatal", "render_thread");
-            return false;
-        }
-
-        pm_MainWindow = 
-            SDL_CreateWindow
-        (
-            fp_WindowTitle,
-            fp_WindowWidth, 
-            fp_WindowHeight,
-            SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
-        );
-
-        if (not pm_MainWindow) 
-        {
-            rendering_logger->LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "PeachEditorRenderingManager", "fatal", "render_thread");
-            SDL_Quit(); //WARNING: NOT SURE IF I DO THIS HERE LMFAO I ALREADY DO IT IN MAIN.CPP ME DONT WANT A HEAP MEMORY VIOLATION THEY HURT MY SOUL
-            return false;
-        }
-
-        return true;
-    }
-
-    SDL_Window*
-        PeachEditorRenderingManager::CreateSDLWindow
-        (
-            const char* fp_WindowTitle,
-            const unsigned int fp_WindowWidth,
-            const unsigned int fp_WindowHeight
-        )
-    {
-        if (not pm_IsRenderingInitialized)
-        {
-            rendering_logger->LogAndPrint("Please initialize RenderingManager before trying to create a window!", "RenderingManager", "warn", "render_thread");
-            return nullptr;
-        }
-
-        if (not pm_MainWindow)
-        {
-            rendering_logger->LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager", "fatal", "render_thread");
-            SDL_Quit(); //WARNING: NOT SURE IF I DO THIS HERE LMFAO I ALREADY DO IT IN MAIN.CPP ME DONT WANT A HEAP MEMORY VIOLATION THEY HURT MY SOUL
-            return nullptr;
-        }
-
-        return SDL_CreateWindow
-        (
-            fp_WindowTitle,
-            fp_WindowWidth,
-            fp_WindowHeight,
-            SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
-        );
-    }
-
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
     shared_ptr<PeachCore::CommandQueue>
         PeachEditorRenderingManager::InitializeQueues()
@@ -177,7 +114,9 @@ namespace PeachEditor {
         struct nk_font_atlas* mf_FontAtlas;
         nk_sdl_font_stash_begin(&mf_FontAtlas);
 
-        struct nk_font* mf_ComicSans = nk_font_atlas_add_from_file(mf_FontAtlas, "D:\\Game Development\\Peach-E\\fonts\\ComicSansMS.ttf", 18, 0);
+        string f_DesiredFontDirectory = static_cast<string>(PHYSFS_getWriteDir()) + "/fonts/ComicSansMS.ttf";
+
+        struct nk_font* mf_ComicSans = nk_font_atlas_add_from_file(mf_FontAtlas, f_DesiredFontDirectory.c_str(), 18, 0);
 
         nk_sdl_font_stash_end();
 
@@ -430,9 +369,13 @@ namespace PeachEditor {
                 if (nk_menu_item_label(pm_NuklearCtx, "Run Peach-E Project", NK_TEXT_LEFT) and not m_IsSceneCurrentlyRunning)
                 {
 
-                    pm_GameInstanceWindow = CreateSDLWindow("Peach Game", 800, 600);
+                    if (not PeachCore::RenderingManager::Renderer().CreateSDLWindow(&pm_GameInstanceWindow, PeachCore::RendererType::OpenGL, "Peach Game", 800, 600))
+                    {
+                        //idk do smth idc rn
+                    }
 
                     // Run the game in a new window
+                    //THIS IS NOT THREAD SAFE IDK WHY I DID THIS LMFAO
                     thread T_CurrentSceneRunnerThread([]()
                     {
                         auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
@@ -468,14 +411,15 @@ namespace PeachEditor {
                         ////////////////////////////////////////////////
                         // Shaders
                         ////////////////////////////////////////////////
-
+                        
+                        //XXX: NEED TO NUKE THIS NOT THREAD SAFE ONLY USED HERE FOR NOW SINCE EVERYTHING RUNS ON A SINGLE THREAD ATM
                         string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
 
                         PeachCore::ShaderProgram mf_CatShader = PeachCore::ShaderProgram
                         (
                             "Cat_Shader",
-                            f_BaseDir + "/tests/vert.vs",
-                            f_BaseDir + "/tests/frag.fs",
+                            f_BaseDir + "/shaders/vert.vs",
+                            f_BaseDir + "/shaders/frag.fs",
                             engine_renderer->rendering_logger.get()
                         );
 
@@ -526,6 +470,7 @@ namespace PeachEditor {
                         //this used to create a bug but doesnt anymore for some reason lmfao
                         engine_renderer->DestroyPeachRenderer(); //IMPORTANT THIS BREAKS THE PROGRAM ITS A THREADING BUG
                         //WE BEED TO SYNCHRONIZE THREADS, CLEANUP RESOURCES IN APPROPRIATE ORDER THEN EXIT MAIN FUNCTION OWO
+                        editor_renderer->SetGameInstanceWindow(nullptr);
                     });
 
                     T_CurrentSceneRunnerThread.detach();
@@ -895,7 +840,7 @@ namespace PeachEditor {
         return pm_FrameRateLimit;
     }
 
-    SDL_Window*
+    SDL_Window*&
         PeachEditorRenderingManager::GetMainWindow()
     {
         return pm_MainWindow;

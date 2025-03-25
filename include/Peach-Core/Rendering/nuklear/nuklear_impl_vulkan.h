@@ -247,11 +247,13 @@ unsigned char nuklearshaders_nuklear_frag_spv[] = {
 };
 unsigned int nuklearshaders_nuklear_frag_spv_len = 860;
 
+#include <Rendering/nuklear/nuklear.h>
+#include <vulkan_core.h>
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
 #include <SDL3/SDL.h>
-#include <nuklear.h>
+
 
 enum nk_sdl_init_state { NK_SDL_DEFAULT = 0 };
 

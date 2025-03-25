@@ -128,7 +128,7 @@ namespace PeachCore
         }
 
         void
-            SetSDLWindow(SDL_Window* fp_SDLWindow)
+            SetSDLWindow(SDL_Window*& fp_SDLWindow)
         {
             pm_MainWindow = fp_SDLWindow;
         }
@@ -391,7 +391,7 @@ namespace PeachCore
             return &pm_ShaderPrograms.at(fp_Name);
         }
 
-        SDL_Window*
+        SDL_Window*&
             GetMainWindow()
         {
             return pm_MainWindow;

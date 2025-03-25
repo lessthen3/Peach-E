@@ -51,28 +51,60 @@ namespace PeachCore {
         return true;
     }
 
-    SDL_Window*
+    bool
         RenderingManager::CreateSDLWindow
         (
-            const char* fp_WindowTitle,
+            SDL_Window** fp_SDLWindow,
+            const RendererType fp_RenderingBackend,
+            const string& fp_WindowTitle,
             const unsigned int fp_WindowWidth,
             const unsigned int fp_WindowHeight
         )
         const
     {
-        if (not pm_IsRenderingInitialized)
+        //if (not pm_IsRenderingInitialized)
+        //{
+        //    rendering_logger->LogAndPrint("Please initialize RenderingManager before trying to create a window!", "RenderingManager", "warn", "render_thread");
+        //    return nullptr;
+        //}
+
+        if (*fp_SDLWindow)
         {
-            rendering_logger->LogAndPrint("Please initialize RenderingManager before trying to create a window!", "RenderingManager", "warn", "render_thread");
-            return nullptr;
+            rendering_logger->LogAndPrint("Tried passing a valid SDL_Window* handle for window creation, please cleanup original SDL window or dereference pointer before attempting to create a new SDL window", "RenderingManager", "error", "render_thread");
+            return false;
         }
 
-        return SDL_CreateWindow
-                (
-                    fp_WindowTitle,
-                    fp_WindowWidth, 
-                    fp_WindowHeight,
-                    SDL_WINDOW_OPENGL
-                );
+        uint64_t f_WindowFlags = -1;
+
+        if (fp_RenderingBackend == RendererType::OpenGL)
+        {
+            f_WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+        }
+        else if (fp_RenderingBackend == RendererType::Vulkan)
+        {
+            f_WindowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE;
+        }
+        else
+        {
+            rendering_logger->LogAndPrint("Invalid Renderer Type was passed to CreateSDLWindow(), please pass a valid rendering backend type", "RenderingManager", "error", "render_thread");
+            return false;
+        }
+
+        *fp_SDLWindow = SDL_CreateWindow
+        (
+            fp_WindowTitle.c_str(),
+            fp_WindowWidth,
+            fp_WindowHeight,
+            f_WindowFlags
+        );
+
+        if (not *fp_SDLWindow)
+        {
+            rendering_logger->LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager", "fatal", "render_thread");
+            return false;
+        }
+
+        return true;
     }
 
     bool
@@ -134,7 +166,7 @@ namespace PeachCore {
 
         if (not pm_AreQueuesInitialized)
         {
-            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", "warn", "render_thread");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", "error", "render_thread");
             return false;
         }
 
@@ -231,7 +263,7 @@ namespace PeachCore {
         bool f_IsGameRuntimeOver = false;
 
         // Main loop that continues until the window is closed
-        while (!f_IsGameRuntimeOver)
+        while (not f_IsGameRuntimeOver)
         {
             if (pm_IsShutDown) //used to stop rendering loop if possible when ForceQuit() is called
             {

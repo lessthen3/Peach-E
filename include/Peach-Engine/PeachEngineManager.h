@@ -98,29 +98,31 @@ namespace PeachEngine {
                 return false;
             }
 
+            if (not SDL_Init(SDL_INIT_VIDEO))
+            {
+                main_logger->LogAndPrint(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "PeachEngineManager", "fatal", "render_thread");
+                return false;
+            }
+
             //////////////////////////////////////////////
             // Load and Setup Plugins
             //////////////////////////////////////////////
-            #if defined(_WIN32) || defined(_WIN64)
-                LoadPluginsFromConfigs(fp_ListOfPluginsToLoad); // Windows
-            #else
-                LoadPluginsFromConfigs(fp_ListOfPluginsToLoad); // Linux/Unix
-            #endif
+
+            LoadPluginsFromConfigs(fp_ListOfPluginsToLoad); 
 
             PeachCore::PluginManager::ManagePlugins().InitializePlugins();
 
-            //////////////////////////////////////////////
-            // Start the Game Engine UwU
-            //////////////////////////////////////////////
-            //MainGameLoop();
+            return true;
+        }
 
-            //////////////////////////////////////////////
-            // Shutdown and Cleanup OwO
-            //////////////////////////////////////////////
+        //////////////////////////////////////////////
+        // Shutdown and Cleanup OwO
+        //////////////////////////////////////////////
+        bool
+            ShutdownPeachEngine()
+        {
             //CLEAN-UP AND ANY CLOSING THINGS THAT SHOULD BE LOGGED TO CHECK THE STATE OF THE ENGINE AS IT EXITS
             PeachCore::PluginManager::ManagePlugins().ShutdownPlugins();
-
-            return true;
         }
 
     //////////////////////////////////////////////
@@ -255,7 +257,7 @@ namespace PeachEngine {
 
         }
 
-        void MainGameLoop()
+        void StartMainGameLoop()
         {
             const float f_PhysicsDeltaTime = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;  // Fixed physics update rate 
             const float f_UserDefinedDeltaTime = 1.0f / USER_DEFINED_UPDATE_FPS;  // User-defined Update() rate

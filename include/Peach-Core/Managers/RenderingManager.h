@@ -53,6 +53,16 @@ namespace PeachCore {
     };
 
     //////////////////////////////////////////////
+    // Rendering backend helper Enum
+    //////////////////////////////////////////////
+
+    enum class RendererType : int
+    {
+        OpenGL,
+        Vulkan
+    };
+
+    //////////////////////////////////////////////
     // Rendering Manager Class
     //////////////////////////////////////////////
     class RenderingManager 
@@ -128,10 +138,12 @@ namespace PeachCore {
         void 
             ProcessLoadedResourcePackages();
 
-        SDL_Window*
+        bool
             CreateSDLWindow
             (
-                const char* fp_WindowTitle,
+                SDL_Window** fp_SDLWindow,
+                const RendererType fp_RenderingBackend,
+                const string& fp_WindowTitle,
                 const unsigned int fp_WindowWidth,
                 const unsigned int fp_WindowHeight
             )

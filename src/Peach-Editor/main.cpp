@@ -27,8 +27,9 @@ namespace PED = PeachEditor;
 namespace PEN = PeachEngine;
 namespace PC = PeachCore;
 
-constexpr int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
-constexpr int FAILED_TO_INITIALIZE_OPENGL = -1001;
+constexpr const int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
+constexpr const int FAILED_TO_INITIALIZE_OPENGL = -1001;
+constexpr const int FAILED_TO_INITIALIZE_VULKAN = -1002;
 
 //////////////////////////////////////////////
 // MAIN FUNCTION BABY
@@ -134,6 +135,8 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
     const unsigned int mf_MainWindowHeight = 600;
 
     auto editor_renderer = &PED::PeachEditorRenderingManager::PeachEditorRenderer();
+    auto engine_renderer = &PC::RenderingManager::Renderer();
+
     shared_ptr<PC::LogManager> main_logger = PED::PeachEditorManager::PeachEditor().main_editor_logger;
 
     //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
@@ -141,7 +144,7 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
 
     mf_PeachEditorRenderingManagersCommandQueue = editor_renderer->InitializeQueues();
 
-    if (not editor_renderer->CreateMainSDLWindow("Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
+    if (not engine_renderer->CreateSDLWindow(&(editor_renderer->GetMainWindow()), PC::RendererType::OpenGL, "Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
     {
         main_logger->LogAndPrint("Was not able to create the main window, exiting execution immediately", "main", "fatal", "main_thread");
         return FAILED_TO_CREATE_MAIN_WINDOW;

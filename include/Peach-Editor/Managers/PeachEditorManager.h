@@ -72,6 +72,12 @@ namespace PeachEditor{
             //InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("InternalResourceLoadingLogger successfully initialized", "Peach-E", "debug");
         }
 
+        bool
+            InitializePeachEditor()
+        {
+
+        }
+
         void
             AdjustGameStartupJSONConfigs() //this is here for adjusting the JSON configs from the Peach Editor
         {

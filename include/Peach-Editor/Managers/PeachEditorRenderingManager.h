@@ -197,13 +197,13 @@ namespace PeachEditor {
 
         unordered_set<string> pm_CurrentlyOpenDirectories;
 
-        struct pm_FileSelectionState
+        struct FileSelectionState
         {
             unordered_set<string> SelectedFiles;
             string LastSelectedItem;
         };
 
-        pm_FileSelectionState pm_SelectionState;
+        FileSelectionState pm_SelectionState;
 
         bool pm_IsCtrlPressed = false;
         bool pm_IsShiftPressed = false;
@@ -224,28 +224,15 @@ namespace PeachEditor {
         void
             ProcessLoadedResourcePackages();
 
-        bool
-            CreateMainSDLWindow
-            (
-                const char* fp_Title = "Peach Engine",
-                const uint32_t fp_Width = 800,
-                const uint32_t fp_Height = 600
-            );
-
-        SDL_Window*
-            CreateSDLWindow
-            (
-                const char* fp_WindowTitle,
-                const unsigned int fp_WindowWidth,
-                const unsigned int fp_WindowHeight
-            );
-
         shared_ptr<PC::CommandQueue>
             InitializeQueues();
 
         //WIP
         bool
             InitializeOpenGL();
+
+        bool
+            InitializeVulkan();
 
         string
             GetRendererType()
@@ -270,7 +257,7 @@ namespace PeachEditor {
             GetFrameRateLimit()
             const;
 
-        SDL_Window*
+        SDL_Window*&
             GetMainWindow();
 
         Viewport*
@@ -295,11 +282,16 @@ namespace PeachEditor {
         void
             RunCurrentScene();
 
-        SDL_Window*
+        SDL_Window*&
             GetGameInstanceWindow()
-            const
         {
             return pm_GameInstanceWindow;
+        }
+
+        void
+            SetGameInstanceWindow(SDL_Window* fp_GameWindow)
+        {
+            pm_GameInstanceWindow = fp_GameWindow;
         }
 
         PC::PeachRenderer*
