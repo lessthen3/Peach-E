@@ -30,9 +30,9 @@ Bitching aside—yeah, all these engines contributed in one way or another to th
 
 My goal with Peach-E is simple:
 
-👉 Make a game engine that doesn’t feel awful to use
+🍑🍑🍑 Make a game engine that doesn’t feel awful to use 🍑🍑🍑
 
-👉 Doesn’t explode when you breathe on it wrong
+💥💥💥 Doesn’t explode when you breathe on it wrong 💥💥💥
 
 That's it. Plain and simple.
 
