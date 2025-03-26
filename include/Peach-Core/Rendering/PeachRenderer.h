@@ -87,7 +87,7 @@ namespace PeachCore
 
             if (not fp_CurrentWindow)
             {
-                pm_RenderingLogger->LogAndPrint("Tried to initialize PeachRenderer with a nullptr for the SDL Window doofus", "PeachRenderer", "fatal", "render_thread");
+                pm_RenderingLogger->LogAndPrint("Tried to initialize PeachRenderer with a nullptr for the SDL Window doofus", "PeachRenderer", LogManager::LogLevel::Fatal, "render_thread");
                 throw runtime_error("Ending program execution immediately since no valid SDL Window was found"); //idk how else to stop the rest of initialization
             }
 
@@ -113,11 +113,11 @@ namespace PeachCore
 
             if (not pm_OpenGLContext)
             {
-                pm_RenderingLogger->LogAndPrint("Failed to create OpenGL context: " + static_cast<string>(SDL_GetError()), "PeachRenderer", "fatal", "render_thread");
+                pm_RenderingLogger->LogAndPrint("Failed to create OpenGL context: " + static_cast<string>(SDL_GetError()), "PeachRenderer", LogManager::LogLevel::Fatal, "render_thread");
                 SDL_DestroyWindow(pm_MainWindow);
             }
 
-            pm_RenderingLogger->LogAndPrint("OpenGL initialized properly", "PeachRenderer", "debug", "render_thread");
+            pm_RenderingLogger->LogAndPrint("OpenGL initialized properly", "PeachRenderer", LogManager::LogLevel::Debug, "render_thread");
 
             if (pm_Is3DEnabled) 
             {
@@ -153,7 +153,7 @@ namespace PeachCore
             }
             catch (const exception& ex)
             {
-                pm_RenderingLogger->LogAndPrint("An error occurred: " + string(ex.what()), "PeachRenderer", "warn", "render_thread"); //this might not work LOL
+                pm_RenderingLogger->LogAndPrint("An error occurred: " + string(ex.what()), "PeachRenderer", LogManager::LogLevel::Warning, "render_thread"); //this might not work LOL
                 return false;
             }
         }
@@ -255,11 +255,11 @@ namespace PeachCore
                 glTexImage2D(GL_TEXTURE_2D, 0, f_ColourFormat, fp_Width, fp_Height, 0, f_ColourFormat, GL_UNSIGNED_BYTE, fp_Data);
                 glGenerateMipmap(GL_TEXTURE_2D);
                 stbi_image_free(fp_Data);
-                pm_RenderingLogger->LogAndPrint("Successfully freed data from: " + fp_PeachObjectID, "PeachRenderer", "info", "render_thread");
+                pm_RenderingLogger->LogAndPrint("Successfully freed data from: " + fp_PeachObjectID, "PeachRenderer", LogManager::LogLevel::Info, "render_thread");
             }
             else
             {
-                pm_RenderingLogger->LogAndPrint("Failed to Register Texture", "PeachRenderer", "info", "render_thread");
+                pm_RenderingLogger->LogAndPrint("Failed to Register Texture", "PeachRenderer", LogManager::LogLevel::Info, "render_thread");
             }
 
             glBindTexture(GL_TEXTURE_2D, 0);

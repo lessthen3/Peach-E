@@ -53,88 +53,76 @@ using namespace std;
 
 namespace PeachCore {
 
-    static string
+    enum class Colours : int
+    {
+        Black,
+        Red,
+        Green,
+        Yellow,
+        Blue,
+        Magenta,
+        Cyan,
+        White,
+
+        BrightBlack,
+        BrightRed,
+        BrightGreen,
+        BrightYellow,
+        BrightBlue,
+        BrightMagenta,
+        BrightCyan,
+        BrightWhite
+    };
+
+    [[nodiscard]] constexpr string //IMPORTANT: this method uses branches instead of a hash map because we want this to be thread safe and the speed gain is neglible
         CreateColouredText
         (
             const string& fp_SampleText,
-            const string& fp_DesiredColour
+            const Colours fp_DesiredColour
         )
     {
-        //////////////////// Regular Colours ////////////////////
+        switch (fp_DesiredColour)
+        {
+            //////////////////// Regular Colours ////////////////////
 
-        if (fp_DesiredColour == "black")
-        {
-            return "\x1B[30m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "red")
-        {
-            return "\x1B[31m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "green")
-        {
-            return "\x1B[32m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "yellow")
-        {
-            return "\x1B[33m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "blue")
-        {
-            return "\x1B[34m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "magenta")
-        {
-            return "\x1B[35m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "cyan")
-        {
-            return "\x1B[36m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "white")
-        {
-            return "\x1B[37m" + fp_SampleText + "\033[0m";
-        }
+        case Colours::Black: return "\x1B[30m" + fp_SampleText + "\033[0m";
 
-        //////////////////// Bright Colours ////////////////////
+        case Colours::Red: return "\x1B[31m" + fp_SampleText + "\033[0m";
 
-        else if (fp_DesiredColour == "bright black")
-        {
-            return "\x1B[90m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "bright red")
-        {
-            return "\x1B[91m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "bright green")
-        {
-            return "\x1B[92m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "bright yellow")
-        {
-            return "\x1B[93m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "bright blue")
-        {
-            return "\x1B[94m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "bright magenta")
-        {
-            return "\x1B[95m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "bright cyan")
-        {
-            return "\x1B[96m" + fp_SampleText + "\033[0m";
-        }
-        else if (fp_DesiredColour == "bright white")
-        {
-            return "\x1B[97m" + fp_SampleText + "\033[0m";
-        }
+        case Colours::Green: return "\x1B[32m" + fp_SampleText + "\033[0m";
 
-        //////////////////// Just Return the Input Text Unaltered Otherwise ////////////////////
+        case Colours::Yellow: return "\x1B[33m" + fp_SampleText + "\033[0m";
 
-        else
-        {
-            return fp_SampleText;
+        case Colours::Blue: return "\x1B[34m" + fp_SampleText + "\033[0m";
+
+        case Colours::Magenta: return "\x1B[35m" + fp_SampleText + "\033[0m";
+
+        case Colours::Cyan: return "\x1B[36m" + fp_SampleText + "\033[0m";
+
+        case Colours::White: return "\x1B[37m" + fp_SampleText + "\033[0m";
+
+
+            //////////////////// Bright Colours ////////////////////
+
+        case Colours::BrightBlack: return "\x1B[90m" + fp_SampleText + "\033[0m";
+
+        case Colours::BrightRed: return "\x1B[91m" + fp_SampleText + "\033[0m";
+
+        case Colours::BrightGreen: return "\x1B[92m" + fp_SampleText + "\033[0m";
+
+        case Colours::BrightYellow: return "\x1B[93m" + fp_SampleText + "\033[0m";
+
+        case Colours::BrightBlue: return "\x1B[94m" + fp_SampleText + "\033[0m";
+
+        case Colours::BrightMagenta: return "\x1B[95m" + fp_SampleText + "\033[0m";
+
+        case Colours::BrightCyan: return "\x1B[96m" + fp_SampleText + "\033[0m";
+
+        case Colours::BrightWhite: return "\x1B[97m" + fp_SampleText + "\033[0m";
+
+            //////////////////// Just Return the Input Text Unaltered Otherwise ////////////////////
+
+        default: return fp_SampleText;
         }
     }
 
@@ -142,7 +130,7 @@ namespace PeachCore {
         Print
         (
             const string& fp_Message,
-            const string& fp_DesiredColour = "white"
+            const Colours fp_DesiredColour = Colours::White
         )
     {
         cout << CreateColouredText(fp_Message, fp_DesiredColour) << "\n";
@@ -152,7 +140,7 @@ namespace PeachCore {
         PrintError
         (
             const string& fp_Message,
-            const string& fp_DesiredColour = "red"
+            const Colours fp_DesiredColour = Colours::Red
         )
     {
         cerr << CreateColouredText(fp_Message, fp_DesiredColour) << "\n";
@@ -333,6 +321,20 @@ namespace PeachCore {
     //////////////////////////////////////////////
     public:
         LogManager() = default;
+
+    ////////////////////////////////////////////////
+    // Helper Enum For LogLevel Specification
+    ////////////////////////////////////////////////
+    public:
+        enum class LogLevel : int
+        {
+            Trace,
+            Debug,
+            Info,
+            Warning,
+            Error,
+            Fatal
+        };
 
     //////////////////////////////////////////////
     // Protected Class Members
@@ -526,41 +528,35 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const string& fp_LogLevel,
+                const LogLevel fp_LogLevel,
                 const string& fp_ThreadName
             )
         {
-            string f_LogEntry = fp_LogLevel + ": [" + fp_Sender + "] " + fp_Message + "\n";
-
             // Log to console
-            if (fp_LogLevel == "trace")
+
+            switch (fp_LogLevel)
             {
-                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "bright white");
-            }
-            else if (fp_LogLevel == "debug")
-            {
-                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "bright blue");
-            }
-            else if (fp_LogLevel == "info")
-            {
-                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "bright green");
-            }
-            else if (fp_LogLevel == "warn")
-            {
-                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "bright yellow");
-            }
-            else if (fp_LogLevel == "error")
-            {
-                PrintError(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "red"); //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
-            }
-            else if (fp_LogLevel == "fatal")
-            {
-                PrintError(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName), "magenta");
-            }
-            else
-            {
-                Print(Log("Did not input a valid option for log level in LogAndPrint()", "LogManager", "error", fp_ThreadName));
-                Print(Log(fp_Message, fp_Sender, fp_LogLevel, fp_ThreadName));
+                case LogLevel::Trace:
+                    Print(Log(fp_Message, fp_Sender, "trace", fp_ThreadName), Colours::BrightWhite);
+                    break;
+                case LogLevel::Debug:
+                    Print(Log(fp_Message, fp_Sender, "debug", fp_ThreadName), Colours::BrightBlue);
+                    break;
+                case LogLevel::Info:
+                    Print(Log(fp_Message, fp_Sender, "info", fp_ThreadName), Colours::BrightGreen);
+                    break;
+                case LogLevel::Warning:
+                    Print(Log(fp_Message, fp_Sender, "warn", fp_ThreadName), Colours::BrightYellow);
+                    break;
+                case LogLevel::Error:
+                    PrintError(Log(fp_Message, fp_Sender, "error", fp_ThreadName), Colours::Red); //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
+                    break;
+                case LogLevel::Fatal:
+                    PrintError(Log(fp_Message, fp_Sender, "fatal", fp_ThreadName), Colours::BrightMagenta);
+                    break;
+                default:
+                    PrintError(Log("Did not input a valid option for log level in LogAndPrint()", "LogManager", "error", fp_ThreadName));
+                    Print(Log(fp_Message, fp_Sender, "error", fp_ThreadName));
             }
         }
 

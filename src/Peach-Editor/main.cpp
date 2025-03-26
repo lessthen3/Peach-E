@@ -52,7 +52,7 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
 
     if (mf_TopLevelDir.empty())
     {
-        PC::Print("Failed to find the top-level directory 'Peach-E'!", "magenta");
+        PC::Print("Failed to find the top-level directory 'Peach-E'!", PeachCore::Colours::Magenta);
         return false;
     }
 
@@ -146,19 +146,19 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
 
     if (not engine_renderer->CreateSDLWindow(&(editor_renderer->GetMainWindow()), PC::RendererType::OpenGL, "Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
     {
-        main_logger->LogAndPrint("Was not able to create the main window, exiting execution immediately", "main", "fatal", "main_thread");
+        main_logger->LogAndPrint("Was not able to create the main window, exiting execution immediately", "main", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
         return FAILED_TO_CREATE_MAIN_WINDOW;
     }
 
-    main_logger->LogAndPrint("SDL window successfully created for Peach Editor", "main", "debug", "main_thread");
+    main_logger->LogAndPrint("SDL window successfully created for Peach Editor", "main", PeachCore::LogManager::LogLevel::Debug, "main_thread");
 
     if (not editor_renderer->InitializeOpenGL())
     {
-        main_logger->LogAndPrint("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main", "fatal", "main_thread");
+        main_logger->LogAndPrint("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
         return FAILED_TO_INITIALIZE_OPENGL;
     }
 
-    main_logger->LogAndPrint("Peach Editor successfully initialized OpenGL", "main", "debug", "main_thread");
+    main_logger->LogAndPrint("Peach Editor successfully initialized OpenGL", "main", PeachCore::LogManager::LogLevel::Debug, "main_thread");
 
     bool mf_IsEditorOpen = true;
 
@@ -175,7 +175,7 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
 
     SDL_Quit(); //just makes more sense to have the main method do this
   
-    main_logger->LogAndPrint("Exit Success!", "Peach-E", "debug", "main_thread");
+    main_logger->LogAndPrint("Exit Success!", "Peach-E", PeachCore::LogManager::LogLevel::Debug, "main_thread");
 
     return EXIT_SUCCESS;
 }

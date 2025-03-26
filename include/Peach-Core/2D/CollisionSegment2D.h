@@ -47,7 +47,7 @@ namespace PeachCore {
 		{
 			if(pm_ListOfPoints.size() == 0)
 			{
-				fp_Logger->LogAndPrint("Tried to optimize line segment when line segment has 0 points to optimize out at segment ID: " + pm_SegmentID, "CollisionSegment2D", "warn", "physics_thread");
+				fp_Logger->LogAndPrint("Tried to optimize line segment when line segment has 0 points to optimize out at segment ID: " + pm_SegmentID, "CollisionSegment2D", LogManager::LogLevel::Warning, "physics_thread");
 				return;
 			}
 

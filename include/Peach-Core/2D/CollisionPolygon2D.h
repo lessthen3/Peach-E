@@ -64,7 +64,7 @@ namespace PeachCore {
         {
             if (fp_Vertices.size() < 3)
             {
-                fp_Logger->LogAndPrint("Tried to create a CollisionPolygon2D with less than 3 vertices", "CollisionPolygon2D", "warn", "physics_thread");
+                fp_Logger->LogAndPrint("Tried to create a CollisionPolygon2D with less than 3 vertices", "CollisionPolygon2D", LogManager::LogLevel::Error, "physics_thread");
                 return false;
             }
 
@@ -208,7 +208,7 @@ namespace PeachCore {
 
             //if (!CGAL::is_convex_2(fp_OutputPolygons.begin(), fp_OutputPolygons.end())) 
             //{
-            //    LogManager::MainLogger().LogAndPrint("Failed to decompose polygon into convex pieces.", "CollisionPolygon2D", "warn");
+            //    LogManager::MainLogger().LogAndPrint("Failed to decompose polygon into convex pieces.", "CollisionPolygon2D", LogManager::LogLevel::Warning);
             //    return false;
             //}
             //else 

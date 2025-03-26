@@ -59,7 +59,7 @@ namespace PeachEditor{
 
             main_editor_logger = make_unique<PC::LogManager>();
             main_editor_logger->Initialize("..\\logs", "PeachEditorManager", pm_PeachEditorConsole);
-            main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", "debug", "main_thread");
+            main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", PeachCore::LogManager::LogLevel::Debug, "main_thread");
 
             //probably should have better error handling for the loggers, especially
             //main_editor_logger->Initialize("..\\logs", "main_thread", f_PeachConsole);
@@ -105,7 +105,7 @@ namespace PeachEditor{
             }
             catch (const fs::filesystem_error& e)
             {
-                main_editor_logger->LogAndPrint("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "main", "error", "main_thread");
+                main_editor_logger->LogAndPrint("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "main", PeachCore::LogManager::LogLevel::Error, "main_thread");
             }
 
             return f_Files;
@@ -129,12 +129,12 @@ namespace PeachEditor{
 
                 if (it == fp_OldState.end())
                 {
-                    main_editor_logger->LogAndPrint("New file found in working directory: " + _file.first, "main", "debug", "main_thread");
+                    main_editor_logger->LogAndPrint("New file found in working directory: " + _file.first, "main", PeachCore::LogManager::LogLevel::Debug, "main_thread");
                     return false;
                 }
                 else if (it->second != _file.second)
                 {
-                    main_editor_logger->LogAndPrint("Modified file found in working directory: " + _file.first, "main", "trace", "main_thread");
+                    main_editor_logger->LogAndPrint("Modified file found in working directory: " + _file.first, "main", PeachCore::LogManager::LogLevel::Trace, "main_thread");
                     return false;
                 }
             }
@@ -143,7 +143,7 @@ namespace PeachEditor{
             {
                 if (fp_NewState.find(_file.first) == fp_NewState.end())
                 {
-                    main_editor_logger->LogAndPrint("Deleted file from working directory: " + _file.first, "main", "debug", "main_thread");
+                    main_editor_logger->LogAndPrint("Deleted file from working directory: " + _file.first, "main", PeachCore::LogManager::LogLevel::Debug, "main_thread");
                     return false;
                 }
             }

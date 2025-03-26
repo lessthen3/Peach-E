@@ -25,7 +25,7 @@ namespace PeachCore {
     {
         plugin_logger = make_unique<LogManager>();
         plugin_logger->Initialize(fp_LogOutputDirectory, "PluginManager", fp_Console);
-        plugin_logger->LogAndPrint("PluginLogger successfully initialized", "PluginManager", "debug", "main_thread");
+        plugin_logger->LogAndPrint("PluginLogger successfully initialized", "PluginManager", LogManager::LogLevel::Debug, "main_thread");
 
         return true;
     }
@@ -38,23 +38,23 @@ namespace PeachCore {
         if (fs::exists(fp_Path) && fs::is_regular_file(fp_Path))
         {
             f_Handle = DYNLIB_LOAD(fp_Path.c_str());
-            plugin_logger->LogAndPrint("Successfully located DLL at: " + fp_Path, "PluginManager", "debug", "main_thread");
+            plugin_logger->LogAndPrint("Successfully located DLL at: " + fp_Path, "PluginManager", LogManager::LogLevel::Debug, "main_thread");
         }
 
         else
         {
-            plugin_logger->LogAndPrint("Failed to locate DLL at: " + fp_Path, "PluginManager", "error", "main_thread");
+            plugin_logger->LogAndPrint("Failed to locate DLL at: " + fp_Path, "PluginManager", LogManager::LogLevel::Error, "main_thread");
             return;
         }
 
         if (not f_Handle)
         {
-            plugin_logger->LogAndPrint("Failed to load plugin at path: " + fp_Path, "PluginManager", "error", "main_thread");
+            plugin_logger->LogAndPrint("Failed to load plugin at path: " + fp_Path, "PluginManager", LogManager::LogLevel::Error, "main_thread");
             return;
         }
         else
         {
-            plugin_logger->LogAndPrint("Successfully loaded plugin at: " + fp_Path, "PluginManager", "debug", "main_thread");
+            plugin_logger->LogAndPrint("Successfully loaded plugin at: " + fp_Path, "PluginManager", LogManager::LogLevel::Debug, "main_thread");
         }
 
         auto f_CreateFunc = (CreatePluginFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
@@ -62,13 +62,13 @@ namespace PeachCore {
 
         if (!f_CreateFunc || !f_DestroyFunc)
         {
-            plugin_logger->LogAndPrint("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager", "error", "main_thread");
+            plugin_logger->LogAndPrint("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager", LogManager::LogLevel::Error, "main_thread");
             DYNLIB_UNLOAD(f_Handle);
             return;
         }
         else
         {
-            plugin_logger->LogAndPrint("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager", "debug", "main_thread");
+            plugin_logger->LogAndPrint("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_Path, "PluginManager", LogManager::LogLevel::Debug, "main_thread");
         }
 
         std::unique_ptr<Plugin, DestroyPluginFunc> plugin(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;

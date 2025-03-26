@@ -26,13 +26,13 @@ namespace PeachCore {
         //////////////////////////////////////////////
         audio_logger = make_unique<LogManager>();
         audio_logger->Initialize(fp_LogOutputDirectory, "AudioManager", fp_Console);
-        audio_logger->LogAndPrint("AudioLogger successfully initialized", "AudioManager", "debug", "audio_thread");
+        audio_logger->LogAndPrint("AudioLogger successfully initialized", "AudioManager", PeachCore::LogManager::LogLevel::Debug, "audio_thread");
 
         pm_Device = alcOpenDevice(nullptr); // Open default device
         
         if (!pm_Device)
         {
-            audio_logger->LogAndPrint("Failed to open audio device", "AudioManager", "error", "audio_thread");
+            audio_logger->LogAndPrint("Failed to open audio device", "AudioManager", PeachCore::LogManager::LogLevel::Error, "audio_thread");
             return false;
         }
         
@@ -42,7 +42,7 @@ namespace PeachCore {
         
         if (!pm_Context || !alcMakeContextCurrent(pm_Context))
         {
-            audio_logger->LogAndPrint("Failed to create or set audio context", "AudioManager", "error", "audio_thread");
+            audio_logger->LogAndPrint("Failed to create or set audio context", "AudioManager", PeachCore::LogManager::LogLevel::Error, "audio_thread");
 
             if (pm_Context) 
             {
@@ -75,7 +75,7 @@ namespace PeachCore {
         // Load WAV file into buffer
         // Assuming LoadWAVFile is a function that loads a WAV file into an OpenAL buffer
         if (!LoadWAVFile(fp_SoundFile, f_Buffer)) {
-            audio_logger->LogAndPrint("Failed to load sound: " + fp_SoundFile, "AudioManager", "error", "audio_thread");
+            audio_logger->LogAndPrint("Failed to load sound: " + fp_SoundFile, "AudioManager", PeachCore::LogManager::LogLevel::Error, "audio_thread");
             return;
         }
 

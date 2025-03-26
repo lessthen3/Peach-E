@@ -43,7 +43,7 @@ namespace PeachEditor {
         {
             return false;
         }
-        rendering_logger->LogAndPrint("PeachEditorRenderingLogger successfully initialized", "PeachEditorRenderingManager", "debug", "render_thread");
+        rendering_logger->LogAndPrint("PeachEditorRenderingLogger successfully initialized", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug, "render_thread");
 
         return true;
     }
@@ -54,7 +54,7 @@ namespace PeachEditor {
     {
         if (pm_AreQueuesInitialized)
         {
-            rendering_logger->LogAndPrint("RenderingManager queues have already been initialized.", "PeachEditorRenderingManager", "warn", "render_thread");
+            rendering_logger->LogAndPrint("RenderingManager queues have already been initialized.", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning, "render_thread");
             return nullptr;
         }
 
@@ -63,7 +63,7 @@ namespace PeachEditor {
 
         //pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, false);
 
-        rendering_logger->LogAndPrint("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager", "debug", "render_thread");
+        rendering_logger->LogAndPrint("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug, "render_thread");
 
         pm_AreQueuesInitialized = true;
 
@@ -77,19 +77,19 @@ namespace PeachEditor {
     {
         if (pm_IsRenderingInitialized)
         {
-            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL when rendering has already been initialized", "PeachEditorRenderingManager", "warn", "render_thread");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL when rendering has already been initialized", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning, "render_thread");
             return false;
         }
 
         if (not pm_AreQueuesInitialized)
         {
-            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", "warn", "render_thread");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning, "render_thread");
             return false;
         }
 
         if (not pm_MainWindow)
         {
-            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before creating the main window!", "PeachEditorRenderingManager", "warn", "render_thread");
+            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before creating the main window!", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning, "render_thread");
             return false;
         }
 
@@ -98,12 +98,12 @@ namespace PeachEditor {
 
         if (glewInit() != GLEW_OK)
         {
-            rendering_logger->LogAndPrint("Failed to create GLEW context: OWO", "PeachEditorRenderingManager", "fatal", "render_thread");
+            rendering_logger->LogAndPrint("Failed to create GLEW context: OWO", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal, "render_thread");
             SDL_DestroyWindow(pm_MainWindow);
             return false;
         }
 
-        rendering_logger->LogAndPrint("GLEW initialized properly", "PeachEditorRenderingManager", "debug", "render_thread");
+        rendering_logger->LogAndPrint("GLEW initialized properly", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug, "render_thread");
 
         ////////////////////////////////////////////////
         // Setup Nuklear GUI
@@ -191,7 +191,7 @@ namespace PeachEditor {
                 [](auto&&) 
                 {
                     // Default handler for any unhandled types
-                    //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", "warn");
+                    //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", LogManager::LogLevel::Warning);
                 }
                 }, ResourcePackage.get()->ResourceData);
         }
@@ -206,13 +206,13 @@ namespace PeachEditor {
         if (not pm_IsRenderingInitialized)
         {
             //rendering_logger isn't initialized yet if rendering hasn't been initialized yet so we use the full singleton call here instead for safety
-            rendering_logger->LogAndPrint("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", "fatal", "render_thread");
+            rendering_logger->LogAndPrint("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal, "render_thread");
             throw runtime_error("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager");
         }
 
         if (not fp_IsProgramRuntimeOver)
         {
-            rendering_logger->LogAndPrint("Tried to pass nullptr bool to RenderFrame inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", "fatal", "render_thread");
+            rendering_logger->LogAndPrint("Tried to pass nullptr bool to RenderFrame inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal, "render_thread");
             throw runtime_error("Tried to pass nullptr bool to RenderFrame");
         }
 
@@ -920,7 +920,7 @@ namespace PeachEditor {
 
         pm_VAO = pm_Render->Generate2DBuffers(vertices, indices);
 
-        PeachCore::Print("The VAO ID for the Viewport Shader is: " + to_string(pm_VAO), "magenta");
+        PeachCore::Print("The VAO ID for the Viewport Shader is: " + to_string(pm_VAO), PeachCore::Colours::Magenta);
 
         ////////////////////////////////////////////////
         // Shaders
@@ -936,7 +936,7 @@ namespace PeachEditor {
             editor_rendering_logger.get()
         );
 
-        PeachCore::Print("The program ID for the Viewport Shader is: " + to_string(pm_ViewportShader->GetProgramID()), "magenta");
+        PeachCore::Print("The program ID for the Viewport Shader is: " + to_string(pm_ViewportShader->GetProgramID()), PeachCore::Colours::Magenta);
 
         ////////////////////////////////////////////////
         // Create Render Texture
@@ -1092,7 +1092,7 @@ namespace PeachEditor {
         // Check if framebuffer is complete
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            editor_rendering_logger->LogAndPrint("Error: Framebuffer is not complete!", "Viewport", "error", "render_thread");
+            editor_rendering_logger->LogAndPrint("Error: Framebuffer is not complete!", "Viewport", PeachCore::LogManager::LogLevel::Error, "render_thread");
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             return false;
         }
@@ -1103,7 +1103,7 @@ namespace PeachEditor {
         // Unbind Buffers and Reset GL state
         ////////////////////////////////////////////////
 
-        editor_rendering_logger->LogAndPrint("Render Texture successfully setup UwU", "Viewport", "debug", "render_thread");
+        editor_rendering_logger->LogAndPrint("Render Texture successfully setup UwU", "Viewport", PeachCore::LogManager::LogLevel::Debug, "render_thread");
 
         return true;
     }

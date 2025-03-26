@@ -31,7 +31,7 @@ namespace PeachCore {
 	{
 		resource_logger = make_unique<LogManager>();
 		resource_logger->Initialize(fp_LogOutputDirectory, "ResourceLoadingManager", fp_Console);
-		resource_logger->LogAndPrint("ResourceLoadingLogger successfully initialized", "ResourceLoadingManager", "debug", "resource_thread");
+		resource_logger->LogAndPrint("ResourceLoadingLogger successfully initialized", "ResourceLoadingManager", LogManager::LogLevel::Debug, "resource_thread");
 
 		return true;
 	}
@@ -47,7 +47,7 @@ namespace PeachCore {
 
 		if (pm_AudioQueueReferenceCount == 2)  //stops unwanted extra references from being created accidentally
 		{
-			resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's AudioResourceLoadingQueue", "ResourceLoadingManager", "warn", "resource_thread");
+			resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's AudioResourceLoadingQueue", "ResourceLoadingManager", LogManager::LogLevel::Warning, "resource_thread");
 			return nullptr;
 		}
 		else if (pm_AudioResourceLoadingQueue == 0) //lazy initialization for LoadingQueue cause why not
@@ -68,7 +68,7 @@ namespace PeachCore {
 
 		if (pm_DrawableQueueReferenceCount == 2) //stops unwanted extra references from being created accidentally
 		{
-			resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's DrawableResourceLoadingQueue", "ResourceLoadingManager", "warn", "resource_thread");
+			resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEngineResourceLoadingManager's DrawableResourceLoadingQueue", "ResourceLoadingManager", LogManager::LogLevel::Warning, "resource_thread");
 			return nullptr;
 		}
 		else if (pm_DrawableQueueReferenceCount == 0) //lazy initialization for LoadingQueue cause why not
@@ -117,7 +117,7 @@ namespace PeachCore {
 
 		if (!pm_DrawableResourceLoadingQueue->PushLoadedResourcePackage(pm_WaitingFullyLoadedResourcePackages))
 		{
-			resource_logger->LogAndPrint("Load put off until later", "ResourceLoadingManager", "debug", "resource_thread");
+			resource_logger->LogAndPrint("Load put off until later", "ResourceLoadingManager", LogManager::LogLevel::Debug, "resource_thread");
 			return false;
 		}
 
