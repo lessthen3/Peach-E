@@ -17,7 +17,7 @@ class PeachEBuilder(ConanFile):
         self.requires("clipper2/1.3.0")
 
         # physics
-        self.requires("bullet3/3.25")
+        self.requires("joltphysics/5.2.0")
         self.requires("box2d/3.0.0")
 
         # language support

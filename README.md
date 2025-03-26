@@ -3,7 +3,7 @@ Hey! This is a game engine that you are free to do whatever with!
 
 Peach-E is an open-source and cross-platform game engine licensed under the permissive MIT License. 
 
-Currently you can target Windows and OSX.
+Currently you can target Windows, macOS and Linux. Peach-E may work on UNIX systems, but support isn't guaranteed.
 
 ### PEACH-E IS STILL IN EARLY ALPHA AND IS A WORK IN PROGRESS AND STILL REQUIRES EXTENSIVE TESTING 
 ### WORK IS BEING DONE TO ADD FEATURES CONSTANTLY AND THE API IS SUBJECT TO BREAKING CHANGES AT ANY MOMENT
@@ -11,6 +11,42 @@ Currently you can target Windows and OSX.
 ## Documentation
 
 Docs are still a work in progress, but expect them to be here by the time Peach Engine 1.0 is released.
+
+## Overall Design and Features
+
+Peach-E is designed around the PeachCore library and utilizes a component based approach to building games with nodes. The API design is heavily inspired by how Godot works, but the implementation is entirely original—no Godot code is used.
+
+Features:
+
+🍑 Vulkan and OpenGL rendering backends
+
+🍑 Scripting support for C#, Python, and Lua
+
+🍑 Planned support for visual scripting and a ShaderGraph
+
+🍑 Built-in rollback networking
+
+🍑 Audio playback and capture
+
+🍑 Physics support via Box2D (v3.0) for 2D and Jolt (v5.2.0) for 3D
+
+🍑 Native support for Windows, macOS, and Linux (web and mobile support planned)
+
+🍑 External C++ plugin support via dynamic linking (scripted plugin support WIP)
+
+🍑 QOL nodes for easily integrating in-game consoles and logging support out of the box
+
+## Building Peach-E From Source
+
+If you want to build Peach-E for yourself:
+
+0. This project is built using __C++20__, and you will need __CMake 3.20+__ and __conan2__ (scroll down to the resources section for links if you are unfamiliar)
+
+1. Clone the repo
+
+2. Run: __python init.py [--debug or --release or --both] -G [desired_generator]__ in your terminal and your done!
+
+__Note:__ The build output will be generated in __/build/(Debug or Release)__ as an executable for Peach_Editor and Peach_Engine and a static lib for Peach_Core
 
 ## Why Another Game Engine
 
@@ -35,18 +71,6 @@ My goal with Peach-E is simple:
 💥💥💥 Doesn’t explode when you breathe on it wrong 💥💥💥
 
 That's it. Plain and simple.
-
-## Building Peach-E From Source
-
-If you want to build Peach-E for yourself:
-
-0. This project is built using __C++20__, and you will need __CMake 3.20+__ and __conan2__ (scroll down to the resources section for links if you are unfamiliar)
-
-1. Clone the repo
-
-2. Run: __python init.py [--debug or --release or --both] -G [desired_generator]__ in your terminal and your done!
-
-__Note:__ The build output will be generated in __/build/(Debug or Release)__ as an executable for Peach_Editor and Peach_Engine and a static lib for Peach_Core
 
 ## Conan Profile Settings Successfully Tested
 

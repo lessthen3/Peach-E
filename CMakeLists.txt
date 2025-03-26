@@ -215,7 +215,7 @@ find_package(PhysFS REQUIRED)
 find_package(cgal REQUIRED)
 find_package(clipper2 REQUIRED)
 
-find_package(Bullet REQUIRED)
+find_package(Jolt REQUIRED)
 find_package(box2d REQUIRED)
 
 find_package(pybind11 REQUIRED)
@@ -244,7 +244,7 @@ target_link_libraries(peach PUBLIC
     CGAL::CGAL
     clipper2::clipper2
     #physics
-    Bullet::Bullet #3D
+    Jolt::Jolt #3D
     box2d::box2d #2D
     #lang support
     pybind11::pybind11
