@@ -28,30 +28,8 @@ namespace fs = filesystem;
 
 namespace PeachEditor {
 
-    //////////////////////////////////////////////
-    // DrawableObject Struct
-    //////////////////////////////////////////////
-    //holds all relevant information that the renderer needs to know
-    struct DrawableObject
-    {
-        string ObjectID;
-
-        glm::vec2 Position;
-        uint32_t LayerNumber = 0;
-
-        bool IsVisible = true;
-        bool IsQueuedForRemoval = false;
-
-        variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
-            <
-            PC::TextureData //used for parsing raw byte information, mainly for audio at the moment
-            //unique_ptr<nlohmann::json> //used for parsing JSON metadata if required WARNING: NEEDS TO BE REWRITTED FOR CEREAL UWU
-
-            > DrawableResourceData; //actual data for graphic
-
-        PC::Drawable GraphicsType;
-        //ShaderProgram Shaders;
-    };
+    constexpr float MAIN_MENU_BAR_SCALE = 0.03f;
+    constexpr unsigned int NUMBER_OF_HORIZONTAL_MAIN_MENU_BAR_ELEMENTS = 7;
 
     //////////////////////////////////////////////
     // Viewport Struct
@@ -153,8 +131,6 @@ namespace PeachEditor {
 
         uint32_t pm_FrameRateLimit = 60;
 
-        string pm_RendererType = "None";
-
         unsigned long int pm_CurrentFrame = 0;
 
         // Object ID : CurrentPosition
@@ -165,14 +141,12 @@ namespace PeachEditor {
         map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
 
         // DrawableObject.ObjectID : DrawableObject dict
-        map<string, DrawableObject> pm_ListOfAllDrawables;
+        map<string, PC::DrawableObject> pm_ListOfAllDrawables;
 
         shared_ptr<PC::CommandQueue> pm_CommandQueue = nullptr;
         shared_ptr<PC::LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
         SDL_Window* pm_MainWindow = nullptr;
-
-        unique_ptr<PC::PeachRenderer> pm_EditorRenderer = nullptr;
 
         struct nk_context* pm_NuklearCtx = nullptr;
 
@@ -188,9 +162,6 @@ namespace PeachEditor {
     // Public Members
     //////////////////////////////////////////////
     public:
-        static constexpr float MAIN_MENU_BAR_SCALE = 0.03f;
-        static constexpr unsigned int NUMBER_OF_HORIZONTAL_MAIN_MENU_BAR_ELEMENTS = 7;
-
         atomic<bool> m_IsSceneCurrentlyRunning = false; //tracks whether the current working scene in the current peach project, is running in the editor
 
         struct nk_colorf pm_BackgroundColour = { 0.10f, 0.18f, 0.24f, 1.0f };
@@ -212,13 +183,6 @@ namespace PeachEditor {
     // Public Methods
     //////////////////////////////////////////////
     public:
-        bool
-            InitializeLogger
-            (
-                const string& fp_LogOutputDirectory,
-                shared_ptr<PC::Console> fp_EditorConsole
-            );
-
         void
             ProcessCommands();
         void
@@ -229,14 +193,11 @@ namespace PeachEditor {
 
         //WIP
         bool
-            InitializeOpenGL();
-
-        bool
-            InitializeVulkan();
-
-        string
-            GetRendererType()
-            const;
+            Initialize
+            (
+                const string& fp_LogOutputDirectory,
+                shared_ptr<PC::Console> fp_EditorConsole
+            );
 
         void
             RenderFrame
@@ -249,9 +210,6 @@ namespace PeachEditor {
 
         void
             CreateSceneTreeViewPanel();
-
-        void
-            GetCurrentViewPort();
 
         uint32_t
             GetFrameRateLimit()
@@ -292,13 +250,6 @@ namespace PeachEditor {
             SetGameInstanceWindow(SDL_Window* fp_GameWindow)
         {
             pm_GameInstanceWindow = fp_GameWindow;
-        }
-
-        PC::PeachRenderer*
-            GetPeachRenderer()
-            const
-        {
-            return pm_EditorRenderer.get();
         }
 
         void

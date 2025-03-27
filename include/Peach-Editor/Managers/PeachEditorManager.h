@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Peach-Engine/PeachEngineManager.h"
+#include "../Peach-Engine/GameManager.h"
 #include "PeachEditorRenderingManager.h"
 
 using namespace std;
@@ -53,19 +53,21 @@ namespace PeachEditor{
 
     public:
         void
-            SetupInternalLogManagers()
+            SetupInternalLogManagers(const string& fp_RootPath)
         {
+            const string f_LogDir = fp_RootPath + "/logs";
+
             pm_PeachEditorConsole = make_shared<PC::Console>();
 
             main_editor_logger = make_unique<PC::LogManager>();
-            main_editor_logger->Initialize("..\\logs", "PeachEditorManager", pm_PeachEditorConsole);
+            main_editor_logger->Initialize(f_LogDir, "PeachEditorManager", pm_PeachEditorConsole);
             main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", PeachCore::LogManager::LogLevel::Debug, "main_thread");
 
             //probably should have better error handling for the loggers, especially
             //main_editor_logger->Initialize("..\\logs", "main_thread", f_PeachConsole);
             //InternalLogManager::InternalAudioLogger().Initialize("..\\logs", "audio_thread", f_PeachConsole);
-            PeachEditorRenderingManager::PeachEditorRenderer().InitializeLogger("..\\logs", pm_PeachEditorConsole);
-            PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger("..\\logs", pm_PeachEditorConsole);
+            PeachEditorRenderingManager::PeachEditorRenderer().Initialize(f_LogDir, pm_PeachEditorConsole);
+            PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger(f_LogDir, pm_PeachEditorConsole);
 
             //main_editor_logger->LogAndPrint("InternalMainLogger successfully initialized", "Peach-E", "debug");
             //InternalLogManager::InternalAudioLogger().LogAndPrint("InternalAudioLogger successfully initialized", "Peach-E", "debug");

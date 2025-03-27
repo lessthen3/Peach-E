@@ -28,26 +28,6 @@ namespace PeachEditor {
         //SDL_GL_DestroyContext(pm_OpenGLContext);
     }
 
-    bool 
-        PeachEditorRenderingManager::InitializeLogger
-        (
-            const string& fp_LogOutputDirectory,
-            shared_ptr<PC::Console> fp_EditorConsole
-        )
-    {
-        //////////////////////////////////////////////
-        // Initialize Logger
-        //////////////////////////////////////////////
-        rendering_logger = make_shared<PC::LogManager>();
-        if (not rendering_logger->Initialize(fp_LogOutputDirectory, "PeachEditorRenderingManager", fp_EditorConsole))
-        {
-            return false;
-        }
-        rendering_logger->LogAndPrint("PeachEditorRenderingLogger successfully initialized", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug, "render_thread");
-
-        return true;
-    }
-
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
     shared_ptr<PeachCore::CommandQueue>
         PeachEditorRenderingManager::InitializeQueues()
@@ -73,37 +53,31 @@ namespace PeachEditor {
     }
 
     bool 
-        PeachEditorRenderingManager::InitializeOpenGL()
+        PeachEditorRenderingManager::Initialize
+        (
+            const string& fp_LogOutputDirectory,
+            shared_ptr<PC::Console> fp_EditorConsole
+        )
     {
-        if (pm_IsRenderingInitialized)
+        //////////////////////////////////////////////
+        // Initialize Logger
+        //////////////////////////////////////////////
+        rendering_logger = make_shared<PC::LogManager>();
+
+        if (not rendering_logger->Initialize(fp_LogOutputDirectory, "PeachEditorRenderingManager", fp_EditorConsole))
         {
-            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL when rendering has already been initialized", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning, "render_thread");
+            PeachCore::PrintError("Unable to initialize PeachEditorRenderingManager's logger");
             return false;
         }
 
-        if (not pm_AreQueuesInitialized)
-        {
-            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before initializing command/loading queues!", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning, "render_thread");
-            return false;
-        }
+        rendering_logger->LogAndPrint("PeachEditorRenderingLogger successfully initialized", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug, "render_thread");
 
-        if (not pm_MainWindow)
-        {
-            rendering_logger->LogAndPrint("PeachEditorRenderingManager tried to initialize OpenGL before creating the main window!", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning, "render_thread");
-            return false;
-        }
-
-        // Create an OpenGL context associated with the window
-        pm_EditorRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, rendering_logger, true);
-
-        if (glewInit() != GLEW_OK)
-        {
-            rendering_logger->LogAndPrint("Failed to create GLEW context: OWO", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal, "render_thread");
-            SDL_DestroyWindow(pm_MainWindow);
-            return false;
-        }
-
-        rendering_logger->LogAndPrint("GLEW initialized properly", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug, "render_thread");
+        //////////////////////////////////////////////
+        // Grab Reference to the Main Window
+        //////////////////////////////////////////////
+        pm_MainWindow = PeachCore::RenderingManager::Renderer()
+            .GetPeachRenderer()
+            ->GetMainWindow();
 
         ////////////////////////////////////////////////
         // Setup Nuklear GUI
@@ -136,7 +110,7 @@ namespace PeachEditor {
         SDL_GetWindowSizeInPixels(pm_MainWindow, &f_CurrentWindowWidth, &f_CurrentWindowHeight);
 
         pm_Viewport = Viewport();
-        pm_Viewport.SetupViewport(400, 200, pm_EditorRenderer.get(), rendering_logger);
+        pm_Viewport.SetupViewport(400, 200, PeachCore::RenderingManager::Renderer().GetPeachRenderer(), rendering_logger);
 
         pm_IsRenderingInitialized = true;
             
@@ -383,9 +357,7 @@ namespace PeachEditor {
 
                         SDL_Window* t_GameWindow = editor_renderer->GetGameInstanceWindow();
 
-                        engine_renderer->CreatePeachRenderer(t_GameWindow);
-
-                        PeachCore::PeachRenderer* t_GameInstanceRenderer = engine_renderer->GetPeachRenderer();
+                        unique_ptr<PeachCore::PeachRenderer> t_GameInstanceRenderer = make_unique<PeachCore::PeachRenderer>(t_GameWindow, engine_renderer->rendering_logger);
 
                         ////////////////////////////////////////////////
                         // Generate Buffers
@@ -468,7 +440,7 @@ namespace PeachEditor {
                         }
 
                         //this used to create a bug but doesnt anymore for some reason lmfao
-                        engine_renderer->DestroyPeachRenderer(); //IMPORTANT THIS BREAKS THE PROGRAM ITS A THREADING BUG
+                        t_GameInstanceRenderer.reset(nullptr); //IMPORTANT THIS BREAKS THE PROGRAM ITS A THREADING BUG
                         //WE BEED TO SYNCHRONIZE THREADS, CLEANUP RESOURCES IN APPROPRIATE ORDER THEN EXIT MAIN FUNCTION OWO
                         editor_renderer->SetGameInstanceWindow(nullptr);
                     });
@@ -824,13 +796,6 @@ namespace PeachEditor {
     {
 
 
-    }
-
-    string 
-        PeachEditorRenderingManager::GetRendererType() 
-        const
-    {
-        return pm_RendererType;
     }
 
     uint32_t 

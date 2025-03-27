@@ -77,7 +77,7 @@ namespace PeachCore
                 const bool fp_Is3DEnabled = false
             )
         {
-            if (not fp_RenderingLogger.get()) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
+            if (not fp_RenderingLogger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
             {
                 PrintError("Tried to initialize PeachRenderer with a nullptr for the Rendering Logger doofus");
                 throw runtime_error("Ending program execution immediately since no valid logger was found"); //idk how else to stop the rest of initialization

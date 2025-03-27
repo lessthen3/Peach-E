@@ -22,7 +22,9 @@
 
 #include <variant>
 
-using namespace std;
+constexpr const int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
+constexpr const int FAILED_TO_INITIALIZE_OPENGL = -1001;
+constexpr const int FAILED_TO_INITIALIZE_VULKAN = -1002;
 
 namespace PeachCore {
 
@@ -35,16 +37,15 @@ namespace PeachCore {
         string ObjectID;
 
         glm::vec2 Position;
-        uint32_t LayerNumber;
+        uint32_t LayerNumber = 0;
 
-        bool IsVisible;
+        bool IsVisible = true;
         bool IsQueuedForRemoval = false;
 
         variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
             <
-
-            unique_ptr<PeachTexture2D>, //SFML loads textures in as a single wrapped unit
-            unique_ptr<string> //used for parsing JSON metadata if required
+            TextureData //used for parsing raw byte information, mainly for audio at the moment
+            //unique_ptr<nlohmann::json> //used for parsing JSON metadata if required WARNING: NEEDS TO BE REWRITTED FOR CEREAL UWU
 
             > DrawableResourceData; //actual data for graphic
 
@@ -115,7 +116,10 @@ namespace PeachCore {
         shared_ptr<CommandQueue> pm_CommandQueue = nullptr;
         shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
-        unique_ptr<PeachRenderer> pm_PeachRenderer = nullptr;
+        unique_ptr<PeachRenderer> pm_Renderer = nullptr;
+
+        SDL_Window* pm_MainWindow = nullptr;
+
     public: //DOING THIS FOR NOW TO TEST RUNNING GAME INSTANCE FROM EDITOR NEEDS TO BE PRIVATE IN MY OPINION
         shared_ptr<LogManager> rendering_logger = nullptr;
 
@@ -126,6 +130,7 @@ namespace PeachCore {
         bool 
             Initialize
         (
+            const RendererType fp_DesiredRenderer,
             const string& fp_LogOutputDirectory,
             shared_ptr<Console> fp_Console
         );
@@ -208,6 +213,9 @@ namespace PeachCore {
         //wip?
         bool
             InitializeOpenGL();
+
+        bool
+            InitializeVulkan();
     };
 
 }

@@ -9,18 +9,19 @@
 
 namespace PeachEditor {
 
-    class PeachEngineDebugManager {
+    class Debugger {
     public:
-        static PeachEngineDebugManager& DebugManager() {
-            static PeachEngineDebugManager debugmanager;
+        static Debugger& DebugManager() 
+        {
+            static Debugger debugmanager;
             return debugmanager;
         }
 
     private:
-        PeachEngineDebugManager() = default;
+        Debugger() = default;
 
-        PeachEngineDebugManager(const PeachEngineDebugManager&) = delete;
-        PeachEngineDebugManager& operator=(const PeachEngineDebugManager&) = delete;
+        Debugger(const Debugger&) = delete;
+        Debugger& operator=(const Debugger&) = delete;
     };
 
 }

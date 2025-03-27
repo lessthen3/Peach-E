@@ -11,7 +11,7 @@
 #define SDL_MAIN_HANDLED
 #include <SDL3/SDL_main.h>
 
-#include "../../include/Peach-Engine/PeachEngineManager.h"
+#include "../../include/Peach-Engine/GameManager.h"
 
 #include <iostream>
 #include <string>
@@ -19,74 +19,19 @@
 #include <thread>
 
 using namespace std;
-namespace PC = PeachCore;
 
-static void RenderThread()
-{
-    while (true)
-    {
-        // Play audio
-        cout << "Playing ur mom LOL...\n";
-        this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-    }
-}
-
-static void AudioThread()
-{
-    while (true)
-    {
-        // Play audio
-        cout << "Playing audio...\n";
-        this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-    }
-}
-
-static void ResourceLoadingThread()
-{
-    while (true)
-    {
-        // Load resources
-        cout << "Loading resources...\n";
-        this_thread::sleep_for(chrono::milliseconds(100)); // Simulate work
-    }
-}
-
-static void NetworkThread()
-{
-    while (true)
-    {
-        // Handle network communication
-        cout << "Handling network...\n";
-        this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-    }
-}
-
-static void PhysicsThread() //processes all physics, changing structure of engine because main thread should execute scripts instead of physics calculations
-{
-    while (true)
-    {
-        // Handle network communication
-        cout << "Handling network...\n";
-        this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-    }
-}
-
-//PYBIND11_MODULE(peach_engine, fp_Module)
-//{
-//    PythonScriptManager::Python().InitializePythonBindingsForPeachCore(fp_Module);
-//}
-
-int main(int fp_ArgCount, const char* fp_ArgVector[])
+int 
+    main(int fp_ArgCount, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao
 {
     cout << "Hello World!\n";
+    
+    auto engine_manager = &PeachEngine::GameManager::PeachEngine();
 
-    if (not SDL_Init(SDL_INIT_VIDEO))
-    {
-        //PC::LogManager::RenderingLogger().LogAndPrint("SDL could not initialize! SDL_Error: " + string(SDL_GetError()), "RenderingManager", "fatal");
-        return false;
-    }
+    vector<string> dummy_vector = {}; //used for now because idk if plugin paths should be specified in IntializePeachEngine()
 
-    SDL_Quit(); //just makes more sense to have the main method do this
+    engine_manager->InitializePeachEngine(string(fp_ArgVector[0]), dummy_vector, PeachCore::RendererType::OpenGL);
+    engine_manager->StartMainGameLoop();
+    engine_manager->ShutdownPeachEngine();
 
-    return 0;
+    return EXIT_SUCCESS;
 }

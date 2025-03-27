@@ -21,16 +21,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../../include/Peach-Core/General/stb/stb_image.h"
 
-using namespace std;
-
-namespace PED = PeachEditor;
-namespace PEN = PeachEngine;
-namespace PC = PeachCore;
-
-constexpr const int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
-constexpr const int FAILED_TO_INITIALIZE_OPENGL = -1001;
-constexpr const int FAILED_TO_INITIALIZE_VULKAN = -1002;
-
 //////////////////////////////////////////////
 // MAIN FUNCTION BABY
 //////////////////////////////////////////////
@@ -69,49 +59,42 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
 
     vector<string> mf_ListOfPluginsToLoad;
 
-    #if defined(_WIN32) || defined(_WIN64)
+    #if defined(_WIN32) || defined(_WIN64) //hard coded for now, will be dynamically loaded using a project file encoded in JSON or binary in the future
     //DLL's
-        vector<string>
-            mf_ListOfWindowsPluginsToLoad =
+        mf_ListOfPluginsToLoad =
         {
             mf_PeachERootPath + "/plugins/SimplePlugin.dll",
             mf_PeachERootPath + "/plugins/SimplePlugin2.dll"
         };
-        if(mf_ListOfWindowsPluginsToLoad.size() > 0)
-        {
-            mf_ListOfPluginsToLoad.insert(mf_ListOfPluginsToLoad.end(), mf_ListOfWindowsPluginsToLoad.begin(), mf_ListOfWindowsPluginsToLoad.end());
-            mf_ListOfWindowsPluginsToLoad.clear(); //don't fee like using move() here because im lazy
-        }
     #else //Unix systems (osx and linux)
     //SO's
-        vector<string>
-            mf_ListOfUnixPluginsToLoad =
+        mf_ListOfPluginsToLoad =
         {
         };
-        if (mf_ListOfUnixPluginsToLoad.size() > 0)
-        {
-            mf_ListOfPluginsToLoad.insert(mf_ListOfPluginsToLoad.end(), mf_ListOfUnixPluginsToLoad.begin(), mf_ListOfUnixPluginsToLoad.end());
-            mf_ListOfUnixPluginsToLoad.clear(); //don't fee like using move() here because im lazy
-        }
     #endif
 
     ////////////////////////////////////////////////
-    // Setup Loggers
+    // Setup Environment
     ////////////////////////////////////////////////
 
-    auto peach_editor = &PED::PeachEditorManager::PeachEditor();
-    auto peach_engine = &PEN::PeachEngineManager::PeachEngine();
+    auto peach_editor = &PeachEditor::PeachEditorManager::PeachEditor();
+    auto peach_engine = &PeachEngine::GameManager::PeachEngine();
 
-    peach_editor->SetupInternalLogManagers();
+    auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
+    auto engine_renderer = &PC::RenderingManager::Renderer();
+
+    auto throw_away = engine_renderer->InitializeQueues();
 
     peach_engine->InitializePeachEngine
         (
             mf_PeachERootPath,
             mf_ListOfPluginsToLoad,
-            "OpenGL"
+            PeachCore::RendererType::OpenGL
         );
-    
 
+    peach_editor->SetupInternalLogManagers(mf_PeachERootPath);
+
+    
     ////////////////////////////////////////////////
     // Setup Communication Queues
     ////////////////////////////////////////////////
@@ -134,36 +117,14 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
     const unsigned int mf_MainWindowWidth = 800;
     const unsigned int mf_MainWindowHeight = 600;
 
-    auto editor_renderer = &PED::PeachEditorRenderingManager::PeachEditorRenderer();
-    auto engine_renderer = &PC::RenderingManager::Renderer();
-
-    shared_ptr<PC::LogManager> main_logger = PED::PeachEditorManager::PeachEditor().main_editor_logger;
+    shared_ptr<PC::LogManager> main_logger = PeachEditor::PeachEditorManager::PeachEditor().main_editor_logger;
 
     //Initialize methods, RenderingManager is special because we need two way communication, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
-    mf_PeachEditorDrawableResourceLoadingQueue = PED::PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
+    mf_PeachEditorDrawableResourceLoadingQueue = PeachEditor::PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
 
     mf_PeachEditorRenderingManagersCommandQueue = editor_renderer->InitializeQueues();
 
-    if (not engine_renderer->CreateSDLWindow(&(editor_renderer->GetMainWindow()), PC::RendererType::OpenGL, "Peach Engine", mf_MainWindowWidth, mf_MainWindowHeight))
-    {
-        main_logger->LogAndPrint("Was not able to create the main window, exiting execution immediately", "main", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
-        return FAILED_TO_CREATE_MAIN_WINDOW;
-    }
-
-    main_logger->LogAndPrint("SDL window successfully created for Peach Editor", "main", PeachCore::LogManager::LogLevel::Debug, "main_thread");
-
-    if (not editor_renderer->InitializeOpenGL())
-    {
-        main_logger->LogAndPrint("Was not able to initialize a valid OpenGL context, exiting execution immediately", "main", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
-        return FAILED_TO_INITIALIZE_OPENGL;
-    }
-
-    main_logger->LogAndPrint("Peach Editor successfully initialized OpenGL", "main", PeachCore::LogManager::LogLevel::Debug, "main_thread");
-
     bool mf_IsEditorOpen = true;
-
-    auto peach_renderer = editor_renderer->GetPeachRenderer();
-    auto editor_viewport = editor_renderer->GetViewport();
 
     while(mf_IsEditorOpen)
     {
@@ -172,8 +133,7 @@ int main(int fp_ArgCount, const char* fp_ArgVector[])
     }
 
     editor_renderer->Shutdown();
-
-    SDL_Quit(); //just makes more sense to have the main method do this
+    peach_engine->ShutdownPeachEngine();
   
     main_logger->LogAndPrint("Exit Success!", "Peach-E", PeachCore::LogManager::LogLevel::Debug, "main_thread");
 
