@@ -74,7 +74,7 @@ namespace PeachCore {
         BrightWhite
     };
 
-    [[nodiscard]] constexpr string //IMPORTANT: this method uses branches instead of a hash map because we want this to be thread safe and the speed gain is neglible
+    [[nodiscard]] constexpr string 
         CreateColouredText
         (
             const string& fp_SampleText,

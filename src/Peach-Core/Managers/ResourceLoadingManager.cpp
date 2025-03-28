@@ -117,7 +117,7 @@ namespace PeachCore {
 
 		if (!pm_DrawableResourceLoadingQueue->PushLoadedResourcePackage(pm_WaitingFullyLoadedResourcePackages))
 		{
-			resource_logger->LogAndPrint("Load put off until later", "ResourceLoadingManager", LogManager::LogLevel::Debug, "resource_thread");
+			resource_logger->LogAndPrint("Load put off until later", "ResourceLoadingManager", LogManager::LogLevel::Trace, "resource_thread");
 			return false;
 		}
 

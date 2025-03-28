@@ -13,12 +13,8 @@
 #include "LogManager.h"
 #include "ResourceLoadingManager.h"
 
-#include <fstream>
-#include <iostream>
 #include <thread>
 #include <shared_mutex>
-#include <chrono>
-#include <vector>
 #include <AL/al.h>
 #include <AL/alc.h>
 

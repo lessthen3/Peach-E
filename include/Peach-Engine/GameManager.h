@@ -13,6 +13,7 @@
 #include "../../include/Peach-Core/Peach-Core.hpp"
 
 #include <physfs.h>
+#include <thread>
 
 //SHOULD MANAGE THE ENTIRE GAME ENGINE ON THE MAIN THREAD, IM NOT SURE IF ILL MOVE ALL THE IMPORTANT CODE FROM MAIN INTO HERE TO CLEAN THINGS UP
 
@@ -76,10 +77,14 @@ namespace PeachEngine {
             InitializePeachEngine
             (
                 const string& fp_RootPath,
-                const vector<string>& fp_ListOfPluginsToLoad,
                 const PeachCore::RendererType fp_RenderingBackend
             )
         {
+            //Enable ANSI colour codes for windows console grumble grumble
+            #if defined(_WIN32) || defined(_WIN64)
+                EnableColors();
+            #endif
+
             main_logger = make_unique<PC::LogManager>();
             main_logger->Initialize(fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger());
             main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", PeachCore::LogManager::LogLevel::Debug, "main_thread");
@@ -106,7 +111,23 @@ namespace PeachEngine {
             // Load and Setup Plugins
             //////////////////////////////////////////////
 
-            LoadPluginsFromConfigs(fp_ListOfPluginsToLoad); 
+            vector<string> f_ListOfPluginsToLoad;
+
+            #if defined(_WIN32) || defined(_WIN64) //hard coded for now, will be dynamically loaded using a project file encoded in JSON or binary in the future
+                //DLL's
+                f_ListOfPluginsToLoad =
+                {
+                    fp_RootPath + "/plugins/SimplePlugin.dll",
+                    fp_RootPath + "/plugins/SimplePlugin2.dll"
+                };
+            #else //Unix systems (osx and linux)
+                //SO's or dylib
+                f_ListOfPluginsToLoad =
+                {
+                };
+            #endif
+
+            LoadPluginsFromConfigs(f_ListOfPluginsToLoad);
 
             PeachCore::PluginManager::ManagePlugins().InitializePlugins();
 

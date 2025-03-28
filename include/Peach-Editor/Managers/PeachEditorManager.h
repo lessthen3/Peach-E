@@ -52,7 +52,31 @@ namespace PeachEditor{
     //////////////////////////////////////////////
 
     public:
+        ////////////////////////////////////////////////
+        // Start Main Loop
+        ////////////////////////////////////////////////
         void
+            StartPeachEditorMainLoop()
+            const
+        {
+            auto peach_engine = &PeachEngine::GameManager::PeachEngine();
+            auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
+
+            bool mf_IsEditorOpen = true;
+
+            while (mf_IsEditorOpen)
+            {
+                this_thread::sleep_for(chrono::milliseconds(16)); //60 fps oh i just realized the fps flickers by 1 because the floating point conversion isnt exact
+                editor_renderer->RenderFrame(&mf_IsEditorOpen);
+            }
+
+            editor_renderer->Shutdown();
+            peach_engine->ShutdownPeachEngine();
+
+            main_editor_logger->LogAndPrint("Exit Success!", "Peach-E", PeachCore::LogManager::LogLevel::Debug, "main_thread");
+        }
+
+        bool
             SetupInternalLogManagers(const string& fp_RootPath)
         {
             const string f_LogDir = fp_RootPath + "/logs";
@@ -60,30 +84,72 @@ namespace PeachEditor{
             pm_PeachEditorConsole = make_shared<PC::Console>();
 
             main_editor_logger = make_unique<PC::LogManager>();
-            main_editor_logger->Initialize(f_LogDir, "PeachEditorManager", pm_PeachEditorConsole);
+
+            if (not main_editor_logger->Initialize(f_LogDir, "PeachEditorManager", pm_PeachEditorConsole))
+            {
+                PeachCore::PrintError("Initialization error: Was not able to initialize PeachEditorManager's main logger");
+                return false;
+            }
+
             main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", PeachCore::LogManager::LogLevel::Debug, "main_thread");
 
             //probably should have better error handling for the loggers, especially
             //main_editor_logger->Initialize("..\\logs", "main_thread", f_PeachConsole);
             //InternalLogManager::InternalAudioLogger().Initialize("..\\logs", "audio_thread", f_PeachConsole);
-            PeachEditorRenderingManager::PeachEditorRenderer().Initialize(f_LogDir, pm_PeachEditorConsole);
-            PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger(f_LogDir, pm_PeachEditorConsole);
+            if(not PeachEditorRenderingManager::PeachEditorRenderer().Initialize(f_LogDir, pm_PeachEditorConsole))
+            {
+                main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
+                return false;
+            }
+
+            if(not PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger(f_LogDir, pm_PeachEditorConsole))
+            {
+                main_editor_logger->LogAndPrint("Initialization error: PeachEditorResourceLoader failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
+                return false;
+            }
 
             //main_editor_logger->LogAndPrint("InternalMainLogger successfully initialized", "Peach-E", "debug");
             //InternalLogManager::InternalAudioLogger().LogAndPrint("InternalAudioLogger successfully initialized", "Peach-E", "debug");
             //InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("InternalResourceLoadingLogger successfully initialized", "Peach-E", "debug");
+
+            return true;
         }
 
         bool
-            InitializePeachEditor()
+            InitializePeachEditor(const string& fp_RootPath)
         {
+            if (not SetupInternalLogManagers(fp_RootPath))
+            {
 
+                return false;
+            }
+
+            return true;
         }
 
-        void
-            AdjustGameStartupJSONConfigs() //this is here for adjusting the JSON configs from the Peach Editor
+        ////////////////////////////////////////////////
+        // Project File Handling Methods
+        ////////////////////////////////////////////////
+
+        bool
+            CreatePeachProjectFile() //this is here for adjusting the JSON configs from the Peach Editor
         {
 
+            return true;
+        }
+
+        bool
+            LoadPeachProjectFile()
+        {
+
+            return true;
+        }
+
+        bool
+            EditProjectFile()
+        {
+
+            return true;
         }
 
         // Function to list all files recursively
