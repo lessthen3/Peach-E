@@ -64,7 +64,7 @@ namespace PeachCore {
 
             > ResourceData;
 
-        LoadedResourcePackage(const string& fp_ID, TextureData& fp_TextureData) //XXX: shouldn't have move here, did this before i understood what move did LMFAO
+        LoadedResourcePackage(const string& fp_ID, TextureData& fp_TextureData)
             : PeachObjectID((fp_ID)), ResourceData(move(fp_TextureData)) {}
 
         LoadedResourcePackage(const string& fp_ID, AudioData& fp_AudioData)
@@ -104,23 +104,19 @@ namespace PeachCore {
 
     public:
         // Push a new command onto the queue
-        void 
-            PushLoadCommandQueue(const LoadCommand& command) //Never supposed to be used by ResourceLoadingManager
+        void PushLoadCommandQueue(const LoadCommand& command) //Never supposed to be used by ResourceLoadingManager
         {
             lock_guard<mutex> lock(Mutex);
             pm_LoadCommandQueue.push(command);
         }
 
         // Pop the next command from the queue
-        bool 
-            PopLoadCommandQueue(LoadCommand& command) //returns true if empty, returns false if there are more commands to process--for use in while loops
+        bool PopLoadCommandQueue(LoadCommand& command) //returns true if empty, returns false if there are more commands to process--for use in while loops
         {
             lock_guard<mutex> lock(Mutex);
 
             if (pm_LoadCommandQueue.empty())
-            {
-                return true;
-            }
+                {return true;}
 
             command = move(pm_LoadCommandQueue.front());
             pm_LoadCommandQueue.pop();
@@ -133,11 +129,11 @@ namespace PeachCore {
         //////////////////////////////////////////////
 
         // Push a new command onto the queue
-        bool PushLoadedResourcePackage(vector<unique_ptr<LoadedResourcePackage>> fp_ListOfPackages) //used exclusively by ResourceLoadingManager, NO OTHER CLASS SHOULD EVER USE THIS
+        bool PushLoadedResourcePackage(vector<unique_ptr<LoadedResourcePackage>>& fp_ListOfPackages) //used exclusively by ResourceLoadingManager, NO OTHER CLASS SHOULD EVER USE THIS
         {
             unique_lock<mutex> lock(Mutex, try_to_lock);
             //used for lazy pushing of LoadedPackages because i decided that loading assets while rendering and gameplay isnt a high priority, and this is better for level memory paging
-            if (not lock.owns_lock()) 
+            if (!lock.owns_lock()) 
             {
                 return false;
             } // lock not acquired, return early
@@ -152,20 +148,19 @@ namespace PeachCore {
 
 
         // pass by ref since Rendering and Audio Manager pass a placeholder ptr
-        [[nodiscard]] unique_ptr<LoadedResourcePackage>
-            PopLoadedResourceQueue() //returns false if empty, returns true if there are more packages to process--for use in while loops
+        bool PopLoadedResourceQueue(unique_ptr<LoadedResourcePackage>& fp_Package) //returns false if empty, returns true if there are more packages to process--for use in while loops
         {
             lock_guard<mutex> lock(Mutex);
 
-            if (pm_LoadedResourceQueue.empty()) //check if there are any more loaded resource packages
+            if (pm_LoadedResourceQueue.empty())
             {
                 return false;
-            } // no new resources loaded, return early
+            }
 
-            unique_ptr<LoadedResourcePackage> fp_Package = move(pm_LoadedResourceQueue.front());
+            fp_Package = move(pm_LoadedResourceQueue.front());
             pm_LoadedResourceQueue.pop();
 
-            return move(fp_Package);
+            return true;
         }
     };
 }
