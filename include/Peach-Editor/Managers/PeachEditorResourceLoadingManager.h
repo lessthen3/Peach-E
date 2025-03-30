@@ -17,8 +17,6 @@
 
 #include <physfs.h>
 
-namespace PC = PeachCore;
-
 namespace PeachEditor {
 
 	//////////////////////////////////////////////
@@ -61,7 +59,7 @@ namespace PeachEditor {
 
 		vector<unique_ptr<PeachCore::LoadedResourcePackage>> pm_WaitingFullyLoadedResourcePackages;
 
-		unique_ptr<PC::LogManager> editor_resource_logger = nullptr;
+		unique_ptr<PeachCore::LogManager> editor_resource_logger = nullptr;
 
 	//////////////////////////////////////////////
 	// Public Members
@@ -77,7 +75,7 @@ namespace PeachEditor {
 			InitializeLogger
 			(
 				const string& fp_LogOutputDirectory,
-				shared_ptr<PC::Console> fp_Console
+				shared_ptr<PeachCore::Console> fp_Console
 			);
 
 		shared_ptr<PeachCore::LoadingQueue> 

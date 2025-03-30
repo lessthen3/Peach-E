@@ -21,12 +21,22 @@ int
     main(int fp_ArgCount, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao
 {
     cout << "Hello World!\n";
-    
-    auto engine_manager = &PeachEngine::GameManager::PeachEngine();
 
-    engine_manager->InitializePeachEngine(string(fp_ArgVector[0]), PeachCore::RendererType::OpenGL);
-    engine_manager->StartMainGameLoop();
-    engine_manager->ShutdownPeachEngine();
+    try
+    {
+        auto engine_manager = &PeachEngine::GameManager::PeachEngine();
 
-    return EXIT_SUCCESS;
+        engine_manager->InitializePeachEngine(string(fp_ArgVector[0]), PeachCore::RendererType::OpenGL);
+        engine_manager->StartMainGameLoop();
+        engine_manager->ShutdownPeachEngine();
+
+        return EXIT_SUCCESS;
+    }
+
+    catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
+    {
+        PeachCore::PrintError(format("Unhandled exception: {}", Exception.what()));
+
+        return EXIT_FAILURE;
+    }
 }

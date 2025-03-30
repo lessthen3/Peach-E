@@ -22,6 +22,8 @@
 #include <map>
 #include <format>
 
+#include <thread>
+
 using namespace std;
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -304,18 +306,19 @@ namespace PeachCore {
     // Public Destructor
     //////////////////////////////////////////////
     public:
-        ~LogManager()
+        ~LogManager() ///XXX: Just copy and pasted the flushalllogs method because they have the assert at the beginning and wont work with premature exit
         {
-            FlushAllLogs();  // Ensure all logs are flushed before destruction
-
             for (auto& _f : pm_LogFiles)
             {
                 if (_f.second.is_open())
                 {
-                    _f.second.close();
+                    _f.second.flush();
                 }
-            }
+            }  // Ensure all logs are flushed before destruction
+
+            CloseOpenLogFiles(); //Closes any files that are open to prevent introducing vulnerabilities in privileged environments
         }
+
     //////////////////////////////////////////////
     // Public Constructor
     //////////////////////////////////////////////
@@ -349,6 +352,9 @@ namespace PeachCore {
 
         shared_ptr<Console> pm_Console = nullptr;
 
+        thread::id pm_ThreadOwnerID;
+        string pm_ThreadOwnerName;
+
     //////////////////////////////////////////////
     // Public Methods
     //////////////////////////////////////////////
@@ -356,6 +362,7 @@ namespace PeachCore {
         bool
             Initialize
             (
+                const string& fp_ThreadName,
                 const string& fp_DesiredOutputDirectory,
                 const string& fp_DesiredLoggerName,
                 shared_ptr<Console> fp_Console,
@@ -369,6 +376,9 @@ namespace PeachCore {
                 return false;
             }
 
+            pm_ThreadOwnerName = fp_ThreadName;
+            pm_ThreadOwnerID = this_thread::get_id();
+
             pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + fp_DesiredLoggerName;
 
             // Ensure log directory exists
@@ -378,9 +388,9 @@ namespace PeachCore {
                 {
                     filesystem::create_directories(pm_CurrentWorkingDirectory);
                 }
-                catch (const exception& ex)
+                catch (const exception& f_Exception)
                 {
-                    PrintError("An error occurred inside LogManager: " + static_cast<string>(ex.what()));
+                    PrintError(format("An exception was thrown inside LogManager: {}", f_Exception.what()));
                     return false;
                 }
             }
@@ -423,6 +433,7 @@ namespace PeachCore {
         bool
             Initialize
             (
+                const string& fp_ThreadName,
                 const string& fp_DesiredOutputDirectory,
                 const string& fp_DesiredLoggerName,
                 shared_ptr<Console> fp_Console,
@@ -441,6 +452,9 @@ namespace PeachCore {
                 return false;
             }
 
+            pm_ThreadOwnerName = fp_ThreadName;
+            pm_ThreadOwnerID = this_thread::get_id();
+
             pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + fp_DesiredLoggerName;
 
             // Ensure log directory exists
@@ -452,7 +466,7 @@ namespace PeachCore {
                 }
                 catch (const exception& ex)
                 {
-                    PrintError("An error occurred inside LogManager: " + static_cast<string>(ex.what()));
+                    PrintError(format("An exception was thrown inside LogManager: {}", ex.what()));
                     return false;
                 }
             }
@@ -476,11 +490,29 @@ namespace PeachCore {
             return true;
         }
 
+        inline void ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
+            AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the LogManager instance
+            const
+        {
+            if (this_thread::get_id() != pm_ThreadOwnerID)
+            {
+                stringstream f_UckCPP; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
+                f_UckCPP << this_thread::get_id();
+                string f_CallerThreadID = f_UckCPP.str();
+
+                PrintError(format("LogManager method '{}' called from the wrong thread, [Caller Thread ID]: {}. Exiting...", fp_FunctionName, f_CallerThreadID));
+                
+                exit(-69);
+            }
+        }
+
         //////////////////// Flush All Logs ////////////////////
 
         void
             FlushAllLogs()
         {
+            AssertThreadAccess("FlushAllLogs");
+
             for (auto& _f : pm_LogFiles)
             {
                 if (_f.second.is_open())
@@ -497,8 +529,39 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const string& fp_LogLevel,
-                const string& fp_ThreadName
+                const string& fp_LogLevel
+            )
+        {
+            AssertThreadAccess("Log");
+
+            string f_TimeStamp = GetCurrentTimestamp();
+            string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + fp_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
+
+            // Log to specific file and all-logs file
+            const string f_LogFileName = fp_LogLevel + ".log";
+            const string f_AllLogsName = "all-logs.log";
+
+            if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+            {
+                pm_LogFiles[f_LogFileName] << f_LogEntry;
+            }
+
+            if (pm_LogFiles.find(f_AllLogsName) != pm_LogFiles.end() and pm_LogFiles[f_AllLogsName].is_open())
+            {
+                pm_LogFiles[f_AllLogsName] << f_LogEntry;
+            }
+
+            pm_Console->AddLog(format("[{}][{}]: {} \n", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, pm_ThreadOwnerName);
+
+            return f_LogEntry;
+        }
+
+        string
+            LogNotThreadSafe ///XXX: pretty much just another Log function copy without the assert, i just wanted the new name for being explicit
+            (
+                const string& fp_Message,
+                const string& fp_Sender,
+                const string& fp_LogLevel
             )
         {
             string f_TimeStamp = GetCurrentTimestamp();
@@ -518,7 +581,7 @@ namespace PeachCore {
                 pm_LogFiles[f_AllLogsName] << f_LogEntry;
             }
 
-            pm_Console->AddLog("[" + pm_LoggerName + "]: " + fp_Message + "\n", pm_LoggerName, fp_ThreadName);
+            pm_Console->AddLog(format("[{}][{}]: {} \n", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, pm_ThreadOwnerName);
 
             return f_LogEntry;
         }
@@ -528,8 +591,7 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const LogLevel fp_LogLevel,
-                const string& fp_ThreadName
+                const LogLevel fp_LogLevel
             )
         {
             // Log to console
@@ -537,26 +599,26 @@ namespace PeachCore {
             switch (fp_LogLevel)
             {
                 case LogLevel::Trace:
-                    Print(Log(fp_Message, fp_Sender, "trace", fp_ThreadName), Colours::BrightWhite);
+                    Print(Log(fp_Message, fp_Sender, "trace"), Colours::BrightWhite);
                     break;
                 case LogLevel::Debug:
-                    Print(Log(fp_Message, fp_Sender, "debug", fp_ThreadName), Colours::BrightBlue);
+                    Print(Log(fp_Message, fp_Sender, "debug"), Colours::BrightBlue);
                     break;
                 case LogLevel::Info:
-                    Print(Log(fp_Message, fp_Sender, "info", fp_ThreadName), Colours::BrightGreen);
+                    Print(Log(fp_Message, fp_Sender, "info"), Colours::BrightGreen);
                     break;
                 case LogLevel::Warning:
-                    Print(Log(fp_Message, fp_Sender, "warn", fp_ThreadName), Colours::BrightYellow);
+                    Print(Log(fp_Message, fp_Sender, "warn"), Colours::BrightYellow);
                     break;
                 case LogLevel::Error:
-                    PrintError(Log(fp_Message, fp_Sender, "error", fp_ThreadName), Colours::Red); //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
+                    PrintError(Log(fp_Message, fp_Sender, "error"), Colours::Red); //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
                     break;
                 case LogLevel::Fatal:
-                    PrintError(Log(fp_Message, fp_Sender, "fatal", fp_ThreadName), Colours::BrightMagenta);
+                    PrintError(Log(fp_Message, fp_Sender, "fatal"), Colours::BrightMagenta);
                     break;
                 default:
-                    PrintError(Log("Did not input a valid option for log level in LogAndPrint()", "LogManager", "error", fp_ThreadName));
-                    Print(Log(fp_Message, fp_Sender, "error", fp_ThreadName));
+                    PrintError(Log("Did not input a valid option for log level in LogAndPrint()", "LogManager", "error"));
+                    Print(Log(fp_Message, fp_Sender, "error"));
             }
         }
 
@@ -577,7 +639,7 @@ namespace PeachCore {
 
             if (not f_File.is_open())
             {
-                cerr << "Failed to open log file: " << fp_FileName << "\n";
+                PrintError(format("Failed to open log file: {}", fp_FileName));
             }
             else
             {
@@ -601,6 +663,18 @@ namespace PeachCore {
             ss << '.' << setfill('0') << setw(3) << milliseconds;
 
             return ss.str();
+        }
+
+        void
+            CloseOpenLogFiles()
+        {
+            for (auto& _f : pm_LogFiles)
+            {
+                if (_f.second.is_open())
+                {
+                    _f.second.close();
+                }
+            }
         }
     };
 }

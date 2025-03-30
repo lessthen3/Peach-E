@@ -34,7 +34,7 @@ namespace PeachEditor {
     {
         if (pm_AreQueuesInitialized)
         {
-            rendering_logger->LogAndPrint("RenderingManager queues have already been initialized.", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning, "render_thread");
+            rendering_logger->LogAndPrint("RenderingManager queues have already been initialized.", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning);
             return nullptr;
         }
 
@@ -43,7 +43,7 @@ namespace PeachEditor {
 
         //pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, false);
 
-        rendering_logger->LogAndPrint("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug, "render_thread");
+        rendering_logger->LogAndPrint("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug);
 
         pm_AreQueuesInitialized = true;
 
@@ -56,21 +56,21 @@ namespace PeachEditor {
         PeachEditorRenderingManager::Initialize
         (
             const string& fp_LogOutputDirectory,
-            shared_ptr<PC::Console> fp_EditorConsole
+            shared_ptr<PeachCore::Console> fp_EditorConsole
         )
     {
         //////////////////////////////////////////////
         // Initialize Logger
         //////////////////////////////////////////////
-        rendering_logger = make_shared<PC::LogManager>();
+        rendering_logger = make_shared<PeachCore::LogManager>();
 
-        if (not rendering_logger->Initialize(fp_LogOutputDirectory, "PeachEditorRenderingManager", fp_EditorConsole))
+        if (not rendering_logger->Initialize("render_thread", fp_LogOutputDirectory, "PeachEditorRenderingManager", fp_EditorConsole))
         {
             PeachCore::PrintError("Unable to initialize PeachEditorRenderingManager's logger");
             return false;
         }
 
-        rendering_logger->LogAndPrint("PeachEditorRenderingLogger successfully initialized", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug, "render_thread");
+        rendering_logger->LogAndPrint("PeachEditorRenderingLogger successfully initialized", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug);
 
         //////////////////////////////////////////////
         // Grab Reference to the Main Window
@@ -180,13 +180,13 @@ namespace PeachEditor {
         if (not pm_IsRenderingInitialized)
         {
             //rendering_logger isn't initialized yet if rendering hasn't been initialized yet so we use the full singleton call here instead for safety
-            rendering_logger->LogAndPrint("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal, "render_thread");
+            rendering_logger->LogAndPrint("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             throw runtime_error("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager");
         }
 
         if (not fp_IsProgramRuntimeOver)
         {
-            rendering_logger->LogAndPrint("Tried to pass nullptr bool to RenderFrame inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal, "render_thread");
+            rendering_logger->LogAndPrint("Tried to pass nullptr bool to RenderFrame inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             throw runtime_error("Tried to pass nullptr bool to RenderFrame");
         }
 
@@ -305,7 +305,10 @@ namespace PeachEditor {
                 if (nk_menu_item_label(pm_NuklearCtx, "Exit", NK_TEXT_LEFT))
                 {
                     *fp_IsProgramRuntimeOver = false;
-                    m_IsSceneCurrentlyRunning = false;
+                    if (m_IsSceneCurrentlyRunning)
+                    {
+                        DestroyCurrentScene();
+                    }
                 }
 
                 nk_menu_end(pm_NuklearCtx);
@@ -341,116 +344,12 @@ namespace PeachEditor {
                 nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
 
                 if (nk_menu_item_label(pm_NuklearCtx, "Run Peach-E Project", NK_TEXT_LEFT) and not m_IsSceneCurrentlyRunning)
-                {
-
-                    if (not PeachCore::RenderingManager::Renderer().CreateSDLWindow(&pm_GameInstanceWindow, PeachCore::RendererType::OpenGL, "Peach Game", 800, 600))
-                    {
-                        //idk do smth idc rn
-                    }
-
-                    // Run the game in a new window
-                    //THIS IS NOT THREAD SAFE IDK WHY I DID THIS LMFAO
-                    thread T_CurrentSceneRunnerThread([]()
-                    {
-                        auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
-                        auto engine_renderer = &PeachCore::RenderingManager::Renderer();
-
-                        SDL_Window* t_GameWindow = editor_renderer->GetGameInstanceWindow();
-
-                        unique_ptr<PeachCore::PeachRenderer> t_GameInstanceRenderer = make_unique<PeachCore::PeachRenderer>(t_GameWindow, engine_renderer->rendering_logger);
-
-                        ////////////////////////////////////////////////
-                        // Generate Buffers
-                        ////////////////////////////////////////////////
-
-                        vector<float> vertices =
-                        {
-                            // positions             // texture coords
-                            0.5f,  0.5f, 0.0f,   1.0f, 1.0f,   // top right
-                            0.5f, -0.5f, 0.0f,   1.0f, 0.0f,   // bottom right
-                           -0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
-                           -0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
-                        };
-
-                        vector<unsigned int> indices =
-                        {  // note that we start from 0!
-                            0, 1, 3,   // first triangle
-                            1, 2, 3    // second triangle
-                        };
-
-                        GLuint vao = t_GameInstanceRenderer->Generate2DBuffers(vertices, indices);
-
-                        ////////////////////////////////////////////////
-                        // Shaders
-                        ////////////////////////////////////////////////
-                        
-                        //XXX: NEED TO NUKE THIS NOT THREAD SAFE ONLY USED HERE FOR NOW SINCE EVERYTHING RUNS ON A SINGLE THREAD ATM
-                        string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
-
-                        PeachCore::ShaderProgram mf_CatShader = PeachCore::ShaderProgram
-                        (
-                            "Cat_Shader",
-                            f_BaseDir + "/shaders/vert.vs",
-                            f_BaseDir + "/shaders/frag.fs",
-                            engine_renderer->rendering_logger.get()
-                        );
-
-                        ////////////////////////////////////////////////
-                        // Loading and Registering Texture
-                        ////////////////////////////////////////////////
-
-                        string f_TexturePath = f_BaseDir + "/First Texture.png";
-                        stbi_set_flip_vertically_on_load(true);
-
-                        int width, height, nrChannels;
-                        unsigned char* data = stbi_load(f_TexturePath.c_str(), &width, &height, &nrChannels, 0);
-
-                        GLuint texture = t_GameInstanceRenderer->RegisterTexture("Texture", data, width, height, nrChannels);
-
-                        glm::mat4 mf_Transform = glm::mat4(1.0f);
-
-
-                        int t_CurrentWindowWidth, t_CurrentWindowHeight;
-
-                        while (editor_renderer->m_IsSceneCurrentlyRunning)
-                        {
-                            this_thread::sleep_for(chrono::milliseconds(16));
-
-                            SDL_GetWindowSizeInPixels(t_GameWindow, &t_CurrentWindowWidth, &t_CurrentWindowHeight);
-                            glViewport(0, 0, t_CurrentWindowWidth, t_CurrentWindowHeight);
-
-                            nk_colorf f_Temp = editor_renderer->pm_BackgroundColour;
-                            glm::vec4 f_Colour = { f_Temp.r, f_Temp.g, f_Temp.b, f_Temp.a };
-
-                            mf_Transform = glm::rotate(mf_Transform, static_cast<float>(static_cast<int>(SDL_GetTicks()) % 10000) * 0.00001f, glm::vec3(0.0, 0.0, 1.0));
-
-                            glUseProgram(mf_CatShader.GetProgramID());
-
-                            mf_CatShader.SetUniform("colourUniform", f_Colour);
-                            mf_CatShader.SetUniform("transform", mf_Transform);
-
-                            glUseProgram(0);
-
-                            t_GameInstanceRenderer->DrawTexture(mf_CatShader, vao, texture);
-
-                            SDL_GL_SwapWindow(t_GameWindow);
-
-                            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-                            glClearColor(0.10f, 0.18f, 0.24f, 1.0f);
-                        }
-
-                        //this used to create a bug but doesnt anymore for some reason lmfao
-                        t_GameInstanceRenderer.reset(nullptr); //IMPORTANT THIS BREAKS THE PROGRAM ITS A THREADING BUG
-                        //WE BEED TO SYNCHRONIZE THREADS, CLEANUP RESOURCES IN APPROPRIATE ORDER THEN EXIT MAIN FUNCTION OWO
-                        editor_renderer->SetGameInstanceWindow(nullptr);
-                    });
-
-                    T_CurrentSceneRunnerThread.detach();
-                    m_IsSceneCurrentlyRunning = true;
+                {   
+                    CreateCurrentScene();
                 }
                 if (nk_menu_item_label(pm_NuklearCtx, "Force Quit Peach-E Project", NK_TEXT_LEFT) and m_IsSceneCurrentlyRunning)
                 {
-                    m_IsSceneCurrentlyRunning = false;
+                    DestroyCurrentScene();
                 }
 
                 nk_menu_end(pm_NuklearCtx);
@@ -567,16 +466,21 @@ namespace PeachEditor {
         nk_sdl_render(NK_ANTI_ALIASING_ON, 512 * 1024, 128 * 1024);
 
         SDL_GL_SwapWindow(pm_MainWindow);
+
+        if (m_IsSceneCurrentlyRunning)
+        {
+            RunCurrentScene();
+        }
     }
 
     void 
         PeachEditorRenderingManager::RenderDirectory
         (
             struct nk_context* ctx, 
-            const fs::path& fp_CurrentPath
+            const filesystem::path& fp_CurrentPath
         )
     {
-        for (const auto& entry : fs::directory_iterator(fp_CurrentPath))
+        for (const auto& entry : filesystem::directory_iterator(fp_CurrentPath))
         {
             string f_FileName = entry.path().filename().string();
             string f_FullPathName = entry.path().string();
@@ -670,7 +574,7 @@ namespace PeachEditor {
     void 
         PeachEditorRenderingManager::RenderFileBrowser
         (
-            const fs::path& fp_TopLevelDirectoryPath, 
+            const filesystem::path& fp_TopLevelDirectoryPath,
             float x, 
             float y, 
             float width, 
@@ -678,9 +582,9 @@ namespace PeachEditor {
             struct nk_context* ctx
         )
     {
-        static fs::path current_path = fp_TopLevelDirectoryPath;  // Holds the current directory path
+        static filesystem::path current_path = fp_TopLevelDirectoryPath;  // Holds the current directory path
 
-        if (not fs::exists(current_path) || not fs::is_directory(current_path)) 
+        if (not filesystem::exists(current_path) or not filesystem::is_directory(current_path))
         {
             current_path = fp_TopLevelDirectoryPath;  // Reset to base directory if the current path is not valid
         }
@@ -788,7 +692,114 @@ namespace PeachEditor {
     void 
         PeachEditorRenderingManager::RunCurrentScene()
     {
+        auto engine_renderer = &PeachCore::RenderingManager::Renderer();
 
+        glm::mat4 mf_Transform = glm::mat4(1.0f);
+
+        int t_CurrentWindowWidth, t_CurrentWindowHeight;
+
+        SDL_GetWindowSizeInPixels(pm_GameInstanceWindow, &t_CurrentWindowWidth, &t_CurrentWindowHeight);
+        glViewport(0, 0, t_CurrentWindowWidth, t_CurrentWindowHeight);
+
+        nk_colorf f_Temp = pm_BackgroundColour;
+        glm::vec4 f_Colour = { f_Temp.r, f_Temp.g, f_Temp.b, f_Temp.a };
+
+        mf_Transform = glm::rotate(mf_Transform, static_cast<float>(static_cast<int>(SDL_GetTicks()) % 10000) * 0.00001f, glm::vec3(0.0, 0.0, 1.0));
+
+        glUseProgram(pm_CatShader.GetProgramID());
+
+        pm_CatShader.SetUniform("colourUniform", f_Colour);
+        pm_CatShader.SetUniform("transform", mf_Transform);
+
+        glUseProgram(0);
+
+        engine_renderer->GetPeachRenderer()->DrawTexture(pm_CatShader, pm_TestVAO, pm_TestTexture);
+
+        SDL_GL_SwapWindow(pm_GameInstanceWindow);
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.10f, 0.18f, 0.24f, 1.0f);
+    }
+
+    void
+        PeachEditorRenderingManager::CreateCurrentScene()
+    {
+        // Run the game in a new window
+        auto engine_renderer = &PeachCore::RenderingManager::Renderer();
+
+        if (m_IsSceneCurrentlyRunning)
+        {
+            return;
+        }
+
+        if (not engine_renderer->CreateSDLWindow(&pm_GameInstanceWindow, PeachCore::RendererType::OpenGL, "Peach Game", 800, 600))
+        {
+            //idk do smth idc rn
+        }
+
+        //pm_GameInstanceRenderer = make_unique<PeachCore::PeachRenderer>(pm_GameInstanceWindow, engine_renderer->rendering_logger);
+
+        ////////////////////////////////////////////////
+        // Generate Buffers
+        ////////////////////////////////////////////////
+
+        vector<float> vertices =
+        {
+            // positions             // texture coords
+            0.5f,  0.5f, 0.0f,   1.0f, 1.0f,   // top right
+            0.5f, -0.5f, 0.0f,   1.0f, 0.0f,   // bottom right
+            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
+            -0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
+        };
+
+        vector<unsigned int> indices =
+        {  // note that we start from 0!
+            0, 1, 3,   // first triangle
+            1, 2, 3    // second triangle
+        };
+
+        pm_TestVAO = engine_renderer->GetPeachRenderer()->Generate2DBuffers(vertices, indices);
+
+        ////////////////////////////////////////////////
+        // Shaders
+        ////////////////////////////////////////////////
+
+        //XXX: NEED TO NUKE THIS NOT THREAD SAFE ONLY USED HERE FOR NOW SINCE EVERYTHING RUNS ON A SINGLE THREAD ATM
+        string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
+
+        pm_CatShader = PeachCore::ShaderProgram
+        (
+            "Cat_Shader",
+            f_BaseDir + "/shaders/vert.vs",
+            f_BaseDir + "/shaders/frag.fs",
+            engine_renderer->rendering_logger.get()
+        );
+
+        ////////////////////////////////////////////////
+        // Loading and Registering Texture
+        ////////////////////////////////////////////////
+
+        string f_TexturePath = f_BaseDir + "/First Texture.png";
+        stbi_set_flip_vertically_on_load(true);
+
+        int width, height, nrChannels;
+        unsigned char* data = stbi_load(f_TexturePath.c_str(), &width, &height, &nrChannels, 0);
+
+        pm_TestTexture = engine_renderer->GetPeachRenderer()->RegisterTexture("Texture", data, width, height, nrChannels);
+
+        m_IsSceneCurrentlyRunning = true;
+    }
+
+    void
+        PeachEditorRenderingManager::DestroyCurrentScene()
+    {
+        auto engine_renderer = &PeachCore::RenderingManager::Renderer();
+        //this used to create a bug but doesnt anymore for some reason lmfao
+        //engine_renderer->DestroyPeachRenderer(); //IMPORTANT THIS BREAKS THE PROGRAM ITS A THREADING BUG
+        //WE BEED TO SYNCHRONIZE THREADS, CLEANUP RESOURCES IN APPROPRIATE ORDER THEN EXIT MAIN FUNCTION OWO
+        SDL_DestroyWindow(pm_GameInstanceWindow);
+        SetGameInstanceWindow(nullptr);
+        m_IsSceneCurrentlyRunning = false;
     }
 
     void 
@@ -844,8 +855,8 @@ namespace PeachEditor {
         (
             const unsigned int fp_Width,
             const unsigned int fp_Height,
-            PC::PeachRenderer* fp_Renderer,
-            shared_ptr<PC::LogManager> fp_EditorRenderingLogger
+            PeachCore::PeachRenderer* fp_Renderer,
+            shared_ptr<PeachCore::LogManager> fp_EditorRenderingLogger
         )
     {
         pm_CurrentViewportWidth = fp_Width;
@@ -1057,7 +1068,7 @@ namespace PeachEditor {
         // Check if framebuffer is complete
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            editor_rendering_logger->LogAndPrint("Error: Framebuffer is not complete!", "Viewport", PeachCore::LogManager::LogLevel::Error, "render_thread");
+            editor_rendering_logger->LogAndPrint("Error: Framebuffer is not complete!", "Viewport", PeachCore::LogManager::LogLevel::Error);
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             return false;
         }
@@ -1068,7 +1079,7 @@ namespace PeachEditor {
         // Unbind Buffers and Reset GL state
         ////////////////////////////////////////////////
 
-        editor_rendering_logger->LogAndPrint("Render Texture successfully setup UwU", "Viewport", PeachCore::LogManager::LogLevel::Debug, "render_thread");
+        editor_rendering_logger->LogAndPrint("Render Texture successfully setup UwU", "Viewport", PeachCore::LogManager::LogLevel::Debug);
 
         return true;
     }

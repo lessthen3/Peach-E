@@ -54,7 +54,8 @@ namespace PeachCore {
     // Singleton Instance
     //////////////////////////////////////////////
     public:
-        static PluginManager& ManagePlugins() {
+        static PluginManager& ManagePlugins() 
+        {
             static PluginManager instance;
             return instance;
         }

@@ -64,7 +64,7 @@ namespace PeachCore {
         {
             if (fp_Vertices.size() < 3)
             {
-                fp_Logger->LogAndPrint("Tried to create a CollisionPolygon2D with less than 3 vertices", "CollisionPolygon2D", LogManager::LogLevel::Error, "physics_thread");
+                fp_Logger->LogAndPrint("Tried to create a CollisionPolygon2D with less than 3 vertices", "CollisionPolygon2D", LogManager::LogLevel::Error);
                 return false;
             }
 

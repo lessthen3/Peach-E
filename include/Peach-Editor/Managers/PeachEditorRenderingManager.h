@@ -20,11 +20,8 @@
 
 #include <atomic> //should be used for communicating whether the scene execution thread is currently running or not
 #include <unordered_set>
-#include <filesystem>
 
 using namespace std; 
-namespace PC = PeachCore;
-namespace fs = filesystem;
 
 namespace PeachEditor {
 
@@ -45,8 +42,8 @@ namespace PeachEditor {
             (
                 const unsigned int fp_Width,
                 const unsigned int fp_Height,
-                PC::PeachRenderer* fp_Renderer,
-                shared_ptr<PC::LogManager> fp_EditorRenderingLogger
+                PeachCore::PeachRenderer* fp_Renderer,
+                shared_ptr<PeachCore::LogManager> fp_EditorRenderingLogger
             );
 
         void
@@ -71,16 +68,16 @@ namespace PeachEditor {
 
         GLuint pm_VAO = -1;
 
-        PC::ShaderProgram* pm_ViewportShader = nullptr;
+        PeachCore::ShaderProgram* pm_ViewportShader = nullptr;
 
         unsigned int pm_CurrentViewportHeight = 0;
         unsigned int pm_CurrentViewportWidth = 0;
 
         vector<SDL_Event> pm_CurrentPolledEvents;
 
-        PC::PeachRenderer* pm_Render = nullptr;
+        PeachCore::PeachRenderer* pm_Render = nullptr;
 
-        shared_ptr<PC::LogManager> editor_rendering_logger = nullptr;
+        shared_ptr<PeachCore::LogManager> editor_rendering_logger = nullptr;
 
         bool
             CreateRenderTexture
@@ -141,20 +138,25 @@ namespace PeachEditor {
         map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
 
         // DrawableObject.ObjectID : DrawableObject dict
-        map<string, PC::DrawableObject> pm_ListOfAllDrawables;
+        map<string, PeachCore::DrawableObject> pm_ListOfAllDrawables;
 
-        shared_ptr<PC::CommandQueue> pm_CommandQueue = nullptr;
-        shared_ptr<PC::LoadingQueue> pm_LoadedResourceQueue = nullptr;
+        shared_ptr<PeachCore::CommandQueue> pm_CommandQueue = nullptr;
+        shared_ptr<PeachCore::LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
         SDL_Window* pm_MainWindow = nullptr;
 
         struct nk_context* pm_NuklearCtx = nullptr;
 
-        shared_ptr<PC::LogManager> rendering_logger = nullptr;
+        shared_ptr<PeachCore::LogManager> rendering_logger = nullptr;
 
         Viewport pm_Viewport;
 
         SDL_Window* pm_GameInstanceWindow = nullptr;
+        //unique_ptr<PeachCore::PeachRenderer> pm_GameInstanceRenderer = nullptr;
+
+        GLuint pm_TestTexture = 69;
+        GLuint pm_TestVAO = 69;
+        PeachCore::ShaderProgram pm_CatShader; //>w<
 
         const glm::vec4 pm_ClearColour = { 0.10f, 0.18f, 0.24f, 1.0f };
 
@@ -188,7 +190,7 @@ namespace PeachEditor {
         void
             ProcessLoadedResourcePackages();
 
-        shared_ptr<PC::CommandQueue>
+        shared_ptr<PeachCore::CommandQueue>
             InitializeQueues();
 
         //WIP
@@ -196,7 +198,7 @@ namespace PeachEditor {
             Initialize
             (
                 const string& fp_LogOutputDirectory,
-                shared_ptr<PC::Console> fp_EditorConsole
+                shared_ptr<PeachCore::Console> fp_EditorConsole
             );
 
         void
@@ -240,6 +242,12 @@ namespace PeachEditor {
         void
             RunCurrentScene();
 
+        void
+            CreateCurrentScene();
+
+        void
+            DestroyCurrentScene();
+
         SDL_Window*&
             GetGameInstanceWindow()
         {
@@ -256,7 +264,7 @@ namespace PeachEditor {
             RenderDirectory
             (
                 struct nk_context* ctx, 
-                const fs::path& path
+                const filesystem::path& path
             );
 
     //////////////////////////////////////////////

@@ -6,7 +6,7 @@
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                 Peach Editor is an open source peach_editor for Peach-E
+ *                 Peach Editor is an open source editor for Peach-E
 ********************************************************************/
 #define SDL_MAIN_HANDLED
 
@@ -16,6 +16,16 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 #include "../../include/Peach-Editor/Managers/PeachEditorManager.h"
+
+#include <csignal>
+
+static void 
+    SegFaultHandler(int fp_Signal) 
+{
+    PeachCore::PrintError(format("[!] Crash signal received: {}", fp_Signal));
+    // possibly notify watchdog or dump stack trace
+    exit(EXIT_FAILURE);
+}
 
 //////////////////////////////////////////////
 // MAIN FUNCTION BABY
@@ -32,59 +42,41 @@ int
     filesystem::path mf_TopLevelDir = mf_ExePath.parent_path();  // Start from the executable directory
 
     // Traverse upwards until we find the "Peach-E" directory
-    while (not mf_TopLevelDir.empty() && mf_TopLevelDir.filename() != "Peach-E")
+    while (not mf_TopLevelDir.empty() and mf_TopLevelDir.filename() != "Peach-E")
     {
         mf_TopLevelDir = mf_TopLevelDir.parent_path();
     }
 
     if (mf_TopLevelDir.empty())
     {
-        PC::Print("Failed to find the top-level directory 'Peach-E'!", PeachCore::Colours::Magenta);
-        return false;
+        PeachCore::PrintError("Failed to find the top-level directory 'Peach-E'!", PeachCore::Colours::Magenta);
+        return EXIT_FAILURE;
     }
 
     string mf_PeachERootPath = mf_TopLevelDir.string();
 
+    signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
+
     ////////////////////////////////////////////////
     // Setup Environment
     ////////////////////////////////////////////////
+    try
+    {
+        auto peach_editor = &PeachEditor::PeachEditorManager::PeachEditor();
 
-    auto peach_editor = &PeachEditor::PeachEditorManager::PeachEditor();
-    auto peach_engine = &PeachEngine::GameManager::PeachEngine();
+        peach_editor->InitializePeachEditor
+        (
+            mf_PeachERootPath
+        );
 
-    auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
-    auto engine_renderer = &PC::RenderingManager::Renderer();
+        peach_editor->StartPeachEditorMainLoop();
 
-    auto throw_away = engine_renderer->InitializeQueues();
+        return EXIT_SUCCESS;
+    }
+    catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
+    {
+        PeachCore::PrintError(format("Unhandled exception: {}", Exception.what()));
 
-    peach_engine->InitializePeachEngine
-    (
-        mf_PeachERootPath,
-        PeachCore::RendererType::OpenGL
-    );
-
-    peach_editor->InitializePeachEditor
-    (
-        mf_PeachERootPath
-    );
-
-    ////////////////////////////////////////////////
-    // Setup Communication Queues
-    ////////////////////////////////////////////////
-
-    //used for pushing update commands to the Render Thread
-    //Initialize methods, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
-    shared_ptr<PeachCore::CommandQueue> mf_PeachEditorRenderingManagersCommandQueue = editor_renderer->InitializeQueues(); //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
-    shared_ptr<PeachCore::LoadingQueue> mf_PeachEditorDrawableResourceLoadingQueue = PeachEditor::PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue(); //used to push load commands that are destined for RenderingManager
-
-    shared_ptr<PeachCore::CommandQueue> mf_AudioManagersCommandQueue; //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
-    shared_ptr<PeachCore::LoadingQueue> mf_AudioResourceLoadingQueue; //used to push load commands that are destined for AudioManager
-
-    // ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
-    //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
-    //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
-
-    peach_editor->StartPeachEditorMainLoop();
-
-    return EXIT_SUCCESS;
+        return EXIT_FAILURE;
+    }
 }

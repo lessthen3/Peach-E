@@ -109,7 +109,7 @@ namespace PeachCore {
             if (not success)
             {
                 glGetShaderInfoLog(f_ShaderID, 512, NULL, infoLog);
-                fp_RenderingLogger->LogAndPrint("Shader compilation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error, "render_thread");
+                fp_RenderingLogger->LogAndPrint("Shader compilation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
                 return 0; // Or handle the error appropriately
             }
 
@@ -308,7 +308,7 @@ namespace PeachCore {
 
             glLinkProgram(pm_ProgramID);
 
-            fp_RenderingLogger->LogAndPrint("Successfully Linked!", "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug, "render_thread");
+            fp_RenderingLogger->LogAndPrint("Successfully Linked!", "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
 
             GLint success;
             GLchar infoLog[512];
@@ -317,7 +317,7 @@ namespace PeachCore {
             if (not success)
             {
                 glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
-                fp_RenderingLogger->LogAndPrint("ERROR::SHADER::PROGRAM::LINKING_FAILED" + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error, "render_thread");
+                fp_RenderingLogger->LogAndPrint("ERROR::SHADER::PROGRAM::LINKING_FAILED" + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
             }
 
             for (auto& shader : pm_Shaders)
@@ -332,7 +332,7 @@ namespace PeachCore {
             if (not success)
             {
                 glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
-                fp_RenderingLogger->LogAndPrint("Shader validation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error, "render_thread");
+                fp_RenderingLogger->LogAndPrint("Shader validation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
             }
 
             AutoCaptureActiveUniforms(fp_RenderingLogger);
@@ -365,7 +365,7 @@ namespace PeachCore {
 
                 pm_Uniforms.insert({ f_temp, location });
 
-                fp_RenderingLogger->LogAndPrint("Uniform #: " + to_string(i) + ", Type(GLenum): " + to_string(type) + ", Name: " + f_temp + ", Location(GLuint): " + to_string(location), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug, "render_thread");
+                fp_RenderingLogger->LogAndPrint("Uniform #: " + to_string(i) + ", Type(GLenum): " + to_string(type) + ", Name: " + f_temp + ", Location(GLuint): " + to_string(location), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
             }
         }
 
@@ -398,7 +398,7 @@ namespace PeachCore {
 
             if (lastDotIndex == string::npos)
             {
-                fp_RenderingLogger->LogAndPrint("No file extension found for GLSL Shader at specified filepath: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error, "render_thread");
+                fp_RenderingLogger->LogAndPrint("No file extension found for GLSL Shader at specified filepath: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -406,7 +406,7 @@ namespace PeachCore {
 
             if (f_FileExtension != ".fs" and f_FileExtension != ".vs" and f_FileExtension != ".glsl")
             {
-                fp_RenderingLogger->LogAndPrint("Invalid file extension found when GLSL Shader was expected at specified filepath: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error, "render_thread");
+                fp_RenderingLogger->LogAndPrint("Invalid file extension found when GLSL Shader was expected at specified filepath: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -414,7 +414,7 @@ namespace PeachCore {
 
             if (not f_FileStream)
             {
-                fp_RenderingLogger->LogAndPrint("Shader failed to load at file path: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error, "render_thread");
+                fp_RenderingLogger->LogAndPrint("Shader failed to load at file path: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -422,7 +422,7 @@ namespace PeachCore {
             f_Buffer << f_FileStream.rdbuf();
             *fp_SourceCode = f_Buffer.str();
 
-            fp_RenderingLogger->LogAndPrint("Shader successfully loaded at file path: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug, "render_thread");
+            fp_RenderingLogger->LogAndPrint("Shader successfully loaded at file path: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
 
             return true;
         }

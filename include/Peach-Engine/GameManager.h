@@ -23,8 +23,6 @@ using namespace std;
 
 namespace PeachEngine {
 
-    namespace PC = PeachCore;
-
     class GameManager 
     {
     //////////////////////////////////////////////
@@ -56,8 +54,10 @@ namespace PeachEngine {
     // Private Members
     //////////////////////////////////////////////
     private:
-        unique_ptr<PC::LogManager> main_logger = nullptr;
-        PC::PeachConsole peach_engine_console;
+        unique_ptr<PeachCore::LogManager> main_logger = nullptr;
+        PeachCore::PeachConsole peach_engine_console;
+
+        shared_ptr<PeachCore::CommandQueue> pm_RenderingManagerLoadingQueue = nullptr;
 
     //////////////////////////////////////////////
     // Public Members
@@ -85,25 +85,31 @@ namespace PeachEngine {
                 EnableColors();
             #endif
 
-            main_logger = make_unique<PC::LogManager>();
-            main_logger->Initialize(fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger());
-            main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", PeachCore::LogManager::LogLevel::Debug, "main_thread");
+            main_logger = make_unique<PeachCore::LogManager>();
+            main_logger->Initialize("main_thread", fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger());
+            main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", PeachCore::LogManager::LogLevel::Debug);
+
+            if (not InitializeQueues())
+            {
+
+                return false;
+            }
 
             if (not InitalizeManagers(fp_RootPath, fp_RenderingBackend))
             {
-                main_logger->LogAndPrint("Failed to initialize Peach Engine managers, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
+                main_logger->LogAndPrint("Failed to initialize Peach Engine managers, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 
             if (not InitializePhysFS(fp_RootPath.c_str()))
             {
-                main_logger->LogAndPrint("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
+                main_logger->LogAndPrint("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 
             if (not SDL_Init(SDL_INIT_VIDEO))
             {
-                main_logger->LogAndPrint(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal, "render_thread");
+                main_logger->LogAndPrint(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 
@@ -182,7 +188,7 @@ namespace PeachEngine {
                 // User-defined game logic updates
                 while (f_GeneralUpdateAccumulator >= f_UserDefinedDeltaTime)
                 {
-                    PC::PluginManager::ManagePlugins().UpdatePlugins(f_UserDefinedDeltaTime); //run loaded plugins alongside player scripts uwu
+                    PeachCore::PluginManager::ManagePlugins().UpdatePlugins(f_UserDefinedDeltaTime); //run loaded plugins alongside player scripts uwu
                     Update(f_UserDefinedDeltaTime);
                     f_GeneralUpdateAccumulator -= f_UserDefinedDeltaTime;
                 }
@@ -215,7 +221,8 @@ namespace PeachEngine {
         //////////////////////////////////////////////
         // Thread Methods
         //////////////////////////////////////////////
-        void RenderThread()
+        void 
+            RenderThread()
         {
             while (true)
             {
@@ -225,7 +232,8 @@ namespace PeachEngine {
             }
         }
 
-        void AudioThread()
+        void 
+            AudioThread()
         {
             while (true)
             {
@@ -235,7 +243,8 @@ namespace PeachEngine {
             }
         }
 
-        void ResourceLoadingThread()
+        void 
+            ResourceLoadingThread()
         {
             while (true)
             {
@@ -245,7 +254,8 @@ namespace PeachEngine {
             }
         }
 
-        void NetworkThread()
+        void 
+            NetworkThread()
         {
             while (true)
             {
@@ -255,7 +265,8 @@ namespace PeachEngine {
             }
         }
 
-        void PhysicsThread() //processes all physics, changing structure of engine because main thread should execute scripts instead of physics calculations
+        void 
+            PhysicsThread() //processes all physics, changing structure of engine because main thread should execute scripts instead of physics calculations
         {
             while (true)
             {
@@ -294,40 +305,48 @@ namespace PeachEngine {
 
             cout << "Hello World!\n"; //>w<
 
-            main_logger->LogAndPrint("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E", PeachCore::LogManager::LogLevel::Warning, "main_thread");
+            main_logger->LogAndPrint("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E", PeachCore::LogManager::LogLevel::Warning);
 
-            main_logger->LogAndPrint("Success! This Built Correctly", "Peach-E", PeachCore::LogManager::LogLevel::Trace, "main_thread");
+            main_logger->LogAndPrint("Success! This Built Correctly", "Peach-E", PeachCore::LogManager::LogLevel::Trace);
 
             return true;
         }
 
-        //////////////////////////////////////////////
-        // Setting Up and Setting Output Directory
-        //////////////////////////////////////////////
+        bool
+            InitializeQueues()
+        {
+            auto engine_renderer = &PeachCore::RenderingManager::Renderer();
+
+            pm_RenderingManagerLoadingQueue = engine_renderer->InitializeQueues();
+
+            return true;
+        }
+
+        /// Setting Up and Setting Output Directory
         bool
             InitializePhysFS(const char* fp_RootPath)
         {
             if (not PHYSFS_init(fp_RootPath))
             {
-                main_logger->LogAndPrint("Failed to initialize PhysFS: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
+                main_logger->LogAndPrint("Failed to initialize PhysFS: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 
             // Set the writable directory to the repo root
             if (not PHYSFS_setWriteDir(fp_RootPath))
             {
-                main_logger->LogAndPrint("Failed to set write directory: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
+                main_logger->LogAndPrint("Failed to set write directory: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 
             // Mount the root directory for asset loading
             if (not PHYSFS_mount(fp_RootPath, nullptr, 1))
             {
-                main_logger->LogAndPrint("Failed to set search path: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
+                main_logger->LogAndPrint("Failed to set search path: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 
-            main_logger->LogAndPrint("PhysFS initialized at root: " + static_cast<string>(fp_RootPath), "PeachEngineManger", PeachCore::LogManager::LogLevel::Debug, "main_thread");
+            main_logger->LogAndPrint("PhysFS initialized at root: " + static_cast<string>(fp_RootPath), "PeachEngineManger", PeachCore::LogManager::LogLevel::Debug);
             return true;
         }
 

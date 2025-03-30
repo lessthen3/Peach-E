@@ -120,12 +120,12 @@ namespace PeachCore {
             )
         {
             physics_logger = make_unique<LogManager>();
-            if (not physics_logger->Initialize(fp_LogOutputDirectory, "PhysicsManager2D", fp_Console))
+            if (not physics_logger->Initialize("physics_thread", fp_LogOutputDirectory, "PhysicsManager2D", fp_Console))
             {
                 PrintError("PhysicsManager2D failed to initialize the physics_thread logger >w<");
                 return false;
             }
-            physics_logger->LogAndPrint("PhysicsLogger successfully initialized", "PhysicsManager2D", PeachCore::LogManager::LogLevel::Debug, "physics_thread");
+            physics_logger->LogAndPrint("PhysicsLogger successfully initialized", "PhysicsManager2D", PeachCore::LogManager::LogLevel::Debug);
 
             b2Vec2 f_Gravity = { fp_GravityX, fp_GravityY };
             b2WorldDef f_WorldDefinition = b2DefaultWorldDef();

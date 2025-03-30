@@ -5,9 +5,6 @@
 
 using namespace std;
 
-namespace fs = filesystem;
-namespace PC = PeachCore;
-
 namespace PeachEditor{
 
     class PeachEditorManager
@@ -31,9 +28,14 @@ namespace PeachEditor{
     // Private Members
     //////////////////////////////////////////////
     private:
-        shared_ptr<PC::Console> pm_PeachEditorConsole = nullptr;
-    public: //IDK PUBLIC FOR NOW CAUSE OF MAIN.CPP FAQQ im tried man i just wanna compile again
-        shared_ptr<PC::LogManager> main_editor_logger = nullptr;
+        shared_ptr<PeachCore::Console> pm_PeachEditorConsole = nullptr;
+        shared_ptr<PeachCore::LogManager> main_editor_logger = nullptr;
+
+        shared_ptr<PeachCore::CommandQueue> pm_PeachEditorRenderingManagersCommandQueue = nullptr;
+        shared_ptr<PeachCore::LoadingQueue> pm_PeachEditorDrawableResourceLoadingQueue = nullptr;
+
+        shared_ptr<PeachCore::CommandQueue> pm_AudioManagersCommandQueue = nullptr; //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
+        shared_ptr<PeachCore::LoadingQueue> pm_AudioResourceLoadingQueue = nullptr; //used to push load commands that are destined for AudioManager
 
     //////////////////////////////////////////////
     // Public Members
@@ -73,7 +75,7 @@ namespace PeachEditor{
             editor_renderer->Shutdown();
             peach_engine->ShutdownPeachEngine();
 
-            main_editor_logger->LogAndPrint("Exit Success!", "Peach-E", PeachCore::LogManager::LogLevel::Debug, "main_thread");
+            main_editor_logger->LogAndPrint("Exit Success!", "Peach-E", PeachCore::LogManager::LogLevel::Debug);
         }
 
         bool
@@ -81,30 +83,30 @@ namespace PeachEditor{
         {
             const string f_LogDir = fp_RootPath + "/logs";
 
-            pm_PeachEditorConsole = make_shared<PC::Console>();
+            pm_PeachEditorConsole = make_shared<PeachCore::Console>();
 
-            main_editor_logger = make_unique<PC::LogManager>();
+            main_editor_logger = make_unique<PeachCore::LogManager>();
 
-            if (not main_editor_logger->Initialize(f_LogDir, "PeachEditorManager", pm_PeachEditorConsole))
+            if (not main_editor_logger->Initialize("main_thread", f_LogDir, "PeachEditorManager", pm_PeachEditorConsole))
             {
                 PeachCore::PrintError("Initialization error: Was not able to initialize PeachEditorManager's main logger");
                 return false;
             }
 
-            main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", PeachCore::LogManager::LogLevel::Debug, "main_thread");
+            main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", PeachCore::LogManager::LogLevel::Debug);
 
             //probably should have better error handling for the loggers, especially
-            //main_editor_logger->Initialize("..\\logs", "main_thread", f_PeachConsole);
+            //main_editor_logger->Initialize("..\\logs", f_PeachConsole);
             //InternalLogManager::InternalAudioLogger().Initialize("..\\logs", "audio_thread", f_PeachConsole);
             if(not PeachEditorRenderingManager::PeachEditorRenderer().Initialize(f_LogDir, pm_PeachEditorConsole))
             {
-                main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
+                main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 
             if(not PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger(f_LogDir, pm_PeachEditorConsole))
             {
-                main_editor_logger->LogAndPrint("Initialization error: PeachEditorResourceLoader failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal, "main_thread");
+                main_editor_logger->LogAndPrint("Initialization error: PeachEditorResourceLoader failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 
@@ -116,11 +118,25 @@ namespace PeachEditor{
         }
 
         bool
-            InitializePeachEditor(const string& fp_RootPath)
+            InitializePeachEditor(const string& fp_RootPath) //XXX: idk this method seems kinda weird idk how im gonna manage error codes but w/e thats for future me to handle UwU
         {
+            auto peach_engine = &PeachEngine::GameManager::PeachEngine();
+
+            if (not peach_engine->InitializePeachEngine(fp_RootPath, PeachCore::RendererType::OpenGL))
+            {
+
+                return false;
+            }
+
             if (not SetupInternalLogManagers(fp_RootPath))
             {
 
+                return false;
+            }
+
+            if (not InitializeQueues())
+            {
+                
                 return false;
             }
 
@@ -153,27 +169,27 @@ namespace PeachEditor{
         }
 
         // Function to list all files recursively
-        unordered_map<string, fs::file_time_type>
+        unordered_map<string, filesystem::file_time_type>
             GetCurrentDirectoryState
             (
-                const fs::path& fp_Directory
+                const filesystem::path& fp_Directory
             )
         {
-            unordered_map<string, fs::file_time_type> f_Files;
+            unordered_map<string, filesystem::file_time_type> f_Files;
 
             try
             {
-                for (const auto& _entry : fs::recursive_directory_iterator(fp_Directory))
+                for (const auto& _entry : filesystem::recursive_directory_iterator(fp_Directory))
                 {
-                    if (fs::is_regular_file(_entry.status()) || fs::is_directory(_entry.status()))
+                    if (filesystem::is_regular_file(_entry.status()) or filesystem::is_directory(_entry.status()))
                     {
-                        f_Files[_entry.path().string()] = fs::last_write_time(_entry);
+                        f_Files[_entry.path().string()] = filesystem::last_write_time(_entry);
                     }
                 }
             }
-            catch (const fs::filesystem_error& e)
+            catch (const filesystem::filesystem_error& e)
             {
-                main_editor_logger->LogAndPrint("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "main", PeachCore::LogManager::LogLevel::Error, "main_thread");
+                main_editor_logger->LogAndPrint("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "main", PeachCore::LogManager::LogLevel::Error);
             }
 
             return f_Files;
@@ -183,12 +199,39 @@ namespace PeachEditor{
     // Private Methods
     //////////////////////////////////////////////
     private:
-        // Function to compare two fs states, returns true if file_system_1 == file_system_2, returns false otherwise
+
+        ////////////////////////////////////////////////
+        // Setup Communication Queues
+        ////////////////////////////////////////////////
+
+        bool
+            InitializeQueues()
+
+        {
+            auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
+
+            //used for pushing update commands to the Render Thread
+            //Initialize methods, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
+            pm_PeachEditorRenderingManagersCommandQueue = editor_renderer->InitializeQueues(); //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
+            pm_PeachEditorDrawableResourceLoadingQueue = PeachEditor::PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue(); //used to push load commands that are destined for RenderingManager
+
+            // ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
+            //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
+            //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
+            // Function to compare two fs states, returns true if file_system_1 == file_system_2, returns false otherwise
+
+            return true;
+        }
+
+        ////////////////////////////////////////////////
+        // Directory Detection Functions
+        ////////////////////////////////////////////////
+
         bool
             CompareStates
             (
-                const unordered_map<string, fs::file_time_type>& fp_OldState,
-                const unordered_map <string, fs::file_time_type>& fp_NewState
+                const unordered_map<string, filesystem::file_time_type>& fp_OldState,
+                const unordered_map <string, filesystem::file_time_type>& fp_NewState
             )
         {
             for (const auto& _file : fp_NewState)
@@ -197,12 +240,12 @@ namespace PeachEditor{
 
                 if (it == fp_OldState.end())
                 {
-                    main_editor_logger->LogAndPrint("New file found in working directory: " + _file.first, "main", PeachCore::LogManager::LogLevel::Debug, "main_thread");
+                    main_editor_logger->LogAndPrint("New file found in working directory: " + _file.first, "main", PeachCore::LogManager::LogLevel::Debug);
                     return false;
                 }
                 else if (it->second != _file.second)
                 {
-                    main_editor_logger->LogAndPrint("Modified file found in working directory: " + _file.first, "main", PeachCore::LogManager::LogLevel::Trace, "main_thread");
+                    main_editor_logger->LogAndPrint("Modified file found in working directory: " + _file.first, "main", PeachCore::LogManager::LogLevel::Trace);
                     return false;
                 }
             }
@@ -211,7 +254,7 @@ namespace PeachEditor{
             {
                 if (fp_NewState.find(_file.first) == fp_NewState.end())
                 {
-                    main_editor_logger->LogAndPrint("Deleted file from working directory: " + _file.first, "main", PeachCore::LogManager::LogLevel::Debug, "main_thread");
+                    main_editor_logger->LogAndPrint("Deleted file from working directory: " + _file.first, "main", PeachCore::LogManager::LogLevel::Debug);
                     return false;
                 }
             }
@@ -220,9 +263,9 @@ namespace PeachEditor{
         }
 
         void
-            CheckAndUpdateFileSystem()
+            CheckAndUpdateFileSystem() //XXX: this function seems kinda sus idk if it works as i want it too lmfao
         {
-            auto f_CurrentPath = fs::current_path(); //idfk
+            auto f_CurrentPath = filesystem::current_path(); //idfk
             auto f_InitialPathState = GetCurrentDirectoryState(f_CurrentPath);
 
             auto f_NewState = GetCurrentDirectoryState(f_CurrentPath);

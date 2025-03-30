@@ -16,12 +16,12 @@ namespace PeachEditor {
 		PeachEditorResourceLoadingManager::InitializeLogger
 		(
 			const string& fp_LogOutputDirectory,
-			shared_ptr<PC::Console> fp_Console
+			shared_ptr<PeachCore::Console> fp_Console
 		)
 	{
-		editor_resource_logger = make_unique<PC::LogManager>();
-		editor_resource_logger->Initialize(fp_LogOutputDirectory, "PeachEditorResourceLoadingManager", fp_Console);
-		editor_resource_logger->LogAndPrint("PeachEditorResourceLoadingLogger successfully initialized", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Debug, "resource_thread");
+		editor_resource_logger = make_unique<PeachCore::LogManager>();
+		editor_resource_logger->Initialize("resource_thread", fp_LogOutputDirectory, "PeachEditorResourceLoadingManager", fp_Console);
+		editor_resource_logger->LogAndPrint("PeachEditorResourceLoadingLogger successfully initialized", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Debug);
 
 		return true;
 	}
@@ -36,7 +36,7 @@ namespace PeachEditor {
 
 		if (pm_AudioQueueReferenceCount == 2)  //stops unwanted extra references from being created accidentally
 		{
-			editor_resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's AudioResourceLoadingQueue", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Warning, "resource_thread");
+			editor_resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's AudioResourceLoadingQueue", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Warning);
 			return nullptr;
 		}
 		else if (pm_AudioResourceLoadingQueue == 0) //lazy initialization for LoadingQueue cause why not
@@ -56,7 +56,7 @@ namespace PeachEditor {
 
 		if (pm_DrawableQueueReferenceCount == 2) //stops unwanted extra references from being created accidentally
 		{
-			editor_resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's DrawableResourceLoadingQueue", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Warning, "resource_thread");
+			editor_resource_logger->LogAndPrint("Attempted to get more than 2 references to PeachEditorResourceLoadingManager's DrawableResourceLoadingQueue", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Warning);
 			return nullptr;
 		}
 		else if (pm_DrawableQueueReferenceCount == 0) //lazy initialization for LoadingQueue cause why not
@@ -105,7 +105,7 @@ namespace PeachEditor {
 
 		if (!pm_DrawableResourceLoadingQueue->PushLoadedResourcePackage(pm_WaitingFullyLoadedResourcePackages))
 		{
-			editor_resource_logger->LogAndPrint("Load deferred until later", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Debug, "resource_thread");
+			editor_resource_logger->LogAndPrint("Load deferred until later", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Debug);
 			return false;
 		}
 
