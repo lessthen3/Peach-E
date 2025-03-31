@@ -9,32 +9,28 @@
 #include <functional>
 #include <atomic>
 #include <iostream>
-#include <tbb/tbb.h>
 //#include "ScriptEngineManager.h"
 
 using namespace std;
 
 namespace PeachCore {
 
-    struct ThreadPoolManager {
+    struct ThreadPool 
+    {
     public:
-        static ThreadPoolManager& ThreadPool() {
-            static ThreadPoolManager instance; // Default to system concurrency
-            return instance;
-        }
+        ThreadPool() = default;
 
-        ~ThreadPoolManager() {
+        ~ThreadPool() 
+        {
             Shutdown();
         }
 
-        void SetEnforceHardEventSync(bool value) {
+    public:
+
+        void SetEnforceHardEventSync(bool value)
+        {
             enforceHardEventSync.store(value, memory_order_release);
         }
-
-    private:
-        ThreadPoolManager() = default;
-
-    public:
 
         void Initialize(size_t fp_MaxThreads = 4)
         {
@@ -45,8 +41,10 @@ namespace PeachCore {
            // m_ScriptEngine = ScriptEngineManager::ScriptEngine().CreateScriptEngine(); //lifecycle of scriptengine is the entire program so no need to clean up explicitly
 
             m_Workers.reserve(m_MaxThreads);
-            for (size_t i = 0; i < m_MaxThreads; ++i) {
-                m_Workers.emplace_back(&ThreadPoolManager::Worker, this);
+
+            for (size_t i = 0; i < m_MaxThreads; ++i) 
+            {
+                m_Workers.emplace_back(&ThreadPool::Worker, this);
             }
         }
 

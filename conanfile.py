@@ -9,7 +9,6 @@ class PeachEBuilder(ConanFile):
 
     def requirements(self):
         # just chillin
-        self.requires("onetbb/2021.12.0")
         self.requires("physfs/3.2.0")
 
         # geometry
@@ -37,7 +36,6 @@ class PeachEBuilder(ConanFile):
 
         # 3D asset importing
         self.requires("assimp/5.4.1")
-        self.requires("cgltf/1.13")
 
         #encryption/decryption
         self.requires("libsodium/1.0.20")

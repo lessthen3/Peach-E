@@ -20,6 +20,34 @@ namespace PeachCore {
         ~ShaderProgram()
         {
             CleanUp();
+            std::cout << "Destroyed program ID: " << pm_ProgramID << " for object " << this << std::endl;
+        }
+
+        ShaderProgram(const ShaderProgram&) = delete;
+        ShaderProgram& operator=(const ShaderProgram&) = delete;
+        //ShaderProgram(ShaderProgram&& other) noexcept = default; // Implement this
+
+        ShaderProgram&
+            operator=(ShaderProgram&& other) //move operator
+            noexcept
+        {
+            if (this != &other)
+            {
+                // Clean up existing resources if necessary
+                // No need to explicitly delete the texture since sf::Texture manages its own memory
+
+                // Transfer object based resources 
+                pm_Shaders = move(other.pm_Shaders);  // IDK IF THIS MOVE OPERATION IS KOSCHER
+                pm_Uniforms = move(other.pm_Uniforms);
+                pm_ProgramName = move(other.pm_ProgramName);
+
+                //Create new copies of primitive types
+                pm_ProgramID = other.pm_ProgramID;
+
+                // "Reset" the other object
+                other.pm_ProgramID = 0;
+            }
+            return *this;
         }
 
         ShaderProgram() = default;
@@ -377,7 +405,10 @@ namespace PeachCore {
             CleanUp()
             const
         {
-            glDeleteProgram(pm_ProgramID);
+            if(pm_ProgramID != 0) //delete program if it has been set only
+            {
+                glDeleteProgram(pm_ProgramID);
+            }
         }
 
        //////////////////////////////////////////////

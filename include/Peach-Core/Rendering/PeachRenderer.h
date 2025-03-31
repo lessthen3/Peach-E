@@ -133,6 +133,12 @@ namespace PeachCore
             pm_MainWindow = fp_SDLWindow;
         }
 
+        [[nodiscard]] SDL_GLContext*
+            GetGLContext()
+        {
+            return &pm_OpenGLContext;
+        }
+
         void 
             DeleteTexture(const uint32_t fp_TextureID)
         {

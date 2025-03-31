@@ -209,7 +209,6 @@ endif()
 
 ####################################### Dependency Linking
 
-find_package(TBB REQUIRED)
 find_package(PhysFS REQUIRED)
 
 find_package(cgal REQUIRED)
@@ -230,14 +229,11 @@ find_package(GLEW REQUIRED)
 find_package(OpenAL REQUIRED)
 
 find_package(assimp REQUIRED)
-find_package(cgltf REQUIRED)
 
 find_package(libsodium REQUIRED)
 
 # Peach Core
 target_link_libraries(peach PUBLIC
-    #threading
-    onetbb::onetbb
     #file system
     physfs-static
     #geometry manipulation
@@ -259,13 +255,12 @@ target_link_libraries(peach PUBLIC
     OpenAL::OpenAL
     #cryptography
     libsodium::libsodium
+    #asset importing
+    assimp::assimp
 )
 
 # Peach Editor
 target_link_libraries(Peach_Editor PUBLIC
-    #asset importing
-    assimp::assimp
-    cgltf::cgltf
     SPIRV_Tools
     shaderC
 )

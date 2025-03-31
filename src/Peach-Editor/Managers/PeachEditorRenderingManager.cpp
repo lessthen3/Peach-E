@@ -225,8 +225,7 @@ namespace PeachEditor {
             {
                 if (f_Event.window.windowID == SDL_GetWindowID(pm_GameInstanceWindow))
                 {
-                    m_IsSceneCurrentlyRunning = false;
-                    pm_GameInstanceWindow = nullptr;
+                    DestroyCurrentScene();
                 }
             }
 
@@ -467,10 +466,14 @@ namespace PeachEditor {
 
         SDL_GL_SwapWindow(pm_MainWindow);
 
+        SDL_GL_MakeCurrent(pm_GameInstanceWindow, *PeachCore::RenderingManager::Renderer().GetPeachRenderer()->GetGLContext());
+
         if (m_IsSceneCurrentlyRunning)
         {
             RunCurrentScene();
         }
+
+        SDL_GL_MakeCurrent(pm_MainWindow, *PeachCore::RenderingManager::Renderer().GetPeachRenderer()->GetGLContext());
     }
 
     void 
@@ -692,6 +695,9 @@ namespace PeachEditor {
     void 
         PeachEditorRenderingManager::RunCurrentScene()
     {
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glClearColor(0.10f, 0.18f, 0.24f, 1.0f);
+
         auto engine_renderer = &PeachCore::RenderingManager::Renderer();
 
         glm::mat4 mf_Transform = glm::mat4(1.0f);
@@ -716,9 +722,6 @@ namespace PeachEditor {
         engine_renderer->GetPeachRenderer()->DrawTexture(pm_CatShader, pm_TestVAO, pm_TestTexture);
 
         SDL_GL_SwapWindow(pm_GameInstanceWindow);
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.10f, 0.18f, 0.24f, 1.0f);
     }
 
     void
@@ -767,13 +770,16 @@ namespace PeachEditor {
         //XXX: NEED TO NUKE THIS NOT THREAD SAFE ONLY USED HERE FOR NOW SINCE EVERYTHING RUNS ON A SINGLE THREAD ATM
         string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
 
-        pm_CatShader = PeachCore::ShaderProgram
-        (
-            "Cat_Shader",
-            f_BaseDir + "/shaders/vert.vs",
-            f_BaseDir + "/shaders/frag.fs",
-            engine_renderer->rendering_logger.get()
-        );
+        pm_CatShader =  //what a dumb fucking language, "oh yeah bro use RAII but also we create 2 copies of a value so the destructor fucks ur RAII up srry its in the standard >w<"
+        
+            PeachCore::ShaderProgram
+            (
+                "Cat_Shader",
+                f_BaseDir + "/shaders/vert.vs",
+                f_BaseDir + "/shaders/frag.fs",
+                engine_renderer->rendering_logger.get()
+            )
+        ;
 
         ////////////////////////////////////////////////
         // Loading and Registering Texture
