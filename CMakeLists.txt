@@ -70,6 +70,7 @@ add_library(peach STATIC
 target_include_directories(peach PUBLIC 
 
     include/Peach-Core
+    "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/vulkan" #vulkan uwu
 )
 
 ####################################### Executable Targets
@@ -80,10 +81,8 @@ add_executable(
     ${PEACH_ENGINE_SOURCES}
 )
 
-# Link Peach Engine
-target_link_libraries(
-    ${PROJECT_NAME} 
-    PRIVATE 
+# Link Peach Engine to Peach Core
+target_link_libraries(${PROJECT_NAME} PRIVATE 
     peach
 )
 
@@ -93,7 +92,7 @@ add_executable(
     ${PEACH_EDITOR_SOURCES}
 )
 
-# Link Peach Core to Peach_Editor
+# Link Peach_Editor to Peach Core
 target_link_libraries(Peach_Editor PRIVATE 
     peach
 )
@@ -101,6 +100,7 @@ target_link_libraries(Peach_Editor PRIVATE
 ####################################### Static Imports
 
 if(WIN32 )
+
     add_library(python313 STATIC IMPORTED)
 
     set_target_properties(python313 PROPERTIES
@@ -108,12 +108,12 @@ if(WIN32 )
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_winx86"
     )
 
-    add_library(GGPO STATIC IMPORTED)
+    # add_library(GGPO STATIC IMPORTED) #working on GGPO4ALL
 
-    set_target_properties(GGPO PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
-    )
+    # set_target_properties(GGPO PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
+    # )
 
     add_library(SDL3 STATIC IMPORTED)
 
@@ -123,13 +123,6 @@ if(WIN32 )
     )
 
     ############ Vulkan Specific Imports
-
-    add_library(vulkan STATIC IMPORTED)
-
-    set_target_properties(vulkan PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/vulkan-1.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/vulkan"
-    )
 
     add_library(shaderC STATIC IMPORTED)
 
@@ -160,6 +153,7 @@ if(WIN32 )
     )
 
 elseif(APPLE)
+
     add_library(python313 STATIC IMPORTED)
 
     set_target_properties(python313 PROPERTIES
@@ -181,29 +175,104 @@ elseif(APPLE)
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
-elseif(UNIX)
+    ############ Vulkan Specific Imports XXX: doing these later when i compile on my mac mini >w<
+
+    # add_library(moltenVK SHARED IMPORTED)
+
+    # set_target_properties(moltenVK PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_osxARM64/libMoltenVK.dylib"
+    # )
+
+    # add_library(shaderC STATIC IMPORTED)
+
+    # set_target_properties(shaderC PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/shaderc.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
+    # )
+
+    # add_library(volk STATIC IMPORTED)
+
+    # set_target_properties(volk PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/volk.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
+    # )
+
+    # add_library(SPIRV_Tools STATIC IMPORTED)
+
+    # set_target_properties(SPIRV_Tools PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/SPIRV-Tools.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    # )
+
+    # add_library(SPIRV_Cross STATIC IMPORTED)
+
+    # set_target_properties(SPIRV_Cross PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/spirv-cross-cpp.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    # )
+
+elseif(UNIX) #XXX: doing these later when i compile on my linux machine
     message(FATAL_ERROR "nothing for unix/linux just yet oof >w<")
+
+    # add_library(python313 STATIC IMPORTED)
+
+    # set_target_properties(python313 PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib_winx86/python313.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_winx86"
+    # )
+
+    # add_library(GGPO STATIC IMPORTED) #working on GGPO4ALL
+
+    # set_target_properties(GGPO PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
+    # )
+
+    # add_library(SDL3 STATIC IMPORTED)
+
+    # set_target_properties(SDL3 PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_winx86/SDL3.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
+    # )
+
+    ############ Vulkan Specific Imports
+
+    # add_library(shaderC STATIC IMPORTED)
+
+    # set_target_properties(shaderC PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/shaderc.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
+    # )
+
+    # add_library(volk STATIC IMPORTED)
+
+    # set_target_properties(volk PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/volk.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
+    # )
+
+    # add_library(SPIRV_Tools STATIC IMPORTED)
+
+    # set_target_properties(SPIRV_Tools PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/SPIRV-Tools.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    # )
+
+    # add_library(SPIRV_Cross STATIC IMPORTED)
+
+    # set_target_properties(SPIRV_Cross PROPERTIES
+    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/spirv-cross-cpp.lib"
+    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    # )
 
 else()
     message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
 
 endif()
 
-if(WIN32 )
-    # Link Statically Compiled External Libraries
+if(APPLE ) #link moltenVK for mac compatibility
     target_link_libraries(peach PUBLIC
-        python313 
-        GGPO
-        SDL3
-        vulkan
-        volk
-        SPIRV_Cross
-    )
-else()
-    # Link Statically Compiled External Libraries
-    target_link_libraries(peach PUBLIC
-    python313 
-    SDL3
+        moltenVK
     )
 endif()
 
@@ -257,6 +326,14 @@ target_link_libraries(peach PUBLIC
     libsodium::libsodium
     #asset importing
     assimp::assimp
+
+    #Vulkan
+    volk
+    SPIRV_Cross
+    #python runtime
+    python313 
+    #SDL
+    SDL3
 )
 
 # Peach Editor
@@ -269,7 +346,7 @@ target_link_libraries(Peach_Editor PUBLIC
 
 # Set Peach_Editor as the default scheme in Xcode
 
-if(CMAKE_GENERATOR STREQUAL "Xcode")
+if(CMAKE_GENERATOR MATCHES "Xcode")
     set(CMAKE_XCODE_GENERATE_SCHEME TRUE)
     set(CMAKE_XCODE_SCHEME_EXECUTABLE Peach_Editor)
     message(STATUS "Setting Peach_Editor as the default startup project for Xcode")

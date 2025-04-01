@@ -58,9 +58,7 @@ Unreal Engine feels like a mess to use, and I don't want to touch Blueprints. I 
 
 Godot feels good to use, has great plugin support, and amazing documentation to boot. In spite of that, Godot feels unfinished. Feature development is slow, and the ones that do get added often feel inconsequential or sometimes just make the engine more awkward to use. Development doesn't seem focused on pressing issues, driven by whatever contributors feel like doing. As a result, Godot doesn't feel production ready to me. 
 
-Godot has so many insane bugs I encountered while using it. Like how I completely broke my project by trying to edit it without realizing I had a game instance running, and now I get errors everytime I try to run my Godot project.
-
-The engine still has memory leaks and weird jank in core systems, and they just keep releasing new versions without a single stable, truly bug-free milestone. To say Godot is out of beta is wishful thinking.
+The engine still has memory leaks and weird jank in core systems, and they just keep releasing new versions without a single stable, truly bug-free milestone.
 
 Bitching aside—yeah, all these engines contributed in one way or another to the creation of Peach-E. However Godot was the straw that broke the camel's back grumble grumble. 
 

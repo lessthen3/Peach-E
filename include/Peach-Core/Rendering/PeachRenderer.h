@@ -12,7 +12,7 @@
 
 #include <SDL3/SDL_system.h>
 
-#include "../Rendering/ShaderProgram.h"
+#include "ShaderProgram.h"
 
 #include "../2D/PeachCamera2D.h"
 

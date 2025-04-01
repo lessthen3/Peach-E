@@ -19,7 +19,11 @@ namespace PeachCore {
     public:
         ~ShaderProgram()
         {
-            CleanUp();
+            if (pm_ProgramID != 0) //delete program if it has been set only
+            {
+                CleanUp();
+            }
+
             std::cout << "Destroyed program ID: " << pm_ProgramID << " for object " << this << std::endl;
         }
 
@@ -34,7 +38,10 @@ namespace PeachCore {
             if (this != &other)
             {
                 // Clean up existing resources if necessary
-                // No need to explicitly delete the texture since sf::Texture manages its own memory
+                if (pm_ProgramID != 0)
+                {
+                    CleanUp();
+                }
 
                 // Transfer object based resources 
                 pm_Shaders = move(other.pm_Shaders);  // IDK IF THIS MOVE OPERATION IS KOSCHER
@@ -81,67 +88,6 @@ namespace PeachCore {
             CreateFragmentShader(f_FragmentSourceCode, fp_RenderingLogger);
 
             Link(fp_RenderingLogger);
-        }
-
-        ///////////////////////////////////////////////
-        // Create Shaders
-        ///////////////////////////////////////////////
-
-        void 
-            CreateVertexShader
-            (
-                const string& fp_ShaderCode,
-                LogManager* fp_RenderingLogger
-            )
-        {
-            pm_Shaders.insert({"VertexShader", CreateShader(fp_ShaderCode, GL_VERTEX_SHADER, fp_RenderingLogger) });
-        }
-
-        void 
-            CreateFragmentShader
-            (
-                const string& fp_ShaderCode,
-                LogManager* fp_RenderingLogger
-            )
-        {
-            pm_Shaders.insert({"FragmentShader", CreateShader(fp_ShaderCode, GL_FRAGMENT_SHADER, fp_RenderingLogger) });
-        }
-
-        int 
-            CreateShader
-            (
-                const string& fp_ShaderSourceCode, 
-                GLuint fp_ShaderType,
-                LogManager* fp_RenderingLogger
-            ) //creates, compiles and attaches desired shader type to current shaderprogram
-            const
-        {
-            int f_ShaderID = glCreateShader(fp_ShaderType);
-
-            if (f_ShaderID == 0) 
-            {
-                return 0;
-            }
-
-            const char* f_Cstr = fp_ShaderSourceCode.c_str(); //idk why cpp makes me do this in two lines but whatever
-
-            glShaderSource(f_ShaderID, 1, &f_Cstr, NULL);
-            glCompileShader(f_ShaderID);
-
-            int success;
-            GLchar infoLog[512];
-
-            // After glCompileShader(f_ShaderID);
-            glGetShaderiv(f_ShaderID, GL_COMPILE_STATUS, &success);
-
-            if (not success)
-            {
-                glGetShaderInfoLog(f_ShaderID, 512, NULL, infoLog);
-                fp_RenderingLogger->LogAndPrint("Shader compilation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
-                return 0; // Or handle the error appropriately
-            }
-
-            return f_ShaderID;
         }
 
         ///////////////////////////////////////////////
@@ -319,6 +265,37 @@ namespace PeachCore {
 
         }
 
+        void
+            PrintShaderProgramUniformList()
+        {
+            for (auto& uniform : pm_Uniforms)
+            {
+                cout << "Uniform Name: " << uniform.first << "\n";
+                cout << "Uniform Location: " << uniform.second << "\n";
+            }
+        }
+
+        int
+            GetUniformLocation(const string& fp_UniformName)
+        {
+            return pm_Uniforms.at(fp_UniformName);
+        }
+
+        string
+            GetProgramName()
+            const
+        {
+            return pm_ProgramName;
+        }
+
+        int
+            GetProgramID()
+            const
+        {
+            return pm_ProgramID;
+        }
+
+    private:
         //////////////////////////////////////////////
         // Shader Linker 
         //////////////////////////////////////////////
@@ -397,6 +374,67 @@ namespace PeachCore {
             }
         }
 
+        ///////////////////////////////////////////////
+        // Create Shaders
+        ///////////////////////////////////////////////
+
+        void
+            CreateVertexShader
+            (
+                const string& fp_ShaderCode,
+                LogManager* fp_RenderingLogger
+            )
+        {
+            pm_Shaders.insert({ "VertexShader", CreateShader(fp_ShaderCode, GL_VERTEX_SHADER, fp_RenderingLogger) });
+        }
+
+        void
+            CreateFragmentShader
+            (
+                const string& fp_ShaderCode,
+                LogManager* fp_RenderingLogger
+            )
+        {
+            pm_Shaders.insert({ "FragmentShader", CreateShader(fp_ShaderCode, GL_FRAGMENT_SHADER, fp_RenderingLogger) });
+        }
+
+        int
+            CreateShader
+            (
+                const string& fp_ShaderSourceCode,
+                GLuint fp_ShaderType,
+                LogManager* fp_RenderingLogger
+            ) //creates, compiles and attaches desired shader type to current shaderprogram
+            const
+        {
+            int f_ShaderID = glCreateShader(fp_ShaderType);
+
+            if (f_ShaderID == 0)
+            {
+                return 0;
+            }
+
+            const char* f_Cstr = fp_ShaderSourceCode.c_str(); //idk why cpp makes me do this in two lines but whatever
+
+            glShaderSource(f_ShaderID, 1, &f_Cstr, NULL);
+            glCompileShader(f_ShaderID);
+
+            int success;
+            GLchar infoLog[512];
+
+            // After glCompileShader(f_ShaderID);
+            glGetShaderiv(f_ShaderID, GL_COMPILE_STATUS, &success);
+
+            if (not success)
+            {
+                glGetShaderInfoLog(f_ShaderID, 512, NULL, infoLog);
+                fp_RenderingLogger->LogAndPrint("Shader compilation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
+                return 0; // Or handle the error appropriately
+            }
+
+            return f_ShaderID;
+        }
+
        //////////////////////////////////////////////
        // Shader Cleanup
        //////////////////////////////////////////////
@@ -405,10 +443,7 @@ namespace PeachCore {
             CleanUp()
             const
         {
-            if(pm_ProgramID != 0) //delete program if it has been set only
-            {
-                glDeleteProgram(pm_ProgramID);
-            }
+            glDeleteProgram(pm_ProgramID);
         }
 
        //////////////////////////////////////////////
@@ -456,36 +491,6 @@ namespace PeachCore {
             fp_RenderingLogger->LogAndPrint("Shader successfully loaded at file path: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
 
             return true;
-        }
-
-        void 
-            PrintShaderProgramUniformList()
-        {
-            for (auto& uniform : pm_Uniforms)
-            {
-                cout << "Uniform Name: " << uniform.first << "\n";
-                cout << "Uniform Location: " << uniform.second << "\n";
-            }
-        }
-
-        int 
-            GetUniformLocation(const string& fp_UniformName)
-        {
-            return pm_Uniforms.at(fp_UniformName);
-        }
-
-        string 
-            GetProgramName() 
-            const 
-        {
-            return pm_ProgramName;
-        }
-
-        int 
-            GetProgramID() 
-            const
-        {
-            return pm_ProgramID;
         }
     };
 }
