@@ -118,9 +118,12 @@ if(WIN32 )
     add_library(SDL3 STATIC IMPORTED)
 
     set_target_properties(SDL3 PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_winx86/SDL3.lib"
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_winx86/SDL3-static.lib"
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
+
+    target_link_libraries(peach PRIVATE setupapi version imm32 winmm gdi32 user32 kernel32) #needed for statically linking SDL3
+
 
     ############ Vulkan Specific Imports
 
