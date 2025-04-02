@@ -9,6 +9,28 @@
  *                 Peach Editor is an open source editor for Peach-E
 ********************************************************************/
 #define SDL_MAIN_HANDLED
+/*******************************************************************
+ *                                       Peach Editor v0.0.7
+ *                           Created by Ranyodh Mandur - � 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                 Peach Editor is an open source editor for Peach-E
+********************************************************************/
+
+/*******************************************************************
+                                      Peach Editor v0.0.7                      
+                           Created by Ranyodh Mandur - © 2024                 
+
+                             Licensed under the MIT License (MIT).              
+                       For more details, see the LICENSE file or visit:          
+                            https://opensource.org/licenses/MIT                 
+
+               Peach Editor is an open source editor for the Peach-E game  
+                                   engine and runtime.                     
+ ******************************************************************/
 
 #define NK_SDL3_GL3_IMPLEMENTATION
 #define NK_IMPLEMENTATION
