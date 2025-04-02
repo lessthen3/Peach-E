@@ -13,29 +13,29 @@ class PeachEBuilder(ConanFile):
 
         # geometry
         self.requires("cgal/5.6.1")
-        self.requires("clipper2/1.3.0")
+        self.requires("clipper2/1.4.0")
 
         # physics
         self.requires("joltphysics/5.2.0")
         self.requires("box2d/3.0.0")
 
         # language support
-        self.requires("pybind11/2.12.0")
-        self.requires("sol2/3.3.1")
+        self.requires("pybind11/2.13.6")
+        self.requires("sol2/3.5.0")
 
         # serialization and compression
         self.requires("cereal/1.3.2")
         self.requires("zlib/1.3.1")
 
         # opengl
-        self.requires("glm/cci.20230113")
+        self.requires("glm/1.0.1")
         self.requires("glew/2.2.0")
         
         # audio playback
         self.requires("openal-soft/1.22.2")
 
         # 3D asset importing
-        self.requires("assimp/5.4.1")
+        self.requires("assimp/5.4.3")
 
         #encryption/decryption
         self.requires("libsodium/1.0.20")

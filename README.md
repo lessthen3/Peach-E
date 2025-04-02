@@ -5,8 +5,8 @@ Peach-E is an open-source and cross-platform game engine licensed under the perm
 
 Currently you can target Windows, macOS and Linux. Peach-E may work on UNIX systems, but support isn't guaranteed.
 
-### PEACH-E IS STILL IN EARLY ALPHA AND IS A WORK IN PROGRESS AND STILL REQUIRES EXTENSIVE TESTING 
-### WORK IS BEING DONE TO ADD FEATURES CONSTANTLY AND THE API IS SUBJECT TO BREAKING CHANGES AT ANY MOMENT
+>[!WARNING]
+>Peach-E is still in early alpha and extensive testing is still required. Work is being done to add features constantly, and the API is subject to breaking changes at any moment while work is being done to get Peach-E to a complete 1.0 release.
 
 ## Documentation
 
@@ -45,6 +45,8 @@ If you want to build Peach-E for yourself:
 1. Clone the repo
 
 2. Run: __python init.py [--debug or --release or --both] -G [desired_generator]__ in your terminal and your done!
+>[!INFO]
+>For the complete list of generators, just run python init.py [-h or --help]
 
 > [!NOTE]
 >The build output will be generated in __/build/(Debug or Release)__ as an executable for Peach_Editor and Peach_Engine and a static lib for Peach_Core
