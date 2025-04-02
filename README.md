@@ -46,7 +46,8 @@ If you want to build Peach-E for yourself:
 
 2. Run: __python init.py [--debug or --release or --both] -G [desired_generator]__ in your terminal and your done!
 
-__Note:__ The build output will be generated in __/build/(Debug or Release)__ as an executable for Peach_Editor and Peach_Engine and a static lib for Peach_Core
+> [!NOTE]
+>The build output will be generated in __/build/(Debug or Release)__ as an executable for Peach_Editor and Peach_Engine and a static lib for Peach_Core
 
 ## Why Another Game Engine
 

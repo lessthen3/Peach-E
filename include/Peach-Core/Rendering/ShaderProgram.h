@@ -57,6 +57,23 @@ namespace PeachCore {
             return *this;
         }
 
+        ShaderProgram(ShaderProgram&& other) 
+            noexcept
+            :   
+            pm_Shaders(std::move(other.pm_Shaders)),
+            pm_Uniforms(std::move(other.pm_Uniforms)),
+            pm_ProgramName(std::move(other.pm_ProgramName))
+        {
+            if (pm_ProgramID != 0) //delete program if it has been set only
+            {
+                CleanUp();
+            }
+
+            pm_ProgramID = other.pm_ProgramID;
+            other.pm_ProgramID = 0;
+        }
+
+
         ShaderProgram() = default;
 
     private:
@@ -80,14 +97,36 @@ namespace PeachCore {
             pm_ProgramID = glCreateProgram();
 
             string f_VertexSourceCode, f_FragmentSourceCode;
+            bool f_IsVertexShaderValid = false;
+            bool f_IsFragmentShaderValid = false;
             
-            ReadFileIntoString(fp_VertexSourceFilePath, &f_VertexSourceCode, fp_RenderingLogger);
-            ReadFileIntoString(fp_FragmentSourceFilePath, &f_FragmentSourceCode, fp_RenderingLogger);
+            ///vertex shader
+            if (not ReadFileIntoString(fp_VertexSourceFilePath, &f_VertexSourceCode, fp_RenderingLogger))
+            {
+                fp_RenderingLogger->LogAndPrint("Unable to read vertex shader code into a string", "ShaderProgram: " + pm_ProgramName, LogManager::LogLevel::Error);
+            }
+            else if(CreateVertexShader(f_VertexSourceCode, fp_RenderingLogger))
+            {
+                f_IsVertexShaderValid = true;
+            }
+            ///fragment shader
+            if (not ReadFileIntoString(fp_FragmentSourceFilePath, &f_FragmentSourceCode, fp_RenderingLogger))
+            {
+                fp_RenderingLogger->LogAndPrint("Unable to read fragment shader code into a string", "ShaderProgram: " + pm_ProgramName, LogManager::LogLevel::Error);
+            }
+            else if (CreateFragmentShader(f_FragmentSourceCode, fp_RenderingLogger))
+            {
+                f_IsFragmentShaderValid = true;
+            }
 
-            CreateVertexShader(f_VertexSourceCode, fp_RenderingLogger);
-            CreateFragmentShader(f_FragmentSourceCode, fp_RenderingLogger);
-
-            Link(fp_RenderingLogger);
+            if(f_IsVertexShaderValid and f_IsFragmentShaderValid)
+            {
+                Link(fp_RenderingLogger);
+            }
+            else
+            {
+                fp_RenderingLogger->LogAndPrint("Shader failed to link due to invalid shader(s)", "ShaderProgram: " + pm_ProgramName, LogManager::LogLevel::Error);
+            }
         }
 
         ///////////////////////////////////////////////
@@ -378,24 +417,42 @@ namespace PeachCore {
         // Create Shaders
         ///////////////////////////////////////////////
 
-        void
+        bool
             CreateVertexShader
             (
                 const string& fp_ShaderCode,
                 LogManager* fp_RenderingLogger
             )
         {
-            pm_Shaders.insert({ "VertexShader", CreateShader(fp_ShaderCode, GL_VERTEX_SHADER, fp_RenderingLogger) });
+            int f_VertexShaderID = CreateShader(fp_ShaderCode, GL_VERTEX_SHADER, fp_RenderingLogger);
+
+            if (not f_VertexShaderID)
+            {
+                return false;
+            }
+
+            pm_Shaders.insert({ "VertexShader", f_VertexShaderID });
+
+            return true;
         }
 
-        void
+        bool
             CreateFragmentShader
             (
                 const string& fp_ShaderCode,
                 LogManager* fp_RenderingLogger
             )
         {
-            pm_Shaders.insert({ "FragmentShader", CreateShader(fp_ShaderCode, GL_FRAGMENT_SHADER, fp_RenderingLogger) });
+            int f_FragmentShaderID = CreateShader(fp_ShaderCode, GL_FRAGMENT_SHADER, fp_RenderingLogger);
+
+            if (not f_FragmentShaderID)
+            {
+                return false;
+            }
+
+            pm_Shaders.insert({ "FragmentShader", f_FragmentShaderID });
+
+            return true;
         }
 
         int
