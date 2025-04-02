@@ -45,7 +45,7 @@ If you want to build Peach-E for yourself:
 1. Clone the repo
 
 2. Run: __python init.py [--debug or --release or --both] -G [desired_generator]__ in your terminal and your done!
->[!INFO]
+>[!TIP]
 >For the complete list of generators, just run python init.py [-h or --help]
 
 > [!NOTE]
