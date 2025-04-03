@@ -71,6 +71,12 @@ target_include_directories(peach PUBLIC
 
     include/Peach-Core
     "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/vulkan" #vulkan uwu
+
+    "${PROJECT_SOURCE_DIR}/Cool-People/miniaudio"
+    "${PROJECT_SOURCE_DIR}/Cool-People/nuklear"
+    "${PROJECT_SOURCE_DIR}/Cool-People/stb"
+    "${PROJECT_SOURCE_DIR}/Cool-People/vma"
+    "${PROJECT_SOURCE_DIR}/Cool-People/vk-bootstrap"
 )
 
 ####################################### Executable Targets
@@ -121,9 +127,6 @@ if(WIN32 )
         IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_winx86/SDL3-static.lib"
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
-
-    target_link_libraries(peach PRIVATE setupapi version imm32 winmm gdi32 user32 kernel32) #needed for statically linking SDL3
-
 
     ############ Vulkan Specific Imports
 
@@ -273,12 +276,6 @@ else()
 
 endif()
 
-if(APPLE ) #link moltenVK for mac compatibility
-    target_link_libraries(peach PUBLIC
-        moltenVK
-    )
-endif()
-
 ####################################### Dependency Linking
 
 find_package(PhysFS REQUIRED)
@@ -338,6 +335,22 @@ target_link_libraries(peach PUBLIC
     #SDL
     SDL3
 )
+
+if(APPLE ) #link moltenVK for mac compatibility
+    target_link_libraries(peach PUBLIC
+        moltenVK
+    )
+elseif(WIN32)
+    target_link_libraries(peach PRIVATE 
+        setupapi 
+        version 
+        imm32 
+        winmm 
+        gdi32 
+        user32 
+        kernel32
+    ) #needed for statically linking SDL3
+endif()
 
 # Peach Editor
 target_link_libraries(Peach_Editor PUBLIC

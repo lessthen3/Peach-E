@@ -24,25 +24,35 @@ def CreateColouredText(fp_SampleText: str, fp_DesiredColour: str) -> str:
     else:
         return f"{f_ListOfColours.get(fp_DesiredColour, '')}{fp_SampleText}\033[0m"
     
-def run_conan(fp_BuildType: str) -> bool:
+def run_conan(fp_BuildType: str, fp_DesiredProfile: str) -> bool:
+
+    f_BuildCommand = [
+        'conan', 'install', '.', 
+        '--output-folder=build', 
+        '--build=missing',
+        f'--settings=build_type={fp_BuildType}'
+    ]
+
+    if fp_DesiredProfile != "default":
+        f_BuildCommand +=  [f'-pr={fp_DesiredProfile}']
 
     try:
         print(CreateColouredText("[INFO]: Running Conan for dependencies setup...", "green"))
 
         subprocess.run(
-            ['conan', 'install', '.', '-s', 'build_type=' + fp_BuildType, '-s', 'compiler.cppstd=20', '--output-folder=build', "--build=missing"],
+            f_BuildCommand,
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
 
     except subprocess.CalledProcessError as err:
-        print(CreateColouredText(f"[ERROR]: Conan wasn't able to complete getting/building dependencies for {fp_BuildType}, stopping build immediately", "red"))
+        print(CreateColouredText(f"[ERROR]: Conan wasn't able to complete getting/building dependencies for build_type={fp_BuildType} using profile={fp_DesiredProfile}, stopping build immediately", "red"))
         print(CreateColouredText(err.stdout.decode(), "yellow"))
         print(CreateColouredText(err.stderr.decode(), "yellow"))
         return False
 
-    print(CreateColouredText(f"[SUCCESS]: Conan setup and dependencies installation successfully completed for {fp_BuildType}", "cyan"))
+    print(CreateColouredText(f"[SUCCESS]: Conan setup and dependencies installation successfully completed for {fp_BuildType} using profile={fp_DesiredProfile}", "cyan"))
 
     return True
 
@@ -87,7 +97,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
     #Step 1: CMake Project Generation
     try:
-        print(CreateColouredText("[INFO]: Running CMake project generation for " + f_GeneratorMap[fp_Generator] +  "...", "green"))
+        print(CreateColouredText(f"[INFO]: Running CMake project generation for {f_GeneratorMap[fp_Generator]}...", "green"))
 
         subprocess.run(
             f_CMakeConfigCommand,
@@ -107,7 +117,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
     #Step 2: Run CMake Build Process
     if not f_IsMultiConfig:
         try:
-            print(CreateColouredText("[INFO]: Running CMake single config build for " + fp_BuildType +  "...", "green"))
+            print(CreateColouredText(f"[INFO]: Running CMake single config build for {fp_BuildType}...", "green"))
 
             subprocess.run(
                 ['cmake', '--build', 'build'],
@@ -117,12 +127,12 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
             )
 
         except subprocess.CalledProcessError as err:
-            print(CreateColouredText("[ERROR]: CMake single config " + fp_BuildType +  " build process failed!", "red"))
+            print(CreateColouredText(f"[ERROR]: CMake single config {fp_BuildType} build process failed!", "red"))
             print(CreateColouredText(err.stdout.decode(), "yellow"))
             print(CreateColouredText(err.stderr.decode(), "yellow"))
             return False
 
-        print(CreateColouredText("[SUCCESS]: " + fp_BuildType +  " build completed!", "cyan"))
+        print(CreateColouredText(f"[SUCCESS]: {fp_BuildType} build completed!", "cyan"))
 
         return True #return immediately since we don't need to go through the --config commands for single config generators
 
@@ -198,6 +208,13 @@ def main() -> bool:
     )
 
     parser.add_argument(
+        '-P', 
+        nargs=1, 
+        metavar="[conan_profile]",
+        help=CreateColouredText('Used to select a conan profile, if none is selected the build will use default', 'bright magenta')
+    )
+
+    parser.add_argument(
         '-G', 
         nargs=1,
         metavar="[generator]",
@@ -228,12 +245,17 @@ def main() -> bool:
     if(not args.G):
         print(CreateColouredText("[ERROR]: YOU DIDN'T USE -G FLAG BROTHER", "red"))
         return False
+    
+    f_DesiredConanProfile = "default"
+
+    if(args.P):
+        f_DesiredConanProfile = args.P[0]
 
     f_DesiredGenerator = args.G[0].lower() #convert to all lower case for easier handling
 
     if(args.debug):
 
-        if not run_conan("Debug"):
+        if not run_conan("Debug", f_DesiredConanProfile):
             return False
 
         if not run_cmake("debug", f_DesiredGenerator):
@@ -241,7 +263,7 @@ def main() -> bool:
         
     elif(args.release):
 
-        if not run_conan("Release"): # >w>
+        if not run_conan("Release", f_DesiredConanProfile): # >w>
             return False
 
         if not run_cmake("release", f_DesiredGenerator):
@@ -249,10 +271,10 @@ def main() -> bool:
 
     elif(args.both):
 
-        if not run_conan("Debug"):
+        if not run_conan("Debug", f_DesiredConanProfile):
             return False
 
-        if not run_conan("Release"):
+        if not run_conan("Release", f_DesiredConanProfile):
             return False
         
         if not run_cmake("both", f_DesiredGenerator):
