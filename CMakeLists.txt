@@ -70,8 +70,8 @@ add_library(peach STATIC
 target_include_directories(peach PUBLIC 
 
     include/Peach-Core
-    "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/vulkan" #vulkan uwu
 
+    "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/vulkan" #vulkan uwu
     "${PROJECT_SOURCE_DIR}/Cool-People/miniaudio"
     "${PROJECT_SOURCE_DIR}/Cool-People/nuklear"
     "${PROJECT_SOURCE_DIR}/Cool-People/stb"
@@ -295,8 +295,6 @@ find_package(ZLIB REQUIRED)
 find_package(glm REQUIRED)
 find_package(GLEW REQUIRED)
 
-find_package(OpenAL REQUIRED)
-
 find_package(assimp REQUIRED)
 
 find_package(libsodium REQUIRED)
@@ -320,8 +318,6 @@ target_link_libraries(peach PUBLIC
     #opengl
     glm::glm
     GLEW::GLEW
-    #audio
-    OpenAL::OpenAL
     #cryptography
     libsodium::libsodium
     #asset importing

@@ -1,5 +1,5 @@
 ﻿/*******************************************************************
- *                                             Peach-E v0.1
+ *                                             Peach-E v0.0.1
  *                           Created by Ranyodh Mandur - � 2024
  *
  *                         Licensed under the MIT License (MIT).
@@ -15,8 +15,6 @@
 
 #include <thread>
 #include <shared_mutex>
-#include <AL/al.h>
-#include <AL/alc.h>
 
 using namespace std;
 
@@ -45,7 +43,7 @@ namespace PeachCore {
     // Private Constructor
     //////////////////////////////////////////////
     private:
-        AudioManager() : pm_Device(nullptr), pm_Context(nullptr) {}
+        AudioManager() = default; //: pm_Device(nullptr), pm_Context(nullptr) {}
 
         // Prevent copying
         AudioManager(const AudioManager&) = delete;
@@ -57,11 +55,11 @@ namespace PeachCore {
     private:
         shared_ptr<LoadingQueue> pm_LoadedAudioResourceQueue;
 
-        ALCdevice* pm_Device;
-        ALCcontext* pm_Context;
+        //ALCdevice* pm_Device;
+        //ALCcontext* pm_Context;
         mutable shared_mutex mutex_;
         string pm_CurrentTrack;
-        vector<ALuint> pm_Sources;
+        //vector<ALuint> pm_Sources;
 
         unique_ptr<LogManager> audio_logger = nullptr;
 
@@ -97,7 +95,7 @@ namespace PeachCore {
     //////////////////////////////////////////////
     private:
         //this should probably be in resource loading manager along w the plugin stuff lmfao
-        bool LoadWAVFile(const string& filename, ALuint buffer);
+        //bool LoadWAVFile(const string& filename, ALuint buffer);
 
         void ProcessLoadedResourcePackages();
 

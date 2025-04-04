@@ -30,9 +30,6 @@ class PeachEBuilder(ConanFile):
         # opengl
         self.requires("glm/1.0.1")
         self.requires("glew/2.2.0")
-        
-        # audio playback
-        self.requires("openal-soft/1.22.2")
 
         # 3D asset importing
         self.requires("assimp/5.4.3")

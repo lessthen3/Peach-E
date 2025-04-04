@@ -6,7 +6,7 @@
 #include "../Managers/PluginManager.h"
 #include "../Managers/RenderingManager.h"
 //#include "../Managers/ResourceLoadingManager.h"
-#include "../Managers/SceneTreeManager.h"
+//#include "../Managers/SceneTreeManager.h"
 #include "../Managers/PhysicsManager2D.h"
 //#include "Managers/PythonScriptManager.h"
 

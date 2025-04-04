@@ -15,6 +15,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 
+#define VOLK_IMPLEMENTATION
+
 #include "../../include/Peach-Editor/Managers/PeachEditorManager.h"
 
 #include <csignal>
