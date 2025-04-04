@@ -19,8 +19,6 @@
 
 //AND MAKE RESPONSIBILITES AND CODE IN GENERAL MORE CLEAN AND EASY TO READ
 
-using namespace std; 
-
 namespace PeachEngine {
 
     class GameManager 

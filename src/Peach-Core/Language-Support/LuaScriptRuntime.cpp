@@ -1,9 +1,13 @@
-#include "../../include/Peach-Core/Language-Support/Lua/LuaScriptManager.h"
+#include "../../include/Peach-Core/Language-Support/LuaScriptRuntime.h"
 
 namespace PeachCore {
 
-    auto 
-        LuaScriptManager::RunLuaScript(const std::string& fp_Script, const std::string& fp_ScriptName) 
+    void 
+        LuaScriptRuntime::RunLuaScript
+        (
+            const string& fp_Script, 
+            const string& fp_ScriptName
+        )
     {
         sol::state lua;
         lua.open_libraries(sol::lib::base);
