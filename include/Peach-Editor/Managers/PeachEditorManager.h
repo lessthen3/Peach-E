@@ -2,10 +2,20 @@
 
 #include "../Peach-Engine/GameManager.h"
 #include "PeachEditorRenderingManager.h"
+#include "../Editor/PeachProject.h"
 
 using namespace std;
 
 namespace PeachEditor{
+
+    struct Config
+    {
+        string name;
+        int64_t maxFPS;
+        bool vsync;
+
+        SERIALIZABLE_FIELDS(name, maxFPS, vsync)
+    };
 
     class PeachEditorManager
     {
@@ -138,6 +148,24 @@ namespace PeachEditor{
             {
                 
                 return false;
+            }
+
+            Config cfg = { "Peach-E", 144, true };
+
+            PeachCore::Serializer Serializer;
+
+            PeachCore::Serializer::JSON json = Serializer.ToJSON(cfg);
+
+            try
+            {
+                json.PrintToConsole();
+                //f_Serializer.ReadJSON(fp_RootPath + "/fucked.json", json, main_editor_logger.get());
+                //const string f_Test = json["scene"]["name"];
+                //Print(f_Test, PeachCore::Colours::Magenta);
+            }
+            catch (const exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
+            {
+                PeachCore::PrintError(format("Unhandled exception: {}", Exception.what()));
             }
 
             return true;

@@ -1,7 +1,7 @@
 # Peach-E
 Hey! This is a game engine that you are free to do whatever with!
 
-Peach-E is an open-source and cross-platform game engine licensed under the permissive MIT License. 
+Peach-E is an open-source and cross-platform game engine built with modern C++ 20 licensed under the permissive MIT License. 
 
 Currently you can target Windows, macOS and Linux. Peach-E may work on UNIX systems, but support isn't guaranteed.
 
@@ -44,9 +44,9 @@ If you want to build Peach-E for yourself:
 
 1. Clone the repo
 
-2. Run: __python init.py [--debug or --release or --both] -G [desired_generator]__ in your terminal and your done!
+2. Run: __python init.py [--debug or --release or --both] -G [desired_generator] -P [conan_profile]__ in your terminal and your done!
 >[!TIP]
->For the complete list of generators, just run python init.py [-h or --help]
+>For the complete list of generators run __python init.py [-h or --help]__. Also -P isn't required, if no profile is specified init.py will use the default profile
 
 > [!NOTE]
 >The build output will be generated in __/build/(Debug or Release)__ as an executable for Peach_Editor and Peach_Engine and a static lib for Peach_Core
@@ -61,7 +61,7 @@ Unreal Engine feels like a mess to use, and I don't want to touch Blueprints. I 
 
 Godot feels good to use, has great plugin support, and amazing documentation to boot. In spite of that, Godot feels unfinished. Feature development is slow, and the ones that do get added often feel inconsequential or sometimes just make the engine more awkward to use. Development doesn't seem focused on pressing issues, driven by whatever contributors feel like doing. As a result, Godot doesn't feel production ready to me. 
 
-The engine still has memory leaks and weird jank in core systems, and they just keep releasing new versions without a single stable, truly bug-free milestone.
+Furthermore, Godot still has memory leaks and weird jank in core systems, and they just keep releasing new versions without a single stable, truly bug-free milestone.
 
 Bitching aside—yeah, all these engines contributed in one way or another to the creation of Peach-E. However Godot was the straw that broke the camel's back grumble grumble. 
 
