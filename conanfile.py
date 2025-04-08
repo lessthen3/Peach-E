@@ -24,7 +24,6 @@ class PeachEBuilder(ConanFile):
         self.requires("sol2/3.5.0")
 
         # serialization and compression
-        self.requires("cereal/1.3.2")
         self.requires("zlib/1.3.1")
 
         # opengl

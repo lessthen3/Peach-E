@@ -8,13 +8,24 @@ using namespace std;
 
 namespace PeachEditor{
 
-    struct Config
+    struct Stats 
+    {
+        float hp;
+        double stamina;
+
+        SERIALIZABLE_FIELDS(hp, stamina)
+    };
+
+    struct Config 
     {
         string name;
-        int64_t maxFPS;
+        unsigned long long maxFPS;
         bool vsync;
+        vector<int64_t> resolutions;
+        map<string, Stats> presets;
+        Stats baseStats;
 
-        SERIALIZABLE_FIELDS(name, maxFPS, vsync)
+        SERIALIZABLE_FIELDS(name, maxFPS, vsync, resolutions, presets, baseStats)
     };
 
     class PeachEditorManager
@@ -150,11 +161,30 @@ namespace PeachEditor{
                 return false;
             }
 
-            Config cfg = { "Peach-E", 144, true };
+            //Config cfg = 
+            //{
+            //    "Peach-E",
+            //    (18446744073709551615),
+            //    true,
+            //    { 720, 1080, 1440 },
+            //    {
+            //        { "easy", Stats{ 100, 50.0f } },
+            //        { "hard", Stats{ 50, 100.0f } }
+            //    },
+            //    Stats{ 80, 75.0f }
+            //};
 
             PeachCore::Serializer Serializer;
 
-            PeachCore::Serializer::JSON json = Serializer.ToJSON(cfg);
+            //PeachCore::Serializer::JSON json = Serializer.ToJSON(cfg);
+
+            Config config;
+
+            PeachCore::Serializer::JSON json;
+            Serializer.ReadJSON(fp_RootPath + "/config.json", json, main_editor_logger.get());
+            Serializer.FromJSON(json, config);
+
+            PeachCore::Print(format("configs name: {}, configs presets hp: {}", config.name, config.presets["easy"].hp), PeachCore::Colours::Magenta);
 
             try
             {

@@ -1,9 +1,6 @@
 #pragma once
 
-#include <string>
-#include <vector>
-#include <cereal/types/string.hpp>
-#include <cereal/types/vector.hpp>
+#include <General/Serializer.h>
 
 using namespace std;
 
@@ -12,17 +9,13 @@ namespace PeachEditor{
     struct PeachProject
     {
         string m_ProjectName;
-        string m_StartupScene;
-        vector<string> m_ScenePaths;
-        vector<string> m_TexturePaths;
-        vector<string> m_AudioPaths;
         string m_ScriptRootPath;
 
-        template <class Archive>
-        void Serialize(Archive& fp_Archive)
-        {
-            fp_Archive(m_ProjectName, m_StartupScene, m_ScenePaths, m_TexturePaths, m_AudioPaths, m_ScriptRootPath);
-        }
+        map<string, string> m_ScenePaths; // Key : ObjectID, Val : path -> resource
+        map<string, string> m_TexturePaths;
+        map<string, string> m_AudioPaths;
+
+        SERIALIZABLE_FIELDS(m_ProjectName, m_ScriptRootPath, m_ScenePaths, m_TexturePaths, m_AudioPaths)
 
     };
 

@@ -1,8 +1,6 @@
 #pragma once
 
 
-#include <cereal/cereal.hpp>
-
 #include <string>
 #include <vector>
 #include <memory>

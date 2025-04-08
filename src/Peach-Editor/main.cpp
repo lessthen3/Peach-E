@@ -22,7 +22,7 @@
 #include <csignal>
 
 static void 
-    SegFaultHandler(int fp_Signal) 
+    SegFaultHandler(int fp_Signal) //primitive segfault handler
 {
     PeachCore::PrintError(format("[!] Crash signal received: {}", fp_Signal));
     // possibly notify watchdog or dump stack trace

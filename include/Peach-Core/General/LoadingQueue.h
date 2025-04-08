@@ -16,8 +16,6 @@
 #include <variant>
 
 
-#include <cereal/cereal.hpp>
-
 using namespace std;
 
 namespace PeachCore {

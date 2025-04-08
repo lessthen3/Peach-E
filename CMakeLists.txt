@@ -289,7 +289,6 @@ find_package(box2d REQUIRED)
 find_package(pybind11 REQUIRED)
 find_package(sol2 REQUIRED)
 
-find_package(cereal REQUIRED)
 find_package(ZLIB REQUIRED)
 
 find_package(glm REQUIRED)
@@ -313,7 +312,6 @@ target_link_libraries(peach PUBLIC
     pybind11::pybind11
     sol2::sol2
     #data handling
-    cereal::cereal
     ZLIB::ZLIB
     #opengl
     glm::glm

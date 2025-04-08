@@ -20,7 +20,9 @@
 #define SERIALIZABLE_FIELDS(...) \
 	template <typename F> \
 	void visit(F&& f) const { f(__VA_ARGS__); } \
-	static constexpr const char* field_names[] = { #__VA_ARGS__ };
+	template <typename F> \
+	void visit(F&& f) { f(__VA_ARGS__); } \
+	static constexpr const char* field_names = { #__VA_ARGS__ };
 
 template<typename>
 inline constexpr bool always_false_v = false;
@@ -95,7 +97,7 @@ namespace PeachCore {
 
 			//////////////////// Symbols ////////////////////
 
-			DoubleDot,
+			DoubleDot, // ':'
 			Comma,
 
 			//////////////////// End Of File ////////////////////
@@ -405,21 +407,38 @@ namespace PeachCore {
 				Array,
 				String,
 				Integer,
+				UnsignedInteger,
 				Float,
 				Boolean,
 				Null
 			} JSONType;
 
-			variant<JSONObject, JSONArray, string, int64_t, double, bool> m_Value;
+			variant //idk im lazy and sick of using templates
+			<
+				JSONObject, 
+				JSONArray, 
+				string, 
+				bool,
+
+				int64_t, 
+				uint64_t,
+				double 
+			> m_Value;
 
 			JSONValue() : JSONType(Type::Null), m_Value(false) {}
 
 			explicit JSONValue(JSONObject __obj) : JSONType(Type::Object), m_Value(move(__obj)) {}
 			explicit JSONValue(JSONArray __arr) : JSONType(Type::Array), m_Value(move(__arr)) {}
 			explicit JSONValue(string __str) : JSONType(Type::String), m_Value(move(__str)) {}
-			explicit JSONValue(int64_t __i) : JSONType(Type::Integer), m_Value(__i) {}
-			explicit JSONValue(double __d) : JSONType(Type::Float), m_Value(__d) {}
 			explicit JSONValue(bool __b) : JSONType(Type::Boolean), m_Value(__b) {}
+
+			template<typename I, enable_if_t<is_integral_v<I>&& is_signed_v<I>, int> = 0>
+			JSONValue(I __i) : JSONType(Type::Integer), m_Value(static_cast<int64_t>(__i)) {}
+
+			template<typename I, enable_if_t<is_integral_v<I>&& is_unsigned_v<I>, int> = 0>
+			JSONValue(I __i) : JSONType(Type::UnsignedInteger), m_Value(static_cast<uint64_t>(__i)) {}
+
+			JSONValue(double __f) : JSONType(Type::Float), m_Value(__f) {} //not explicit to implicitly cast float -> double
 		};
 
 		//////////////////////////////////////////////
@@ -433,7 +452,7 @@ namespace PeachCore {
 
 			JSONValue m_Root;
 
-			JSON 
+			auto 
 				operator[](const string& key) 
 				const
 			{
@@ -450,10 +469,10 @@ namespace PeachCore {
 					throw runtime_error("Key not found: " + key);
 				}
 
-				return JSON{ it->second };
+				return it->second;
 			}
 
-			JSON 
+			auto 
 				operator[](size_t index) 
 				const
 			{
@@ -469,7 +488,110 @@ namespace PeachCore {
 					throw out_of_range("Array index out of bounds: " + to_string(index));
 				}
 
-				return JSON{ arr[index] };
+				return arr[index];
+			}
+
+			bool
+				ToString(string* fp_JSONString) //kicks off recursive creation of JSON string
+				const
+			{
+				if (not fp_JSONString)
+				{
+
+					return false;
+				}
+
+				stringstream f_TempString;
+
+				if (not ToStringStream(m_Root, f_TempString))
+				{
+
+					return false;
+				}
+
+				*fp_JSONString = f_TempString.str();
+				return true;
+			}
+
+			bool
+				ToStringStream
+				(
+					const JSONValue& fp_JSONValue,
+					stringstream& fp_JSONString, 
+					const uint32_t indent = 0,
+					const bool fp_IsKeyValue = false, 
+					const bool fp_IsInsideArray = false
+				)
+				const
+			{
+				string f_IndentLevel(indent, ' ');
+
+				switch (m_Root.JSONType)
+				{
+					case JSONValue::Type::Null:
+						if(fp_IsInsideArray)
+						{
+							fp_JSONString << "null" << ", ";
+							//ToStringStream(fp_JSONString, false, )
+						}
+						break;
+					case JSONValue::Type::Boolean:
+						fp_JSONString << f_IndentLevel << (get<bool>(m_Root.m_Value) ? "true" : "false") << endl;
+						break;
+					case JSONValue::Type::Integer:
+						fp_JSONString << f_IndentLevel << get<int64_t>(m_Root.m_Value) << endl;
+						break;
+					case JSONValue::Type::Float:
+						fp_JSONString << f_IndentLevel << get<double>(m_Root.m_Value) << endl;
+						break;
+					case JSONValue::Type::String:
+						if(fp_IsKeyValue)
+						{
+							fp_JSONString << f_IndentLevel << get<string>(m_Root.m_Value) << "," << endl; //string as value
+						}
+						else
+						{
+							fp_JSONString << f_IndentLevel << get<string>(m_Root.m_Value) << ": "; //no endl and : for key
+						}
+						break;
+					case JSONValue::Type::UnsignedInteger:
+						fp_JSONString << f_IndentLevel << "\"" << get<uint64_t>(m_Root.m_Value) << "\"" << endl;
+						break;
+					case JSONValue::Type::Array:
+					{
+						fp_JSONString << f_IndentLevel << "[" << endl;
+						for (const auto& v : get<JSONArray>(m_Root.m_Value))
+						{
+							PrintJSON(v, indent + 4);
+						}
+						fp_JSONString << f_IndentLevel << "]" << ", " << endl;
+						break;
+					}
+					case JSONValue::Type::Object:
+					{
+						fp_JSONString << f_IndentLevel << "{" << endl;
+						const auto& obj = get<JSONObject>(m_Root.m_Value);
+
+						for (auto it = obj.begin(); it != obj.end(); ++it)
+						{
+							fp_JSONString << f_IndentLevel << "  \"" << it->first << "\": ";
+
+							PrintJSON(it->second, indent + 4);
+
+							if (next(it) != obj.end())
+							{
+								fp_JSONString << ","; // comma after each element except the last
+							}
+
+							fp_JSONString << endl;
+						}
+
+						fp_JSONString << f_IndentLevel << "}";
+						break;
+					}
+				}
+
+				return true;
 			}
 
 			void
@@ -626,46 +748,269 @@ namespace PeachCore {
 			}
 		};
 
-		static vector<string> 
-			SplitFieldNames(const char* raw)
+		//////////////////////////////////////////////
+		// Helper Function for field_names -> vector<string>
+		//////////////////////////////////////////////
+
+		inline vector<string> 
+			SplitFieldNames(const string& raw) //used because field_names gets all member names stuffed into a single string
 		{
-			string src = raw;
 			vector<string> result;
+			string token;
 
-			size_t start = 0;
-			while (true)
+			for (char c : raw)
 			{
-				size_t comma = src.find(',', start);
-				string token = src.substr(start, comma - start);
+				if (c == ',')
+				{
+					if (not token.empty()) 
+					{
+						result.push_back(token);
+					}
+					token.clear();
+				}
+				else if (c != ' ')
+				{
+					token += c;
+				}
+			}
 
-				// Trim leading/trailing whitespace
-				token.erase(remove_if(token.begin(), token.end(), ::isspace), token.end());
-
-				if (!token.empty())
-					result.push_back(token);
-
-				if (comma == string::npos) break;
-				start = comma + 1;
+			if (not token.empty()) 
+			{
+				result.push_back(token);
 			}
 
 			return result;
 		}
 
+		//////////////////////////////////////////////
+		// Helper Templates
+		//////////////////////////////////////////////
+		/*
+		These templates are used for detecting data structs that have SERIALIZABLE_FIELDS implemented since serialization in this library completely relies on the defined functions
+		provided by the macro to serialize data.
+
+		As well as checking for map/vector structs since serializing them is pretty clean in JSON and honestly are used widely enough that not being able to serialize maps/structs feels
+		like a major downside.
+		*/
+
+		template<typename T, typename = void>
+		struct is_map : false_type {};
+
 		template<typename T>
-		JSON
+		struct is_map<T, void_t<
+			typename T::key_type,
+			typename T::mapped_type,
+			decltype(declval<T>().begin()),
+			decltype(declval<T>().end())
+			>> : bool_constant<
+			is_same_v<typename T::key_type, string>
+			> {};
+
+		template<typename T, typename = void>
+		struct is_vector : false_type {};
+
+		template<typename T>
+		struct is_vector<T, void_t<
+			typename T::value_type,
+			decltype(declval<T>().begin()),
+			decltype(declval<T>().end())
+			>> : true_type {};
+
+		template<typename T, typename = void>
+		struct is_serializable_struct : false_type {};
+
+		template<typename T>
+		struct is_serializable_struct<T, void_t<decltype(T::field_names), decltype(declval<T>().visit(declval<void(*)(int)>()))>> : true_type {};
+
+		//////////////////////////////////////////////
+		// Main (De)Serialization Functions
+		//////////////////////////////////////////////
+		/*
+		These functions should be used on POD structs, serializing more complex data types is fine, however serialization for basic types is only supported since I dont really see any reason
+		for serializing more complex types, since it just amounts to serializing everything down to integral types since that's what computers at their foundation understand + string because
+		strings are super common so we deal with those uwu.
+
+		For any external types, just create a POD struct that encapsulates fields relevant to reconstructing the external type and assign them manually.
+
+		This is the case since JSON expects and does things just fine using basic types + strings + lists/POD structs.
+		*/
+
+		template<typename T>
+		enable_if_t<is_serializable_struct<T>::value, JSON>
 			ToJSON(const T& obj) //IT WORKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKSSS IM SO TIRED >w< ;w; i sleep like a champion tn
 		{
 			JSONObject f_Object; // ✅ this is what i was missin UwU
 
-			const vector<string> fieldNames = SplitFieldNames(T::field_names[0]);
+			static_assert(is_serializable_struct<T>::value, "ToJSON() can only be used with types that use SERIALIZABLE_FIELDS");
+
+			const vector<string> fieldNames = SplitFieldNames(T::field_names);
 
 			size_t i = 0;
 
-			obj.visit([&](auto&&... fields) { 
-				((f_Object.emplace(fieldNames[i++], fields)), ...);
+			obj.visit([&](auto&&... fields)
+				{
+					(
+						[&]
+						{
+							const auto& field = fields;
+							const auto& key = fieldNames[i++];
+
+							if constexpr (is_arithmetic_v<decay_t<decltype(field)>> || is_same_v<decay_t<decltype(field)>, string>)
+							{
+								f_Object.emplace(key, field);
+							}
+							else if constexpr (is_serializable_struct<decay_t<decltype(field)>>::value)
+							{
+								f_Object.emplace(key, ToJSON(field).m_Root);
+							}
+							else if constexpr (is_map<decay_t<decltype(field)>>::value)
+							{
+								JSONObject mapObj;
+								for (const auto& [mapKey, mapVal] : field)
+								{
+									if constexpr (is_serializable_struct<decay_t<decltype(mapVal)>>::value)
+									{
+										mapObj.emplace(mapKey, ToJSON(mapVal).m_Root);
+									}
+									else
+									{
+										mapObj.emplace(mapKey, mapVal);
+									}
+								}
+								f_Object.emplace(key, mapObj);
+							}
+							else if constexpr (is_vector<decay_t<decltype(field)>>::value)
+							{
+								JSONArray arr;
+
+								for (const auto& val : field)
+								{
+									if constexpr (is_serializable_struct<decay_t<decltype(val)>>::value)
+									{
+										arr.emplace_back(ToJSON(val).m_Root);
+									}
+									else
+									{
+										arr.emplace_back(val);
+									}
+								}
+
+								f_Object.emplace(key, arr);
+							}
+							else
+							{
+								static_assert(always_false_v<decltype(field)>, "Unsupported field type in ToJSON");
+							}
+						}(), ...
+							);
 				});
 
 			return JSON(JSONValue(f_Object));
+		}
+
+		template<typename T>
+		enable_if_t<is_serializable_struct<T>::value, bool> //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
+			FromJSON(const JSON& json, T& out)
+		{
+			static_assert(is_serializable_struct<T>::value, "FromJSON() can only be used with types that use SERIALIZABLE_FIELDS");
+
+			const vector<string> fieldNames = SplitFieldNames(T::field_names);
+
+			size_t i = 0;
+			bool success = true;
+
+			out.visit([&](auto&... fields) {
+				(
+					[&] {
+						const string& key = fieldNames[i++];
+						//Print(format("Current field name being processed: {}, Current JSON root type: {}", key, static_cast<int>(json[key].m_Root.JSONType)), Colours::Magenta);
+
+						try 
+						{
+							using FieldType = decay_t<decltype(fields)>;
+
+							if constexpr (is_same_v<FieldType, string>) 
+							{
+								fields = get<string>(json[key].m_Value);
+							}
+							else if constexpr (is_same_v<FieldType, bool>) 
+							{
+								fields = get<bool>(json[key].m_Value);
+							}
+							else if constexpr (is_floating_point_v<FieldType>) 
+							{
+								fields = static_cast<FieldType>(get<double>(json[key].m_Value));
+							}
+							else if constexpr (is_integral_v<FieldType> && is_signed_v<FieldType>) 
+							{
+								fields = static_cast<FieldType>(get<int64_t>(json[key].m_Value));
+							}
+							else if constexpr (is_integral_v<FieldType> && is_unsigned_v<FieldType>) 
+							{
+								fields = static_cast<FieldType>(get<uint64_t>(json[key].m_Value));
+							}
+							else if constexpr (is_serializable_struct<decay_t<decltype(fields)>>::value)
+							{
+								FromJSON(JSON(json[key]), fields);
+							}
+							else if constexpr (is_map<decay_t<decltype(fields)>>::value)
+							{
+								const auto& obj = json[key];
+								fields.clear();
+
+								for (const auto& [mapKey, val] : get<JSONObject>(obj.m_Value))
+								{
+									using ValType = typename decay_t<decltype(fields)>::mapped_type;
+									ValType item{};
+
+									if constexpr (is_serializable_struct<ValType>::value)
+									{
+										FromJSON(JSON(val), item);
+									}
+									else
+									{
+										item = val;
+									}
+
+									fields[mapKey] = item;
+								}
+							}
+							else if constexpr (is_vector<decay_t<decltype(fields)>>::value)
+							{
+								const auto& arr = json[key];
+								fields.clear();
+
+								for (size_t j = 0; j < get<JSONArray>(arr.m_Value).size(); ++j) 
+								{
+									using Elem = typename decay_t<decltype(fields)>::value_type;
+									Elem item{};
+
+									if constexpr (is_serializable_struct<Elem>::value) 
+									{
+										FromJSON(JSON(arr[j]), item);
+									}
+									else 
+									{
+										//item = arr[j].m_Value;
+									}
+
+									fields.push_back(item);
+								}
+							}
+						}
+						catch (const exception& e)
+						{
+							PrintError(format("Deserialization failed for field '{}' (type: {}): {}",
+								key,
+								typeid(decltype(fields)).name(),
+								e.what()));
+							success = false;
+						}
+					}(), ...
+						);
+				});
+
+			return success;
 		}
 
 	private:
@@ -678,7 +1023,7 @@ namespace PeachCore {
 		{
 			if (fp_TokenVector.empty())
 			{
-				return Token("\0", TokenType::ENDF, -1); //return escape char when source code is done being read
+				return Token("EOF", TokenType::ENDF, -1); //return escape char when source code is done being read
 			}
 
 			Token f_FirstElement = fp_TokenVector.front();
@@ -703,7 +1048,7 @@ namespace PeachCore {
 
 			Token f_CurrentToken = ShiftForward(fp_Tokens); //shift forwards one and check for a string key, assuming the last token was '{'
 
-			while (f_CurrentToken.m_Type != TokenType::CloseBracket)
+			while (f_CurrentToken.m_Type != TokenType::CloseBracket) //this will break out of the loop if it parses towards ENDF for invalid JSONS in the worst cases
 			{
 				if (f_CurrentToken.m_Type != TokenType::StringLiteral)
 				{
@@ -763,7 +1108,7 @@ namespace PeachCore {
 		{
 			Token f_CurrentToken = ShiftForward(fp_Tokens); //assuming the most recent token was '[' called from ParseJSON
 
-			while (f_CurrentToken.m_Type != TokenType::CloseSquareBracket)
+			while (f_CurrentToken.m_Type != TokenType::CloseSquareBracket) //this will break out of the loop if it parses towards ENDF for invalid JSONS in the worst cases
 			{
 				if (not ParseValue(f_CurrentToken, fp_JSONArray, fp_Tokens, logger))
 				{
@@ -773,12 +1118,12 @@ namespace PeachCore {
 
 				f_CurrentToken = ShiftForward(fp_Tokens); //shift to find comma
 
-				if (f_CurrentToken.m_Type == TokenType::CloseSquareBracket)
+				if (f_CurrentToken.m_Type == TokenType::CloseSquareBracket) // check for end of array before we check for comma
 				{
 					break;
 				}
 
-				if (f_CurrentToken.m_Type != TokenType::Comma)
+				if (f_CurrentToken.m_Type != TokenType::Comma) //throw error if a separating comma is not found between array elements
 				{
 					logger->LogAndPrint(format("Parsing Error: expected ',' after value inside JSON array but found '{}' instead at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseArray", LogManager::LogLevel::Error);
 					return false;
@@ -797,7 +1142,7 @@ namespace PeachCore {
 		}
 
 		bool
-			ParseValue
+			ParseValue //used for parsing values inside an array
 			(
 				Token fp_CurrentToken,
 				JSONArray& fp_Array,
@@ -811,7 +1156,14 @@ namespace PeachCore {
 					fp_Array.emplace_back(fp_CurrentToken.m_Value);
 					break;
 				case TokenType::IntLiteral:
-					fp_Array.emplace_back(stoll(fp_CurrentToken.m_Value));
+					if (fp_CurrentToken.m_Value[0] == '-')
+					{
+						fp_Array.emplace_back(static_cast<int64_t>(stoll(fp_CurrentToken.m_Value))); // signed
+					}
+					else
+					{
+						fp_Array.emplace_back(static_cast<uint64_t>(stoull(fp_CurrentToken.m_Value))); // unsigned
+					}
 					break;
 				case TokenType::FloatLiteral:
 					fp_Array.emplace_back(stod(fp_CurrentToken.m_Value));
@@ -823,14 +1175,14 @@ namespace PeachCore {
 					fp_Array.emplace_back(); //lmfao this looks so dumb but works
 					break;
 
-				case TokenType::OpenBracket:
+				case TokenType::OpenBracket: //check for nested objects
 				{
 					JSONObject f_TempObject;
 					ParseObject(fp_Tokens, f_TempObject, logger);
 					fp_Array.emplace_back(f_TempObject);
 				}
 				break;
-				case TokenType::OpenSquareBracket:
+				case TokenType::OpenSquareBracket: //check for nested arrays
 				{
 					JSONArray f_TempArray;
 					ParseArray(fp_Tokens, f_TempArray, logger);
@@ -846,7 +1198,7 @@ namespace PeachCore {
 		}
 
 		bool
-			ParseValue
+			ParseValue //used for parsing values inside a regular JSON object
 			(
 				Token fp_CurrentToken,
 				JSONObject& fp_JSONObject,
@@ -861,7 +1213,14 @@ namespace PeachCore {
 					fp_JSONObject.emplace(fp_ValueKey, fp_CurrentToken.m_Value);
 					break;
 				case TokenType::IntLiteral:
-					fp_JSONObject.emplace(fp_ValueKey, stoll(fp_CurrentToken.m_Value));
+					if (fp_CurrentToken.m_Value[0] == '-') //XXX: this is used to handle container sizing issues coming from values serialized as a large uint64 vs a regular int64
+					{
+						fp_JSONObject.emplace(fp_ValueKey, static_cast<int64_t>(stoll(fp_CurrentToken.m_Value))); // signed
+					}
+					else
+					{
+						fp_JSONObject.emplace(fp_ValueKey, static_cast<uint64_t>(stoull(fp_CurrentToken.m_Value))); // unsigned
+					}
 					break;
 				case TokenType::FloatLiteral:
 					fp_JSONObject.emplace(fp_ValueKey, stod(fp_CurrentToken.m_Value));
@@ -895,8 +1254,8 @@ namespace PeachCore {
 			return true;
 		}
 
-		bool
-			ParseJSON
+		bool //XXX: this function assumes that the JSON is structured such that it has one top level object denoted by a "{ . . . . }"
+			ParseJSON //function call that kicks off the recursive parse chain
 			(
 				vector<Token>& fp_Tokens,
 				JSON& fp_JSON,
@@ -907,23 +1266,23 @@ namespace PeachCore {
 
 			switch (f_CurrentToken.m_Type) //should only need to do this once for a valid JSON
 			{
-			case TokenType::OpenBracket:
-			{
-				JSONObject f_Object;
-				ParseObject(fp_Tokens, f_Object, logger);
-				fp_JSON.m_Root = move(JSONValue(f_Object));
-			}
-			break;
-			case TokenType::OpenSquareBracket:
-			{
-				JSONArray f_Array;
-				ParseArray(fp_Tokens, f_Array, logger);
-				fp_JSON.m_Root = move(JSONValue(f_Array));
-			}
-			break;
-			default:
-				logger->LogAndPrint("Parsing Error: ill-formed JSON found, parsing failed", "ParseJSON", LogManager::LogLevel::Error);
-				return false;
+				case TokenType::OpenBracket:
+				{
+					JSONObject f_Object;
+					ParseObject(fp_Tokens, f_Object, logger);
+					fp_JSON.m_Root = move(JSONValue(f_Object));
+				}
+				break;
+				case TokenType::OpenSquareBracket:
+				{
+					JSONArray f_Array;
+					ParseArray(fp_Tokens, f_Array, logger);
+					fp_JSON.m_Root = move(JSONValue(f_Array));
+				}
+				break;
+				default:
+					logger->LogAndPrint("Parsing Error: ill-formed JSON found, parsing failed", "ParseJSON", LogManager::LogLevel::Error);
+					return false;
 			}
 
 			f_CurrentToken = ShiftForward(fp_Tokens); //check for ENDF
@@ -949,53 +1308,56 @@ namespace PeachCore {
 
 			switch (value.JSONType)
 			{
-			case JSONValue::Type::Null:
-				cout << spacing << "null" << endl;
-				break;
-			case JSONValue::Type::Boolean:
-				cout << spacing << (get<bool>(value.m_Value) ? "true" : "false") << endl;
-				break;
-			case JSONValue::Type::Integer:
-				cout << spacing << get<int64_t>(value.m_Value) << endl;
-				break;
-			case JSONValue::Type::Float:
-				cout << spacing << get<double>(value.m_Value) << endl;
-				break;
-			case JSONValue::Type::String:
-				cout << spacing << "\"" << get<string>(value.m_Value) << "\"" << endl;
-				break;
-			case JSONValue::Type::Array:
-			{
-				cout << spacing << "[" << endl;
-				for (const auto& v : get<JSONArray>(value.m_Value))
+				case JSONValue::Type::Null:
+					cout << spacing << "null" << endl;
+					break;
+				case JSONValue::Type::Boolean:
+					cout << spacing << (get<bool>(value.m_Value) ? "true" : "false") << endl;
+					break;
+				case JSONValue::Type::Integer:
+					cout << spacing << get<int64_t>(value.m_Value) << endl;
+					break;
+				case JSONValue::Type::Float:
+					cout << spacing << get<double>(value.m_Value) << endl;
+					break;
+				case JSONValue::Type::String:
+					cout << spacing << "\"" << get<string>(value.m_Value) << "\"" << endl;
+					break;
+				case JSONValue::Type::UnsignedInteger:
+					cout << spacing << "\"" << get<uint64_t>(value.m_Value) << "\"" << endl;
+					break;
+				case JSONValue::Type::Array:
 				{
-					PrintJSON(v, indent + 2);
-				}
-				cout << spacing << "]" << endl;
-				break;
-			}
-			case JSONValue::Type::Object:
-			{
-				cout << spacing << "{" << endl;
-				const auto& obj = get<JSONObject>(value.m_Value);
-
-				for (auto it = obj.begin(); it != obj.end(); ++it)
-				{
-					cout << spacing << "  \"" << it->first << "\": ";
-
-					PrintJSON(it->second, indent + 2);
-
-					if (next(it) != obj.end())
+					cout << spacing << "[" << endl;
+					for (const auto& v : get<JSONArray>(value.m_Value))
 					{
-						cout << ","; // comma after each element except the last
+						PrintJSON(v, indent + 2);
+					}
+					cout << spacing << "]" << endl;
+					break;
+				}
+				case JSONValue::Type::Object:
+				{
+					cout << spacing << "{" << endl;
+					const auto& obj = get<JSONObject>(value.m_Value);
+
+					for (auto it = obj.begin(); it != obj.end(); ++it)
+					{
+						cout << spacing << "  \"" << it->first << "\": ";
+
+						PrintJSON(it->second, indent + 2);
+
+						if (next(it) != obj.end())
+						{
+							cout << ","; // comma after each element except the last
+						}
+
+						cout << endl;
 					}
 
-					cout << endl;
+					cout << spacing << "}";
+					break;
 				}
-
-				cout << spacing << "}";
-				break;
-			}
 			}
 		}
 
@@ -1003,45 +1365,47 @@ namespace PeachCore {
 		// JSON Read/Write Functions
 		//////////////////////////////////////////////
 
-		void
+		bool
 			WriteToJSON
 			(
 				const string& fp_DesiredOutputDirectory,
 				const string& fp_DesiredName,
-				const vector<uint8_t>& fp_ByteCode, //XXX: Nuke this and replace with proper json serialization
+				const JSON& fp_JSON,
 				LogManager* logger
 			)
 		{
-			//logger->LogAndPrint("Bytecode size: " + to_string(fp_ByteCode.size()), "Compiler", "info", "cyan");
-
-			if (fp_ByteCode.empty())
+			if (not logger)
 			{
-				logger->LogAndPrint("Serialization Error: Failed to write " + fp_DesiredName + " ", "Serializer", LogManager::LogLevel::Error);
+
+				return false;
 			}
 
 			string f_FileName;
 
-			if (fp_DesiredOutputDirectory == "./")
-			{
-				f_FileName = "./" + fp_DesiredName + ".json";
-			}
-			else
-			{
-				f_FileName = fp_DesiredOutputDirectory + "/" + fp_DesiredName + ".json";
-			}
+			f_FileName = fp_DesiredOutputDirectory + "/" + fp_DesiredName + ".json";
 
 			ofstream file(f_FileName, ios::binary);  // Open in binary mode
 
 			if (!file)
 			{
-				logger->LogAndPrint("Serialization Error: Failed to open " + f_FileName + " for writing.", "Serializer", LogManager::LogLevel::Error);
-				return;
+				logger->LogAndPrint(format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
+				return false;
 			}
 
-			// Write the entire contents of the vector to the file
-			file.write(reinterpret_cast<const char*>(fp_ByteCode.data()), fp_ByteCode.size());
+			string f_JSONString;
 
-			file.close();  // Close the file
+			if (not fp_JSON.ToString(&f_JSONString))
+			{
+
+				return false;
+			}
+
+			// Write JSON string -> .json file
+			file.write(f_JSONString.c_str(), f_JSONString.size());
+			// Close the file
+			file.close(); 
+
+			return true;
 		}
 
 		bool
