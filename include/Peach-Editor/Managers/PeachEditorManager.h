@@ -21,11 +21,20 @@ namespace PeachEditor{
         string name;
         unsigned long long maxFPS;
         bool vsync;
-        vector<int64_t> resolutions;
+        vector<uint16_t> resolutions;
         map<string, Stats> presets;
         Stats baseStats;
 
         SERIALIZABLE_FIELDS(name, maxFPS, vsync, resolutions, presets, baseStats)
+    };
+
+    struct Test
+    {
+        map<uint64_t, bool> random;
+
+        map< string, map<int, bool> > oof;
+
+        SERIALIZABLE_FIELDS(random)
     };
 
     class PeachEditorManager
@@ -161,19 +170,6 @@ namespace PeachEditor{
                 return false;
             }
 
-            //Config cfg = 
-            //{
-            //    "Peach-E",
-            //    (18446744073709551615),
-            //    true,
-            //    { 720, 1080, 1440 },
-            //    {
-            //        { "easy", Stats{ 100, 50.0f } },
-            //        { "hard", Stats{ 50, 100.0f } }
-            //    },
-            //    Stats{ 80, 75.0f }
-            //};
-
             PeachProject test_project =
             {
                 "Project Peach",
@@ -189,7 +185,26 @@ namespace PeachEditor{
                 }
             };
 
+            //Test fucked =
+            //{
+            //    {
+            //        {30, false},
+            //        {69, true}
+            //    },
+            //    {
+            //        {"69", {{59, false}, {20, true}}}
+            //    }
+            //};
+
+            //Test newFucked;
+
             PeachCore::Serializer Serializer;
+
+            //PeachCore::Serializer::JSON json = Serializer.ToJSON(newFucked);
+
+            //json.PrintToConsole();
+
+            //Serializer.FromJSON(json.m_Root, newFucked);
 
             PeachCore::Serializer::JSON testJSON = Serializer.ToJSON(test_project);
 
@@ -199,13 +214,17 @@ namespace PeachEditor{
 
             PeachCore::Print("Project name: " + readProject.m_ProjectName + "\n" + "main scene: " + readProject.m_ScenePaths["main_scene"]);
 
+            string f_testString;
+
+            //testJSON.ToString(&f_testString);
+
             Config config;
 
             PeachCore::Serializer::JSON json;
             Serializer.ReadJSON(fp_RootPath + "/config.json", json, main_editor_logger.get());
             Serializer.FromJSON(json.m_Root, config);
 
-            PeachCore::Print(format("configs name: {}, configs presets hp: {}", config.name, config.presets["easy"].hp), PeachCore::Colours::Magenta);
+            //PeachCore::Print(format("configs name: {}, configs presets hp: {}", config.name, config.presets["easy"].hp), PeachCore::Colours::Magenta);
 
             for (const auto& [_key , _item] : config.presets)
             {
@@ -215,24 +234,6 @@ namespace PeachEditor{
             for (const auto&  _item : config.resolutions)
             {
                 PeachCore::Print(format("resolutions item : {}", _item), PeachCore::Colours::BrightMagenta);
-            }
-            const string f_temp = "name";
-            cout << get<string>(json[f_temp].m_Value) << endl;
-            //for (const auto& _item : get<Serializer::JSONArray>json["resolutions"])
-            //{
-            //    PeachCore::Print(format("presets item : {}", _item), PeachCore::Colours::BrightMagenta);
-            //}
-
-            try
-            {
-                json.PrintToConsole();
-                //f_Serializer.ReadJSON(fp_RootPath + "/fucked.json", json, main_editor_logger.get());
-                //const string f_Test = json["scene"]["name"];
-                //Print(f_Test, PeachCore::Colours::Magenta);
-            }
-            catch (const exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
-            {
-                PeachCore::PrintError(format("Unhandled exception: {}", Exception.what()));
             }
 
             return true;

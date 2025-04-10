@@ -16,7 +16,6 @@ namespace PeachEditor{
         map<string, string> m_AudioPaths;
 
         SERIALIZABLE_FIELDS(m_ProjectName, m_ScriptRootPath, m_ScenePaths, m_TexturePaths, m_AudioPaths)
-
     };
 
 }

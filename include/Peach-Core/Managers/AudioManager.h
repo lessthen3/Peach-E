@@ -16,6 +16,8 @@
 #include <thread>
 #include <shared_mutex>
 
+#include <miniaudio.h>
+
 using namespace std;
 
 namespace PeachCore {

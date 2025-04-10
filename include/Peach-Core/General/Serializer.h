@@ -15,6 +15,8 @@
 
 #include "Managers/LogManager.h"
 
+#include <zlib.h>
+
 /// Magic
 
 #define SERIALIZABLE_FIELDS(...) \
@@ -399,6 +401,9 @@ namespace PeachCore {
 		using JSONObject = unordered_map<string, JSONValue>;
 		using JSONArray = vector<JSONValue>;
 
+		template<typename KeyType, typename ValType>
+		using MapType = map<KeyType, ValType>;
+
 		struct JSONValue
 		{
 			enum class Type
@@ -534,16 +539,16 @@ namespace PeachCore {
 				switch (m_Root.JSONType)
 				{
 					case JSONValue::Type::Null:
-						fp_JSONString << f_IndentLevel << "null";
+						fp_JSONString << f_IndentLevel << "null, ";
 						break;
 					case JSONValue::Type::Boolean:
-						fp_JSONString << f_IndentLevel << (get<bool>(m_Root.m_Value) ? "true" : "false");
+						fp_JSONString << f_IndentLevel << (get<bool>(m_Root.m_Value) ? "true" : "false") << ", ";
 						break;
 					case JSONValue::Type::Integer:
-						fp_JSONString << f_IndentLevel << get<int64_t>(m_Root.m_Value);
+						fp_JSONString << f_IndentLevel << get<int64_t>(m_Root.m_Value) << ", ";
 						break;
 					case JSONValue::Type::Float:
-						fp_JSONString << f_IndentLevel << get<double>(m_Root.m_Value);
+						fp_JSONString << f_IndentLevel << get<double>(m_Root.m_Value) << ", ";
 						break;
 					case JSONValue::Type::String:
 						if(fp_IsKeyValue)
@@ -561,7 +566,7 @@ namespace PeachCore {
 					case JSONValue::Type::Array:
 					{
 						fp_JSONString << f_IndentLevel << "[";
-						string f_ListOffset = 0;
+						int f_ElementOffset = 0;
 						for (const auto& v : get<JSONArray>(m_Root.m_Value))
 						{
 							//ToStringStream(v, 0);
@@ -942,25 +947,9 @@ namespace PeachCore {
 						{
 							using FieldType = decay_t<decltype(fields)>;
 
-							if constexpr (is_same_v<FieldType, string>) 
+							if constexpr (is_same_v<FieldType, string> or is_arithmetic_v<FieldType>)
 							{
-								fields = get<string>(json.at(key).m_Value);
-							}
-							else if constexpr (is_same_v<FieldType, bool>) 
-							{
-								fields = get<bool>(json.at(key).m_Value);
-							}
-							else if constexpr (is_floating_point_v<FieldType>) 
-							{
-								fields = static_cast<FieldType>(get<double>(json.at(key).m_Value));
-							}
-							else if constexpr (is_integral_v<FieldType> && is_signed_v<FieldType>) 
-							{
-								fields = static_cast<FieldType>(get<int64_t>(json.at(key).m_Value));
-							}
-							else if constexpr (is_integral_v<FieldType> && is_unsigned_v<FieldType>) 
-							{
-								fields = static_cast<FieldType>(get<uint64_t>(json.at(key).m_Value));
+								fields = Extract<FieldType>(json.at(key));
 							}
 							else if constexpr (is_serializable_struct<decay_t<decltype(fields)>>::value)
 							{
@@ -971,9 +960,10 @@ namespace PeachCore {
 								const auto& obj = json.at(key);
 								fields.clear(); //clear the map in case the user passes a map filled with values
 								
+								using ValType = typename decay_t<decltype(fields)>::mapped_type;
+
 								for (const auto& [mapKey, __val] : get<JSONObject>(obj.m_Value))
 								{
-									using ValType = typename decay_t<decltype(fields)>::mapped_type;
 									ValType item{};
 
 									if constexpr (is_serializable_struct<ValType>::value)
@@ -992,11 +982,11 @@ namespace PeachCore {
 							{
 								const auto& arr = get<JSONArray>(json.at(key).m_Value);
 								fields.clear(); //clear the vector in case the user passes a vector filled with values
-								Print(format("got to vector with key name: {}, with array size: {}", key, arr.size()));
+
+								using Elem = typename decay_t<decltype(fields)>::value_type;
 
 								for (const auto& __val : arr)
 								{
-									using Elem = typename decay_t<decltype(fields)>::value_type;
 									Elem item{};
 
 									if constexpr (is_serializable_struct<Elem>::value) 
@@ -1028,34 +1018,26 @@ namespace PeachCore {
 		}
 
 		template<typename T>
-		T Extract(const JSONValue& json) 
+		T Extract(const JSONValue& json) //we extract and recast anything like doubles and 64 bit ints -> whatever the user defined eg vector<int>
 		{
 			using FieldType = decay_t<T>;
-
-			std::cout << "Extracting: expected " << typeid(FieldType).name()
-				<< ", JSONValue::Type = " << static_cast<int>(json.JSONType)
-				<< ", variant index = " << json.m_Value.index() << std::endl;
-
 
 			if constexpr (is_same_v<FieldType, string>) 
 			{
 				return get<string>(json.m_Value);
 			}
-			else if constexpr (is_same_v<FieldType, bool>)
+			else if constexpr (is_arithmetic_v<FieldType>) //AHHH IT FUCKING WORKS, have to wrap in this if otherwise the compiler bitches
 			{
-				return get<bool>(json.m_Value);
-			}
-			else if constexpr (is_floating_point_v<FieldType>) 
-			{
-				return static_cast<FieldType>(get<double>(json.m_Value));
-			}
-			else if constexpr (is_integral_v<FieldType> && is_signed_v<FieldType>) 
-			{
-				return static_cast<FieldType>(get<int64_t>(json.m_Value));
-			}
-			else if constexpr (is_integral_v<FieldType> && is_unsigned_v<FieldType>) 
-			{
-				return static_cast<FieldType>(get<uint64_t>(json.m_Value));
+				switch (json.JSONType)
+				{
+					case JSONValue::Type::Integer: return static_cast<FieldType>(get<int64_t>(json.m_Value));
+					case JSONValue::Type::UnsignedInteger: return static_cast<FieldType>(get<uint64_t>(json.m_Value));
+					case JSONValue::Type::Float: return static_cast<FieldType>(get<double>(json.m_Value));
+					case JSONValue::Type::Boolean: return get<bool>(json.m_Value);
+					default: 
+						PrintError("Unsupported type in FromJSON vector element for key: ");
+						return false;
+				}
 			}
 			else 
 			{
