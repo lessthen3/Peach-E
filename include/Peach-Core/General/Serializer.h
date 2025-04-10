@@ -393,7 +393,7 @@ namespace PeachCore {
 		//////////////////////////////////////////////
 		// Parsing
 		//////////////////////////////////////////////
-
+		public:
 		struct JSONValue;
 
 		using JSONObject = unordered_map<string, JSONValue>;
@@ -513,14 +513,19 @@ namespace PeachCore {
 				return true;
 			}
 
+			void
+				ValueToString()
+			{
+
+			}
+
 			bool
 				ToStringStream
 				(
 					const JSONValue& fp_JSONValue,
 					stringstream& fp_JSONString, 
 					const uint32_t indent = 0,
-					const bool fp_IsKeyValue = false, 
-					const bool fp_IsInsideArray = false
+					const bool fp_IsKeyValue = false
 				)
 				const
 			{
@@ -529,20 +534,16 @@ namespace PeachCore {
 				switch (m_Root.JSONType)
 				{
 					case JSONValue::Type::Null:
-						if(fp_IsInsideArray)
-						{
-							fp_JSONString << "null" << ", ";
-							//ToStringStream(fp_JSONString, false, )
-						}
+						fp_JSONString << f_IndentLevel << "null";
 						break;
 					case JSONValue::Type::Boolean:
-						fp_JSONString << f_IndentLevel << (get<bool>(m_Root.m_Value) ? "true" : "false") << endl;
+						fp_JSONString << f_IndentLevel << (get<bool>(m_Root.m_Value) ? "true" : "false");
 						break;
 					case JSONValue::Type::Integer:
-						fp_JSONString << f_IndentLevel << get<int64_t>(m_Root.m_Value) << endl;
+						fp_JSONString << f_IndentLevel << get<int64_t>(m_Root.m_Value);
 						break;
 					case JSONValue::Type::Float:
-						fp_JSONString << f_IndentLevel << get<double>(m_Root.m_Value) << endl;
+						fp_JSONString << f_IndentLevel << get<double>(m_Root.m_Value);
 						break;
 					case JSONValue::Type::String:
 						if(fp_IsKeyValue)
@@ -555,14 +556,15 @@ namespace PeachCore {
 						}
 						break;
 					case JSONValue::Type::UnsignedInteger:
-						fp_JSONString << f_IndentLevel << "\"" << get<uint64_t>(m_Root.m_Value) << "\"" << endl;
+						fp_JSONString << f_IndentLevel << get<uint64_t>(m_Root.m_Value);
 						break;
 					case JSONValue::Type::Array:
 					{
-						fp_JSONString << f_IndentLevel << "[" << endl;
+						fp_JSONString << f_IndentLevel << "[";
+						string f_ListOffset = 0;
 						for (const auto& v : get<JSONArray>(m_Root.m_Value))
 						{
-							PrintJSON(v, indent + 4);
+							//ToStringStream(v, 0);
 						}
 						fp_JSONString << f_IndentLevel << "]" << ", " << endl;
 						break;
@@ -576,7 +578,7 @@ namespace PeachCore {
 						{
 							fp_JSONString << f_IndentLevel << "  \"" << it->first << "\": ";
 
-							PrintJSON(it->second, indent + 4);
+							//ToStringStream(it->second, indent + 4);
 
 							if (next(it) != obj.end())
 							{
@@ -589,6 +591,11 @@ namespace PeachCore {
 						fp_JSONString << f_IndentLevel << "}";
 						break;
 					}
+				}
+
+				if (fp_IsKeyValue)
+				{
+					fp_JSONString << ", ";
 				}
 
 				return true;
@@ -910,11 +917,18 @@ namespace PeachCore {
 
 		template<typename T>
 		enable_if_t<is_serializable_struct<T>::value, bool> //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
-			FromJSON(const JSON& json, T& out)
+			FromJSON(const JSONValue& _j, T& out)
 		{
+			if (_j.JSONType != JSONValue::Type::Object)
+			{
+				return false;
+			}
+
 			static_assert(is_serializable_struct<T>::value, "FromJSON() can only be used with types that use SERIALIZABLE_FIELDS");
 
 			const vector<string> fieldNames = SplitFieldNames(T::field_names);
+
+			const JSONObject& json = get<JSONObject>(_j.m_Value);
 
 			size_t i = 0;
 			bool success = true;
@@ -923,7 +937,6 @@ namespace PeachCore {
 				(
 					[&] {
 						const string& key = fieldNames[i++];
-						//Print(format("Current field name being processed: {}, Current JSON root type: {}", key, static_cast<int>(json[key].m_Root.JSONType)), Colours::Magenta);
 
 						try 
 						{
@@ -931,45 +944,45 @@ namespace PeachCore {
 
 							if constexpr (is_same_v<FieldType, string>) 
 							{
-								fields = get<string>(json[key].m_Value);
+								fields = get<string>(json.at(key).m_Value);
 							}
 							else if constexpr (is_same_v<FieldType, bool>) 
 							{
-								fields = get<bool>(json[key].m_Value);
+								fields = get<bool>(json.at(key).m_Value);
 							}
 							else if constexpr (is_floating_point_v<FieldType>) 
 							{
-								fields = static_cast<FieldType>(get<double>(json[key].m_Value));
+								fields = static_cast<FieldType>(get<double>(json.at(key).m_Value));
 							}
 							else if constexpr (is_integral_v<FieldType> && is_signed_v<FieldType>) 
 							{
-								fields = static_cast<FieldType>(get<int64_t>(json[key].m_Value));
+								fields = static_cast<FieldType>(get<int64_t>(json.at(key).m_Value));
 							}
 							else if constexpr (is_integral_v<FieldType> && is_unsigned_v<FieldType>) 
 							{
-								fields = static_cast<FieldType>(get<uint64_t>(json[key].m_Value));
+								fields = static_cast<FieldType>(get<uint64_t>(json.at(key).m_Value));
 							}
 							else if constexpr (is_serializable_struct<decay_t<decltype(fields)>>::value)
 							{
-								FromJSON(JSON(json[key]), fields);
+								FromJSON(json.at(key), fields);
 							}
 							else if constexpr (is_map<decay_t<decltype(fields)>>::value)
 							{
-								const auto& obj = json[key];
-								fields.clear();
-
-								for (const auto& [mapKey, val] : get<JSONObject>(obj.m_Value))
+								const auto& obj = json.at(key);
+								fields.clear(); //clear the map in case the user passes a map filled with values
+								
+								for (const auto& [mapKey, __val] : get<JSONObject>(obj.m_Value))
 								{
 									using ValType = typename decay_t<decltype(fields)>::mapped_type;
 									ValType item{};
 
 									if constexpr (is_serializable_struct<ValType>::value)
 									{
-										FromJSON(JSON(val), item);
+										FromJSON(__val, item);
 									}
 									else
 									{
-										item = val;
+										item = Extract<ValType>(__val);
 									}
 
 									fields[mapKey] = item;
@@ -977,21 +990,22 @@ namespace PeachCore {
 							}
 							else if constexpr (is_vector<decay_t<decltype(fields)>>::value)
 							{
-								const auto& arr = json[key];
-								fields.clear();
+								const auto& arr = get<JSONArray>(json.at(key).m_Value);
+								fields.clear(); //clear the vector in case the user passes a vector filled with values
+								Print(format("got to vector with key name: {}, with array size: {}", key, arr.size()));
 
-								for (size_t j = 0; j < get<JSONArray>(arr.m_Value).size(); ++j) 
+								for (const auto& __val : arr)
 								{
 									using Elem = typename decay_t<decltype(fields)>::value_type;
 									Elem item{};
 
 									if constexpr (is_serializable_struct<Elem>::value) 
 									{
-										FromJSON(JSON(arr[j]), item);
+										FromJSON(__val, item);
 									}
 									else 
 									{
-										//item = arr[j].m_Value;
+										item = Extract<Elem>(__val);
 									}
 
 									fields.push_back(item);
@@ -1012,6 +1026,43 @@ namespace PeachCore {
 
 			return success;
 		}
+
+		template<typename T>
+		T Extract(const JSONValue& json) 
+		{
+			using FieldType = decay_t<T>;
+
+			std::cout << "Extracting: expected " << typeid(FieldType).name()
+				<< ", JSONValue::Type = " << static_cast<int>(json.JSONType)
+				<< ", variant index = " << json.m_Value.index() << std::endl;
+
+
+			if constexpr (is_same_v<FieldType, string>) 
+			{
+				return get<string>(json.m_Value);
+			}
+			else if constexpr (is_same_v<FieldType, bool>)
+			{
+				return get<bool>(json.m_Value);
+			}
+			else if constexpr (is_floating_point_v<FieldType>) 
+			{
+				return static_cast<FieldType>(get<double>(json.m_Value));
+			}
+			else if constexpr (is_integral_v<FieldType> && is_signed_v<FieldType>) 
+			{
+				return static_cast<FieldType>(get<int64_t>(json.m_Value));
+			}
+			else if constexpr (is_integral_v<FieldType> && is_unsigned_v<FieldType>) 
+			{
+				return static_cast<FieldType>(get<uint64_t>(json.m_Value));
+			}
+			else 
+			{
+				static_assert(always_false_v<T>, "Unsupported type in Extract");
+			}
+		}
+
 
 	private:
 		//////////////////////////////////////////////
@@ -1332,6 +1383,7 @@ namespace PeachCore {
 					for (const auto& v : get<JSONArray>(value.m_Value))
 					{
 						PrintJSON(v, indent + 2);
+						cout << ",";
 					}
 					cout << spacing << "]" << endl;
 					break;

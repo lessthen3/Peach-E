@@ -157,7 +157,7 @@ namespace PeachEditor{
 
             if (not InitializeQueues())
             {
-                
+
                 return false;
             }
 
@@ -174,17 +174,54 @@ namespace PeachEditor{
             //    Stats{ 80, 75.0f }
             //};
 
+            PeachProject test_project =
+            {
+                "Project Peach",
+                "/src",
+                {
+                    {"main_scene", "/main"}
+                },
+                {
+                    {"cat_texture", "/my_cast.png"}
+                },
+                {
+                    { "meow_sound", "/meow.mp3" }
+                }
+            };
+
             PeachCore::Serializer Serializer;
 
-            //PeachCore::Serializer::JSON json = Serializer.ToJSON(cfg);
+            PeachCore::Serializer::JSON testJSON = Serializer.ToJSON(test_project);
+
+            PeachProject readProject;
+
+            Serializer.FromJSON(testJSON.m_Root, readProject);
+
+            PeachCore::Print("Project name: " + readProject.m_ProjectName + "\n" + "main scene: " + readProject.m_ScenePaths["main_scene"]);
 
             Config config;
 
             PeachCore::Serializer::JSON json;
             Serializer.ReadJSON(fp_RootPath + "/config.json", json, main_editor_logger.get());
-            Serializer.FromJSON(json, config);
+            Serializer.FromJSON(json.m_Root, config);
 
             PeachCore::Print(format("configs name: {}, configs presets hp: {}", config.name, config.presets["easy"].hp), PeachCore::Colours::Magenta);
+
+            for (const auto& [_key , _item] : config.presets)
+            {
+                PeachCore::Print(format("presets key : {}, item : {}", _key, _item.hp), PeachCore::Colours::BrightBlack);
+            }
+
+            for (const auto&  _item : config.resolutions)
+            {
+                PeachCore::Print(format("resolutions item : {}", _item), PeachCore::Colours::BrightMagenta);
+            }
+            const string f_temp = "name";
+            cout << get<string>(json[f_temp].m_Value) << endl;
+            //for (const auto& _item : get<Serializer::JSONArray>json["resolutions"])
+            //{
+            //    PeachCore::Print(format("presets item : {}", _item), PeachCore::Colours::BrightMagenta);
+            //}
 
             try
             {
