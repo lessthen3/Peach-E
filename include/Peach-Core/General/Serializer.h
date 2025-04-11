@@ -398,11 +398,10 @@ namespace PeachCore {
 		public:
 		struct JSONValue;
 
-		using JSONObject = unordered_map<string, JSONValue>;
-		using JSONArray = vector<JSONValue>;
+		using JSONObject = unordered_map<string, JSONValue>; //used for regular JSONObjects
+		using JSONArray = vector<JSONValue>; //used for JSON arrays and vectors
 
-		template<typename KeyType, typename ValType>
-		using MapType = map<KeyType, ValType>;
+		using MapType = map<JSONValue, JSONValue>; //used for serializing general maps
 
 		struct JSONValue
 		{
@@ -410,6 +409,7 @@ namespace PeachCore {
 			{
 				Object,
 				Array,
+				Map,
 				String,
 				Integer,
 				UnsignedInteger,
@@ -422,6 +422,7 @@ namespace PeachCore {
 			<
 				JSONObject, 
 				JSONArray, 
+				MapType,
 				string, 
 				bool,
 
@@ -434,6 +435,8 @@ namespace PeachCore {
 
 			explicit JSONValue(JSONObject __obj) : JSONType(Type::Object), m_Value(move(__obj)) {}
 			explicit JSONValue(JSONArray __arr) : JSONType(Type::Array), m_Value(move(__arr)) {}
+			explicit JSONValue(MapType __map) : JSONType(Type::Map), m_Value(move(__map)) {}
+
 			explicit JSONValue(string __str) : JSONType(Type::String), m_Value(move(__str)) {}
 			explicit JSONValue(bool __b) : JSONType(Type::Boolean), m_Value(__b) {}
 
@@ -502,7 +505,7 @@ namespace PeachCore {
 			{
 				if (not fp_JSONString)
 				{
-
+					PrintError("Passed nullptr reference to string, ToString() is not possible exiting function call immediately");
 					return false;
 				}
 
@@ -510,7 +513,7 @@ namespace PeachCore {
 
 				if (not ToStringStream(m_Root, f_TempString))
 				{
-
+					PrintError("Unable to stringify JSON");
 					return false;
 				}
 
@@ -529,78 +532,78 @@ namespace PeachCore {
 				(
 					const JSONValue& fp_JSONValue,
 					stringstream& fp_JSONString, 
-					const uint32_t indent = 0,
-					const bool fp_IsKeyValue = false
+					const uint32_t fp_Spacing = 0
 				)
 				const
 			{
-				string f_IndentLevel(indent, ' ');
+				string f_IndentLevel(fp_Spacing, ' ');
 
-				switch (m_Root.JSONType)
+				switch (fp_JSONValue.JSONType)
 				{
 					case JSONValue::Type::Null:
-						fp_JSONString << f_IndentLevel << "null, ";
+						fp_JSONString << "null";
 						break;
 					case JSONValue::Type::Boolean:
-						fp_JSONString << f_IndentLevel << (get<bool>(m_Root.m_Value) ? "true" : "false") << ", ";
+						fp_JSONString << (get<bool>(fp_JSONValue.m_Value) ? "true" : "false");
 						break;
 					case JSONValue::Type::Integer:
-						fp_JSONString << f_IndentLevel << get<int64_t>(m_Root.m_Value) << ", ";
+						fp_JSONString << get<int64_t>(fp_JSONValue.m_Value);
 						break;
 					case JSONValue::Type::Float:
-						fp_JSONString << f_IndentLevel << get<double>(m_Root.m_Value) << ", ";
+						fp_JSONString << get<double>(fp_JSONValue.m_Value);
 						break;
 					case JSONValue::Type::String:
-						if(fp_IsKeyValue)
-						{
-							fp_JSONString << f_IndentLevel << get<string>(m_Root.m_Value) << "," << endl; //string as value
-						}
-						else
-						{
-							fp_JSONString << f_IndentLevel << get<string>(m_Root.m_Value) << ": "; //no endl and : for key
-						}
+						fp_JSONString << get<string>(fp_JSONValue.m_Value);
 						break;
 					case JSONValue::Type::UnsignedInteger:
-						fp_JSONString << f_IndentLevel << get<uint64_t>(m_Root.m_Value);
+						fp_JSONString << get<uint64_t>(fp_JSONValue.m_Value);
 						break;
 					case JSONValue::Type::Array:
 					{
 						fp_JSONString << f_IndentLevel << "[";
-						int f_ElementOffset = 0;
-						for (const auto& v : get<JSONArray>(m_Root.m_Value))
+						const auto& arr = get<JSONArray>(fp_JSONValue.m_Value);
+
+						for (auto _it = arr.begin(); _it != arr.end(); ++_it)
 						{
-							//ToStringStream(v, 0);
+							if (_it->JSONType == JSONValue::Type::Object) //XXX: we're assuming mono typed arrays so no mixing of objects and primitive types
+							{
+								fp_JSONString << "\n"; //new line for each JSONObject inside the array
+							}
+
+							ToStringStream(*_it, fp_JSONString, fp_Spacing + 4); //4 spaces for indent level
+
+							if (_it != arr.end())
+							{
+								fp_JSONString << ", "; //add comma until we hit the last element
+							}
 						}
-						fp_JSONString << f_IndentLevel << "]" << ", " << endl;
+						fp_JSONString << f_IndentLevel << "]" << ", " << "\n";
 						break;
 					}
 					case JSONValue::Type::Object:
 					{
-						fp_JSONString << f_IndentLevel << "{" << endl;
-						const auto& obj = get<JSONObject>(m_Root.m_Value);
+						fp_JSONString << "{" << "\n";
+						const auto& obj = get<JSONObject>(fp_JSONValue.m_Value);
+
+						string f_ScopeIndent = f_IndentLevel + string(4, ' '); //add a 4 space indent for the scope
 
 						for (auto it = obj.begin(); it != obj.end(); ++it)
 						{
-							fp_JSONString << f_IndentLevel << "  \"" << it->first << "\": ";
+							fp_JSONString << f_ScopeIndent << it->first << ": ";
 
-							//ToStringStream(it->second, indent + 4);
+							ToStringStream(it->second, fp_JSONString, fp_Spacing + 4); //add 4 for indent level
 
-							if (next(it) != obj.end())
+							if (next(it) != obj.end()) //check for the end of the container
 							{
-								fp_JSONString << ","; // comma after each element except the last
+								fp_JSONString << ", "; // comma after each element except the last
 							}
 
-							fp_JSONString << endl;
+							fp_JSONString << "\n";
 						}
 
 						fp_JSONString << f_IndentLevel << "}";
 						break;
 					}
-				}
-
-				if (fp_IsKeyValue)
-				{
-					fp_JSONString << ", ";
 				}
 
 				return true;
@@ -610,7 +613,9 @@ namespace PeachCore {
 				PrintToConsole()
 				const
 			{
-				PrintJSON(m_Root);
+				string f_StringJSON;
+				ToString(&f_StringJSON);
+				Print(f_StringJSON);
 			}
 
 			bool
@@ -1331,71 +1336,6 @@ namespace PeachCore {
 		}
 
 		//////////////////////////////////////////////
-		// Print JSON to Console
-		//////////////////////////////////////////////
-
-		static void
-			PrintJSON(const JSONValue& value, int indent = 0)
-		{
-			string spacing(indent, ' ');
-
-			switch (value.JSONType)
-			{
-				case JSONValue::Type::Null:
-					cout << spacing << "null" << endl;
-					break;
-				case JSONValue::Type::Boolean:
-					cout << spacing << (get<bool>(value.m_Value) ? "true" : "false") << endl;
-					break;
-				case JSONValue::Type::Integer:
-					cout << spacing << get<int64_t>(value.m_Value) << endl;
-					break;
-				case JSONValue::Type::Float:
-					cout << spacing << get<double>(value.m_Value) << endl;
-					break;
-				case JSONValue::Type::String:
-					cout << spacing << "\"" << get<string>(value.m_Value) << "\"" << endl;
-					break;
-				case JSONValue::Type::UnsignedInteger:
-					cout << spacing << "\"" << get<uint64_t>(value.m_Value) << "\"" << endl;
-					break;
-				case JSONValue::Type::Array:
-				{
-					cout << spacing << "[" << endl;
-					for (const auto& v : get<JSONArray>(value.m_Value))
-					{
-						PrintJSON(v, indent + 2);
-						cout << ",";
-					}
-					cout << spacing << "]" << endl;
-					break;
-				}
-				case JSONValue::Type::Object:
-				{
-					cout << spacing << "{" << endl;
-					const auto& obj = get<JSONObject>(value.m_Value);
-
-					for (auto it = obj.begin(); it != obj.end(); ++it)
-					{
-						cout << spacing << "  \"" << it->first << "\": ";
-
-						PrintJSON(it->second, indent + 2);
-
-						if (next(it) != obj.end())
-						{
-							cout << ","; // comma after each element except the last
-						}
-
-						cout << endl;
-					}
-
-					cout << spacing << "}";
-					break;
-				}
-			}
-		}
-
-		//////////////////////////////////////////////
 		// JSON Read/Write Functions
 		//////////////////////////////////////////////
 
@@ -1410,13 +1350,11 @@ namespace PeachCore {
 		{
 			if (not logger)
 			{
-
+				PrintError("Serialization Error: Tried to pass nullptr reference to logger during WriteToJSON()");
 				return false;
 			}
 
-			string f_FileName;
-
-			f_FileName = fp_DesiredOutputDirectory + "/" + fp_DesiredName + ".json";
+			const string f_FileName = fp_DesiredOutputDirectory + "/" + fp_DesiredName + ".json";
 
 			ofstream file(f_FileName, ios::binary);  // Open in binary mode
 
@@ -1430,7 +1368,8 @@ namespace PeachCore {
 
 			if (not fp_JSON.ToString(&f_JSONString))
 			{
-
+				logger->LogAndPrint(format("Serialization Error: Failed to stringify JSON for writing -> file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
+				file.close(); //close the file since writing failed
 				return false;
 			}
 

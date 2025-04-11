@@ -207,34 +207,35 @@ namespace PeachEditor{
             //Serializer.FromJSON(json.m_Root, newFucked);
 
             PeachCore::Serializer::JSON testJSON = Serializer.ToJSON(test_project);
+            
+            testJSON.PrintToConsole();
 
-            PeachProject readProject;
+            //PeachProject readProject;
 
-            Serializer.FromJSON(testJSON.m_Root, readProject);
+            //Serializer.FromJSON(testJSON.m_Root, readProject);
 
-            PeachCore::Print("Project name: " + readProject.m_ProjectName + "\n" + "main scene: " + readProject.m_ScenePaths["main_scene"]);
+            //PeachCore::Print("Project name: " + readProject.m_ProjectName + "\n" + "main scene: " + readProject.m_ScenePaths["main_scene"]);
 
-            string f_testString;
-
+            //string f_testString;
             //testJSON.ToString(&f_testString);
 
-            Config config;
+            //Config config;
 
-            PeachCore::Serializer::JSON json;
-            Serializer.ReadJSON(fp_RootPath + "/config.json", json, main_editor_logger.get());
-            Serializer.FromJSON(json.m_Root, config);
+            //PeachCore::Serializer::JSON json;
+            //Serializer.ReadJSON(fp_RootPath + "/config.json", json, main_editor_logger.get());
+            //Serializer.FromJSON(json.m_Root, config);
 
             //PeachCore::Print(format("configs name: {}, configs presets hp: {}", config.name, config.presets["easy"].hp), PeachCore::Colours::Magenta);
 
-            for (const auto& [_key , _item] : config.presets)
-            {
-                PeachCore::Print(format("presets key : {}, item : {}", _key, _item.hp), PeachCore::Colours::BrightBlack);
-            }
+            //for (const auto& [_key , _item] : config.presets)
+            //{
+            //    PeachCore::Print(format("presets key : {}, item : {}", _key, _item.hp), PeachCore::Colours::BrightBlack);
+            //}
 
-            for (const auto&  _item : config.resolutions)
-            {
-                PeachCore::Print(format("resolutions item : {}", _item), PeachCore::Colours::BrightMagenta);
-            }
+            //for (const auto&  _item : config.resolutions)
+            //{
+            //    PeachCore::Print(format("resolutions item : {}", _item), PeachCore::Colours::BrightMagenta);
+            //}
 
             return true;
         }
