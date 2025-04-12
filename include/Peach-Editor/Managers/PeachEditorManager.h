@@ -178,7 +178,7 @@ namespace PeachEditor{
                     {"main_scene", "/main"}
                 },
                 {
-                    {"cat_texture", "/my_cast.png"}
+                    {"cat_texture", "/my_cat.png"}
                 },
                 {
                     { "meow_sound", "/meow.mp3" }
@@ -206,36 +206,33 @@ namespace PeachEditor{
 
             //Serializer.FromJSON(json.m_Root, newFucked);
 
-            PeachCore::Serializer::JSON testJSON = Serializer.ToJSON(test_project);
-            
-            testJSON.PrintToConsole();
+            //PeachCore::Serializer::JSON testJSON = Serializer.ToJSON(test_project);
+            //
+            //testJSON.PrintToConsole();
 
-            //PeachProject readProject;
+            //Serializer.WriteToJSON(fp_RootPath, "first_project", testJSON, main_editor_logger.get());
 
-            //Serializer.FromJSON(testJSON.m_Root, readProject);
+            PeachProject readProject;
 
-            //PeachCore::Print("Project name: " + readProject.m_ProjectName + "\n" + "main scene: " + readProject.m_ScenePaths["main_scene"]);
+            Serializer.FromJSON(readProject, fp_RootPath + "/first_project.json", main_editor_logger.get());
 
-            //string f_testString;
-            //testJSON.ToString(&f_testString);
+            PeachCore::Print("Project name: " + readProject.m_ProjectName + "\n" + "main scene: " + readProject.m_ScenePaths["main_scene"]);
 
-            //Config config;
+            Config config;
 
-            //PeachCore::Serializer::JSON json;
-            //Serializer.ReadJSON(fp_RootPath + "/config.json", json, main_editor_logger.get());
-            //Serializer.FromJSON(json.m_Root, config);
+            Serializer.FromJSON(config, fp_RootPath + "/config.json", main_editor_logger.get());
 
-            //PeachCore::Print(format("configs name: {}, configs presets hp: {}", config.name, config.presets["easy"].hp), PeachCore::Colours::Magenta);
+            PeachCore::Print(format("configs name: {}, configs presets hp: {}", config.name, config.presets["easy"].hp), PeachCore::Colours::Magenta);
 
-            //for (const auto& [_key , _item] : config.presets)
-            //{
-            //    PeachCore::Print(format("presets key : {}, item : {}", _key, _item.hp), PeachCore::Colours::BrightBlack);
-            //}
+            for (const auto& [_key , _item] : config.presets)
+            {
+                PeachCore::Print(format("presets key : {}, item : {}", _key, _item.hp), PeachCore::Colours::BrightBlack);
+            }
 
-            //for (const auto&  _item : config.resolutions)
-            //{
-            //    PeachCore::Print(format("resolutions item : {}", _item), PeachCore::Colours::BrightMagenta);
-            //}
+            for (const auto&  _item : config.resolutions)
+            {
+                PeachCore::Print(format("resolutions item : {}", _item), PeachCore::Colours::BrightMagenta);
+            }
 
             return true;
         }

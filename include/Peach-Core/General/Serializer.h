@@ -41,33 +41,60 @@ namespace PeachCore {
 		Serializer() = default;
 		~Serializer() = default;
 
-		struct JSON; //c++ is a dumb fucking language
-
 	public:
+		template<typename T>
 		bool
-			ReadJSON
+			FromJSON
 			(
+				T& fp_DesiredObject,
 				const string& fp_FilePath,
-				JSON& fp_JSON,
 				LogManager* logger
 			)
 		{
 			string f_JsonString;
 			vector<Token> f_TokenizedJson;
 
-			if (not ReadJSONIntoString(fp_FilePath, &f_JsonString, logger))
+			JSONValue f_TempJSON;
+
+			if (not ReadJSONIntoString(fp_FilePath, &f_JsonString, logger)) //get JSON into a string
 			{
-				logger->LogAndPrint("Failed to Read JSON", "ReadJSON", LogManager::LogLevel::Error);
+				logger->LogAndPrint("Failed to Read JSON", "FromJSON", LogManager::LogLevel::Error);
 				return false;
 			}
-			else if (not Tokenize(f_TokenizedJson, f_JsonString, logger))
+			else if (not Tokenize(f_TokenizedJson, f_JsonString, logger)) //convert JSON string into a vector of tokens
 			{
-				logger->LogAndPrint("Failed to Lex JSON", "Tokenize", LogManager::LogLevel::Error);
+				logger->LogAndPrint("Failed to Lex JSON", "FromJSON", LogManager::LogLevel::Error);
 				return false;
 			}
-			else if (not ParseJSON(f_TokenizedJson, fp_JSON, logger))
+			else if (not ParseJSON(f_TokenizedJson, f_TempJSON, logger)) //parse the tokens into a valid JSONValue object
 			{
-				logger->LogAndPrint("Failed to Parse JSON", "ParseJSON", LogManager::LogLevel::Error);
+				logger->LogAndPrint("Failed to Parse JSON", "FromJSON", LogManager::LogLevel::Error);
+				return false;
+			}
+			else if (not FromJSON(f_TempJSON, fp_DesiredObject)) //retrieve values and insert into fp_DesiredObject
+			{
+				logger->LogAndPrint(format("Failed to retrieve data values from desired JSON file: {}", fp_FilePath), "FromJSON", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			return true;
+		}
+
+		template<typename T>
+		bool
+			ToJSON
+			(
+				T& fp_DesiredObject,
+				const string& fp_DesiredFileName,
+				const string& fp_DesiredOutputDirectory,
+				LogManager* logger
+			)
+		{
+			JSONValue f_TempJSON = ToJSON(fp_DesiredObject);
+
+			if (not WriteToJSON(fp_DesiredOutputDirectory, fp_DesiredFileName, f_TempJSON, logger))
+			{
+				logger->LogAndPrint(format("Failed writing to JSON file: {}, nothing was done", fp_DesiredFileName), "ToJSON", LogManager::LogLevel::Error);
 				return false;
 			}
 
@@ -76,7 +103,7 @@ namespace PeachCore {
 
 	private:
 		//////////////////////////////////////////////
-		// Token and Token-type Definition
+		// Token and Token-type Definition for JSON
 		//////////////////////////////////////////////
 
 		enum class TokenType
@@ -129,7 +156,7 @@ namespace PeachCore {
 		};
 
 		//////////////////////////////////////////////
-		// Utility Functions
+		// Utility Function for Tokenizing JSON
 		//////////////////////////////////////////////
 
 		[[nodiscard]] char
@@ -393,9 +420,8 @@ namespace PeachCore {
 		}
 
 		//////////////////////////////////////////////
-		// Parsing
+		// JSON Parsing
 		//////////////////////////////////////////////
-		public:
 		struct JSONValue;
 
 		using JSONObject = unordered_map<string, JSONValue>; //used for regular JSONObjects
@@ -450,320 +476,121 @@ namespace PeachCore {
 		};
 
 		//////////////////////////////////////////////
-		// JSON interface
+		// JSON Utility Functions
 		//////////////////////////////////////////////
-	public:
-		struct JSON
+
+		bool
+			ToString(string* fp_JSONString, const JSONValue& fp_JSON ) //kicks off recursive creation of JSON string
+			const
 		{
-			JSON() = default;
-			JSON(const JSONValue& root) : m_Root(root) {}
-
-			JSONValue m_Root;
-
-			auto 
-				operator[](const string& key) 
-				const
+			if (not fp_JSONString)
 			{
-				if (m_Root.JSONType != JSONValue::Type::Object)
-				{
-					throw runtime_error("Accessed key on non-object");
-				}
-
-				const auto& obj = get<JSONObject>(m_Root.m_Value);
-				auto it = obj.find(key);
-
-				if (it == obj.end())
-				{
-					throw runtime_error("Key not found: " + key);
-				}
-
-				return it->second;
+				PrintError("Passed nullptr reference to string, ToString() is not possible exiting function call immediately");
+				return false;
 			}
 
-			auto 
-				operator[](size_t index) 
-				const
+			stringstream f_TempString;
+
+			if (not ToStringStream(fp_JSON, f_TempString))
 			{
-				if (m_Root.JSONType != JSONValue::Type::Array)
-				{
-					throw runtime_error("Attempted array access on non-array");
-				}
-
-				const auto& arr = get<JSONArray>(m_Root.m_Value);
-
-				if (index >= arr.size())
-				{
-					throw out_of_range("Array index out of bounds: " + to_string(index));
-				}
-
-				return arr[index];
+				PrintError("Unable to stringify JSON");
+				return false;
 			}
 
-			bool
-				ToString(string* fp_JSONString) //kicks off recursive creation of JSON string
-				const
+			*fp_JSONString = f_TempString.str();
+			return true;
+		}
+
+		bool
+			ToStringStream
+			(
+				const JSONValue& fp_JSONValue,
+				stringstream& fp_JSONString,
+				const uint32_t fp_Spacing = 0
+			)
+			const
+		{
+			string f_IndentLevel(fp_Spacing, ' ');
+
+			switch (fp_JSONValue.JSONType)
 			{
-				if (not fp_JSONString)
-				{
-					PrintError("Passed nullptr reference to string, ToString() is not possible exiting function call immediately");
-					return false;
-				}
-
-				stringstream f_TempString;
-
-				if (not ToStringStream(m_Root, f_TempString))
-				{
-					PrintError("Unable to stringify JSON");
-					return false;
-				}
-
-				*fp_JSONString = f_TempString.str();
-				return true;
-			}
-
-			void
-				ValueToString()
+			case JSONValue::Type::String:
+				fp_JSONString << '"' << get<string>(fp_JSONValue.m_Value) << '"';
+				break;
+			case JSONValue::Type::Null:
+				fp_JSONString << '"' << "null" << '"';
+				break;
+			case JSONValue::Type::Boolean:
+				fp_JSONString << '"' << (get<bool>(fp_JSONValue.m_Value) ? "true" : "false") << '"';
+				break;
+			case JSONValue::Type::Integer:
+				fp_JSONString << get<int64_t>(fp_JSONValue.m_Value);
+				break;
+			case JSONValue::Type::Float:
+				fp_JSONString << get<double>(fp_JSONValue.m_Value);
+				break;
+			case JSONValue::Type::UnsignedInteger:
+				fp_JSONString << get<uint64_t>(fp_JSONValue.m_Value);
+				break;
+			case JSONValue::Type::Array:
 			{
+				fp_JSONString << f_IndentLevel << "[";
+				const auto& arr = get<JSONArray>(fp_JSONValue.m_Value);
 
-			}
-
-			bool
-				ToStringStream
-				(
-					const JSONValue& fp_JSONValue,
-					stringstream& fp_JSONString, 
-					const uint32_t fp_Spacing = 0
-				)
-				const
-			{
-				string f_IndentLevel(fp_Spacing, ' ');
-
-				switch (fp_JSONValue.JSONType)
+				for (auto _it = arr.begin(); _it != arr.end(); ++_it)
 				{
-					case JSONValue::Type::Null:
-						fp_JSONString << "null";
-						break;
-					case JSONValue::Type::Boolean:
-						fp_JSONString << (get<bool>(fp_JSONValue.m_Value) ? "true" : "false");
-						break;
-					case JSONValue::Type::Integer:
-						fp_JSONString << get<int64_t>(fp_JSONValue.m_Value);
-						break;
-					case JSONValue::Type::Float:
-						fp_JSONString << get<double>(fp_JSONValue.m_Value);
-						break;
-					case JSONValue::Type::String:
-						fp_JSONString << get<string>(fp_JSONValue.m_Value);
-						break;
-					case JSONValue::Type::UnsignedInteger:
-						fp_JSONString << get<uint64_t>(fp_JSONValue.m_Value);
-						break;
-					case JSONValue::Type::Array:
+					if (_it->JSONType == JSONValue::Type::Object) //XXX: we're assuming mono typed arrays so no mixing of objects and primitive types
 					{
-						fp_JSONString << f_IndentLevel << "[";
-						const auto& arr = get<JSONArray>(fp_JSONValue.m_Value);
-
-						for (auto _it = arr.begin(); _it != arr.end(); ++_it)
-						{
-							if (_it->JSONType == JSONValue::Type::Object) //XXX: we're assuming mono typed arrays so no mixing of objects and primitive types
-							{
-								fp_JSONString << "\n"; //new line for each JSONObject inside the array
-							}
-
-							ToStringStream(*_it, fp_JSONString, fp_Spacing + 4); //4 spaces for indent level
-
-							if (_it != arr.end())
-							{
-								fp_JSONString << ", "; //add comma until we hit the last element
-							}
-						}
-						fp_JSONString << f_IndentLevel << "]" << ", " << "\n";
-						break;
-					}
-					case JSONValue::Type::Object:
-					{
-						fp_JSONString << "{" << "\n";
-						const auto& obj = get<JSONObject>(fp_JSONValue.m_Value);
-
-						string f_ScopeIndent = f_IndentLevel + string(4, ' '); //add a 4 space indent for the scope
-
-						for (auto it = obj.begin(); it != obj.end(); ++it)
-						{
-							fp_JSONString << f_ScopeIndent << it->first << ": ";
-
-							ToStringStream(it->second, fp_JSONString, fp_Spacing + 4); //add 4 for indent level
-
-							if (next(it) != obj.end()) //check for the end of the container
-							{
-								fp_JSONString << ", "; // comma after each element except the last
-							}
-
-							fp_JSONString << "\n";
-						}
-
-						fp_JSONString << f_IndentLevel << "}";
-						break;
-					}
-				}
-
-				return true;
-			}
-
-			void
-				PrintToConsole()
-				const
-			{
-				string f_StringJSON;
-				ToString(&f_StringJSON);
-				Print(f_StringJSON);
-			}
-
-			bool
-				Has(const string& key)
-				const
-			{
-				if (m_Root.JSONType != JSONValue::Type::Object)
-				{
-					return false;
-				}
-
-				const auto& obj = get<JSONObject>(m_Root.m_Value);
-				return obj.find(key) != obj.end();
-			}
-
-			size_t
-				Size()
-				const
-			{
-				if (m_Root.JSONType == JSONValue::Type::Array)
-				{
-					return get<JSONArray>(m_Root.m_Value).size();
-				}
-				if (m_Root.JSONType == JSONValue::Type::Object)
-				{
-					return get<JSONObject>(m_Root.m_Value).size();
-				}
-
-				return 0;
-			}
-
-			bool
-				Empty()
-				const
-			{
-				return Size() == 0;
-			}
-
-			//auto Begin()
-			//{
-			//	if (m_Root.JSONType == JSONValue::Type::Array)
-			//		return get<JSONArray>(m_Root.m_Value).begin();
-			//	if (m_Root.JSONType == JSONValue::Type::Object)
-			//		return get<JSONObject>(m_Root.m_Value).begin();
-			//	throw runtime_error("Iteration on non-iterable JSON type");
-			//}
-
-			//auto end() 
-			//{
-			//	if (m_Root.JSONType == JSONValue::Type::Array)
-			//		return get<JSONArray>(m_Root.m_Value).end();
-			//	if (m_Root.JSONType == JSONValue::Type::Object)
-			//		return get<JSONObject>(m_Root.m_Value).end();
-			//	throw runtime_error("Iteration on non-iterable JSON type");
-			//}
-
-			template<typename T>
-			operator
-				T()
-				const
-			{
-				if constexpr (is_same_v<T, string>)
-				{
-					if (m_Root.JSONType != JSONValue::Type::String)
-					{
-						throw bad_cast();
+						fp_JSONString << "\n"; //new line for each JSONObject inside the array
 					}
 
-					return get<string>(m_Root.m_Value);
-				}
-				else if constexpr (is_same_v<T, int64_t>)
-				{
-					if (m_Root.JSONType != JSONValue::Type::Integer)
+					ToStringStream(*_it, fp_JSONString, fp_Spacing + 4); //4 spaces for indent level
+
+					if (_it != arr.end())
 					{
-						throw bad_cast();
+						fp_JSONString << ", "; //add comma until we hit the last element
+					}
+				}
+				fp_JSONString << f_IndentLevel << "]" << ", " << "\n";
+				break;
+			}
+			case JSONValue::Type::Object:
+			{
+				fp_JSONString << "{" << "\n";
+				const auto& obj = get<JSONObject>(fp_JSONValue.m_Value);
+
+				string f_ScopeIndent = f_IndentLevel + string(4, ' '); //add a 4 space indent for the scope
+
+				for (auto it = obj.begin(); it != obj.end(); ++it)
+				{
+					fp_JSONString << f_ScopeIndent << '"' << it->first << '"' << ": ";
+
+					ToStringStream(it->second, fp_JSONString, fp_Spacing + 4); //add 4 for indent level
+
+					if (next(it) != obj.end()) //check for the end of the container
+					{
+						fp_JSONString << ", "; // comma after each element except the last
 					}
 
-					return get<int64_t>(m_Root.m_Value);
+					fp_JSONString << "\n";
 				}
-				else if constexpr (is_same_v<T, double>)
-				{
-					if (m_Root.JSONType != JSONValue::Type::Float)
-					{
-						throw bad_cast();
-					}
 
-					return get<double>(m_Root.m_Value);
-				}
-				else if constexpr (is_same_v<T, bool>)
-				{
-					if (m_Root.JSONType != JSONValue::Type::Boolean)
-					{
-						throw bad_cast();
-					}
-
-					return get<bool>(m_Root.m_Value);
-				}
-				else
-				{
-					static_assert(sizeof(T) == 0, "Unsupported type for JSONValue conversion");
-				}
+				fp_JSONString << f_IndentLevel << "}";
+				break;
+			}
 			}
 
-			JSON(initializer_list<pair<string, JSON>> list)
-			{
-				JSONObject obj;
+			return true;
+		}
 
-				for (const auto& [k, v] : list)
-				{
-					obj[k] = v.m_Root;
-				}
-
-				m_Root = JSONValue(move(obj));
-			}
-
-			JSON(initializer_list<JSON> list)
-			{
-				JSONArray arr;
-
-				for (const auto& val : list)
-				{
-					arr.push_back(val.m_Root);
-				}
-
-				m_Root = JSONValue(move(arr));
-			}
-
-			template<typename T, typename = enable_if_t<is_arithmetic_v<T> || is_same_v<T, string>>>
-			JSON(const T& val)
-			{
-				if constexpr (is_same_v<T, string>)
-				{
-					m_Root = JSONValue(val);
-				}
-				else if constexpr (is_integral_v<T>)
-				{
-					m_Root = JSONValue(static_cast<int64_t>(val));
-				}
-				else if constexpr (is_floating_point_v<T>)
-				{
-					m_Root = JSONValue(static_cast<double>(val));
-				}
-				else
-				{
-					static_assert(always_false_v<T>, "Unsupported type for JSON conversion");
-				}
-			}
-		};
+		void
+			PrintToConsole(JSONValue& fp_JSON)
+			const
+		{
+			string f_StringJSON;
+			ToString(&f_StringJSON, fp_JSON);
+			Print(f_StringJSON);
+		}
 
 		//////////////////////////////////////////////
 		// Helper Function for field_names -> vector<string>
@@ -853,7 +680,7 @@ namespace PeachCore {
 		*/
 
 		template<typename T>
-		enable_if_t<is_serializable_struct<T>::value, JSON>
+		enable_if_t<is_serializable_struct<T>::value, JSONValue>
 			ToJSON(const T& obj) //IT WORKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKSSS IM SO TIRED >w< ;w; i sleep like a champion tn
 		{
 			JSONObject f_Object; // ✅ this is what i was missin UwU
@@ -922,16 +749,46 @@ namespace PeachCore {
 							);
 				});
 
-			return JSON(JSONValue(f_Object));
+			return move(JSONValue(f_Object)); //idk if move should be here but whatever
 		}
 
 		template<typename T>
 		enable_if_t<is_serializable_struct<T>::value, bool> //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
 			FromJSON(const JSONValue& _j, T& out)
 		{
-			if (_j.JSONType != JSONValue::Type::Object)
+			if (_j.JSONType != JSONValue::Type::Object and _j.JSONType != JSONValue::Type::Array)
 			{
+				PrintError("Passed invalid JSON type to FromJSON");
 				return false;
+			}
+			else if (_j.JSONType == JSONValue::Type::Array) //XXX: used for nested vectors
+			{
+				//const auto& arr = get<JSONArray>(_j.m_Value);
+				//fields.clear(); //clear the vector in case the user passes a vector filled with values
+
+				//using Elem = typename decay_t<decltype(fields)>::value_type;
+
+				//for (const auto& __val : arr)
+				//{
+				//	Elem item{};
+
+				//	if constexpr (is_serializable_struct<Elem>::value)
+				//	{
+				//		if (not FromJSON(__val, item))
+				//		{
+				//			PrintError("failed to deserialize non primitive struct");
+				//			return false;
+				//		}
+				//	}
+				//	else
+				//	{
+				//		item = Extract<Elem>(__val);
+				//	}
+
+				//	fields.push_back(item);
+				//}
+
+				return true;
 			}
 
 			static_assert(is_serializable_struct<T>::value, "FromJSON() can only be used with types that use SERIALIZABLE_FIELDS");
@@ -941,7 +798,6 @@ namespace PeachCore {
 			const JSONObject& json = get<JSONObject>(_j.m_Value);
 
 			size_t i = 0;
-			bool success = true;
 
 			out.visit([&](auto&... fields) {
 				(
@@ -958,7 +814,11 @@ namespace PeachCore {
 							}
 							else if constexpr (is_serializable_struct<decay_t<decltype(fields)>>::value)
 							{
-								FromJSON(json.at(key), fields);
+								if(not FromJSON(json.at(key), fields))
+								{
+									PrintError("failed to deserialize non primitive struct inside JSON Object");
+									return false;
+								}
 							}
 							else if constexpr (is_map<decay_t<decltype(fields)>>::value)
 							{
@@ -973,7 +833,16 @@ namespace PeachCore {
 
 									if constexpr (is_serializable_struct<ValType>::value)
 									{
-										FromJSON(__val, item);
+										if (not FromJSON(__val, item))
+										{
+											PrintError("failed to deserialize non primitive struct inside JSON Object");
+											return false;
+										}
+									}
+									//XXX: this is used for nested vectors
+									else if (__val.JSONType == JSONValue::Type::Array) //is constexpr here kosher idk
+									{
+
 									}
 									else
 									{
@@ -996,7 +865,11 @@ namespace PeachCore {
 
 									if constexpr (is_serializable_struct<Elem>::value) 
 									{
-										FromJSON(__val, item);
+										if (not FromJSON(__val, item))
+										{
+											PrintError("failed to deserialize non primitive struct");
+											return false;
+										}
 									}
 									else 
 									{
@@ -1013,13 +886,13 @@ namespace PeachCore {
 								key,
 								typeid(decltype(fields)).name(),
 								e.what()));
-							success = false;
+							return false;
 						}
 					}(), ...
 						);
 				});
 
-			return success;
+			return true;
 		}
 
 		template<typename T>
@@ -1194,7 +1067,7 @@ namespace PeachCore {
 					fp_Array.emplace_back(fp_CurrentToken.m_Value);
 					break;
 				case TokenType::IntLiteral:
-					if (fp_CurrentToken.m_Value[0] == '-')
+					if (fp_CurrentToken.m_Value[0] == '-') //store any positive number as a uint64 because y not we'll recast it at deserialization
 					{
 						fp_Array.emplace_back(static_cast<int64_t>(stoll(fp_CurrentToken.m_Value))); // signed
 					}
@@ -1296,7 +1169,7 @@ namespace PeachCore {
 			ParseJSON //function call that kicks off the recursive parse chain
 			(
 				vector<Token>& fp_Tokens,
-				JSON& fp_JSON,
+				JSONValue& fp_JSON,
 				LogManager* logger
 			)
 		{
@@ -1308,14 +1181,14 @@ namespace PeachCore {
 				{
 					JSONObject f_Object;
 					ParseObject(fp_Tokens, f_Object, logger);
-					fp_JSON.m_Root = move(JSONValue(f_Object));
+					fp_JSON = move(JSONValue(f_Object));
 				}
 				break;
 				case TokenType::OpenSquareBracket:
 				{
 					JSONArray f_Array;
 					ParseArray(fp_Tokens, f_Array, logger);
-					fp_JSON.m_Root = move(JSONValue(f_Array));
+					fp_JSON = move(JSONValue(f_Array));
 				}
 				break;
 				default:
@@ -1328,7 +1201,7 @@ namespace PeachCore {
 			if (f_CurrentToken.m_Type != TokenType::ENDF)
 			{
 				logger->LogAndPrint("Parsing Error: parser failed to find end of file, something bad happened and I have 0 clue why lmfao. JSONValue isn't properly formed", "ParseJSON", LogManager::LogLevel::Error);
-				fp_JSON.m_Root = JSONValue();
+				fp_JSON = JSONValue();
 				return false;
 			}
 
@@ -1336,7 +1209,7 @@ namespace PeachCore {
 		}
 
 		//////////////////////////////////////////////
-		// JSON Read/Write Functions
+		// JSON File Read/Write Functions
 		//////////////////////////////////////////////
 
 		bool
@@ -1344,9 +1217,10 @@ namespace PeachCore {
 			(
 				const string& fp_DesiredOutputDirectory,
 				const string& fp_DesiredName,
-				const JSON& fp_JSON,
+				const JSONValue& fp_JSON,
 				LogManager* logger
 			)
+			const
 		{
 			if (not logger)
 			{
@@ -1354,11 +1228,18 @@ namespace PeachCore {
 				return false;
 			}
 
+			// Ensure directory exists
+			if (not filesystem::exists(fp_DesiredOutputDirectory))
+			{
+				logger->LogAndPrint("Serialization Error: Tried to pass invalid write directory to WriteToJSON", "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
 			const string f_FileName = fp_DesiredOutputDirectory + "/" + fp_DesiredName + ".json";
 
-			ofstream file(f_FileName, ios::binary);  // Open in binary mode
+			ofstream file(f_FileName, ios::out);  // Open in regular string mode
 
-			if (!file)
+			if (not file)
 			{
 				logger->LogAndPrint(format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
 				return false;
@@ -1366,7 +1247,7 @@ namespace PeachCore {
 
 			string f_JSONString;
 
-			if (not fp_JSON.ToString(&f_JSONString))
+			if (not ToString(&f_JSONString, fp_JSON))
 			{
 				logger->LogAndPrint(format("Serialization Error: Failed to stringify JSON for writing -> file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
 				file.close(); //close the file since writing failed
@@ -1389,9 +1270,17 @@ namespace PeachCore {
 				LogManager* logger
 			)
 		{
+			//check for nullptr
 			if (not fp_SourceCode)
 			{
 				logger->LogAndPrint("Serialization Error: Nullptr reference passed to ReadJSONIntoString", "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			// Ensure directory exists
+			if (not filesystem::exists(fp_ScriptFilePath))
+			{
+				logger->LogAndPrint("Serialization Error: Tried to pass invalid filepath to ReadJSONIntoString", "Serializer", LogManager::LogLevel::Error);
 				return false;
 			}
 
@@ -1412,9 +1301,9 @@ namespace PeachCore {
 				return false;
 			}
 
-			ifstream f_FileStream(fp_ScriptFilePath);
+			ifstream f_FileStream(fp_ScriptFilePath, ios::in);
 
-			if (!f_FileStream)
+			if (not f_FileStream)
 			{
 				logger->LogAndPrint("Serialization Error: Failed to open JSON for reading.", "Serializer", LogManager::LogLevel::Error);
 				return false;
@@ -1425,6 +1314,124 @@ namespace PeachCore {
 			*fp_SourceCode = f_StringBuffer.str();
 
 			return true;
+		}
+
+		//////////////////////////////////////////////
+		// Binary File Read/Write Functions
+		//////////////////////////////////////////////
+
+		bool
+			WriteToBinary
+			(
+				const string& fp_DesiredOutputDirectory,
+				const string& fp_DesiredName,
+				const vector<uint8_t>& fp_Binary,
+				LogManager* logger
+			)
+		{
+			if (not logger)
+			{
+				PrintError("Serialization Error: Tried to pass nullptr reference to logger during WriteToBinary()");
+				return false;
+			}
+
+			// Ensure directory exists
+			if (not filesystem::exists(fp_DesiredOutputDirectory))
+			{
+				logger->LogAndPrint(format("Serialization Error: Tried to pass invalid write directory: '{}' to WriteToBinary", fp_DesiredOutputDirectory), "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			if (fp_Binary.empty()) //check if the byte vector is empty uwu
+			{
+				logger->LogAndPrint(format("Serialization Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			const string f_FileName = fp_DesiredOutputDirectory + "/" + fp_DesiredName + ".json";
+
+			ofstream file(f_FileName, ios::binary);  // Open in regular string mode
+
+			if (not file)
+			{
+				logger->LogAndPrint(format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			// Write the entire contents of the vector -> peach binary
+			file.write(reinterpret_cast<const char*>(fp_Binary.data()), fp_Binary.size());
+			// Close the file
+			file.close();
+			
+			return true; //success! wrote byte vector -> peach binary
+		}
+
+		bool
+			ReadBinaryIntoVector //i think this'll work lmfao
+			(
+				const string& fp_ScriptFilePath,
+				vector<uint8_t>& fp_Binary,
+				LogManager* logger
+			)
+		{
+			if (not logger) //check for nullptr ref passed to ReadBinaryIntoVector
+			{
+				PrintError("Serialization Error: Tried to pass nullptr reference to logger during ReadBinaryIntoVector()");
+				return false;
+			}
+
+			// Ensure directory exists
+			if (not filesystem::exists(fp_ScriptFilePath))
+			{
+				logger->LogAndPrint("Serialization Error: Tried to pass invalid directory to ReadBinaryIntoVector", "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			if (not fp_Binary.empty()) //check if the byte vector is empty before reading data into it OwO
+			{
+				logger->LogAndPrint(format("Serialization Error: Tried passing non-empty byte vector for reading to file name: '{}', nothing was done.", fp_ScriptFilePath), "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			// Extract file extension assuming format "filename.ext"
+			size_t lastDotIndex = fp_ScriptFilePath.rfind('.');
+
+			if (lastDotIndex == string::npos)
+			{
+				logger->LogAndPrint("Serialization Error: No file extension found for Peach-E Binary", "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			string f_FileExtension = fp_ScriptFilePath.substr(lastDotIndex);
+
+			if (f_FileExtension != ".peachbin") //file extension for peach-e binary encoding, get it? it's like a bin of peaches >w<
+			{
+				logger->LogAndPrint("Serialization Error: Attempted to read from a file that isn't a valid Peach-E Binary", "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			ifstream f_BinaryStream(fp_ScriptFilePath, ios::binary); //open in binary mode
+
+			if (not f_BinaryStream) //check if the file opened properly
+			{
+				logger->LogAndPrint("Serialization Error: Failed to open Peach-E Binary for reading.", "Serializer", LogManager::LogLevel::Error);
+				return false;
+			}
+
+			// Get the size of the file
+			f_BinaryStream.seekg(0, ios::end);
+			size_t f_Size = f_BinaryStream.tellg();
+			f_BinaryStream.seekg(0, ios::beg);
+
+			// Resize the vector to the size of the file
+			fp_Binary.resize(f_Size);
+
+			// Read the entire file into the vector
+			f_BinaryStream.read(reinterpret_cast<char*>(fp_Binary.data()), f_Size);
+			// Close the file
+			f_BinaryStream.close(); 
+
+			return true; //success! file read into vector
 		}
 	};
 }
