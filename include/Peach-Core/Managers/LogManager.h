@@ -639,7 +639,7 @@ namespace PeachCore {
 
             if (not f_File.is_open())
             {
-                PrintError(format("Failed to open log file: {}", fp_FileName));
+                PrintError(format("Failed to open log file: '{}'", fp_FileName));
             }
             else
             {

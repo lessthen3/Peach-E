@@ -200,17 +200,7 @@ namespace PeachEditor{
 
             PeachCore::Serializer Serializer;
 
-            //PeachCore::Serializer::JSON json = Serializer.ToJSON(newFucked);
-
-            //json.PrintToConsole();
-
             //Serializer.FromJSON(json.m_Root, newFucked);
-
-            //PeachCore::Serializer::JSON testJSON = Serializer.ToJSON(test_project);
-            //
-            //testJSON.PrintToConsole();
-
-            //Serializer.WriteToJSON(fp_RootPath, "first_project", testJSON, main_editor_logger.get());
 
             PeachProject readProject;
 

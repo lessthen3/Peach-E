@@ -1270,6 +1270,12 @@ namespace PeachCore {
 				LogManager* logger
 			)
 		{
+			if (not logger)
+			{
+				PrintError("Serialization Error: Tried to pass nullptr reference to logger during ReadJSONIntoString()");
+				return false;
+			}
+
 			//check for nullptr
 			if (not fp_SourceCode)
 			{

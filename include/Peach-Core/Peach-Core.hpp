@@ -58,7 +58,6 @@
 
 #include "3D/Camera3D.h"
 #include "3D/DirectionalLight3D.h"
-#include "3D/PerlinNoise3D.h"
 #include "3D/PointLight3D.h"
 #include "3D/SpotLight3D.h"
 
@@ -73,6 +72,8 @@
 #include "General/PeachConsole.h"
 
 #include "General/Serializer.h"
+
+#include "General/NoiseGenerator.h"
 
 //////////////////////////////////////////////
 // Rendering

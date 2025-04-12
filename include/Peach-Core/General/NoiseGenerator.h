@@ -5,7 +5,7 @@
 
 namespace PeachCore {
 
-	struct PerlinNoise2D
+	struct NoiseGenerator
 	{
 	};
 }
