@@ -534,7 +534,7 @@ namespace PeachCore {
 				break;
 			case JSONValue::Type::Array:
 			{
-				fp_JSONString << f_IndentLevel << "[";
+				fp_JSONString << "[";
 				const auto& arr = get<JSONArray>(fp_JSONValue.m_Value);
 
 				for (auto _it = arr.begin(); _it != arr.end(); ++_it)
@@ -546,12 +546,12 @@ namespace PeachCore {
 
 					ToStringStream(*_it, fp_JSONString, fp_Spacing + 4); //4 spaces for indent level
 
-					if (_it != arr.end())
+					if (next(_it) != arr.end())
 					{
 						fp_JSONString << ", "; //add comma until we hit the last element
 					}
 				}
-				fp_JSONString << f_IndentLevel << "]" << ", " << "\n";
+				fp_JSONString << "]";
 				break;
 			}
 			case JSONValue::Type::Object:
@@ -705,7 +705,7 @@ namespace PeachCore {
 							}
 							else if constexpr (is_serializable_struct<decay_t<decltype(field)>>::value)
 							{
-								f_Object.emplace(key, ToJSON(field).m_Root);
+								f_Object.emplace(key, ToJSON(field));
 							}
 							else if constexpr (is_map<decay_t<decltype(field)>>::value)
 							{
@@ -714,7 +714,7 @@ namespace PeachCore {
 								{
 									if constexpr (is_serializable_struct<decay_t<decltype(mapVal)>>::value)
 									{
-										mapObj.emplace(mapKey, ToJSON(mapVal).m_Root);
+										mapObj.emplace(mapKey, ToJSON(mapVal));
 									}
 									else
 									{
@@ -726,18 +726,8 @@ namespace PeachCore {
 							else if constexpr (is_vector<decay_t<decltype(field)>>::value)
 							{
 								JSONArray arr;
-
-								for (const auto& val : field)
-								{
-									if constexpr (is_serializable_struct<decay_t<decltype(val)>>::value)
-									{
-										arr.emplace_back(ToJSON(val).m_Root);
-									}
-									else
-									{
-										arr.emplace_back(val);
-									}
-								}
+								
+								ToJSONArray(arr, field);
 
 								f_Object.emplace(key, arr);
 							}
@@ -752,43 +742,40 @@ namespace PeachCore {
 			return move(JSONValue(f_Object)); //idk if move should be here but whatever
 		}
 
+		/*
+		used for parsing vectors -> JSONArrays and deals with nested vectors since ToJSON requires SERIALIZABLE_FIELDS structs by default
+		*/
+		template<typename T_VectorObject>
+		void
+			ToJSONArray(JSONArray& fp_ArrayObject, const T_VectorObject& fp_SerializableObjectField) 
+		{
+			for (const auto& __val : fp_SerializableObjectField)
+			{
+				if constexpr (is_serializable_struct<decay_t<decltype(__val)>>::value)
+				{
+					fp_ArrayObject.emplace_back(ToJSON(__val)); //this handles custom structs 
+				}
+				else if constexpr (is_vector<decay_t<decltype(__val)>>::value)
+				{
+					JSONArray f_NestedArray;
+					ToJSONArray(f_NestedArray, __val); //this handles nested vectors
+					fp_ArrayObject.emplace_back(f_NestedArray);
+				}
+				else
+				{
+					fp_ArrayObject.emplace_back(__val);
+				}
+			}
+		}
+
 		template<typename T>
 		enable_if_t<is_serializable_struct<T>::value, bool> //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
 			FromJSON(const JSONValue& _j, T& out)
 		{
-			if (_j.JSONType != JSONValue::Type::Object and _j.JSONType != JSONValue::Type::Array)
+			if (_j.JSONType != JSONValue::Type::Object)
 			{
 				PrintError("Passed invalid JSON type to FromJSON");
 				return false;
-			}
-			else if (_j.JSONType == JSONValue::Type::Array) //XXX: used for nested vectors
-			{
-				//const auto& arr = get<JSONArray>(_j.m_Value);
-				//fields.clear(); //clear the vector in case the user passes a vector filled with values
-
-				//using Elem = typename decay_t<decltype(fields)>::value_type;
-
-				//for (const auto& __val : arr)
-				//{
-				//	Elem item{};
-
-				//	if constexpr (is_serializable_struct<Elem>::value)
-				//	{
-				//		if (not FromJSON(__val, item))
-				//		{
-				//			PrintError("failed to deserialize non primitive struct");
-				//			return false;
-				//		}
-				//	}
-				//	else
-				//	{
-				//		item = Extract<Elem>(__val);
-				//	}
-
-				//	fields.push_back(item);
-				//}
-
-				return true;
 			}
 
 			static_assert(is_serializable_struct<T>::value, "FromJSON() can only be used with types that use SERIALIZABLE_FIELDS");
@@ -854,30 +841,8 @@ namespace PeachCore {
 							}
 							else if constexpr (is_vector<decay_t<decltype(fields)>>::value)
 							{
-								const auto& arr = get<JSONArray>(json.at(key).m_Value);
-								fields.clear(); //clear the vector in case the user passes a vector filled with values
-
-								using Elem = typename decay_t<decltype(fields)>::value_type;
-
-								for (const auto& __val : arr)
-								{
-									Elem item{};
-
-									if constexpr (is_serializable_struct<Elem>::value) 
-									{
-										if (not FromJSON(__val, item))
-										{
-											PrintError("failed to deserialize non primitive struct");
-											return false;
-										}
-									}
-									else 
-									{
-										item = Extract<Elem>(__val);
-									}
-
-									fields.push_back(item);
-								}
+								const JSONArray& arr = get<JSONArray>(json.at(key).m_Value);
+								FromJSONArray(arr, fields);
 							}
 						}
 						catch (const exception& e)
@@ -923,6 +888,40 @@ namespace PeachCore {
 			}
 		}
 
+		template<typename T_VectorObject>
+		void
+			FromJSONArray(const JSONArray& fp_ArrayObject, T_VectorObject& fp_SerializableObjectField)
+		{
+			fp_SerializableObjectField.clear(); //clear the vector in case the user passes a vector filled with values
+
+			using Elem = typename decay_t<decltype(fp_SerializableObjectField)>::value_type;
+
+			for (const auto& __val : fp_ArrayObject)
+			{
+				Elem item{};
+
+				if constexpr (is_serializable_struct<Elem>::value)
+				{
+					if (not FromJSON(__val, item))
+					{
+						PrintError("failed to deserialize non primitive struct");
+						return false;
+					}
+				}
+				else if constexpr (is_vector<Elem>::value) //XXX: used for nested vectors
+				{
+					const JSONArray& f_NestedArray = get<JSONArray>(__val.m_Value); //peel back vector one layer at a time
+					//call again assuming Elem reduces to a vector type and at the lowest level it will fill item with primitives or serializable structs
+					FromJSONArray(f_NestedArray, item); 
+				}
+				else
+				{
+					item = Extract<Elem>(__val);
+				}
+
+				fp_SerializableObjectField.push_back(item);
+			}
+		}
 
 	private:
 		//////////////////////////////////////////////

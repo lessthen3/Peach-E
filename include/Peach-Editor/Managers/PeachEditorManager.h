@@ -37,6 +37,13 @@ namespace PeachEditor{
         SERIALIZABLE_FIELDS(random)
     };
 
+    struct Nested
+    {
+        vector<vector<uint16_t>> list;
+
+        SERIALIZABLE_FIELDS(list)
+    };
+
     class PeachEditorManager
     {
     //////////////////////////////////////////////
@@ -222,6 +229,25 @@ namespace PeachEditor{
             for (const auto&  _item : config.resolutions)
             {
                 PeachCore::Print(format("resolutions item : {}", _item), PeachCore::Colours::BrightMagenta);
+            }
+
+            Nested test_nest =
+            {
+                {{6 , 6 , 6 , 6}, {9,9,9,9}, {34, 34, 34, 34}}
+            };
+
+            Serializer.ToJSON(test_nest, "nested", fp_RootPath, main_editor_logger.get());
+
+            Nested read_nest;
+
+            Serializer.FromJSON(read_nest, fp_RootPath + "/nested.json", main_editor_logger.get());
+
+            for (const auto& __val : read_nest.list)
+            {
+                for (const auto& __item : __val)
+                {
+                    PeachCore::Print(format("nested item: {}", __item), PeachCore::Colours::BrightGreen);
+                }
             }
 
             return true;
