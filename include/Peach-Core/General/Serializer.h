@@ -534,24 +534,36 @@ namespace PeachCore {
 				break;
 			case JSONValue::Type::Array:
 			{
-				fp_JSONString << "[";
 				const auto& arr = get<JSONArray>(fp_JSONValue.m_Value);
+				string f_ScopeIndent = f_IndentLevel + string(4, ' '); //add a 4 space indent for the scope
+
+				fp_JSONString << "[" << "\n" << f_ScopeIndent; //start array, advance to next line, and indent for scope
+
+				size_t f_Indexer = 0; //used for tracking if the col width is rlly long because i want pretty jsons uwu
 
 				for (auto _it = arr.begin(); _it != arr.end(); ++_it)
 				{
-					if (_it->JSONType == JSONValue::Type::Object) //XXX: we're assuming mono typed arrays so no mixing of objects and primitive types
-					{
-						fp_JSONString << "\n"; //new line for each JSONObject inside the array
-					}
-
 					ToStringStream(*_it, fp_JSONString, fp_Spacing + 4); //4 spaces for indent level
 
-					if (next(_it) != arr.end())
+					if (next(_it) == arr.end()) //do this before adding any new lines to avoid double new lines for prettyness >w<
 					{
-						fp_JSONString << ", "; //add comma until we hit the last element
+						fp_JSONString << "\n" << f_IndentLevel << "]";
+						break; //break so we dont add an extra comma after the end has been reached
 					}
+
+					fp_JSONString << ", "; //add comma until we hit the last element
+
+					if (_it->JSONType == JSONValue::Type::Object or _it->JSONType == JSONValue::Type::Array) //XXX: we're assuming mono typed arrays so no mixing of objects/arrays and primitive types
+					{
+						fp_JSONString << "\n" << f_ScopeIndent; //new line for each JSONObject inside the array
+					}
+					else if (f_Indexer % 20 == 19) //this is an else if so that objects/arrays won't double line
+					{
+						fp_JSONString << "\n" << f_ScopeIndent; //newline every 20 elements for non objects
+					}
+
+					f_Indexer++;
 				}
-				fp_JSONString << "]";
 				break;
 			}
 			case JSONValue::Type::Object:
