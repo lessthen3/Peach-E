@@ -16,7 +16,7 @@
 #include <thread>
 #include <shared_mutex>
 
-#include <miniaudio.h>
+#include <miniaudio/miniaudio.h>
 
 using namespace std;
 

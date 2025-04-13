@@ -17,6 +17,8 @@
 
 #define VOLK_IMPLEMENTATION
 
+#define MINIAUDIO_IMPLEMENTATION
+
 #include "../../include/Peach-Engine/GameManager.h"
 
 #include <csignal>

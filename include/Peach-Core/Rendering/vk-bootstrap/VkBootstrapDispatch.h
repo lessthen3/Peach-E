@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include <vulkan_core.h>
+#include <vulkan/vulkan_core.h>
 
 namespace vkb {
 

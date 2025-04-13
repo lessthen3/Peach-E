@@ -70,13 +70,7 @@ add_library(peach STATIC
 target_include_directories(peach PUBLIC 
 
     include/Peach-Core
-
-    "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/vulkan" #vulkan uwu
-    "${PROJECT_SOURCE_DIR}/Cool-People/miniaudio"
-    "${PROJECT_SOURCE_DIR}/Cool-People/nuklear"
-    "${PROJECT_SOURCE_DIR}/Cool-People/stb"
-    "${PROJECT_SOURCE_DIR}/Cool-People/vma"
-    "${PROJECT_SOURCE_DIR}/Cool-People/vk-bootstrap"
+    "${PROJECT_SOURCE_DIR}/Cool-People/header_only" #header only library includes
 )
 
 ####################################### Executable Targets

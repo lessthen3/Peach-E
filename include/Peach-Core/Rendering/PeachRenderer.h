@@ -11,7 +11,7 @@
 #include <Rendering/OpenGLRenderer.h>
 #include <Rendering/VulkanRenderer.h>
 
-#include "nuklear_impl_opengl3.h"
+#include "nuklear/nuklear_impl_opengl3.h"
 
 #include <SDL3/SDL_system.h>
 
@@ -19,7 +19,7 @@
 
 #include "../2D/PeachCamera2D.h"
 
-#include "stb_image.h"
+#include "stb/stb_image.h"
 
 #include <memory>
 
