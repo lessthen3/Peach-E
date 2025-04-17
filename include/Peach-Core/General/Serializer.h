@@ -514,82 +514,82 @@ namespace PeachCore {
 
 			switch (fp_JSONValue.JSONType)
 			{
-			case JSONValue::Type::String:
-				fp_JSONString << '"' << get<string>(fp_JSONValue.m_Value) << '"';
-				break;
-			case JSONValue::Type::Null:
-				fp_JSONString << '"' << "null" << '"';
-				break;
-			case JSONValue::Type::Boolean:
-				fp_JSONString << '"' << (get<bool>(fp_JSONValue.m_Value) ? "true" : "false") << '"';
-				break;
-			case JSONValue::Type::Integer:
-				fp_JSONString << get<int64_t>(fp_JSONValue.m_Value);
-				break;
-			case JSONValue::Type::Float:
-				fp_JSONString << get<double>(fp_JSONValue.m_Value);
-				break;
-			case JSONValue::Type::UnsignedInteger:
-				fp_JSONString << get<uint64_t>(fp_JSONValue.m_Value);
-				break;
-			case JSONValue::Type::Array:
-			{
-				const auto& arr = get<JSONArray>(fp_JSONValue.m_Value);
-				string f_ScopeIndent = f_IndentLevel + string(4, ' '); //add a 4 space indent for the scope
-
-				fp_JSONString << "[" << "\n" << f_ScopeIndent; //start array, advance to next line, and indent for scope
-
-				size_t f_Indexer = 0; //used for tracking if the col width is rlly long because i want pretty jsons uwu
-
-				for (auto _it = arr.begin(); _it != arr.end(); ++_it)
+				case JSONValue::Type::String:
+					fp_JSONString << '"' << get<string>(fp_JSONValue.m_Value) << '"';
+					break;
+				case JSONValue::Type::Null:
+					fp_JSONString << '"' << "null" << '"';
+					break;
+				case JSONValue::Type::Boolean:
+					fp_JSONString << '"' << (get<bool>(fp_JSONValue.m_Value) ? "true" : "false") << '"';
+					break;
+				case JSONValue::Type::Integer:
+					fp_JSONString << get<int64_t>(fp_JSONValue.m_Value);
+					break;
+				case JSONValue::Type::Float:
+					fp_JSONString << get<double>(fp_JSONValue.m_Value);
+					break;
+				case JSONValue::Type::UnsignedInteger:
+					fp_JSONString << get<uint64_t>(fp_JSONValue.m_Value);
+					break;
+				case JSONValue::Type::Array:
 				{
-					ToStringStream(*_it, fp_JSONString, fp_Spacing + 4); //4 spaces for indent level
+					const auto& arr = get<JSONArray>(fp_JSONValue.m_Value);
+					string f_ScopeIndent = f_IndentLevel + string(4, ' '); //add a 4 space indent for the scope
 
-					if (next(_it) == arr.end()) //do this before adding any new lines to avoid double new lines for prettyness >w<
+					fp_JSONString << "[" << "\n" << f_ScopeIndent; //start array, advance to next line, and indent for scope
+
+					size_t f_Indexer = 0; //used for tracking if the col width is rlly long because i want pretty jsons uwu
+
+					for (auto _it = arr.begin(); _it != arr.end(); ++_it)
 					{
-						fp_JSONString << "\n" << f_IndentLevel << "]";
-						break; //break so we dont add an extra comma after the end has been reached
-					}
+						ToStringStream(*_it, fp_JSONString, fp_Spacing + 4); //4 spaces for indent level
 
-					fp_JSONString << ", "; //add comma until we hit the last element
+						if (next(_it) == arr.end()) //do this before adding any new lines to avoid double new lines for prettyness >w<
+						{
+							fp_JSONString << "\n" << f_IndentLevel << "]";
+							break; //break so we dont add an extra comma after the end has been reached
+						}
 
-					if (_it->JSONType == JSONValue::Type::Object or _it->JSONType == JSONValue::Type::Array) //XXX: we're assuming mono typed arrays so no mixing of objects/arrays and primitive types
-					{
-						fp_JSONString << "\n" << f_ScopeIndent; //new line for each JSONObject inside the array
-					}
-					else if (f_Indexer % 20 == 19) //this is an else if so that objects/arrays won't double line
-					{
-						fp_JSONString << "\n" << f_ScopeIndent; //newline every 20 elements for non objects
-					}
+						fp_JSONString << ", "; //add comma until we hit the last element
 
-					f_Indexer++;
+						if (_it->JSONType == JSONValue::Type::Object or _it->JSONType == JSONValue::Type::Array) //XXX: we're assuming mono typed arrays so no mixing of objects/arrays and primitive types
+						{
+							fp_JSONString << "\n" << f_ScopeIndent; //new line for each JSONObject inside the array
+						}
+						else if (f_Indexer % 20 == 19) //this is an else if so that objects/arrays won't double line
+						{
+							fp_JSONString << "\n" << f_ScopeIndent; //newline every 20 elements for non objects
+						}
+
+						f_Indexer++;
+					}
+					break;
 				}
-				break;
-			}
-			case JSONValue::Type::Object:
-			{
-				fp_JSONString << "{" << "\n";
-				const auto& obj = get<JSONObject>(fp_JSONValue.m_Value);
-
-				string f_ScopeIndent = f_IndentLevel + string(4, ' '); //add a 4 space indent for the scope
-
-				for (auto it = obj.begin(); it != obj.end(); ++it)
+				case JSONValue::Type::Object:
 				{
-					fp_JSONString << f_ScopeIndent << '"' << it->first << '"' << ": ";
+					fp_JSONString << "{" << "\n";
+					const auto& obj = get<JSONObject>(fp_JSONValue.m_Value);
 
-					ToStringStream(it->second, fp_JSONString, fp_Spacing + 4); //add 4 for indent level
+					string f_ScopeIndent = f_IndentLevel + string(4, ' '); //add a 4 space indent for the scope
 
-					if (next(it) != obj.end()) //check for the end of the container
+					for (auto it = obj.begin(); it != obj.end(); ++it)
 					{
-						fp_JSONString << ", "; // comma after each element except the last
+						fp_JSONString << f_ScopeIndent << '"' << it->first << '"' << ": ";
+
+						ToStringStream(it->second, fp_JSONString, fp_Spacing + 4); //add 4 for indent level
+
+						if (next(it) != obj.end()) //check for the end of the container
+						{
+							fp_JSONString << ", "; // comma after each element except the last
+						}
+
+						fp_JSONString << "\n";
 					}
 
-					fp_JSONString << "\n";
+					fp_JSONString << f_IndentLevel << "}";
+					break;
 				}
-
-				fp_JSONString << f_IndentLevel << "}";
-				break;
-			}
 			}
 
 			return true;
@@ -653,14 +653,12 @@ namespace PeachCore {
 		struct is_map : false_type {};
 
 		template<typename T>
-		struct is_map<T, void_t<
+		struct is_map<T, void_t< //XXX: used for deducing general map types
 			typename T::key_type,
 			typename T::mapped_type,
 			decltype(declval<T>().begin()),
 			decltype(declval<T>().end())
-			>> : bool_constant<
-			is_same_v<typename T::key_type, string>
-			> {};
+			>> : true_type {};
 
 		template<typename T, typename = void>
 		struct is_vector : false_type {};
@@ -701,51 +699,61 @@ namespace PeachCore {
 
 			const vector<string> fieldNames = SplitFieldNames(T::field_names);
 
-			size_t i = 0;
+			uint64_t i = 0;
 
 			obj.visit([&](auto&&... fields)
 				{
 					(
 						[&]
 						{
-							const auto& field = fields;
 							const auto& key = fieldNames[i++];
+							using FieldType = decay_t<decltype(fields)>; //makes things look prettier
 
-							if constexpr (is_arithmetic_v<decay_t<decltype(field)>> || is_same_v<decay_t<decltype(field)>, string>)
+							if constexpr (is_arithmetic_v<FieldType> or is_same_v<FieldType, string>)
 							{
-								f_Object.emplace(key, field);
+								//JSONValue constructor call will auto assign appropriate type since we utilize explicit constructors
+								f_Object.emplace(key, fields); 
 							}
-							else if constexpr (is_serializable_struct<decay_t<decltype(field)>>::value)
+							else if constexpr (is_serializable_struct<FieldType>::value)
 							{
-								f_Object.emplace(key, ToJSON(field));
+								f_Object.emplace(key, ToJSON(fields));
 							}
-							else if constexpr (is_map<decay_t<decltype(field)>>::value)
+							else if constexpr (is_map<FieldType>::value)
 							{
 								JSONObject mapObj;
-								for (const auto& [mapKey, mapVal] : field)
+
+								for (const auto& [mapKey, mapVal] : fields)
 								{
 									if constexpr (is_serializable_struct<decay_t<decltype(mapVal)>>::value)
 									{
 										mapObj.emplace(mapKey, ToJSON(mapVal));
+									}
+									//XXX: this is used for vector keys
+									else if constexpr (is_vector<decay_t<decltype(mapVal)>>::value) //is constexpr here kosher idk, future me: yeah it is
+									{
+										JSONArray f_TempArray;
+										ToJSONArray(f_TempArray, mapVal);
+										mapObj.emplace(mapKey, f_TempArray);
 									}
 									else
 									{
 										mapObj.emplace(mapKey, mapVal);
 									}
 								}
+
 								f_Object.emplace(key, mapObj);
 							}
-							else if constexpr (is_vector<decay_t<decltype(field)>>::value)
+							else if constexpr (is_vector<FieldType>::value)
 							{
 								JSONArray arr;
 								
-								ToJSONArray(arr, field);
+								ToJSONArray(arr, fields);
 
 								f_Object.emplace(key, arr);
 							}
 							else
 							{
-								static_assert(always_false_v<decltype(field)>, "Unsupported field type in ToJSON");
+								static_assert(always_false_v<decltype(fields)>, "Unsupported field type in ToJSON");
 							}
 						}(), ...
 							);
@@ -811,7 +819,7 @@ namespace PeachCore {
 							{
 								fields = Extract<FieldType>(json.at(key));
 							}
-							else if constexpr (is_serializable_struct<decay_t<decltype(fields)>>::value)
+							else if constexpr (is_serializable_struct<FieldType>::value)
 							{
 								if(not FromJSON(json.at(key), fields))
 								{
@@ -819,16 +827,18 @@ namespace PeachCore {
 									return false;
 								}
 							}
-							else if constexpr (is_map<decay_t<decltype(fields)>>::value)
+							else if constexpr (is_map<FieldType>::value)
 							{
 								const auto& obj = json.at(key);
 								fields.clear(); //clear the map in case the user passes a map filled with values
 								
-								using ValType = typename decay_t<decltype(fields)>::mapped_type;
+								using ValType = typename FieldType::mapped_type;
+								using KeyType = typename FieldType::key_type;
 
 								for (const auto& [mapKey, __val] : get<JSONObject>(obj.m_Value))
 								{
 									ValType item{};
+									//KeyType key{};
 
 									if constexpr (is_serializable_struct<ValType>::value)
 									{
@@ -839,19 +849,28 @@ namespace PeachCore {
 										}
 									}
 									//XXX: this is used for nested vectors
-									else if (__val.JSONType == JSONValue::Type::Array) //is constexpr here kosher idk
+									else if constexpr(is_vector<ValType>::value and not is_same_v<ValType, string>) //is constexpr here kosher idk, future me: yeah it is
 									{
+										const JSONArray& arr = get<JSONArray>(__val.m_Value);
 
+										using VecElem = typename ValType::value_type; // the vector<T>’s T
+										vector<VecElem> f_TempVector;
+
+										FromJSONArray(arr, f_TempVector);
+
+										fields.emplace(mapKey, f_TempVector); //probably shouldnt have static cast here but idk it isnt working rn so im tryin everything
+										continue; //continue here because item isnt set and we want to get to the next iter
 									}
 									else
 									{
 										item = Extract<ValType>(__val);
+										//key = Extract<KeyType>(mapKey);
 									}
 
-									fields[mapKey] = item;
+									fields.emplace(mapKey, item);
 								}
 							}
-							else if constexpr (is_vector<decay_t<decltype(fields)>>::value)
+							else if constexpr (is_vector<FieldType>::value)
 							{
 								const JSONArray& arr = get<JSONArray>(json.at(key).m_Value);
 								FromJSONArray(arr, fields);
@@ -896,7 +915,12 @@ namespace PeachCore {
 			}
 			else 
 			{
-				static_assert(always_false_v<T>, "Unsupported type in Extract");
+				// Static error w/ full type sig
+#if defined(_MSC_VER)
+				static_assert(always_false_v<T>, "Unsupported type in Extract. Check __FUNCSIG__ for details: " __FUNCSIG__);
+#else
+				static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
+#endif
 			}
 		}
 

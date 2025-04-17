@@ -32,9 +32,9 @@ namespace PeachEditor{
     {
         map<uint64_t, bool> random;
 
-        map< string, map<int, bool> > oof;
+        map< string, vector<int> > oof;
 
-        SERIALIZABLE_FIELDS(random)
+        SERIALIZABLE_FIELDS(oof)
     };
 
     struct Nested
@@ -177,6 +177,8 @@ namespace PeachEditor{
                 return false;
             }
 
+            PeachCore::Serializer Serializer;
+
             PeachProject test_project =
             {
                 "Project Peach",
@@ -192,22 +194,27 @@ namespace PeachEditor{
                 }
             };
 
-            //Test fucked =
-            //{
-            //    {
-            //        {30, false},
-            //        {69, true}
-            //    },
-            //    {
-            //        {"69", {{59, false}, {20, true}}}
-            //    }
-            //};
+            Test fucked =
+            {
+                {
+                    {30, false},
+                    {69, true}
+                },
+                {
+                    {"69", {50, 50, 50 , 50 ,50}}
+                }
+            };
 
-            //Test newFucked;
+            Serializer.ToJSON(fucked, "mapvec", fp_RootPath, main_editor_logger.get());
 
-            PeachCore::Serializer Serializer;
+            Test newFucked;
 
-            //Serializer.FromJSON(json.m_Root, newFucked);
+            Serializer.FromJSON(newFucked, fp_RootPath + "/mapvec.json", main_editor_logger.get());
+
+            for (const auto& item : newFucked.oof.at("69"))
+            {
+                PeachCore::Print(to_string(item), PeachCore::Colours::BrightRed);
+            }
 
             PeachProject readProject;
 
@@ -236,7 +243,7 @@ namespace PeachEditor{
                 {{6 , 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6}, {9,9,9,9}, {34, 34, 34, 34}}
             };
 
-            Serializer.ToJSON(test_nest, "nested", fp_RootPath, main_editor_logger.get());
+            //Serializer.ToJSON(test_nest, "nested", fp_RootPath, main_editor_logger.get());
 
             Nested read_nest;
 
