@@ -20,11 +20,6 @@
 
 #include "../General/PeachNode.h"
 
-#include <variant>
-
-constexpr const int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
-constexpr const int FAILED_TO_INITIALIZE_OPENGL = -1001;
-constexpr const int FAILED_TO_INITIALIZE_VULKAN = -1002;
 
 namespace PeachCore {
 
@@ -41,16 +36,11 @@ namespace PeachCore {
 
         bool IsVisible = true;
         bool IsQueuedForRemoval = false;
-
-        variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
-            <
-            TextureData //used for parsing raw byte information, mainly for audio at the moment
-            //unique_ptr<nlohmann::json> //used for parsing JSON metadata if required WARNING: NEEDS TO BE REWRITTED FOR CEREAL UWU
-
-            > DrawableResourceData; //actual data for graphic
-
+            
+        TextureData DrawableResourceData; //actual data for graphic //used for parsing raw byte information, mainly for audio at the moment
+            //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
         Drawable GraphicsType; 
-        ShaderProgram Shaders;
+        ShaderProgram Shaders; //Contains multiple shaders relevant to drawing the object
     };
 
     //////////////////////////////////////////////

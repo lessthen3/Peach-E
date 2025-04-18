@@ -215,6 +215,14 @@ namespace PeachCore {
     bool
         RenderingManager::InitializeVulkan()
     {
+        if (volkInitialize() != VK_SUCCESS)
+        {
+            rendering_logger->LogAndPrint("Volk failed to initialize! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            return false;
+        }
+
+        vkb::InstanceBuilder builder;
+
         return true; // >w<
     }
 

@@ -247,7 +247,7 @@ unsigned char nuklearshaders_nuklear_frag_spv[] = {
 };
 unsigned int nuklearshaders_nuklear_frag_spv_len = 860;
 
-#include <Rendering/nuklear/nuklear.h>
+#include <nuklear.h>
 #include <vulkan_core.h>
 #include <assert.h>
 #include <stddef.h>

@@ -427,15 +427,12 @@ namespace PeachCore {
 		using JSONObject = unordered_map<string, JSONValue>; //used for regular JSONObjects
 		using JSONArray = vector<JSONValue>; //used for JSON arrays and vectors
 
-		using MapType = map<JSONValue, JSONValue>; //used for serializing general maps
-
 		struct JSONValue
 		{
 			enum class Type
 			{
 				Object,
 				Array,
-				Map,
 				String,
 				Integer,
 				UnsignedInteger,
@@ -448,7 +445,6 @@ namespace PeachCore {
 			<
 				JSONObject, 
 				JSONArray, 
-				MapType,
 				string, 
 				bool,
 
@@ -461,7 +457,6 @@ namespace PeachCore {
 
 			explicit JSONValue(JSONObject __obj) : JSONType(Type::Object), m_Value(move(__obj)) {}
 			explicit JSONValue(JSONArray __arr) : JSONType(Type::Array), m_Value(move(__arr)) {}
-			explicit JSONValue(MapType __map) : JSONType(Type::Map), m_Value(move(__map)) {}
 
 			explicit JSONValue(string __str) : JSONType(Type::String), m_Value(move(__str)) {}
 			explicit JSONValue(bool __b) : JSONType(Type::Boolean), m_Value(__b) {}
@@ -916,11 +911,11 @@ namespace PeachCore {
 			else 
 			{
 				// Static error w/ full type sig
-#if defined(_MSC_VER)
-				static_assert(always_false_v<T>, "Unsupported type in Extract. Check __FUNCSIG__ for details: " __FUNCSIG__);
-#else
-				static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
-#endif
+				#if defined(_MSC_VER)
+					static_assert(always_false_v<T>, "Unsupported type in Extract. Check __FUNCSIG__ for details: " __FUNCSIG__);
+				#else
+					static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
+				#endif
 			}
 		}
 
@@ -1284,7 +1279,7 @@ namespace PeachCore {
 
 			if (not ToString(&f_JSONString, fp_JSON))
 			{
-				logger->LogAndPrint(format("Serialization Error: Failed to stringify JSON for writing -> file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
+				logger->LogAndPrint(format("Serialization Error: Failed to stringify JSON -> file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
 				file.close(); //close the file since writing failed
 				return false;
 			}

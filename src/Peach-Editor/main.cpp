@@ -28,7 +28,7 @@ static void
 {
     PeachCore::PrintError(format("[!] Crash signal received: {}", fp_Signal));
     // possibly notify watchdog or dump stack trace
-    exit(EXIT_FAILURE);
+    exit(FATAL_SEGMENTATION_FAULT); //clean exit so everything calls their destructors
 }
 
 //////////////////////////////////////////////

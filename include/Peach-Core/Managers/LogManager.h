@@ -53,6 +53,12 @@ using namespace std;
 
 #endif
 
+constexpr const int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
+constexpr const int FAILED_TO_INITIALIZE_OPENGL = -1001;
+constexpr const int FAILED_TO_INITIALIZE_VULKAN = -1002;
+
+constexpr const int FATAL_SEGMENTATION_FAULT = -6969;
+
 namespace PeachCore {
 
     enum class Colours : int

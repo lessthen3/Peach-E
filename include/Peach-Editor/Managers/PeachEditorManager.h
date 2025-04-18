@@ -34,7 +34,9 @@ namespace PeachEditor{
 
         map< string, vector<int> > oof;
 
-        SERIALIZABLE_FIELDS(oof)
+        glm::vec2 test_vec;
+
+        SERIALIZABLE_FIELDS(oof, test_vec.x, test_vec.y)
     };
 
     struct Nested
@@ -202,7 +204,8 @@ namespace PeachEditor{
                 },
                 {
                     {"69", {50, 50, 50 , 50 ,50}}
-                }
+                },
+                {20, 30}
             };
 
             Serializer.ToJSON(fucked, "mapvec", fp_RootPath, main_editor_logger.get());
@@ -210,6 +213,8 @@ namespace PeachEditor{
             Test newFucked;
 
             Serializer.FromJSON(newFucked, fp_RootPath + "/mapvec.json", main_editor_logger.get());
+
+            PeachCore::Print(format("x : {}, y: {}", newFucked.test_vec.x, newFucked.test_vec.y), PeachCore::Colours::BrightCyan);
 
             for (const auto& item : newFucked.oof.at("69"))
             {
@@ -249,13 +254,13 @@ namespace PeachEditor{
 
             Serializer.FromJSON(read_nest, fp_RootPath + "/nested.json", main_editor_logger.get());
 
-            for (const auto& __val : read_nest.list)
-            {
-                for (const auto& __item : __val)
-                {
-                    PeachCore::Print(format("nested item: {}", __item), PeachCore::Colours::BrightGreen);
-                }
-            }
+            //for (const auto& __val : read_nest.list)
+            //{
+            //    for (const auto& __item : __val)
+            //    {
+            //        PeachCore::Print(format("nested item: {}", __item), PeachCore::Colours::BrightGreen);
+            //    }
+            //}
 
             return true;
         }
@@ -265,7 +270,11 @@ namespace PeachEditor{
         ////////////////////////////////////////////////
 
         bool
-            CreatePeachProjectFile() //this is here for adjusting the JSON configs from the Peach Editor
+            CreatePeachProjectFile //project files are just json files with a different extension name uwu
+            (
+                const string& fp_ProjectName, 
+                const string& fp_TargetDirectory
+            ) 
         {
 
             return true;
