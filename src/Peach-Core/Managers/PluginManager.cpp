@@ -101,18 +101,22 @@ namespace PeachCore {
     void PluginManager::ShutdownPlugins()
     {
 
-        for (auto& plugin : pm_PluginInstances) {
-            plugin->Shutdown();
+        for (auto& plugin : pm_PluginInstances) //call shutdown methods defined in external plugins
+        {
+            plugin->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
         }
 
         pm_PluginInstances.clear();
-        pm_PluginHandles.clear();
 
-        for (auto f_Handle : pm_PluginHandles) {
-            if (f_Handle != nullptr) {
+        for (auto f_Handle : pm_PluginHandles)
+        {
+            if (f_Handle != nullptr)
+            {
                 DYNLIB_UNLOAD(f_Handle);
             }
         }
+
+        pm_PluginHandles.clear(); //wait why am i clearing plugin handles before unloading them LMFAO, XXX: fixed it uwu ><
     }
 }
 

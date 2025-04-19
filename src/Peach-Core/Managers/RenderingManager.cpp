@@ -80,12 +80,6 @@ namespace PeachCore {
         )
         const
     {
-        //if (not pm_IsRenderingInitialized)
-        //{
-        //    rendering_logger->LogAndPrint("Please initialize RenderingManager before trying to create a window!", "RenderingManager", LogManager::LogLevel::Warning);
-        //    return nullptr;
-        //}
-
         if (*fp_SDLWindow)
         {
             rendering_logger->LogAndPrint("Tried passing a valid SDL_Window* handle for window creation, please cleanup original SDL window or dereference pointer before attempting to create a new SDL window", "RenderingManager", LogManager::LogLevel::Error);

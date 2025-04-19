@@ -12,7 +12,6 @@
 
 #include "../../include/Peach-Core/Peach-Core.hpp"
 
-#include <physfs.h>
 #include <thread>
 
 //SHOULD MANAGE THE ENTIRE GAME ENGINE ON THE MAIN THREAD, IM NOT SURE IF ILL MOVE ALL THE IMPORTANT CODE FROM MAIN INTO HERE TO CLEAN THINGS UP
@@ -219,6 +218,14 @@ namespace PeachEngine {
         //////////////////////////////////////////////
         // Thread Methods
         //////////////////////////////////////////////
+
+        bool
+            InitializeThreads() //XXX: used for kickstarting threads needed for engine execution
+        {
+
+            return true;
+        }
+
         void 
             RenderThread()
         {

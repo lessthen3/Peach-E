@@ -10,11 +10,16 @@
 ********************************************************************/
 #pragma once
 
+///STL
 #include <algorithm>
 #include <cctype>
+#include <unordered_map>
+#include <variant>
 
+///Peach-E
 #include "Managers/LogManager.h"
 
+///External
 #include <zlib.h>
 
 /// Magic
@@ -30,8 +35,6 @@ template<typename>
 inline constexpr bool always_false_v = false;
 
 /// back to reality >W<
-
-using namespace std;
 
 namespace PeachCore {
 
@@ -800,6 +803,7 @@ namespace PeachCore {
 			const JSONObject& json = get<JSONObject>(_j.m_Value);
 
 			size_t i = 0;
+			bool f_IsSuccessful = true; //XXX: used to track state of lambda execution
 
 			out.visit([&](auto&... fields) {
 				(
@@ -819,7 +823,8 @@ namespace PeachCore {
 								if(not FromJSON(json.at(key), fields))
 								{
 									PrintError("failed to deserialize non primitive struct inside JSON Object");
-									return false;
+									f_IsSuccessful = false;
+									return f_IsSuccessful; //end lambda expression
 								}
 							}
 							else if constexpr (is_map<FieldType>::value)
@@ -840,7 +845,8 @@ namespace PeachCore {
 										if (not FromJSON(__val, item))
 										{
 											PrintError("failed to deserialize non primitive struct inside JSON Object");
-											return false;
+											f_IsSuccessful = false;
+											return f_IsSuccessful; //End lambda execution
 										}
 									}
 									//XXX: this is used for nested vectors
@@ -865,10 +871,16 @@ namespace PeachCore {
 									fields.emplace(mapKey, item);
 								}
 							}
-							else if constexpr (is_vector<FieldType>::value)
+							else if constexpr (is_vector<FieldType>::value) //XXX: don't need to check for string types here since we already do so at the first branch
 							{
 								const JSONArray& arr = get<JSONArray>(json.at(key).m_Value);
-								FromJSONArray(arr, fields);
+
+								if(not FromJSONArray(arr, fields))
+								{
+									PrintError(format("Failed to deserialize vector for field '{}'", key));
+									f_IsSuccessful = false;
+									return f_IsSuccessful;
+								}
 							}
 						}
 						catch (const exception& e)
@@ -877,13 +889,16 @@ namespace PeachCore {
 								key,
 								typeid(decltype(fields)).name(),
 								e.what()));
-							return false;
+							f_IsSuccessful = false;
+							return f_IsSuccessful;
 						}
+
+						return f_IsSuccessful; //XXX: this doesnt need to be here, but i put it anyways because MSVC wont stop bitching ab it
 					}(), ...
 						);
 				});
 
-			return true;
+			return f_IsSuccessful;
 		}
 
 		template<typename T>
@@ -920,7 +935,7 @@ namespace PeachCore {
 		}
 
 		template<typename T_VectorObject>
-		void
+		bool
 			FromJSONArray(const JSONArray& fp_ArrayObject, T_VectorObject& fp_SerializableObjectField)
 		{
 			fp_SerializableObjectField.clear(); //clear the vector in case the user passes a vector filled with values
@@ -931,27 +946,41 @@ namespace PeachCore {
 			{
 				Elem item{};
 
-				if constexpr (is_serializable_struct<Elem>::value)
+				try
 				{
-					if (not FromJSON(__val, item))
+					if constexpr (is_serializable_struct<Elem>::value)
 					{
-						PrintError("failed to deserialize non primitive struct");
-						return false;
+						if (not FromJSON(__val, item))
+						{
+							PrintError("failed to deserialize non primitive struct");
+							return false;
+						}
+					}
+					else if constexpr (is_vector<Elem>::value and not is_same_v<Elem, string>) //XXX: used for nested vectors, needa check for strings since they're just char vectors
+					{
+						const JSONArray& f_NestedArray = get<JSONArray>(__val.m_Value); //peel back vector one layer at a time
+						//call again assuming Elem reduces to a vector type and at the lowest level it will fill item with primitives or serializable structs
+						if(not FromJSONArray(f_NestedArray, item))
+						{
+							PrintError("Failed to deserialize nested vector element in FromJSONArray");
+							return false;
+						}
+					}
+					else
+					{
+						item = Extract<Elem>(__val);
 					}
 				}
-				else if constexpr (is_vector<Elem>::value) //XXX: used for nested vectors
+				catch (const std::exception& e)
 				{
-					const JSONArray& f_NestedArray = get<JSONArray>(__val.m_Value); //peel back vector one layer at a time
-					//call again assuming Elem reduces to a vector type and at the lowest level it will fill item with primitives or serializable structs
-					FromJSONArray(f_NestedArray, item); 
-				}
-				else
-				{
-					item = Extract<Elem>(__val);
+					PrintError(format("Deserialization failed in FromJSONArray (type: '{}'): {}", typeid(Elem).name(), e.what()));
+					return false;
 				}
 
 				fp_SerializableObjectField.push_back(item);
 			}
+
+			return true; //success! JSONArray was deserialized >W<
 		}
 
 	private:

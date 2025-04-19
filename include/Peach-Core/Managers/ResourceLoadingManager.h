@@ -10,11 +10,16 @@
 ********************************************************************/
 #pragma once
 
-#include "LogManager.h"
-
-#include "../General/LoadingQueue.h"
+///STL
 #include <memory>
 #include <assert.h>
+
+///Peach-E
+#include "../General/Serializer.h"
+#include "../General/LoadingQueue.h"
+
+///External
+#include <physfs.h>
 
 namespace PeachCore {
 
@@ -81,7 +86,7 @@ namespace PeachCore {
 
 	public: //PUBLIC FOR TESTING
 		bool TryPushingLoadedResourcePackage(unique_ptr<LoadedResourcePackage> fp_LoadedPackage);
-		bool LoadTextureFromSpecifiedFilePath(const string& fp_FilePath);
+		bool LoadTextureFromFile(const string& fp_FilePath);
 
 	//////////////////////////////////////////////
 	// Private Methods
