@@ -97,6 +97,17 @@ compiler.version=16
 os=Macos
 ```
 
+```ini
+[settings]
+arch=x86_64
+build_type=Release
+compiler=clang
+compiler.cppstd=20
+compiler.libcxx=libc++
+compiler.version=18
+os=Linux
+```
+
 ## Resources:
 
 [Latest CMake Download](https://cmake.org/download/)

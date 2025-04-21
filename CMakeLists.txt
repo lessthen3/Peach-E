@@ -212,14 +212,13 @@ elseif(APPLE)
     # )
 
 elseif(UNIX) #XXX: doing these later when i compile on my linux machine
-    message(FATAL_ERROR "nothing for unix/linux just yet oof >w<")
 
-    # add_library(python313 STATIC IMPORTED)
+    add_library(python313 STATIC IMPORTED)
 
-    # set_target_properties(python313 PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib_winx86/python313.lib"
-    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_winx86"
-    # )
+    set_target_properties(python313 PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib_osxARM64/python313.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_tux64"
+    )
 
     # add_library(GGPO STATIC IMPORTED) #working on GGPO4ALL
 
@@ -228,42 +227,42 @@ elseif(UNIX) #XXX: doing these later when i compile on my linux machine
     #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
     # )
 
-    # add_library(SDL3 STATIC IMPORTED)
+    add_library(SDL3 STATIC IMPORTED)
 
-    # set_target_properties(SDL3 PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_winx86/SDL3.lib"
-    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
-    # )
+    set_target_properties(SDL3 PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/tux64/libSDL3.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
+    )
 
     ############ Vulkan Specific Imports
 
-    # add_library(shaderC STATIC IMPORTED)
+    add_library(shaderC STATIC IMPORTED)
 
-    # set_target_properties(shaderC PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/shaderc.lib"
-    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
-    # )
+    set_target_properties(shaderC PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libshaderc.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
+    )
 
-    # add_library(volk STATIC IMPORTED)
+    add_library(volk STATIC IMPORTED)
 
-    # set_target_properties(volk PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/volk.lib"
-    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
-    # )
+    set_target_properties(volk PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libvolk.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
+    )
 
-    # add_library(SPIRV_Tools STATIC IMPORTED)
+    add_library(SPIRV_Tools STATIC IMPORTED)
 
-    # set_target_properties(SPIRV_Tools PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/SPIRV-Tools.lib"
-    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
-    # )
+    set_target_properties(SPIRV_Tools PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    )
 
-    # add_library(SPIRV_Cross STATIC IMPORTED)
+    add_library(SPIRV_Cross STATIC IMPORTED)
 
-    # set_target_properties(SPIRV_Cross PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/spirv-cross-cpp.lib"
-    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
-    # )
+    set_target_properties(SPIRV_Cross PROPERTIES
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-cpp.a"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    )
 
 else()
     message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")

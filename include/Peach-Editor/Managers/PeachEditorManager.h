@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Peach-Engine/GameManager.h"
+#include "../../Peach-Engine/GameManager.h"
 #include "PeachEditorRenderingManager.h"
 #include "../Editor/PeachProject.h"
 

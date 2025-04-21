@@ -5,6 +5,9 @@
 **.vcxproj.user
 **.vcxproj.filters
 
+#CLion
+/.idea
+
 # Conan
 /dependencies
 

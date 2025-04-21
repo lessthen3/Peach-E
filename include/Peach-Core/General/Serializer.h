@@ -17,7 +17,7 @@
 #include <variant>
 
 ///Peach-E
-#include "Managers/LogManager.h"
+#include "../Managers/LogManager.h"
 
 ///External
 #include <zlib.h>
@@ -929,7 +929,7 @@ namespace PeachCore {
 				#if defined(_MSC_VER)
 					static_assert(always_false_v<T>, "Unsupported type in Extract. Check __FUNCSIG__ for details: " __FUNCSIG__);
 				#else
-					static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
+					//static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
 				#endif
 			}
 		}
