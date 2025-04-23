@@ -32,7 +32,7 @@ namespace PeachCore {
         string ObjectID;
 
         glm::vec2 Position;
-        uint32_t LayerNumber = 0;
+        uint32_t LayerNumber = 0; //can't imagine there'll be more than 4 billion drawing layers, at that point integer overflow is the least of ur worries lmfao
 
         bool IsVisible = true;
         bool IsQueuedForRemoval = false;
@@ -85,6 +85,8 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
+        VulkanRenderer pm_VulkanRenderer;
+
         unsigned int pm_FrameRateLimit = 60;
         unsigned long int pm_CurrentFrame = 0;
 
@@ -184,7 +186,12 @@ namespace PeachCore {
     // Private Methods
     //////////////////////////////////////////////
     private:
-        inline const float
+        /*
+                These LERP functions are used for interpolating sprite positions between physics update frames if the rendering fps is > 60 since physics
+                will always update at a constant update interval of 60 times a second, equally spaced apart. This way you'll get "smoother" graphics if u wanna
+                crank up the fps uwu
+            */
+        inline const float 
             Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
             const
         {

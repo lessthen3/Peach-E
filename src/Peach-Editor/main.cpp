@@ -16,6 +16,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 #define VOLK_IMPLEMENTATION
+#define VMA_IMPLEMENTATION
 
 #define MINIAUDIO_IMPLEMENTATION
 
@@ -73,7 +74,8 @@ int
             mf_PeachERootPath
         );
 
-        peach_editor->StartPeachEditorMainLoop();
+        //peach_editor->StartPeachEditorMainLoop();
+        this_thread::sleep_for(chrono::seconds(5));
 
         return EXIT_SUCCESS;
     }

@@ -78,7 +78,7 @@ namespace PeachEngine {
             )
         {
             //Enable ANSI colour codes for windows console grumble grumble
-            #if defined(_WIN32) || defined(_WIN64)
+            #if defined(_WIN32) or defined(_WIN64)
                 EnableColors();
             #endif
 
@@ -86,27 +86,24 @@ namespace PeachEngine {
             main_logger->Initialize("main_thread", fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger());
             main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", PeachCore::LogManager::LogLevel::Debug);
 
-            if (not InitializeQueues())
+            if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop
+            {
+                main_logger->LogAndPrint(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
+                return false;
+            }
+            else if (not InitializeQueues())
             {
 
                 return false;
             }
-
-            if (not InitalizeManagers(fp_RootPath, fp_RenderingBackend))
+            else if (not InitalizeManagers(fp_RootPath, fp_RenderingBackend))
             {
                 main_logger->LogAndPrint("Failed to initialize Peach Engine managers, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
-
-            if (not InitializePhysFS(fp_RootPath.c_str()))
+            else if (not InitializePhysFS(fp_RootPath.c_str()))
             {
                 main_logger->LogAndPrint("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
-                return false;
-            }
-
-            if (not SDL_Init(SDL_INIT_VIDEO))
-            {
-                main_logger->LogAndPrint(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 

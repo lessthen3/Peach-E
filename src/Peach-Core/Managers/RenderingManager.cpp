@@ -36,7 +36,7 @@ namespace PeachCore {
             shared_ptr<Console> fp_Console
         )   
     {
-        if (not fp_Console.get())
+        if (not fp_Console)
         {
             PrintError("Tried to initialize RenderingManager with a nullptr reference to the Console");
             return false;
@@ -209,13 +209,25 @@ namespace PeachCore {
     bool
         RenderingManager::InitializeVulkan()
     {
+        if (not CreateSDLWindow(&pm_MainWindow, RendererType::Vulkan, "Peach Window", 800, 600))
+        {
+            rendering_logger->LogAndPrint("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+            exit(FAILED_TO_CREATE_MAIN_WINDOW); //idk if i wanna exit here but it doesn really matter, i might want the "stack trace" from the false chain created by intialize failing
+        }
+
         if (volkInitialize() != VK_SUCCESS)
         {
             rendering_logger->LogAndPrint("Volk failed to initialize! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             return false;
         }
+        
+        if (not pm_VulkanRenderer.Initialize(pm_MainWindow, rendering_logger))
+        {
+            rendering_logger->LogAndPrint("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            return false;
+        }
 
-        vkb::InstanceBuilder builder;
+        pm_VulkanRenderer.DrawFrame();
 
         return true; // >w<
     }

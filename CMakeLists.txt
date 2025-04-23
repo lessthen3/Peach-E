@@ -211,7 +211,7 @@ elseif(APPLE)
     #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     # )
 
-elseif(UNIX) #XXX: doing these later when i compile on my linux machine
+elseif(UNIX) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
 
     add_library(python313 STATIC IMPORTED)
 
@@ -304,10 +304,9 @@ target_link_libraries(peach PUBLIC
     #lang support
     pybind11::pybind11
     sol2::sol2
-    #data handling
+    #compression
     ZLIB::ZLIB
     #opengl
-    glm::glm
     GLEW::GLEW
     #cryptography
     libsodium::libsodium
@@ -316,7 +315,7 @@ target_link_libraries(peach PUBLIC
 
     #Vulkan
     volk
-    SPIRV_Cross
+    glm::glm
     #python runtime
     python313 
     #SDL
@@ -341,7 +340,9 @@ endif()
 
 # Peach Editor
 target_link_libraries(Peach_Editor PUBLIC
+    #Tools for compiling, and debuggin SPIRV, not needed for game runtime uwu
     SPIRV_Tools
+    SPIRV_Cross
     shaderC
 )
 

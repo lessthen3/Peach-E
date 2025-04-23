@@ -1,6 +1,6 @@
 ﻿/*******************************************************************
- *                                             Peach-E v0.1
- *                           Created by Ranyodh Mandur - � 2024
+ *                                             Peach-E v0.0.1
+ *                           Created by Ranyodh Mandur - 🍑 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
@@ -254,27 +254,27 @@ namespace PeachCore {
         {
             if (fp_ThreadName == "main_thread")
             {
-                pm_MainThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+                pm_MainThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
             }
             else if (fp_ThreadName == "render_thread")
             {
-                pm_RenderThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+                pm_RenderThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
             }
             else if (fp_ThreadName == "audio_thread")
             {
-                pm_AudioThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+                pm_AudioThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
             }
             else if (fp_ThreadName == "resource_thread")
             {
-                pm_ResourceThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+                pm_ResourceThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
             }
             else if (fp_ThreadName == "physics_thread")
             {
-                pm_PhysicsThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+                pm_PhysicsThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
             }
             else if (fp_ThreadName == "network_thread")
             {
-                pm_NetworkThreadLogBuffer->push_back({ fp_Message, fp_Sender });
+                pm_NetworkThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
             }
             else
             {

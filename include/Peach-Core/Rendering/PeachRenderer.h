@@ -13,9 +13,6 @@
 
 #include "nuklear/nuklear_impl_opengl3.h"
 
-#include <SDL3/SDL_system.h>
-#include <SDL3/SDL_vulkan.h>
-
 #include "ShaderProgram.h"
 
 #include "../2D/PeachCamera2D.h"

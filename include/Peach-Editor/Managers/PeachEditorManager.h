@@ -8,44 +8,6 @@ using namespace std;
 
 namespace PeachEditor{
 
-    struct Stats 
-    {
-        float hp;
-        double stamina;
-
-        SERIALIZABLE_FIELDS(hp, stamina)
-    };
-
-    struct Config 
-    {
-        string name;
-        unsigned long long maxFPS;
-        bool vsync;
-        vector<uint16_t> resolutions;
-        map<string, Stats> presets;
-        Stats baseStats;
-
-        SERIALIZABLE_FIELDS(name, maxFPS, vsync, resolutions, presets, baseStats)
-    };
-
-    struct Test
-    {
-        map<uint64_t, bool> random;
-
-        map< string, vector<int> > oof;
-
-        glm::vec2 test_vec;
-
-        SERIALIZABLE_FIELDS(oof, test_vec.x, test_vec.y)
-    };
-
-    struct Nested
-    {
-        vector<vector<uint16_t>> list;
-
-        SERIALIZABLE_FIELDS(list)
-    };
-
     class PeachEditorManager
     {
     //////////////////////////////////////////////
@@ -137,11 +99,11 @@ namespace PeachEditor{
             //probably should have better error handling for the loggers, especially
             //main_editor_logger->Initialize("..\\logs", f_PeachConsole);
             //InternalLogManager::InternalAudioLogger().Initialize("..\\logs", "audio_thread", f_PeachConsole);
-            if(not PeachEditorRenderingManager::PeachEditorRenderer().Initialize(f_LogDir, pm_PeachEditorConsole))
-            {
-                main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
-                return false;
-            }
+            //if(not PeachEditorRenderingManager::PeachEditorRenderer().Initialize(f_LogDir, pm_PeachEditorConsole))
+            //{
+            //    main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
+            //    return false;
+            //}
 
             if(not PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger(f_LogDir, pm_PeachEditorConsole))
             {
@@ -161,106 +123,23 @@ namespace PeachEditor{
         {
             auto peach_engine = &PeachEngine::GameManager::PeachEngine();
 
-            if (not peach_engine->InitializePeachEngine(fp_RootPath, PeachCore::RendererType::OpenGL))
+            if (not peach_engine->InitializePeachEngine(fp_RootPath, PeachCore::RendererType::Vulkan))
             {
 
                 return false;
             }
-
-            if (not SetupInternalLogManagers(fp_RootPath))
+            else if (not SetupInternalLogManagers(fp_RootPath))
             {
 
                 return false;
             }
+            //else if (not InitializeQueues())
+            //{
 
-            if (not InitializeQueues())
-            {
-
-                return false;
-            }
+            //    return false;
+            //}
 
             PeachCore::Serializer Serializer;
-
-            PeachProject test_project =
-            {
-                "Project Peach",
-                "/src",
-                {
-                    {"main_scene", "/main"}
-                },
-                {
-                    {"cat_texture", "/my_cat.png"}
-                },
-                {
-                    { "meow_sound", "/meow.mp3" }
-                }
-            };
-
-            Test fucked =
-            {
-                {
-                    {30, false},
-                    {69, true}
-                },
-                {
-                    {"69", {50, 50, 50 , 50 ,50}}
-                },
-                {20, 30}
-            };
-
-            Serializer.ToJSON(fucked, "mapvec", fp_RootPath, main_editor_logger.get());
-
-            Test newFucked;
-
-            Serializer.FromJSON(newFucked, fp_RootPath + "/mapvec.json", main_editor_logger.get());
-
-            PeachCore::Print(format("x : {}, y: {}", newFucked.test_vec.x, newFucked.test_vec.y), PeachCore::Colours::BrightCyan);
-
-            for (const auto& item : newFucked.oof.at("69"))
-            {
-                PeachCore::Print(to_string(item), PeachCore::Colours::BrightRed);
-            }
-
-            PeachProject readProject;
-
-            Serializer.FromJSON(readProject, fp_RootPath + "/first_project.json", main_editor_logger.get());
-
-            PeachCore::Print("Project name: " + readProject.m_ProjectName + "\n" + "main scene: " + readProject.m_ScenePaths["main_scene"]);
-
-            Config config;
-
-            Serializer.FromJSON(config, fp_RootPath + "/config.json", main_editor_logger.get());
-
-            PeachCore::Print(format("configs name: {}, configs presets hp: {}", config.name, config.presets["easy"].hp), PeachCore::Colours::Magenta);
-
-            for (const auto& [_key , _item] : config.presets)
-            {
-                PeachCore::Print(format("presets key : {}, item : {}", _key, _item.hp), PeachCore::Colours::BrightBlack);
-            }
-
-            for (const auto&  _item : config.resolutions)
-            {
-                PeachCore::Print(format("resolutions item : {}", _item), PeachCore::Colours::BrightMagenta);
-            }
-
-            Nested test_nest =
-            {
-                {{6 , 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6, 6 , 6 , 6}, {9,9,9,9}, {34, 34, 34, 34}}
-            };
-
-            //Serializer.ToJSON(test_nest, "nested", fp_RootPath, main_editor_logger.get());
-
-            Nested read_nest;
-
-            Serializer.FromJSON(read_nest, fp_RootPath + "/nested.json", main_editor_logger.get());
-
-            //for (const auto& __val : read_nest.list)
-            //{
-            //    for (const auto& __item : __val)
-            //    {
-            //        PeachCore::Print(format("nested item: {}", __item), PeachCore::Colours::BrightGreen);
-            //    }
-            //}
 
             return true;
         }
