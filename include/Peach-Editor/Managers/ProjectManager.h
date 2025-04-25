@@ -16,15 +16,11 @@
 
 namespace PeachEditor {
 
-
-	struct SettingsManager
+	struct ProjectManager
 	{
 
     public:
-        static SettingsManager& Settings() {
-            static SettingsManager instance;
-            return instance;
-        }
+        
 
     public:
         std::map<std::string, std::string> EditorSettings;
@@ -33,11 +29,12 @@ namespace PeachEditor {
         void Initialize(const std::string& logDirectory);
 
     private:
-        SettingsManager() = default;
-        ~SettingsManager() = default;
+        ProjectManager() = default;
+        ~ProjectManager() = default;
 
-        SettingsManager(const SettingsManager&) = delete;
-        SettingsManager& operator=(const SettingsManager&) = delete;
+        //prevent accidental copying
+        ProjectManager(const ProjectManager&) = delete;
+        ProjectManager& operator=(const ProjectManager&) = delete;
 
 
 	private:

@@ -23,11 +23,11 @@ namespace PeachEditor {
 
 	};
 
-	class ProjectExportManager
+	class ProjectExporter
 	{
 	public:
-		ProjectExportManager() = default;
-		~ProjectExportManager();
+		ProjectExporter() = default;
+		~ProjectExporter();
 
 
 	public:
@@ -58,7 +58,5 @@ namespace PeachEditor {
 		map<string, ExportConfigSetting> pm_CurrentExportConfigSettings;
 
 
-	}
-
-
+	};
 }

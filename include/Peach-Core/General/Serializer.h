@@ -519,7 +519,7 @@ namespace PeachCore {
 					fp_JSONString << '"' << "null" << '"';
 					break;
 				case JSONValue::Type::Boolean:
-					fp_JSONString << '"' << (get<bool>(fp_JSONValue.m_Value) ? "true" : "false") << '"';
+					fp_JSONString << (get<bool>(fp_JSONValue.m_Value) ? "true" : "false");
 					break;
 				case JSONValue::Type::Integer:
 					fp_JSONString << get<int64_t>(fp_JSONValue.m_Value);

@@ -14,13 +14,11 @@
 //////////////////////////////////////////////
 
 #include "Managers/AudioManager.h"
-#include "Managers/InputManager.h"
 #include "Managers/LogManager.h"
 #include "Managers/PluginManager.h"
 #include "Managers/RenderingManager.h"
 #include "Managers/ResourceLoadingManager.h"
 #include "Managers/PhysicsManager2D.h"
-#include "Managers/EventQueueManager.h"
 
 //////////////////////////////////////////////
 // Graphics2D
@@ -74,6 +72,9 @@
 #include "General/Serializer.h"
 
 #include "General/NoiseGenerator.h"
+
+#include "General/InputHandler.h"
+#include "General/EventQueue.h"
 
 //////////////////////////////////////////////
 // Rendering
