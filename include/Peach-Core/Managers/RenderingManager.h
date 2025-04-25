@@ -77,7 +77,7 @@ namespace PeachCore {
     // Private Constructor
     //////////////////////////////////////////////
     private:
-        explicit RenderingManager() = default;
+        explicit RenderingManager() = default; //explicitly nothing UwU >O<
         RenderingManager(const RenderingManager&) = delete;
         RenderingManager& operator=(const RenderingManager&) = delete;
 

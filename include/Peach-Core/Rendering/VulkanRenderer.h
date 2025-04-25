@@ -24,6 +24,9 @@
 ///Peach Core
 #include "../Managers/LogManager.h"
 
+///STL
+#include <unordered_map>
+
 constexpr const int MAX_FRAMES_IN_FLIGHT = 2;
 
 namespace PeachCore{
@@ -57,8 +60,20 @@ namespace PeachCore{
             vector<VkFramebuffer> FrameBuffers;
 
             VkRenderPass RenderPass;
-            VkPipelineLayout PipelineLayout;
-            VkPipeline GraphicsPipeline;
+            unordered_map<string, VkPipelineLayout> PipelineLayouts;
+            unordered_map<string, VkPipeline> GraphicsPipelines;
+
+            unordered_map<string, VkDescriptorSetLayout> DescriptorSetLayouts;
+            unordered_map<string, VkDescriptorSet> DescriptorSets;
+
+            //Used for drawing a default texture if for some reason the texture is missing or failed to load
+            VkSampler DefaultSampler;
+            VkImageView DefaultTextureView;
+            VkImage DefaultTexture;
+
+            VkImage DepthImage;
+            VkImageView DepthImageView;
+            VkDeviceMemory DepthImageMemory;
 
             VkCommandPool CommandPool;
             vector<VkCommandBuffer> CommandBuffers;
@@ -73,6 +88,11 @@ namespace PeachCore{
     private:
         Initializer pm_Init;
         RenderData pm_RenderData;
+
+        VmaAllocator pm_Allocator;
+        VkPhysicalDevice pm_PhysicalDevice;
+        VkDescriptorPool pm_DescriptorPool;
+
 
         shared_ptr<LogManager> rendering_logger = nullptr;
 
@@ -145,6 +165,8 @@ namespace PeachCore{
 
                 return false; //^_^
             }
+
+            return true; //rawr UwU forgot this return path zzzzzzzzzzzz
         }
 
         bool 
@@ -243,8 +265,18 @@ namespace PeachCore{
                 pm_Init.Dispatch.destroyFramebuffer(framebuffer, nullptr);
             }
 
-            pm_Init.Dispatch.destroyPipeline(pm_RenderData.GraphicsPipeline, nullptr);
-            pm_Init.Dispatch.destroyPipelineLayout(pm_RenderData.PipelineLayout, nullptr);
+            for(auto& __pipeline : pm_RenderData.GraphicsPipelines)
+            {
+                pm_Init.Dispatch.destroyPipeline(__pipeline.second, nullptr);
+            }
+            pm_RenderData.GraphicsPipelines.clear();
+
+            for(auto& __layout : pm_RenderData.PipelineLayouts)
+            {
+                pm_Init.Dispatch.destroyPipelineLayout(__layout.second, nullptr);
+            }
+            pm_RenderData.PipelineLayouts.clear();
+
             pm_Init.Dispatch.destroyRenderPass(pm_RenderData.RenderPass, nullptr);
 
             pm_Init.SwapChain.destroy_image_views(pm_RenderData.SwapChainImageViews);
@@ -546,11 +578,15 @@ namespace PeachCore{
             pipeline_layout_info.setLayoutCount = 0;
             pipeline_layout_info.pushConstantRangeCount = 0;
 
-            if (pm_Init.Dispatch.createPipelineLayout(&pipeline_layout_info, nullptr, &pm_RenderData.PipelineLayout) != VK_SUCCESS) 
+            VkPipelineLayout f_TempLayout;
+
+            if (pm_Init.Dispatch.createPipelineLayout(&pipeline_layout_info, nullptr, &f_TempLayout) != VK_SUCCESS)
             {
                 rendering_logger->LogAndPrint("failed to create pipeline layout, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
                 return false; // failed to create pipeline layout
             }
+
+            pm_RenderData.PipelineLayouts.emplace("name", f_TempLayout);
 
             vector<VkDynamicState> dynamic_states = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
@@ -570,16 +606,19 @@ namespace PeachCore{
             pipeline_info.pMultisampleState = &multisampling;
             pipeline_info.pColorBlendState = &color_blending;
             pipeline_info.pDynamicState = &dynamic_info;
-            pipeline_info.layout = pm_RenderData.PipelineLayout;
+            pipeline_info.layout = f_TempLayout;
             pipeline_info.renderPass = pm_RenderData.RenderPass;
             pipeline_info.subpass = 0;
             pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
 
-            if (pm_Init.Dispatch.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pm_RenderData.GraphicsPipeline) != VK_SUCCESS) 
+            VkPipeline f_TempGraphicsPipeline;
+
+            if (pm_Init.Dispatch.createGraphicsPipelines(VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &f_TempGraphicsPipeline) != VK_SUCCESS)
             {
                 rendering_logger->LogAndPrint("failed to create pipline, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
                 return false; // failed to create graphics pipeline
             }
+            pm_RenderData.GraphicsPipelines.emplace("name", f_TempGraphicsPipeline);
 
             pm_Init.Dispatch.destroyShaderModule(frag_module, nullptr);
             pm_Init.Dispatch.destroyShaderModule(vert_module, nullptr);
@@ -689,7 +728,7 @@ namespace PeachCore{
 
                 pm_Init.Dispatch.cmdBeginRenderPass(pm_RenderData.CommandBuffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-                pm_Init.Dispatch.cmdBindPipeline(pm_RenderData.CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pm_RenderData.GraphicsPipeline);
+                pm_Init.Dispatch.cmdBindPipeline(pm_RenderData.CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pm_RenderData.GraphicsPipelines.at("name"));
 
                 pm_Init.Dispatch.cmdDraw(pm_RenderData.CommandBuffers[i], 3, 1, 0, 0);
 

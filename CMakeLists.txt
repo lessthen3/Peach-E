@@ -17,6 +17,12 @@ if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
     message(FATAL_ERROR "No build type specified, ending build. CMAKE WILL NOW EXIT")
 endif()
 
+####################################### Enforce 64-bit Requirement
+
+if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
+    message(FATAL_ERROR "Peach-E only supports 64-bit platforms.")
+endif()
+
 ####################################### Conan Toolchain Setup
 
 # Try to find `conan_toolchain.cmake` inside the build directory automatically
@@ -99,13 +105,26 @@ target_link_libraries(Peach_Editor PRIVATE
 
 ####################################### Static Imports
 
+# helper macro for reducing repeated boiler plate for vulkan imports uwu
+macro(IMPORTED_LIBRARY TARGET RELEASE_LIB DEBUG_LIB INCLUDE_DIR)
+    add_library(${TARGET} STATIC IMPORTED)
+    set_target_properties(${TARGET} PROPERTIES
+        IMPORTED_LOCATION_DEBUG           ${DEBUG_LIB}
+        IMPORTED_LOCATION_RELEASE         ${RELEASE_LIB}
+        IMPORTED_LOCATION_RELWITHDEBINFO  ${RELEASE_LIB}
+        IMPORTED_LOCATION_MINSIZEREL      ${RELEASE_LIB}
+        INTERFACE_INCLUDE_DIRECTORIES     ${INCLUDE_DIR}
+    )
+endmacro()
+
+
 if(WIN32 )
 
     add_library(python313 STATIC IMPORTED)
 
     set_target_properties(python313 PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/lib_winx86/python313.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_winx86"
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/python/win64/python313.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/python/include_win64"
     )
 
     # add_library(GGPO STATIC IMPORTED) #working on GGPO4ALL
@@ -118,38 +137,110 @@ if(WIN32 )
     add_library(SDL3 STATIC IMPORTED)
 
     set_target_properties(SDL3 PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_winx86/SDL3-static.lib"
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/win64/SDL3-static.lib"
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
     ############ Vulkan Specific Imports
 
-    add_library(shaderC STATIC IMPORTED)
-
-    set_target_properties(shaderC PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/shaderc.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
+    IMPORTED_LIBRARY(shaderC 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/shaderc.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/shadercd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
     )
 
-    add_library(volk STATIC IMPORTED)
-
-    set_target_properties(volk PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/volk.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
+    IMPORTED_LIBRARY(volk 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/volk.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/volkd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
     )
 
-    add_library(SPIRV_Tools STATIC IMPORTED)
+    ############ SPIRV Tools
 
-    set_target_properties(SPIRV_Tools PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/SPIRV-Tools.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    IMPORTED_LIBRARY(SPIRV_Tools 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Toolsd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
-    add_library(SPIRV_Cross STATIC IMPORTED)
+    IMPORTED_LIBRARY(SPIRV_Tools_Diff 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-diff.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-diffd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    )
 
-    set_target_properties(SPIRV_Cross PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_winx86/spirv-cross-cpp.lib"
-        INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    IMPORTED_LIBRARY(SPIRV_Tools_Link 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-link.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-linkd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Tools_Lint 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-lint.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-lintd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Tools_Opt 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-opt.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-optd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Tools_Reduce 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-reduce.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-reduced.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Tools_Remapper 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPVRemapper.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPVRemapperd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
+    )
+
+    ############ SPIRV Cross
+
+    IMPORTED_LIBRARY(SPIRV_Cross_Core 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-core.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-cored.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Cross_CPP 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-cpp.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-cppd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Cross_GLSL 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-glsl.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-glsld.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Cross_HLSL 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-hlsl.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-hlsld.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Cross_MSL 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-msl.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-msld.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Cross_Reflect 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-reflect.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-reflectd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
+    )
+
+    IMPORTED_LIBRARY(SPIRV_Cross_Util 
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-util.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-utild.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
 elseif(APPLE)
@@ -273,7 +364,6 @@ endif()
 
 find_package(PhysFS REQUIRED)
 
-find_package(cgal REQUIRED)
 find_package(clipper2 REQUIRED)
 
 find_package(Jolt REQUIRED)
@@ -296,7 +386,6 @@ target_link_libraries(peach PUBLIC
     #file system
     physfs-static
     #geometry manipulation
-    CGAL::CGAL
     clipper2::clipper2
     #physics
     Jolt::Jolt #3D
@@ -341,8 +430,24 @@ endif()
 # Peach Editor
 target_link_libraries(Peach_Editor PUBLIC
     #Tools for compiling, and debuggin SPIRV, not needed for game runtime uwu
+    #spirv-tools
     SPIRV_Tools
-    SPIRV_Cross
+    SPIRV_Tools_Diff
+    SPIRV_Tools_Link
+    SPIRV_Tools_Lint
+    SPIRV_Tools_Opt
+    SPIRV_Tools_Reduce
+    SPIRV_Tools_Remapper
+
+    #spirv-cross
+    SPIRV_Cross_Core
+    SPIRV_Cross_CPP
+    SPIRV_Cross_GLSL
+    SPIRV_Cross_HLSL
+    SPIRV_Cross_MSL
+    SPIRV_Cross_Reflect
+    SPIRV_Cross_Util
+    
     shaderC
 )
 

@@ -39,6 +39,8 @@ static void
 int 
     main(int fp_ArgCount, const char* fp_ArgVector[])
 {
+    signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
+
     cout << fp_ArgVector[0] << "\n"; //COOL AF
 
     //WARNING: WE ONLY USE THIS FOR DEVELOPMENT, FOR DEPLOYMENT WE NEED THIS DIRECTORY TO BE THE BASE DIR OF THE EXECUTABLE
@@ -60,8 +62,6 @@ int
 
     string mf_PeachERootPath = mf_TopLevelDir.string();
 
-    signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
-
     ////////////////////////////////////////////////
     // Setup Environment
     ////////////////////////////////////////////////
@@ -75,7 +75,6 @@ int
         );
 
         //peach_editor->StartPeachEditorMainLoop();
-        this_thread::sleep_for(chrono::seconds(5));
 
         return EXIT_SUCCESS;
     }

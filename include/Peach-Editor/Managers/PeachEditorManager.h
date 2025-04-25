@@ -4,7 +4,7 @@
 #include "PeachEditorRenderingManager.h"
 #include "../Editor/PeachProject.h"
 
-using namespace std;
+#include "../Editor/ShaderCompilerUtils.h"
 
 namespace PeachEditor{
 
@@ -118,6 +118,67 @@ namespace PeachEditor{
             return true;
         }
 
+        void
+            TestShaderReflection(const std::string& spvPath, PeachCore::LogManager* logger)
+        {
+            std::ifstream file(spvPath, std::ios::binary | std::ios::ate);
+            if (!file.is_open()) {
+                logger->LogAndPrint("Failed to open SPIR-V file: " + spvPath, "TestShaderReflection", PeachCore::LogManager::LogLevel::Error);
+                return;
+            }
+
+            std::streamsize size = file.tellg();
+            file.seekg(0, std::ios::beg);
+
+            // Validate size is aligned to 4 bytes
+            if (size % sizeof(uint32_t) != 0) {
+                logger->LogAndPrint("SPIR-V file size is not aligned to 4 bytes", "TestShaderReflection", PeachCore::LogManager::LogLevel::Error);
+                return;
+            }
+
+            std::vector<uint32_t> spirv(size / sizeof(uint32_t));
+            file.read(reinterpret_cast<char*>(spirv.data()), size);
+            file.close();
+
+            // 2. Reflect Inputs/Outputs
+            auto reflection = PeachEditor::ShaderCompilerUtils::ReflectInputsOutputs(spirv);
+            std::cout << "--- INPUT VARIABLES ---\n";
+            for (const auto& input : reflection.InputVars)
+                std::cout << input << "\n";
+
+            std::cout << "--- UNIFORM BUFFERS ---\n";
+            for (const auto& ubo : reflection.UniformBuffers)
+                std::cout << ubo << "\n";
+
+            std::cout << "--- SAMPLED IMAGES ---\n";
+            for (const auto& image : reflection.SampledImages)
+                std::cout << image << "\n";
+
+            // 3. Reflect Descriptor Bindings
+            std::vector<PeachEditor::ShaderCompilerUtils::DescriptorBindingInfo> bindings;
+            if (PeachEditor::ShaderCompilerUtils::ReflectDescriptorBindings(&bindings, spirv, logger)) {
+                std::cout << "--- DESCRIPTOR BINDINGS ---\n";
+                for (const auto& b : bindings) {
+                    std::cout << "Name: " << b.Name
+                        << " | Set: " << b.Set
+                        << " | Binding: " << b.Binding
+                        << " | Type: " << b.Type << "\n";
+                }
+            }
+
+            // 4. Reflect Push Constants
+            std::vector<PeachEditor::ShaderCompilerUtils::PushConstantInfo> pushConstants;
+            if (PeachEditor::ShaderCompilerUtils::ReflectPushConstants(&pushConstants, spirv, logger)) {
+                std::cout << "--- PUSH CONSTANTS ---\n";
+                for (const auto& pc : pushConstants) {
+                    std::cout << "Name: " << pc.Name
+                        << " | Offset: " << pc.Offset
+                        << " | Size: " << pc.Size
+                        << " | StageFlags: " << pc.StageFlags << "\n";
+                }
+            }
+        }
+
         bool
             InitializePeachEditor(const string& fp_RootPath) //XXX: idk this method seems kinda weird idk how im gonna manage error codes but w/e thats for future me to handle UwU
         {
@@ -138,6 +199,8 @@ namespace PeachEditor{
 
             //    return false;
             //}
+
+            TestShaderReflection(fp_RootPath + "/shaders/triangle.frag.spv", main_editor_logger.get());
 
             PeachCore::Serializer Serializer;
 

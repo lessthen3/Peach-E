@@ -12,7 +12,6 @@ class PeachEBuilder(ConanFile):
         self.requires("physfs/3.2.0")
 
         # geometry
-        self.requires("cgal/5.6.1")
         self.requires("clipper2/1.4.0")
 
         # physics

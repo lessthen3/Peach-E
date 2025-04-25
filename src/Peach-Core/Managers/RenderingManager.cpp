@@ -229,6 +229,18 @@ namespace PeachCore {
 
         pm_VulkanRenderer.DrawFrame();
 
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event) or true)
+        {
+            //ImGui_ImplSDL2_ProcessEvent(&event);
+
+            if (event.type == SDL_EVENT_QUIT)
+            {
+                break;
+            }
+        }
+
         return true; // >w<
     }
 

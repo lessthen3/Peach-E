@@ -12,10 +12,10 @@
 
 #include "../Managers/LogManager.h"
 
-#include <CGAL/Cartesian/point_constructions_2.h>
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
-#include <CGAL/Partition_traits_2.h>
-#include <CGAL/partition_2.h>
+//#include <CGAL/Cartesian/point_constructions_2.h>
+//#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
+//#include <CGAL/Partition_traits_2.h>
+//#include <CGAL/partition_2.h>
 
 
 #include <vector>
@@ -23,16 +23,14 @@
 #include <stdexcept>
 #include <box2d/box2d.h>
 
-using namespace std;
-
 namespace PeachCore {
 
-    typedef CGAL::Exact_predicates_inexact_constructions_kernel              Kernel;
-    typedef CGAL::Partition_traits_2<Kernel>                                      Traits;
-    typedef Traits::Point_2                                                        Point_2;
-    typedef Traits::Polygon_2                                                   Polygon_2;
+    //typedef CGAL::Exact_predicates_inexact_constructions_kernel              Kernel;
+    //typedef CGAL::Partition_traits_2<Kernel>                                      Traits;
+    //typedef Traits::Point_2                                                        Point_2;
+    //typedef Traits::Polygon_2                                                   Polygon_2;
 
-    typedef list<Polygon_2>                                                    Polygon_List;
+    //typedef list<Polygon_2>                                                    Polygon_List;
 
     class CollisionPolygon2D {
     public:
@@ -52,73 +50,73 @@ namespace PeachCore {
         //convexness is not strictly required, however co-linear points might fuck up the algorithm/slow it down, so we remove them from the list before performing the polygonal decomposition
         //we also check for a minimum of 3 vertices before doing ANY operation on the given set of vertices since those are degenerate cases, and u especially are a degenerate for trying to pass it
         //might have some imprecision for very small or very large values, but whatever floating point arithmetic can only do so much Xd
-        bool 
-            CreatePolygonBody
-            (
-                const b2WorldId& fp_World, 
-                const glm::vec2& fp_Position, 
-                const vector<glm::vec2>& fp_Vertices, 
-                LogManager* fp_Logger, //idk if i need the physics logger for any other part of this class
-                const bool fp_IsDynamic = true
-            ) 
-        {
-            if (fp_Vertices.size() < 3)
-            {
-                fp_Logger->LogAndPrint("Tried to create a CollisionPolygon2D with less than 3 vertices", "CollisionPolygon2D", LogManager::LogLevel::Error);
-                return false;
-            }
+        //bool 
+        //    CreatePolygonBody
+        //    (
+        //        const b2WorldId& fp_World, 
+        //        const glm::vec2& fp_Position, 
+        //        const vector<glm::vec2>& fp_Vertices, 
+        //        LogManager* fp_Logger, //idk if i need the physics logger for any other part of this class
+        //        const bool fp_IsDynamic = true
+        //    ) 
+        //{
+        //    if (fp_Vertices.size() < 3)
+        //    {
+        //        fp_Logger->LogAndPrint("Tried to create a CollisionPolygon2D with less than 3 vertices", "CollisionPolygon2D", LogManager::LogLevel::Error);
+        //        return false;
+        //    }
 
-            if (pm_IsValid) //Cleans up body if creating a new one using the recommended method by Box2D docs
-            {
-                b2DestroyBody(pm_Body2D);
-                pm_Body2D = b2_nullBodyId;
-                //need to destroy attached joints manually
-            }
+        //    if (pm_IsValid) //Cleans up body if creating a new one using the recommended method by Box2D docs
+        //    {
+        //        b2DestroyBody(pm_Body2D);
+        //        pm_Body2D = b2_nullBodyId;
+        //        //need to destroy attached joints manually
+        //    }
 
-            //create one body for all shapes to be attached too
-            CreatePhysicsBody(fp_World, pm_Body2D, fp_Position, fp_IsDynamic); //if im gonna mutate a variable, its going to be all in one place so its easy to read
+        //    //create one body for all shapes to be attached too
+        //    CreatePhysicsBody(fp_World, pm_Body2D, fp_Position, fp_IsDynamic); //if im gonna mutate a variable, its going to be all in one place so its easy to read
 
-            vector<b2Vec2> f_OrderedVertices = AssertWindingOrderCCW(fp_Vertices); //ensures that the points being passed to the CGAL algorithm are ordered appropriately
+        //    vector<b2Vec2> f_OrderedVertices = AssertWindingOrderCCW(fp_Vertices); //ensures that the points being passed to the CGAL algorithm are ordered appropriately
 
-            //handles case where polygon decomposition isn't required
-            if (fp_Vertices.size()  <= 8)
-            {
+        //    //handles case where polygon decomposition isn't required
+        //    if (fp_Vertices.size()  <= 8)
+        //    {
 
 
 
-            }
-            //mmmmmm yummy math I don't have to write
-            else
-            {
-                Polygon_List f_ConvexPolygons;
-                //returns false immediately if the vertices are not able to be decomposed into a set of convex polygons
-                if (!DecomposePossiblyConcavePolygon(f_OrderedVertices, f_ConvexPolygons))
-                {
-                    return false;
-                }
+        //    }
+        //    //mmmmmm yummy math I don't have to write
+        //    else
+        //    {
+        //        Polygon_List f_ConvexPolygons;
+        //        //returns false immediately if the vertices are not able to be decomposed into a set of convex polygons
+        //        if (!DecomposePossiblyConcavePolygon(f_OrderedVertices, f_ConvexPolygons))
+        //        {
+        //            return false;
+        //        }
 
-                //we create a body, and bodydefintion for each polygon making up the cloud of vertices selected by the user/me
-                //IK HOW TO DO IT
-                for (const auto& poly : f_ConvexPolygons)
-                {
-                    vector<b2Vec2> f_b2Vertices;
+        //        //we create a body, and bodydefintion for each polygon making up the cloud of vertices selected by the user/me
+        //        //IK HOW TO DO IT
+        //        for (const auto& poly : f_ConvexPolygons)
+        //        {
+        //            vector<b2Vec2> f_b2Vertices;
 
-                    for (const auto& v : poly)
-                    {
-                        f_b2Vertices.push_back(b2Vec2(v.x(), v.y()));
-                    }
+        //            for (const auto& v : poly)
+        //            {
+        //                f_b2Vertices.push_back(b2Vec2(v.x(), v.y()));
+        //            }
 
-                    b2Polygon f_Polygon;
-                    //TODO ACTUALLY CREATE POLYGONS, BOX2D ALLOWS UP TO ONLY 8 VERTICES MAX FOR EACH POLYGON
-                    //THESE TWO METHODS ARE THE GENERAL OUTLINE TO HOW TO ADD EACH SHAPE TO THE CURRENT BODY
-                   /* polygonShape.Set(b2Vertices.data(), b2Vertices.size());
+        //            b2Polygon f_Polygon;
+        //            //TODO ACTUALLY CREATE POLYGONS, BOX2D ALLOWS UP TO ONLY 8 VERTICES MAX FOR EACH POLYGON
+        //            //THESE TWO METHODS ARE THE GENERAL OUTLINE TO HOW TO ADD EACH SHAPE TO THE CURRENT BODY
+        //           /* polygonShape.Set(b2Vertices.data(), b2Vertices.size());
 
-                    AttachShape(polygonShape);*/
-                }
-            }
+        //            AttachShape(polygonShape);*/
+        //        }
+        //    }
 
-            return true;
-        }
+        //    return true;
+        //}
 
         void 
             CreatePhysicsBody
@@ -152,70 +150,70 @@ namespace PeachCore {
             return f_ShapeDefinition;
         }
 
-        bool 
-            DecomposePossiblyConcavePolygon
-            (
-                vector<b2Vec2>& fp_InputVertices, 
-                Polygon_List& fp_OutputPolygons
-            )
-        {
-            vector<b2Vec2> f_OptimizedVertices = RemoveCollinearPoints(fp_InputVertices);
+        //bool 
+        //    DecomposePossiblyConcavePolygon
+        //    (
+        //        vector<b2Vec2>& fp_InputVertices, 
+        //        Polygon_List& fp_OutputPolygons
+        //    )
+        //{
+        //    vector<b2Vec2> f_OptimizedVertices = RemoveCollinearPoints(fp_InputVertices);
 
-            Polygon_2 f_Polygon;
+        //    Polygon_2 f_Polygon;
 
-            //converts our glm vec2's into a form appropriate for CGAL to operate on
-            for (const auto& vertex : f_OptimizedVertices)
-            {
-                f_Polygon.push_back(Point_2(vertex.x, vertex.y));
-            }
+        //    //converts our glm vec2's into a form appropriate for CGAL to operate on
+        //    for (const auto& vertex : f_OptimizedVertices)
+        //    {
+        //        f_Polygon.push_back(Point_2(vertex.x, vertex.y));
+        //    }
 
-            //Run an initial decomposition, and check the results to see if all polygons obey the maxium upper bound of 8 vertices per polygon
-            Polygon_List f_InitialDecomposition;
-            CGAL::approx_convex_partition_2(f_Polygon.vertices_begin(), f_Polygon.vertices_end(), back_inserter(f_InitialDecomposition));
+        //    //Run an initial decomposition, and check the results to see if all polygons obey the maxium upper bound of 8 vertices per polygon
+        //    Polygon_List f_InitialDecomposition;
+        //    CGAL::approx_convex_partition_2(f_Polygon.vertices_begin(), f_Polygon.vertices_end(), back_inserter(f_InitialDecomposition));
 
-            bool f_NeedsFurtherDecomposition = true;
-            // decompose any polygon with more than 8 vertices further
-            while (f_NeedsFurtherDecomposition)
-            {
-                bool f_NeedsFurtherDecomposition = false;
-                Polygon_List f_NextDecomposition;
+        //    bool f_NeedsFurtherDecomposition = true;
+        //    // decompose any polygon with more than 8 vertices further
+        //    while (f_NeedsFurtherDecomposition)
+        //    {
+        //        bool f_NeedsFurtherDecomposition = false;
+        //        Polygon_List f_NextDecomposition;
 
-                for (const auto& poly : f_InitialDecomposition)
-                {
-                    if (poly.size() <= 8) //verifies that all polygons are below 8 vertices if the initial pass has done the job, otherwise we go again baby
-                    {
-                        fp_OutputPolygons.push_back(poly);
-                    }
-                    else //reruns the algorithm as many times as needed to get a full decomposition
-                    {
-                        CGAL::approx_convex_partition_2(poly.vertices_begin(), poly.vertices_end(), back_inserter(f_NextDecomposition));
-                        f_NeedsFurtherDecomposition = true;
-                    }
-                }
+        //        for (const auto& poly : f_InitialDecomposition)
+        //        {
+        //            if (poly.size() <= 8) //verifies that all polygons are below 8 vertices if the initial pass has done the job, otherwise we go again baby
+        //            {
+        //                fp_OutputPolygons.push_back(poly);
+        //            }
+        //            else //reruns the algorithm as many times as needed to get a full decomposition
+        //            {
+        //                CGAL::approx_convex_partition_2(poly.vertices_begin(), poly.vertices_end(), back_inserter(f_NextDecomposition));
+        //                f_NeedsFurtherDecomposition = true;
+        //            }
+        //        }
 
-                //assert(CGAL::convex_partition_is_valid_2(polygon.vertices_begin(),
-                //    polygon.vertices_end(),
-                //    partition_polys.begin(),
-                //    partition_polys.end()));
+        //        //assert(CGAL::convex_partition_is_valid_2(polygon.vertices_begin(),
+        //        //    polygon.vertices_end(),
+        //        //    partition_polys.begin(),
+        //        //    partition_polys.end()));
 
-                if (f_NeedsFurtherDecomposition)
-                {
-                    f_InitialDecomposition = f_NextDecomposition;
-                }
-            }
+        //        if (f_NeedsFurtherDecomposition)
+        //        {
+        //            f_InitialDecomposition = f_NextDecomposition;
+        //        }
+        //    }
 
-            return true;
+        //    return true;
 
-            //if (!CGAL::is_convex_2(fp_OutputPolygons.begin(), fp_OutputPolygons.end())) 
-            //{
-            //    LogManager::MainLogger().LogAndPrint("Failed to decompose polygon into convex pieces.", "CollisionPolygon2D", LogManager::LogLevel::Warning);
-            //    return false;
-            //}
-            //else 
-            //{
-            //    return true;
-            //}
-        }
+        //    //if (!CGAL::is_convex_2(fp_OutputPolygons.begin(), fp_OutputPolygons.end())) 
+        //    //{
+        //    //    LogManager::MainLogger().LogAndPrint("Failed to decompose polygon into convex pieces.", "CollisionPolygon2D", LogManager::LogLevel::Warning);
+        //    //    return false;
+        //    //}
+        //    //else 
+        //    //{
+        //    //    return true;
+        //    //}
+        //}
 
         // Function to ensure vertices are wound counter-clockwise in Box2D
         vector<b2Vec2> AssertWindingOrderCCW(const vector<glm::vec2>& vertices)
