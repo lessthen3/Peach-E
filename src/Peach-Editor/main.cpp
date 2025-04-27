@@ -1,6 +1,6 @@
 ﻿/*******************************************************************
  *                                        Peach Editor v0.0.7
- *                           Created by Ranyodh Mandur - � 2024
+ *                           Created by Ranyodh Mandur - 🍑 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
@@ -78,7 +78,7 @@ int
 
         return EXIT_SUCCESS;
     }
-    catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
+    catch (const exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
     {
         PeachCore::PrintError(format("Unhandled exception: {}", Exception.what()));
 

@@ -1,6 +1,6 @@
 ﻿/*******************************************************************
  *                                             Peach-E v0.0.1
- *                           Created by Ranyodh Mandur - � 2024
+ *                           Created by Ranyodh Mandur - 🍑 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
@@ -10,15 +10,16 @@
 ********************************************************************/
 #pragma once
 
+///PeachCore
 #include "LogManager.h"
 #include "ResourceLoadingManager.h"
 
+///STL
 #include <thread>
 #include <shared_mutex>
 
+///External
 #include <miniaudio/miniaudio.h>
-
-using namespace std;
 
 namespace PeachCore {
 

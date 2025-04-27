@@ -18,7 +18,7 @@ Peach-E is designed around the PeachCore library and utilizes a component based 
 
 Features:
 
-🍑 Vulkan and OpenGL rendering backends
+🍑 Built from the ground up for Vulkan
 
 🍑 Scripting support for C#, Python, and Lua
 

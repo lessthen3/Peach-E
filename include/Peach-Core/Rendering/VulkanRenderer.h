@@ -93,7 +93,6 @@ namespace PeachCore{
         VkPhysicalDevice pm_PhysicalDevice;
         VkDescriptorPool pm_DescriptorPool;
 
-
         shared_ptr<LogManager> rendering_logger = nullptr;
 
     public:

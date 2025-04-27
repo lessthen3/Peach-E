@@ -1,3 +1,13 @@
+﻿/*******************************************************************
+ *                                             Peach-E v0.0.1
+ *                           Created by Ranyodh Mandur - 🍑 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                         Peach-E is an open-source game engine
+********************************************************************/
 #pragma once
 
 #include <volk.h>
@@ -11,37 +21,33 @@
 #include <memory>
 
 namespace PeachCore {
+    namespace ShaderUtils {
 
-    struct CompiledShader {
-        vector<uint32_t> spirv;
-        VkShaderStageFlagBits stage;
-    };
+        struct CompiledShader {
+            vector<uint32_t> spirv;
+            VkShaderStageFlagBits stage;
+        };
 
-    struct GraphicsPipelineCreateInfo
-    {
-        string VertexShaderPath;
-        string FragmentShaderPath;
-        VkRenderPass RenderPass;
-        VkExtent2D SwapchainExtent;
-        VkPipelineLayout PipelineLayout = VK_NULL_HANDLE; // optional override
-        VkPrimitiveTopology Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-        bool EnableDepthTest = true;
-    };
+        struct GraphicsPipelineCreateInfo
+        {
+            string VertexShaderPath;
+            string FragmentShaderPath;
+            VkRenderPass RenderPass;
+            VkExtent2D SwapchainExtent;
+            VkPipelineLayout PipelineLayout = VK_NULL_HANDLE; // optional override
+            VkPrimitiveTopology Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            bool EnableDepthTest = true;
+        };
 
-    class ShaderUtils {
-    public:
-        ShaderUtils() = default;
-
-        // Loads SPIR-V binary from file
-        static bool 
+        static bool
             LoadSPIRVFromFile
             (
-                const string& path, 
-                CompiledShader& outShader, 
+                const string& path,
+                CompiledShader& outShader,
                 VkShaderStageFlagBits stage
             );
 
-        static VkPipeline
+        static bool
             CreateGraphicsPipeline
             (
                 const GraphicsPipelineCreateInfo& createInfo,
@@ -52,11 +58,16 @@ namespace PeachCore {
         static VkShaderModule
             CreateShaderModule
             (
-                VkDevice device,
-                const vector<uint32_t>& bytecode
+                const vkb::DispatchTable& fp_DispatchTable,
+                const vector<uint32_t>& fp_SpirvBytecode
             );
 
         // Optional: destroy shader module
-        void DestroyShaderModule(VkShaderModule module);
-    };
-}
+        static void 
+            DestroyShaderModule
+            (
+                VkShaderModule module
+            );
+
+    } //namespace ShaderUtils
+} //namespace PeachCore
