@@ -13,7 +13,7 @@
 #include "../Rendering/PeachRenderer.h"
 #include "../2D/PeachTexture2D.h"
 
-#include "ResourceLoadingManager.h"
+#include "ResourceManager.h"
 #include "../Rendering/ShaderProgram.h"
 #include "../General/CommandQueue.h"
 #include "../General/LoadingQueue.h"

@@ -12,7 +12,7 @@
 
 ///PeachCore
 #include "LogManager.h"
-#include "ResourceLoadingManager.h"
+#include "ResourceManager.h"
 
 ///STL
 #include <thread>

@@ -17,7 +17,7 @@
 #include "Managers/LogManager.h"
 #include "Managers/PluginManager.h"
 #include "Managers/RenderingManager.h"
-#include "Managers/ResourceLoadingManager.h"
+#include "Managers/ResourceManager.h"
 #include "Managers/PhysicsManager2D.h"
 
 //////////////////////////////////////////////

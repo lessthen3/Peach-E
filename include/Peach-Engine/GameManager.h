@@ -91,6 +91,11 @@ namespace PeachEngine {
                 main_logger->LogAndPrint(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
+            else if (not InitializePhysFS(fp_RootPath.c_str()))
+            {
+                main_logger->LogAndPrint("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
+                return false;
+            }
             else if (not InitializeQueues())
             {
 
@@ -99,11 +104,6 @@ namespace PeachEngine {
             else if (not InitalizeManagers(fp_RootPath, fp_RenderingBackend))
             {
                 main_logger->LogAndPrint("Failed to initialize Peach Engine managers, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
-                return false;
-            }
-            else if (not InitializePhysFS(fp_RootPath.c_str()))
-            {
-                main_logger->LogAndPrint("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
             }
 
@@ -299,7 +299,7 @@ namespace PeachEngine {
             PeachCore::PluginManager::ManagePlugins().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
             PeachCore::AudioManager::AudioPlayer().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
             PeachCore::RenderingManager::Renderer().Initialize(fp_RenderingBackend, f_LogDir, peach_engine_console.GetConsoleLogger());
-            PeachCore::ResourceLoadingManager::ResourceLoader().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
+            PeachCore::ResourceManager::ResourceLoader().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
 
             //PeachCore::LogManager::NetworkLogger().Initialize(f_LogDir, "NetworkLogger");
 

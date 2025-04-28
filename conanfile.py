@@ -18,10 +18,6 @@ class PeachEBuilder(ConanFile):
         self.requires("joltphysics/5.2.0")
         self.requires("box2d/3.0.0")
 
-        # language support
-        self.requires("pybind11/2.13.6")
-        self.requires("sol2/3.5.0")
-
         # serialization and compression
         self.requires("zlib/1.3.1")
 

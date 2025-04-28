@@ -1,9 +1,9 @@
 # Peach-E
 Hey! This is a game engine that you are free to do whatever with!
 
-Peach-E is an open-source and cross-platform game engine built with modern C++ 20 licensed under the permissive MIT License. 
+Peach-E is a free open source and cross-platform 2D/3D game engine built with modern C++ 20 licensed under the permissive MIT License. 
 
-Currently you can target Windows, macOS and Linux. Peach-E may work on UNIX systems, but support isn't guaranteed.
+Currently you can target Windows, MacOS(ARM64) and Linux. Peach-E may work on UNIX systems, but support isn't guaranteed.
 
 >[!WARNING]
 >Peach-E is still in early alpha and extensive testing is still required. Work is being done to add features constantly, and the API is subject to breaking changes at any moment while work is being done to get Peach-E to a complete 1.0 release.
@@ -30,7 +30,7 @@ Features:
 
 🍑 Physics support via Box2D (v3.0) for 2D and Jolt (v5.2.0) for 3D
 
-🍑 Native support for Windows, macOS, and Linux (web and mobile support planned)
+🍑 Native support for Windows, MacOS, and Linux (web and mobile support planned)
 
 🍑 External C++ plugin support via dynamic linking (scripted plugin support WIP)
 

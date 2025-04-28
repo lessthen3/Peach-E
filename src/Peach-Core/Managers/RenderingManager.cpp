@@ -157,7 +157,7 @@ namespace PeachCore {
         }
 
         pm_CommandQueue = make_shared<CommandQueue>();
-        pm_LoadedResourceQueue = ResourceLoadingManager::ResourceLoader().GetDrawableResourceLoadingQueue();
+        pm_LoadedResourceQueue = ResourceManager::ResourceLoader().GetDrawableResourceLoadingQueue();
 
         //rendering_logger->LogAndPrint("RenderingManager successfully initialized >w<", "RenderingManager", LogManager::LogLevel::Debug);
 
@@ -220,8 +220,14 @@ namespace PeachCore {
             rendering_logger->LogAndPrint("Volk failed to initialize! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             return false;
         }
+
+        string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCEMANAGER
+
+        ShaderUtils::BakedPipelineData f_BakedPipelineData;
+
+        ShaderUtils::BakePipelineData(f_BaseDir + "/shaders/triangle.vert.spv", f_BaseDir + "/shaders/triangle.frag.spv", f_BakedPipelineData, rendering_logger.get());
         
-        if (not pm_VulkanRenderer.Initialize(pm_MainWindow, rendering_logger))
+        if (not pm_VulkanRenderer.Initialize(pm_MainWindow, f_BakedPipelineData, rendering_logger))
         {
             rendering_logger->LogAndPrint("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             return false;

@@ -6,8 +6,6 @@
 
 #include "../Editor/ShaderCompilerUtils.h"
 
-#include "../../Peach-Core/General/Serializer.h"
-
 namespace PeachEditor{
 
     enum class TestEnum {

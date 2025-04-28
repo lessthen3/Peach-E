@@ -15,59 +15,63 @@
 
 #include "../Managers/LogManager.h"
 
-#include <string>
 #include <unordered_map>
-#include <vector>
 #include <memory>
 
 namespace PeachCore {
-    namespace ShaderUtils {
+namespace ShaderUtils { //namespacing this because it doesnt need to be a class, just a file w shader utilization tools
 
-        struct CompiledShader {
-            vector<uint32_t> spirv;
-            VkShaderStageFlagBits stage;
-        };
+    struct CompiledShader 
+    {
+        vector<uint32_t> Bytecode;
+        VkShaderStageFlagBits Stage;
+    };
 
-        struct GraphicsPipelineCreateInfo
-        {
-            string VertexShaderPath;
-            string FragmentShaderPath;
-            VkRenderPass RenderPass;
-            VkExtent2D SwapchainExtent;
-            VkPipelineLayout PipelineLayout = VK_NULL_HANDLE; // optional override
-            VkPrimitiveTopology Topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-            bool EnableDepthTest = true;
-        };
+    struct BakedPipelineData
+    {
+        string PipelineName;
 
-        static bool
-            LoadSPIRVFromFile
-            (
-                const string& path,
-                CompiledShader& outShader,
-                VkShaderStageFlagBits stage
-            );
+        vector<uint32_t> VertexSPV;
+        vector<uint32_t> FragmentSPV;
 
-        static bool
-            CreateGraphicsPipeline
-            (
-                const GraphicsPipelineCreateInfo& createInfo,
-                VkDevice device,
-                PeachCore::LogManager* logger
-            );
+        VkPipelineShaderStageCreateInfo VertexStageInfo = {};
+        VkPipelineShaderStageCreateInfo FragStageInfo = {};
 
-        static VkShaderModule
-            CreateShaderModule
-            (
-                const vkb::DispatchTable& fp_DispatchTable,
-                const vector<uint32_t>& fp_SpirvBytecode
-            );
+        VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
 
-        // Optional: destroy shader module
-        static void 
-            DestroyShaderModule
-            (
-                VkShaderModule module
-            );
+        VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo = {};
+        VkPipelineRasterizationStateCreateInfo RasterizationInfo = {};
 
-    } //namespace ShaderUtils
+        VkPipelineMultisampleStateCreateInfo MultisampleInfo = {};
+
+        VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
+        VkPipelineColorBlendStateCreateInfo ColorBlendStateInfo = {};
+
+        VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
+
+        vector<VkDynamicState> DynamicStates;
+        VkPipelineDynamicStateCreateInfo DynamicStateInfo = {};
+
+        VkGraphicsPipelineCreateInfo PipelineInfo = {};
+
+        // IMPORTANT: no actual VkShaderModule, VkPipelineLayout, VkPipeline yet
+    };
+
+    bool
+        LoadSPIRVFromFile
+        (
+            const string& fp_ShaderFilePath,
+            vector<uint32_t>& fp_Bytecode,
+            LogManager* logger
+        );
+
+    bool
+        BakePipelineData
+        (
+            const string& fp_VertexShaderPath,
+            const string& fp_FragShaderPath,
+            BakedPipelineData& fp_CreateInfo,
+            LogManager* logger
+        );
+} //namespace ShaderUtils
 } //namespace PeachCore

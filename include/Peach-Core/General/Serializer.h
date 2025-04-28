@@ -606,7 +606,7 @@ namespace PeachCore {
 		// Helper Function for field_names -> vector<string>
 		//////////////////////////////////////////////
 
-		inline vector<string> 
+		constexpr inline vector<string> //XXX: is consteval since all vars are defined from compile time
 			SplitFieldNames(const string& raw) //used because field_names gets all member names stuffed into a single string
 		{
 			vector<string> result;
