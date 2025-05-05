@@ -235,7 +235,7 @@ namespace PeachCore {
 
         ShaderUtils::BakedPipelineData f_BakedPipelineData;
 
-        ShaderUtils::BakePipelineData(f_BaseDir + "/shaders/triangle.vert.spv", f_BaseDir + "/shaders/triangle.frag.spv", f_BakedPipelineData, rendering_logger.get());
+        ShaderUtils::BakePipelineData(f_BaseDir + "/res/compiled_shaders/triangle.vert.spv", f_BaseDir + "/res/compiled_shaders/triangle.frag.spv", f_BakedPipelineData, rendering_logger.get());
         
         if (not pm_VulkanRenderer.Initialize(pm_MainWindow, f_BakedPipelineData, rendering_logger))
         {

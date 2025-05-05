@@ -149,14 +149,14 @@ if(WIN32)
     )
 
     STATIC_IMPORT(Lua_Symbols 
-        "${PROJECT_SOURCE_DIR}/script_runtimes/lua/release/win64/lua_shared.lib"
-        "${PROJECT_SOURCE_DIR}/script_runtimes/lua/debug/win64/lua_shared.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/lua/release/win64/lua_shared.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/lua/debug/win64/lua_shared.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
     )
 
     STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/script_runtimes/lua/release/win64/lua_compiler.lib"
-        "${PROJECT_SOURCE_DIR}/script_runtimes/lua/debug/win64/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/lua/release/win64/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/lua/debug/win64/lua_compiler.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
     )
 

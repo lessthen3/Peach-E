@@ -162,8 +162,9 @@ namespace PeachCore {
 
     struct LogMessage
     {
-        string m_Log;
-        string m_Sender;
+        string Log;
+        string Sender;
+        uint8_t Level = 69;
     };
 
     //////////////////////////////////////////////
@@ -172,6 +173,7 @@ namespace PeachCore {
 
     enum ThreadName : uint8_t
     {
+        NoOwner = 0,
         MainThread = 1 << 0,
         RenderThread = 1 << 1,
         ResourceThread = 1 << 2,
@@ -188,7 +190,15 @@ namespace PeachCore {
     struct Console
     {
     public:
-        Console() = default;
+        Console()
+        {
+            pm_MainThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
+            pm_RenderThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
+            pm_AudioThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
+            pm_ResourceThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
+            pm_PhysicsThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
+            pm_NetworkThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
+        }
 
         ~Console() //idk i think windows heap cleanup is more efficient but whatever this feels better uwu
         {
@@ -242,17 +252,18 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
+                const uint8_t fp_LogLevel,
                 const ThreadName fp_ThreadName
             )
         {
             switch (fp_ThreadName)
             {
-            case ThreadName::MainThread: pm_MainThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            case ThreadName::RenderThread: pm_RenderThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            case ThreadName::AudioThread: pm_AudioThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            case ThreadName::ResourceThread: pm_ResourceThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            case ThreadName::PhysicsThread: pm_PhysicsThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            case ThreadName::NetworkThread: pm_NetworkThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            case ThreadName::MainThread: pm_MainThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            case ThreadName::RenderThread: pm_RenderThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            case ThreadName::AudioThread: pm_AudioThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            case ThreadName::ResourceThread: pm_ResourceThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            case ThreadName::PhysicsThread: pm_PhysicsThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            case ThreadName::NetworkThread: pm_NetworkThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
             default:
                 PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
             }
@@ -340,7 +351,7 @@ namespace PeachCore {
         shared_ptr<Console> pm_Console = nullptr;
 
         thread::id pm_ThreadOwnerID;
-        ThreadName pm_ThreadOwnerName;
+        ThreadName pm_ThreadOwnerName = ThreadName::NoOwner;
 
         LogLevel pm_ActiveLogMask = LogLevel::All;
         LogLevel pm_FlushMask = static_cast<LogLevel>(LogLevel::Error | LogLevel::Fatal); // or make this user-configurable
@@ -442,7 +453,8 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const string& fp_LogLevel
+                const string& fp_LogLevel,
+                const LogLevel fp_EnumLogLevel //used for adding a log to console
             )
         {
             string f_TimeStamp = GetCurrentTimestamp();
@@ -456,7 +468,7 @@ namespace PeachCore {
                 pm_LogFiles[f_LogFileName] << f_LogEntry;
             }
 
-            pm_Console->AddLog(format("[{}][{}]: {}", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, pm_ThreadOwnerName);
+            pm_Console->AddLog(format("[{}][{}]: {}", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, fp_EnumLogLevel, pm_ThreadOwnerName);
 
             return f_LogEntry;
         }
@@ -499,8 +511,8 @@ namespace PeachCore {
                     f_LogLevel = "fatal";
                     break;
                 default:
-                    PrintError(Log("Did not input a valid option for log level in LogAndPrint()", pm_LoggerName, "error"));
-                    Print(Log(fp_Message, fp_Sender, "error"));
+                    PrintError(Log("Did not input a valid option for log level in Log()", pm_LoggerName, "error", fp_LogLevel));
+                    Print(Log(fp_Message, fp_Sender, "error", fp_LogLevel));
                     return;
             }
 
@@ -515,7 +527,7 @@ namespace PeachCore {
                 pm_LogFiles[f_LogFileName] << f_LogEntry;
             }
 
-            pm_Console->AddLog(format("[{}][{}]: {}", f_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, pm_ThreadOwnerName);
+            pm_Console->AddLog(format("[{}][{}]: {}", f_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, fp_LogLevel, pm_ThreadOwnerName);
         }
 
         void
@@ -538,26 +550,26 @@ namespace PeachCore {
             switch (fp_LogLevel)
             {
                 case LogLevel::Trace:
-                    Print(Log(fp_Message, fp_Sender, "trace"), Colours::BrightWhite);
+                    Print(Log(fp_Message, fp_Sender, "trace", fp_LogLevel), Colours::BrightWhite);
                     break;
                 case LogLevel::Debug:
-                    Print(Log(fp_Message, fp_Sender, "debug"), Colours::BrightBlue);
+                    Print(Log(fp_Message, fp_Sender, "debug", fp_LogLevel), Colours::BrightBlue);
                     break;
                 case LogLevel::Info:
-                    Print(Log(fp_Message, fp_Sender, "info"), Colours::BrightGreen);
+                    Print(Log(fp_Message, fp_Sender, "info", fp_LogLevel), Colours::BrightGreen);
                     break;
                 case LogLevel::Warning:
-                    Print(Log(fp_Message, fp_Sender, "warn"), Colours::BrightYellow);
+                    Print(Log(fp_Message, fp_Sender, "warn", fp_LogLevel), Colours::BrightYellow);
                     break;
                 case LogLevel::Error:
-                    PrintError(Log(fp_Message, fp_Sender, "error"), Colours::Red); //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
+                    PrintError(Log(fp_Message, fp_Sender, "error", fp_LogLevel), Colours::Red); //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
                     break;
                 case LogLevel::Fatal:
-                    PrintError(Log(fp_Message, fp_Sender, "fatal"), Colours::BrightMagenta);
+                    PrintError(Log(fp_Message, fp_Sender, "fatal", fp_LogLevel), Colours::BrightMagenta);
                     break;
                 default:
-                    PrintError(Log("Did not input a valid option for log level in LogAndPrint()", pm_LoggerName, "error"));
-                    Print(Log(fp_Message, fp_Sender, "error"));
+                    PrintError(Log("Did not input a valid option for log level in LogAndPrint()", pm_LoggerName, "error", fp_LogLevel));
+                    Print(Log(fp_Message, fp_Sender, "error", fp_LogLevel));
             }
         }
 
