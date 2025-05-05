@@ -146,7 +146,7 @@ namespace PeachCore {
             pm_Renderer.reset(nullptr);
         }
 
-        pm_Renderer = make_unique<PeachRenderer>(fp_Window, rendering_logger);
+        pm_Renderer = make_unique<OpenGLRenderer>(fp_Window, rendering_logger);
         return true;
     }
 
@@ -199,7 +199,7 @@ namespace PeachCore {
 
         rendering_logger->LogAndPrint("main SDL window successfully created", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
 
-        pm_Renderer = make_unique<PeachRenderer>(pm_MainWindow, rendering_logger, true);
+        pm_Renderer = make_unique<OpenGLRenderer>(pm_MainWindow, rendering_logger, true);
 
         if (glewInit() != GLEW_OK)
         {
@@ -405,7 +405,7 @@ namespace PeachCore {
         pm_FrameRateLimit = fp_Limit;
     }
 
-    [[nodiscard]] PeachRenderer*
+    [[nodiscard]] OpenGLRenderer*
         RenderingManager::GetPeachRenderer()
     {
         return pm_Renderer.get();

@@ -1,6 +1,6 @@
 ﻿/*******************************************************************
  *                                        Peach Editor v0.0.7
- *                           Created by Ranyodh Mandur - � 2024
+ *                           Created by Ranyodh Mandur - 🍑 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
@@ -10,82 +10,16 @@
 ********************************************************************/
 #pragma once
 
-#include <GL/glew.h>
-
 #include "PeachEditorResourceLoadingManager.h"
-
 #include "../../include/Peach-Core/Managers/RenderingManager.h"
-
-#include <SDL3/SDL_opengl.h>
 
 #include <atomic> //should be used for communicating whether the scene execution thread is currently running or not
 #include <unordered_set>
-
-using namespace std; 
 
 namespace PeachEditor {
 
     constexpr float MAIN_MENU_BAR_SCALE = 0.03f;
     constexpr unsigned int NUMBER_OF_HORIZONTAL_MAIN_MENU_BAR_ELEMENTS = 7;
-
-    //////////////////////////////////////////////
-    // Viewport Struct
-    //////////////////////////////////////////////
-
-    struct Viewport
-    {
-
-        Viewport() = default;
-
-        void
-            SetupViewport
-            (
-                const unsigned int fp_Width,
-                const unsigned int fp_Height,
-                PeachCore::PeachRenderer* fp_Renderer,
-                shared_ptr<PeachCore::LogManager> fp_EditorRenderingLogger
-            );
-
-        void
-            ResizeViewport
-            (
-                const unsigned int fp_Width,
-                const unsigned int fp_Height
-            );
-
-        void
-            RenderViewport
-            (
-                const glm::vec2& fp_Position,
-                const unsigned int fp_Width,
-                const unsigned int fp_Height
-            );
-
-    private:
-        GLuint pm_RenderTexture = -1; //i initialize these to -1 so that i know they've been unitialized ig idk
-        GLuint pm_FrameBuffer = -1;
-        GLuint pm_DepthRenderBuffer = -1;
-
-        GLuint pm_VAO = -1;
-
-        PeachCore::ShaderProgram* pm_ViewportShader = nullptr;
-
-        unsigned int pm_CurrentViewportHeight = 0;
-        unsigned int pm_CurrentViewportWidth = 0;
-
-        vector<SDL_Event> pm_CurrentPolledEvents;
-
-        PeachCore::PeachRenderer* pm_Render = nullptr;
-
-        shared_ptr<PeachCore::LogManager> editor_rendering_logger = nullptr;
-
-        bool
-            CreateRenderTexture
-            (
-                const unsigned int fp_Width,
-                const unsigned int fp_Height
-            );
-    };
 
     //////////////////////////////////////////////
     // PeachEditorRenderingManager Class
@@ -149,7 +83,7 @@ namespace PeachEditor {
 
         shared_ptr<PeachCore::LogManager> rendering_logger = nullptr;
 
-        Viewport pm_Viewport;
+        PeachCore::Viewport pm_Viewport;
 
         SDL_Window* pm_GameInstanceWindow = nullptr;
         //unique_ptr<PeachCore::PeachRenderer> pm_GameInstanceRenderer = nullptr;
@@ -220,7 +154,7 @@ namespace PeachEditor {
         SDL_Window*&
             GetMainWindow();
 
-        Viewport*
+        PeachCore::Viewport*
             GetViewport();
 
         //WIP NOT SURE IF I SHOULD HAVE THIS BUT WHATEVER I NEED IT FOR TESTING W THE CURRENT THREAD SETUP UWU

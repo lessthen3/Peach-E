@@ -1,12 +1,12 @@
 ﻿/*******************************************************************
  *                                             Peach-E v0.0.1
- *                           Created by Ranyodh Mandur - � 2024
+ *                           Created by Ranyodh Mandur - 🍑 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                         Peach-E is an open-source game engine
+ *                     Peach-E is a free open source game engine
 ********************************************************************/
 #define SDL_MAIN_HANDLED
 
@@ -16,6 +16,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 
 #define VOLK_IMPLEMENTATION
+#define VMA_IMPLEMENTATION
 
 #define MINIAUDIO_IMPLEMENTATION
 

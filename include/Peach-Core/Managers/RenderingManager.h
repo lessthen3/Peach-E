@@ -12,15 +12,17 @@
 
 #include "ResourceManager.h"
 
-#include "../Rendering/PeachRenderer.h"
+#include <Rendering/OpenGLRenderer.h>
+#include <Rendering/VulkanRenderer.h>
+
 #include "../2D/PeachTexture2D.h"
 
-#include "../Rendering/ShaderProgram.h"
 #include "../General/CommandQueue.h"
 #include "../General/LoadingQueue.h"
 
 #include "../General/PeachNode.h"
 
+#include <memory>
 
 namespace PeachCore {
 
@@ -109,7 +111,7 @@ namespace PeachCore {
         shared_ptr<CommandQueue> pm_CommandQueue = nullptr;
         shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
-        unique_ptr<PeachRenderer> pm_Renderer = nullptr;
+        unique_ptr<OpenGLRenderer> pm_Renderer = nullptr;
 
         SDL_Window* pm_MainWindow = nullptr;
 
@@ -168,7 +170,7 @@ namespace PeachCore {
         void 
             GetCurrentViewPort();
 
-        PeachRenderer*
+        OpenGLRenderer*
             GetPeachRenderer();
 
         unsigned int GetFrameRateLimit() const;
