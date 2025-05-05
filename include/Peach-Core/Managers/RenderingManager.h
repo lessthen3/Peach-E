@@ -10,10 +10,11 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
+#include "ResourceManager.h"
+
 #include "../Rendering/PeachRenderer.h"
 #include "../2D/PeachTexture2D.h"
 
-#include "ResourceManager.h"
 #include "../Rendering/ShaderProgram.h"
 #include "../General/CommandQueue.h"
 #include "../General/LoadingQueue.h"
@@ -135,7 +136,7 @@ namespace PeachCore {
         void 
             ProcessLoadedResourcePackages();
 
-        bool
+        inline bool
             CreateSDLWindow
             (
                 SDL_Window** fp_SDLWindow,

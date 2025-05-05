@@ -29,8 +29,6 @@
     #define DYNLIB_UNLOAD dlclose
 #endif
 
-using namespace std;
-
 //TODO: add support for scripted plugins that dont require AOT lmfao that might be a good idea uwu and also move all the loading code to ResourceLoadingManager uwu
 
 namespace PeachCore {

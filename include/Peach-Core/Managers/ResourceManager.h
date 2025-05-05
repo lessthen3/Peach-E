@@ -6,7 +6,7 @@
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                         Peach-E is an open-source game engine
+ *                     Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
@@ -21,6 +21,7 @@
 
 ///External
 #include <physfs.h>
+#include <stb/stb_image.h>
 
 namespace PeachCore {
 
@@ -46,7 +47,7 @@ namespace PeachCore {
 	// Private Constructor
 	//////////////////////////////////////////////
 	private:
-		ResourceManager() {};
+		ResourceManager() = default;
 
 		ResourceManager(const ResourceManager&) = delete;
 		ResourceManager& operator=(const ResourceManager&) = delete;
@@ -61,7 +62,7 @@ namespace PeachCore {
 		unsigned int pm_AudioQueueReferenceCount = 0;
 		unsigned int pm_DrawableQueueReferenceCount = 0;
 
-		vector<unique_ptr<LoadedResourcePackage>> pm_WaitingFullyLoadedResourcePackages;
+		vector<LoadedResourcePackage> pm_WaitingFullyLoadedResourcePackages;
 
 		unique_ptr<LogManager> resource_logger = nullptr;
 
@@ -86,7 +87,7 @@ namespace PeachCore {
 		shared_ptr<LoadingQueue> GetDrawableResourceLoadingQueue();
 
 	public: //PUBLIC FOR TESTING
-		bool TryPushingLoadedResourcePackage(unique_ptr<LoadedResourcePackage> fp_LoadedPackage);
+		bool TryPushingLoadedTexture(const string& fp_ObjectID, unique_ptr<TextureData> fp_TextureDataPtr);
 		bool LoadTextureFromFile(const string& fp_FilePath);
 
 	//////////////////////////////////////////////

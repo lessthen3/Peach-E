@@ -50,8 +50,8 @@ namespace PeachCore{
 
         struct RenderData
         {
-            VkQueue GraphicsQueue;
-            VkQueue PresentQueue;
+            VkQueue GraphicsQueue = {};
+            VkQueue PresentQueue = {};
 
             vector<VkImage> SwapChainImages;
             vector<VkImageView> SwapChainImageViews;
@@ -65,13 +65,13 @@ namespace PeachCore{
             unordered_map<string, VkDescriptorSet> DescriptorSets;
 
             //Used for drawing a default texture if for some reason the texture is missing or failed to load
-            VkSampler DefaultSampler;
-            VkImageView DefaultTextureView;
-            VkImage DefaultTexture;
+            VkSampler DefaultSampler = {};
+            VkImageView DefaultTextureView = {};
+            VkImage DefaultTexture = {};
 
-            VkImage DepthImage;
-            VkImageView DepthImageView;
-            VkDeviceMemory DepthImageMemory;
+            VkImage DepthImage = {};
+            VkImageView DepthImageView = {};
+            VkDeviceMemory DepthImageMemory = {};
 
             VkCommandPool CommandPool;
             vector<VkCommandBuffer> CommandBuffers;

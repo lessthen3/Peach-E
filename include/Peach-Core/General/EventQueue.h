@@ -6,8 +6,6 @@
 #include <typeindex>
 #include <functional>
 
-using namespace std;
-
 namespace PeachCore {
 
     template<typename Event>

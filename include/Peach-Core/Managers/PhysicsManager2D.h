@@ -120,7 +120,7 @@ namespace PeachCore {
             )
         {
             physics_logger = make_unique<LogManager>();
-            if (not physics_logger->Initialize("physics_thread", fp_LogOutputDirectory, "PhysicsManager2D", fp_Console))
+            if (not physics_logger->Initialize(ThreadName::PhysicsThread, fp_LogOutputDirectory, "PhysicsManager2D", fp_Console, LogManager::LogLevel::All))
             {
                 PrintError("PhysicsManager2D failed to initialize the physics_thread logger >w<");
                 return false;

@@ -20,7 +20,7 @@ namespace PeachEditor {
 		)
 	{
 		editor_resource_logger = make_unique<PeachCore::LogManager>();
-		editor_resource_logger->Initialize("resource_thread", fp_LogOutputDirectory, "PeachEditorResourceLoadingManager", fp_Console);
+		editor_resource_logger->Initialize(PeachCore::ThreadName::ResourceThread, fp_LogOutputDirectory, "PeachEditorResourceLoadingManager", fp_Console, PeachCore::LogManager::LogLevel::All);
 		editor_resource_logger->LogAndPrint("PeachEditorResourceLoadingLogger successfully initialized", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Debug);
 
 		return true;
@@ -101,13 +101,13 @@ namespace PeachEditor {
 	//I'm kinda tired of working on the loading manager and i wanna do physics now so gl future ryan i hope things go well >w<
 	bool PeachEditorResourceLoadingManager::TryPushingLoadedResourcePackage(unique_ptr<PeachCore::LoadedResourcePackage> fp_LoadedPackage)
 	{
-		pm_WaitingFullyLoadedResourcePackages.push_back(move(fp_LoadedPackage));
+		//pm_WaitingFullyLoadedResourcePackages.push_back(move(fp_LoadedPackage));
 
-		if (!pm_DrawableResourceLoadingQueue->PushLoadedResourcePackage(pm_WaitingFullyLoadedResourcePackages))
-		{
-			editor_resource_logger->LogAndPrint("Load deferred until later", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Debug);
-			return false;
-		}
+		//if (!pm_DrawableResourceLoadingQueue->PushLoadedResourcePackage(pm_WaitingFullyLoadedResourcePackages))
+		//{
+		//	editor_resource_logger->LogAndPrint("Load deferred until later", "PeachEditorResourceLoadingManager", PeachCore::LogManager::LogLevel::Debug);
+		//	return false;
+		//}
 
 		return true;
 	}

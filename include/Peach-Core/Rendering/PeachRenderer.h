@@ -17,11 +17,7 @@
 
 #include "../2D/PeachCamera2D.h"
 
-#include "stb/stb_image.h"
-
 #include <memory>
-
-using namespace std;
 
 namespace PeachCore
 {
@@ -261,7 +257,7 @@ namespace PeachCore
             {
                 glTexImage2D(GL_TEXTURE_2D, 0, f_ColourFormat, fp_Width, fp_Height, 0, f_ColourFormat, GL_UNSIGNED_BYTE, fp_Data);
                 glGenerateMipmap(GL_TEXTURE_2D);
-                stbi_image_free(fp_Data);
+                //stbi_image_free(fp_Data);
                 pm_RenderingLogger->LogAndPrint("Successfully freed data from: " + fp_PeachObjectID, "PeachRenderer", LogManager::LogLevel::Info);
             }
             else

@@ -1,3 +1,13 @@
+﻿/*******************************************************************
+ *                                             Peach-E v0.0.1
+ *                           Created by Ranyodh Mandur - 🍑 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                     Peach-E is a free open source game engine
+********************************************************************/
 #include "../../include/Peach-Core/Managers/RenderingManager.h"
 /*
 	This class is used to manage the render thread, and queue/unqueue objects safely
@@ -43,7 +53,7 @@ namespace PeachCore {
         }
 
         rendering_logger = make_shared<LogManager>(); 
-        rendering_logger->Initialize("render_thread", fp_LogOutputDirectory, "RenderingManager", fp_Console);
+        rendering_logger->Initialize(ThreadName::RenderThread, fp_LogOutputDirectory, "RenderingManager", fp_Console, LogManager::LogLevel::All);
         rendering_logger->LogAndPrint("RenderingLogger successfully initialized", "RenderingManager", LogManager::LogLevel::Debug);
 
         if(fp_DesiredRenderer == RendererType::OpenGL)
@@ -283,24 +293,24 @@ namespace PeachCore {
     void 
         RenderingManager::ProcessLoadedResourcePackages()
     {
-        unique_ptr<LoadedResourcePackage> ResourcePackage;
+        //LoadedResourcePackage ResourcePackage;
 
-        while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage)) 
-        {
-            visit(overloaded
-                {
-                [&](TextureData& fp_RawByteData)
-                {
-                    // Handle creation logic here
-                },
-                [](auto&&)
-                {
-                    //THIS DOESN'T WORK AND IDK Y LAMBDA SMTH IDK FUCK IT ill come back to it later
-                    // Default handler for any unhandled types
-                    //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "RenderingManager", LogManager::LogLevel::Warning);
-                }
-                }, ResourcePackage.get()->ResourceData);
-        }
+        //while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage)) 
+        //{
+        //    //visit(overloaded
+        //    //    {
+        //    //    [&](unique_ptr<TextureData> fp_RawByteData)
+        //    //    {
+        //    //        // Handle creation logic here
+        //    //    },
+        //    //    [](auto&&)
+        //    //    {
+        //    //        //THIS DOESN'T WORK AND IDK Y LAMBDA SMTH IDK FUCK IT ill come back to it later
+        //    //        // Default handler for any unhandled types
+        //    //        //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "RenderingManager", LogManager::LogLevel::Warning);
+        //    //    }
+        //    //    }, ResourcePackage.get()->ResourceData);
+        //}
     }
 
     void 

@@ -10,8 +10,6 @@
 ********************************************************************/
 #include "../../include/Peach-Core/Managers/PluginManager.h"
 
-using namespace std;
-
 namespace PeachCore {
 
     namespace fs = std::filesystem;
@@ -24,7 +22,7 @@ namespace PeachCore {
         )
     {
         plugin_logger = make_unique<LogManager>();
-        plugin_logger->Initialize("main_thread", fp_LogOutputDirectory, "PluginManager", fp_Console);
+        plugin_logger->Initialize(ThreadName::MainThread, fp_LogOutputDirectory, "PluginManager", fp_Console, LogManager::LogLevel::All);
         plugin_logger->LogAndPrint("PluginLogger successfully initialized", "PluginManager", LogManager::LogLevel::Debug);
 
         return true;

@@ -64,7 +64,7 @@ namespace PeachEditor {
         //////////////////////////////////////////////
         rendering_logger = make_shared<PeachCore::LogManager>();
 
-        if (not rendering_logger->Initialize("render_thread", fp_LogOutputDirectory, "PeachEditorRenderingManager", fp_EditorConsole))
+        if (not rendering_logger->Initialize(PeachCore::ThreadName::RenderThread, fp_LogOutputDirectory, "PeachEditorRenderingManager", fp_EditorConsole, PeachCore::LogManager::LogLevel::All))
         {
             PeachCore::PrintError("Unable to initialize PeachEditorRenderingManager's logger");
             return false;
@@ -151,24 +151,24 @@ namespace PeachEditor {
     void
         PeachEditorRenderingManager::ProcessLoadedResourcePackages()
     {
-        unique_ptr<PeachCore::LoadedResourcePackage> ResourcePackage;
-        while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage))
-        {
-            visit(
-                PeachCore::overloaded
-                {
-                [&](PeachCore::TextureData& fp_TextureByteData)
-                {
-                    // Handle creation logic here
-                    //stbi_image_free(fp_TextureByteData.get()); //unload texture data
-                },
-                [](auto&&) 
-                {
-                    // Default handler for any unhandled types
-                    //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", LogManager::LogLevel::Warning);
-                }
-                }, ResourcePackage.get()->ResourceData);
-        }
+        //unique_ptr<PeachCore::LoadedResourcePackage> ResourcePackage;
+        //while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage))
+        //{
+        //    visit(
+        //        PeachCore::overloaded
+        //        {
+        //        [&](PeachCore::TextureData& fp_TextureByteData)
+        //        {
+        //            // Handle creation logic here
+        //            //stbi_image_free(fp_TextureByteData.get()); //unload texture data
+        //        },
+        //        [](auto&&) 
+        //        {
+        //            // Default handler for any unhandled types
+        //            //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", LogManager::LogLevel::Warning);
+        //        }
+        //        }, ResourcePackage.get()->ResourceData);
+        //}
     }
 
     void 

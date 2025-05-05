@@ -83,7 +83,7 @@ namespace PeachEngine {
             #endif
 
             main_logger = make_unique<PeachCore::LogManager>();
-            main_logger->Initialize("main_thread", fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger());
+            main_logger->Initialize(PeachCore::ThreadName::MainThread, fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger(), PeachCore::LogManager::LogLevel::All);
             main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", PeachCore::LogManager::LogLevel::Debug);
 
             if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop

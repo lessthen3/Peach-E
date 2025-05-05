@@ -8,12 +8,11 @@ namespace PeachCore {
         cout << "Hey! I am out of this joint, let's blow this popsicle stand buckoo" << "\n";
     }
 
-    PeachTexture2D::PeachTexture2D(const string& fp_Name,  TextureData& fp_Texture) : m_Name(fp_Name)
+    PeachTexture2D::PeachTexture2D(const string& fp_Name, const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight)
     {
-        pm_Texture.m_TextureByteData = move(fp_Texture.m_TextureByteData);
-
-        m_Width = fp_Texture.m_TextureWidth; //I AM NOT SURE WHICH ONE IS X AND WHICH ONE IS Y TBH SO IMA ASSUME IT WORKS WITH NORMAL LOGIC LOL
-        m_Height = fp_Texture.m_TextureHeight;
+        m_Name = fp_Name;
+        m_Width = fp_TextureWidth; //I AM NOT SURE WHICH ONE IS X AND WHICH ONE IS Y TBH SO IMA ASSUME IT WORKS WITH NORMAL LOGIC LOL
+        m_Height = fp_TextureHeight;
         pm_IsValid = true;
     }
 
@@ -57,14 +56,6 @@ namespace PeachCore {
         PeachTexture2D::Draw()
     {
 
-    }
-
-    void PeachTexture2D::DeleteTexture() //resets the texture2D object
-    {
-        if (pm_IsValid) 
-        {
-            pm_Texture.m_TextureByteData.reset(nullptr); //reassign texture to nullptr so that the unique_ptr gets dereferenced and is cleaned up automatically
-        }
     }
 
     void 

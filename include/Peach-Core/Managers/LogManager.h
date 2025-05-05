@@ -53,6 +53,8 @@ using namespace std;
 
 #endif
 
+constexpr uint32_t MAX_NUMBER_OF_LOGS = 1024;
+
 constexpr const int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
 constexpr const int FAILED_TO_INITIALIZE_OPENGL = -1001;
 constexpr const int FAILED_TO_INITIALIZE_VULKAN = -1002;
@@ -162,12 +164,21 @@ namespace PeachCore {
     {
         string m_Log;
         string m_Sender;
+    };
 
-        LogMessage(const string& fp_Log, const string& fp_Sender)
-        {
-            m_Log = fp_Log;
-            m_Sender = fp_Sender;
-        }
+    //////////////////////////////////////////////
+    // ThreadName Enum
+    //////////////////////////////////////////////
+
+    enum ThreadName : uint8_t
+    {
+        MainThread = 1 << 0,
+        RenderThread = 1 << 1,
+        ResourceThread = 1 << 2,
+        NetworkThread = 1 << 3,
+        PhysicsThread = 1 << 4,
+        AudioThread = 1 << 5,
+        AllThreads = MainThread | RenderThread | ResourceThread | NetworkThread | PhysicsThread | AudioThread
     };
 
     //////////////////////////////////////////////
@@ -177,69 +188,51 @@ namespace PeachCore {
     struct Console
     {
     public:
-        Console() //should heap alloc these since they can get large and me no want stack overflow uwu xxdxdxdxd rawr so random
-        {
-            pm_MainThreadLogBuffer = make_unique< vector<LogMessage> >();
-            pm_RenderThreadLogBuffer = make_unique< vector<LogMessage> >();
-            pm_AudioThreadLogBuffer = make_unique< vector<LogMessage> >();
-            pm_ResourceThreadLogBuffer = make_unique< vector<LogMessage> >();
-            pm_PhysicsThreadLogBuffer = make_unique< vector<LogMessage> >();
-            pm_NetworkThreadLogBuffer = make_unique< vector<LogMessage> >();
-        }
+        Console() = default;
 
         ~Console() //idk i think windows heap cleanup is more efficient but whatever this feels better uwu
         {
-            pm_MainThreadLogBuffer.reset(nullptr);
-            pm_RenderThreadLogBuffer.reset(nullptr);
-            pm_AudioThreadLogBuffer.reset(nullptr);
-            pm_ResourceThreadLogBuffer.reset(nullptr);
-            pm_PhysicsThreadLogBuffer.reset(nullptr);
-            pm_NetworkThreadLogBuffer.reset(nullptr);
+            pm_MainThreadLogBuffer.clear();
+            pm_RenderThreadLogBuffer.clear();
+            pm_AudioThreadLogBuffer.clear();
+            pm_ResourceThreadLogBuffer.clear();
+            pm_PhysicsThreadLogBuffer.clear();
+            pm_NetworkThreadLogBuffer.clear();
         }
 
         void
             ClearConsoleBuffer
             (
-                const string& fp_DesiredTab
+                const uint8_t fp_DesiredTab
             )
         {
 
         }
 
         //WIP NEED TO LOCK THE THREAD SO THAT WE CAN SAFELY QUERY THE LOG BUFFERS SINCE THEY CAN BE WRITTEN TOO WHILE
-        vector<string>
+        bool
             QueryLogBufferByLevel
             (
-                const string& fp_DesiredLogLevelQuery,
-                const string& fp_NameOfLogBuffer
+                const ThreadName fp_NameOfLogBuffer,
+                const uint8_t fp_DesiredLogLevelQuery
             )
         {
-            //if (fp_NameOfLogBuffer == "main_thread")
+            unique_lock<mutex> lock(pm_ConsoleMutex, try_to_lock);
+
+            if (not lock.owns_lock())
+            {
+                return false;
+            } // lock not acquired, return early
+
+            //switch (fp_NameOfLogBuffer)
             //{
-            //    pm_MainThreadLogBuffer->push_back({ fp_Message, fp_Sender });
-            //}
-            //else if (fp_NameOfLogBuffer == "render_thread")
-            //{
-            //    pm_RenderThreadLogBuffer->push_back({ fp_Message, fp_Sender });
-            //}
-            //else if (fp_NameOfLogBuffer == "audio_thread")
-            //{
-            //    pm_AudioThreadLogBuffer->push_back({ fp_Message, fp_Sender });
-            //}
-            //else if (fp_NameOfLogBuffer == "resource_thread")
-            //{
-            //    pm_ResourceThreadLogBuffer->push_back({ fp_Message, fp_Sender });
-            //}
-            //else if (fp_NameOfLogBuffer == "physics_thread")
-            //{
-            //    pm_PhysicsThreadLogBuffer->push_back({ fp_Message, fp_Sender });
-            //}
-            //else if (fp_NameOfLogBuffer == "network_thread")
-            //{
-            //    pm_NetworkThreadLogBuffer->push_back({ fp_Message, fp_Sender });
-            //}
-            //else
-            //{
+            //case ThreadName::MainThread: pm_MainThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //case ThreadName::RenderThread: pm_RenderThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //case ThreadName::AudioThread: pm_AudioThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //case ThreadName::ResourceThread: pm_ResourceThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //case ThreadName::PhysicsThread: pm_PhysicsThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //case ThreadName::NetworkThread: pm_NetworkThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //default:
             //    PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
             //}
         }
@@ -249,57 +242,33 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const string& fp_ThreadName
+                const ThreadName fp_ThreadName
             )
         {
-            if (fp_ThreadName == "main_thread")
+            switch (fp_ThreadName)
             {
-                pm_MainThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
-            }
-            else if (fp_ThreadName == "render_thread")
-            {
-                pm_RenderThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
-            }
-            else if (fp_ThreadName == "audio_thread")
-            {
-                pm_AudioThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
-            }
-            else if (fp_ThreadName == "resource_thread")
-            {
-                pm_ResourceThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
-            }
-            else if (fp_ThreadName == "physics_thread")
-            {
-                pm_PhysicsThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
-            }
-            else if (fp_ThreadName == "network_thread")
-            {
-                pm_NetworkThreadLogBuffer->emplace_back(fp_Message, fp_Sender);
-            }
-            else
-            {
+            case ThreadName::MainThread: pm_MainThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            case ThreadName::RenderThread: pm_RenderThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            case ThreadName::AudioThread: pm_AudioThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            case ThreadName::ResourceThread: pm_ResourceThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            case ThreadName::PhysicsThread: pm_PhysicsThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            case ThreadName::NetworkThread: pm_NetworkThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            default:
                 PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
             }
         }
 
     private:
-
-        unique_ptr<vector<LogMessage>> pm_MainThreadLogBuffer = nullptr;
-        unique_ptr<vector<LogMessage>> pm_RenderThreadLogBuffer = nullptr;
-        unique_ptr<vector<LogMessage>> pm_AudioThreadLogBuffer = nullptr;
-        unique_ptr<vector<LogMessage>> pm_ResourceThreadLogBuffer = nullptr;
-        unique_ptr<vector<LogMessage>> pm_PhysicsThreadLogBuffer = nullptr;
-        unique_ptr<vector<LogMessage>> pm_NetworkThreadLogBuffer = nullptr;
-
-
         //logs are all related to the current project game logs
-        //map<const string, vector<string>> pm_Buffers = 
-        //{
-        //    {"everything", vector<string>()},
 
-        //    {"editor_warn", vector<string>()},
-        //    {"editor_error", vector<string>()}
-        //};
+        vector<LogMessage> pm_MainThreadLogBuffer;
+        vector<LogMessage> pm_RenderThreadLogBuffer;
+        vector<LogMessage> pm_AudioThreadLogBuffer;
+        vector<LogMessage> pm_ResourceThreadLogBuffer;
+        vector<LogMessage> pm_PhysicsThreadLogBuffer;
+        vector<LogMessage> pm_NetworkThreadLogBuffer;
+
+        mutex pm_ConsoleMutex;
     };
 
     //////////////////////////////////////////////
@@ -335,15 +304,27 @@ namespace PeachCore {
     // Helper Enum For LogLevel Specification
     ////////////////////////////////////////////////
     public:
-        enum class LogLevel : int
+        enum LogLevel : uint8_t 
         {
-            Trace,
-            Debug,
-            Info,
-            Warning,
-            Error,
-            Fatal
+            Trace = 1 << 0,
+            Debug = 1 << 1,
+            Info = 1 << 2,
+            Warning = 1 << 3,
+            Error = 1 << 4,
+            Fatal = 1 << 5,
+            All = Trace | Debug | Info | Warning | Error | Fatal
         };
+
+        inline bool 
+            HasFlag
+            (
+                const LogLevel __Val, 
+                const LogLevel __Flag
+            ) 
+            const noexcept
+        {
+            return static_cast<uint8_t>(__Val) & static_cast<uint8_t>(__Flag);
+        }
 
     //////////////////////////////////////////////
     // Protected Class Members
@@ -359,7 +340,10 @@ namespace PeachCore {
         shared_ptr<Console> pm_Console = nullptr;
 
         thread::id pm_ThreadOwnerID;
-        string pm_ThreadOwnerName;
+        ThreadName pm_ThreadOwnerName;
+
+        LogLevel pm_ActiveLogMask = LogLevel::All;
+        LogLevel pm_FlushMask = static_cast<LogLevel>(LogLevel::Error | LogLevel::Fatal); // or make this user-configurable
 
     //////////////////////////////////////////////
     // Public Methods
@@ -368,12 +352,12 @@ namespace PeachCore {
         bool
             Initialize
             (
-                const string& fp_ThreadName,
+                const ThreadName fp_ThreadName,
                 const string& fp_DesiredOutputDirectory,
                 const string& fp_DesiredLoggerName,
                 shared_ptr<Console> fp_Console,
-                const string& fp_MinLogLevel = "trace",
-                const string& fp_MaxLogLevel = "fatal"
+                const uint8_t fp_LogLevelFlags,
+                const bool fp_ShouldCreateOutputDirectory = true
             )
         {
             if (pm_HasBeenInitialized) //stops accidental reinitialization of logmanager
@@ -382,13 +366,16 @@ namespace PeachCore {
                 return false;
             }
 
+            pm_LoggerName = fp_DesiredLoggerName;
+            pm_Console = fp_Console;
+
             pm_ThreadOwnerName = fp_ThreadName;
             pm_ThreadOwnerID = this_thread::get_id();
 
-            pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + fp_DesiredLoggerName;
+            pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory;
 
             // Ensure log directory exists
-            if (not filesystem::exists(pm_CurrentWorkingDirectory))
+            if ((not filesystem::exists(pm_CurrentWorkingDirectory)) and fp_ShouldCreateOutputDirectory)
             {
                 try
                 {
@@ -396,120 +383,38 @@ namespace PeachCore {
                 }
                 catch (const exception& f_Exception)
                 {
-                    PrintError(format("An exception was thrown inside LogManager: {}", f_Exception.what()));
+                    PrintError(format("Failed to create desired log output directory with exception: '{}'", f_Exception.what()));
                     return false;
                 }
             }
-
-            if (fp_MinLogLevel == fp_MaxLogLevel)
+            else if (not filesystem::exists(pm_CurrentWorkingDirectory))
             {
-                CreateLogFile(pm_CurrentWorkingDirectory, fp_MinLogLevel + ".log"); //could be min or max just chose min cause y not
+                PrintError("Failed to find valid log output directory");
+                return false;
             }
-            else
+            
+            //Create Log files based off of log level flags
+            const map<uint8_t, string> f_LogLevels = 
             {
-                const vector<string> f_LogLevels = { "trace", "debug", "info", "warn", "error", "fatal", "all-logs" };
-                bool f_ShouldInclude = false;
+                {Trace, "trace"},
+                {Debug, "debug"},
+                {Info, "info"},
+                {Warning, "warn"},
+                {Error, "error"},
+                {Fatal, "fatal"}
+            };
 
-                for (const auto& _level : f_LogLevels)
+            for (const auto& [__key, __val] : f_LogLevels)
+            {
+                if(fp_LogLevelFlags & __key)
                 {
-                    if (_level == fp_MinLogLevel)
-                    {
-                        f_ShouldInclude = true;
-                    }
-                    else if (_level == fp_MaxLogLevel and fp_MaxLogLevel != "fatal")
-                    {
-                        f_ShouldInclude = false;
-                    }
-
-                    if(f_ShouldInclude or _level == "all-logs")
-                    {
-                        CreateLogFile(pm_CurrentWorkingDirectory, _level + ".log");
-                    }
+                    CreateLogFile(pm_CurrentWorkingDirectory, __val + ".log");
                 }
             }
-
-            pm_LoggerName = fp_DesiredLoggerName;
-            pm_Console = fp_Console;
 
             pm_HasBeenInitialized = true; //well if everything went as planned we should be good to set this to true uwu
 
             return true;
-        }
-
-        bool
-            Initialize
-            (
-                const string& fp_ThreadName,
-                const string& fp_DesiredOutputDirectory,
-                const string& fp_DesiredLoggerName,
-                shared_ptr<Console> fp_Console,
-                const vector<string>& fp_DesiredLogLevels
-            )
-        {
-            if (fp_DesiredLogLevels.size() == 0)
-            {
-                PrintError("LogManager tried to initialize with no value for specific log filtering");
-                return false;
-            }
-
-            if (pm_HasBeenInitialized) //stops accidental reinitialization of logmanager
-            {
-                PrintError("LogManager has already been initialized, LogManager is only allowed to initialize once per run");
-                return false;
-            }
-
-            pm_ThreadOwnerName = fp_ThreadName;
-            pm_ThreadOwnerID = this_thread::get_id();
-
-            pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + fp_DesiredLoggerName;
-
-            // Ensure log directory exists
-            if (not filesystem::exists(pm_CurrentWorkingDirectory))
-            {
-                try
-                {
-                    filesystem::create_directories(pm_CurrentWorkingDirectory);
-                }
-                catch (const exception& ex)
-                {
-                    PrintError(format("An exception was thrown inside LogManager: {}", ex.what()));
-                    return false;
-                }
-            }
-
-            const vector<string> f_AllowedLogLevels = { "trace", "debug", "info", "warn", "error", "fatal", "all-logs" };
-
-            for (const auto& _level : fp_DesiredLogLevels)
-            {
-                CreateLogFile(pm_CurrentWorkingDirectory, _level + ".log");
-
-                if (count(f_AllowedLogLevels.begin(), f_AllowedLogLevels.end(), _level) == 0)
-                {
-                    PrintError("Invalid log level was input when filtering for individual log files");
-                    return false;
-                }
-            }
-
-            pm_Console = fp_Console;
-            pm_HasBeenInitialized = true; //well if everything went as planned we should be good to set this to true uwu
-
-            return true;
-        }
-
-        inline void ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
-            AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the LogManager instance
-            const
-        {
-            if (this_thread::get_id() != pm_ThreadOwnerID)
-            {
-                stringstream f_UckCPP; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
-                f_UckCPP << this_thread::get_id();
-                string f_CallerThreadID = f_UckCPP.str();
-
-                PrintError(format("LogManager method '{}' called from the wrong thread, [Caller Thread ID]: {}. Exiting...", fp_FunctionName, f_CallerThreadID));
-                
-                exit(-69);
-            }
         }
 
         //////////////////// Flush All Logs ////////////////////
@@ -517,7 +422,9 @@ namespace PeachCore {
         void
             FlushAllLogs()
         {
-            AssertThreadAccess("FlushAllLogs");
+            #ifdef _DEBUG
+                AssertThreadAccess("FlushAllLogs");
+            #endif
 
             for (auto& _f : pm_LogFiles)
             {
@@ -538,58 +445,77 @@ namespace PeachCore {
                 const string& fp_LogLevel
             )
         {
-            AssertThreadAccess("Log");
-
             string f_TimeStamp = GetCurrentTimestamp();
             string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + fp_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
 
             // Log to specific file and all-logs file
             const string f_LogFileName = fp_LogLevel + ".log";
-            const string f_AllLogsName = "all-logs.log";
 
             if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
             {
                 pm_LogFiles[f_LogFileName] << f_LogEntry;
             }
 
-            if (pm_LogFiles.find(f_AllLogsName) != pm_LogFiles.end() and pm_LogFiles[f_AllLogsName].is_open())
-            {
-                pm_LogFiles[f_AllLogsName] << f_LogEntry;
-            }
-
-            pm_Console->AddLog(format("[{}][{}]: {} \n", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, pm_ThreadOwnerName);
+            pm_Console->AddLog(format("[{}][{}]: {}", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, pm_ThreadOwnerName);
 
             return f_LogEntry;
         }
 
-        string
-            LogNotThreadSafe ///XXX: pretty much just another Log function copy without the assert, i just wanted the new name for being explicit
+        void
+            Log
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const string& fp_LogLevel
+                const LogLevel fp_LogLevel
             )
         {
+            //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
+            #ifdef _DEBUG
+                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("Log"))) return;
+            #else
+                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized)) return;
+            #endif
+
+            string f_LogLevel;
+
+            switch (fp_LogLevel)
+            {
+                case LogLevel::Trace:
+                    f_LogLevel = "trace";
+                    break;
+                case LogLevel::Debug:
+                    f_LogLevel = "debug";
+                    break;
+                case LogLevel::Info:
+                    f_LogLevel = "info";
+                    break;
+                case LogLevel::Warning:
+                    f_LogLevel = "warn";
+                    break;
+                case LogLevel::Error:
+                    f_LogLevel = "error"; //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
+                    break;
+                case LogLevel::Fatal:
+                    f_LogLevel = "fatal";
+                    break;
+                default:
+                    PrintError(Log("Did not input a valid option for log level in LogAndPrint()", pm_LoggerName, "error"));
+                    Print(Log(fp_Message, fp_Sender, "error"));
+                    return;
+            }
+
             string f_TimeStamp = GetCurrentTimestamp();
-            string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + fp_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
+            string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + f_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
 
             // Log to specific file and all-logs file
-            const string f_LogFileName = fp_LogLevel + ".log";
-            const string f_AllLogsName = "all-logs.log";
+            const string f_LogFileName = f_LogLevel + ".log";
 
             if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
             {
                 pm_LogFiles[f_LogFileName] << f_LogEntry;
             }
 
-            if (pm_LogFiles.find(f_AllLogsName) != pm_LogFiles.end() and pm_LogFiles[f_AllLogsName].is_open())
-            {
-                pm_LogFiles[f_AllLogsName] << f_LogEntry;
-            }
-
-            pm_Console->AddLog(format("[{}][{}]: {} \n", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, pm_ThreadOwnerName);
-
-            return f_LogEntry;
+            pm_Console->AddLog(format("[{}][{}]: {}", f_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, pm_ThreadOwnerName);
         }
 
         void
@@ -600,6 +526,13 @@ namespace PeachCore {
                 const LogLevel fp_LogLevel
             )
         {
+            //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
+            #ifdef _DEBUG
+                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("LogAndPrint"))) return;
+            #else
+                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized)) return;
+            #endif
+
             // Log to console
 
             switch (fp_LogLevel)
@@ -623,7 +556,7 @@ namespace PeachCore {
                     PrintError(Log(fp_Message, fp_Sender, "fatal"), Colours::BrightMagenta);
                     break;
                 default:
-                    PrintError(Log("Did not input a valid option for log level in LogAndPrint()", "LogManager", "error"));
+                    PrintError(Log("Did not input a valid option for log level in LogAndPrint()", pm_LoggerName, "error"));
                     Print(Log(fp_Message, fp_Sender, "error"));
             }
         }
@@ -639,17 +572,17 @@ namespace PeachCore {
                 const string& fp_FileName
             )
         {
-            ofstream f_File;
+            ofstream f_LogFile;
 
-            f_File.open(fp_FilePath + "/" + fp_FileName, ios::out | ios::app);
+            f_LogFile.open(fp_FilePath + "/" + pm_LoggerName + "/" + fp_FileName, ios::out | ios::app);
 
-            if (not f_File.is_open())
+            if (not f_LogFile.is_open())
             {
                 PrintError(format("Failed to open log file: '{}'", fp_FileName));
             }
             else
             {
-                pm_LogFiles[fp_FileName] = move(f_File);
+                pm_LogFiles[fp_FileName] = move(f_LogFile);
             }
         }
 
@@ -682,5 +615,24 @@ namespace PeachCore {
                 }
             }
         }
+        #ifdef _DEBUG
+            inline bool ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
+                AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the LogManager instance
+                const
+            {
+                if (this_thread::get_id() == pm_ThreadOwnerID)
+                {
+                    return true;
+                }
+
+                stringstream f_UckCPP; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
+                f_UckCPP << this_thread::get_id();
+                string f_CallerThreadID = f_UckCPP.str();
+
+                PrintError(format("Logger name: '{}' called method '{}' from the wrong thread, [Caller Thread ID]: {}", pm_LoggerName, fp_FunctionName, f_CallerThreadID));
+
+                return false;
+            }
+        #endif
     };
 }

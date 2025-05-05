@@ -62,25 +62,12 @@ namespace PeachCore {
     {
 
     }
-
-    void //nlohmann::json
-        TileSet::SerializePeachNodeToJSON()
-    {
-        //nlohmann::json f_TileSetJSONData;
-
-
-
-
-
-        //return f_TileSetJSONData;
-    }
-
    
-    void 
-        TileSet::SetCurrentTexture(TextureData& fp_NewTexture) //idk how moving the unique_ptr reference is gonna act 2 functions deep, but it should work normally
-    {
-        pm_Texture = PeachTexture2D(m_Name, fp_NewTexture);
-    }
+    //void 
+    //    TileSet::SetCurrentTexture(TextureData& fp_NewTexture) //idk how moving the unique_ptr reference is gonna act 2 functions deep, but it should work normally
+    //{
+    //    pm_Texture = PeachTexture2D(m_Name, fp_NewTexture);
+    //}
 
     bool 
         TileSet::SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight)

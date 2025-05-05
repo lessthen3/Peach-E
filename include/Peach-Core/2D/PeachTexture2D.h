@@ -21,8 +21,6 @@
 #include <tuple>
 #include <future>
 
-using namespace std;
-
 namespace PeachCore {
 
     class PeachTexture2D: public PeachNode2D
@@ -31,7 +29,7 @@ namespace PeachCore {
         PeachTexture2D() : PeachNode2D() {};
         PeachTexture2D(const string& fp_Name) : PeachNode2D(fp_Name) {};
 
-        PeachTexture2D(const string& fp_Name, TextureData& fp_Texture);
+        PeachTexture2D(const string& fp_Name, const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight);
         ~PeachTexture2D();
 
         PeachTexture2D& 
@@ -44,7 +42,6 @@ namespace PeachCore {
                 // No need to explicitly delete the texture since sf::Texture manages its own memory
 
                 // Transfer object based resources 
-                pm_Texture.m_TextureByteData = move(other.pm_Texture.m_TextureByteData);  // IDK IF THIS MOVE OPERATION IS KOSCHER
                 pm_TileUVs = move(other.pm_TileUVs);
                 m_Name = move(other.m_Name);
 
@@ -73,7 +70,6 @@ namespace PeachCore {
             operator=(nullptr_t fp_NullPtr) //null operator
             noexcept
         {
-            pm_Texture.m_TextureByteData.reset(nullptr);
             pm_TileUVs.clear();
             m_Name = "";
 
@@ -136,8 +132,6 @@ namespace PeachCore {
         string m_Name;
 
     private:
-        TextureData pm_Texture;
-
         int pm_TileWidth = -1;
         int pm_TileHeight = -1;
 

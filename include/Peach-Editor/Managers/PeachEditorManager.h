@@ -20,7 +20,7 @@ namespace PeachEditor{
         TestEnum UwU;
         bool OwO;
 
-        SERIALIZABLE_FIELDS(OwO);
+        SERIALIZABLE_FIELDS(OwO)
     };
 
     class PeachEditorManager
@@ -103,7 +103,7 @@ namespace PeachEditor{
 
             main_editor_logger = make_unique<PeachCore::LogManager>();
 
-            if (not main_editor_logger->Initialize("main_thread", f_LogDir, "PeachEditorManager", pm_PeachEditorConsole))
+            if (not main_editor_logger->Initialize(PeachCore::ThreadName::MainThread, f_LogDir, "PeachEditorManager", pm_PeachEditorConsole, PeachCore::LogManager::LogLevel::All))
             {
                 PeachCore::PrintError("Initialization error: Was not able to initialize PeachEditorManager's main logger");
                 return false;

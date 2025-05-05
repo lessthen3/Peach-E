@@ -15,7 +15,6 @@
 #include <queue>
 #include <variant>
 
-
 using namespace std;
 
 namespace PeachCore {
@@ -24,19 +23,30 @@ namespace PeachCore {
     template<class... Ts> struct overloaded : Ts... { using Ts::operator()...; };
     template<class... Ts> overloaded(Ts...) -> overloaded<Ts...>;
 
-    struct TextureData
+    struct TextureData //POD structs dont use m_ 
     {
         //declaring texture data as a unique_ptr with the stbi_image_free function attached to its deleter
-        unique_ptr<unsigned char> m_TextureByteData;
+        unsigned char* TextureByteData;
 
-        int m_TextureWidth;
-        int m_TextureHeight;
-        int m_NumColourChannels;
+        uint32_t TextureWidth;
+        uint32_t TextureHeight;
+        uint32_t NumColourChannels;
 
-        TextureData(unsigned char* ptr, const int w, const int h, const int c)
-            : m_TextureByteData(ptr), m_TextureWidth(w), m_TextureHeight(h), m_NumColourChannels(c) {}
+        explicit 
+            TextureData
+            (
+                unsigned char* fp_RawTextureByteData, 
+                const uint32_t fp_TextureWidth, 
+                const uint32_t fp_TextureHeight, 
+                const uint32_t fp_NumberOfColourChannels
+            )
+        {
+            TextureByteData = fp_RawTextureByteData;
+            TextureWidth = fp_TextureWidth;
+            TextureHeight = fp_TextureHeight;
+            NumColourChannels = fp_NumberOfColourChannels;
+        }
 
-        TextureData() : m_TextureByteData(nullptr), m_TextureWidth(0), m_TextureHeight(0), m_NumColourChannels(0) {}
     };
 
     struct AudioData
@@ -48,30 +58,50 @@ namespace PeachCore {
             : m_AudioByteData(ptr), m_Size(sz) {}
     };
 
+    enum class LoadedDataType //TODO: probably add more descriptive types so that it describes formats possible or stuff that into the data structs
+    {
+        NoData,
+        TextureData,
+        AudioData
+    };
 
     struct LoadedResourcePackage
     {
         string PeachObjectID; //target object that this resource is for, unecessary but good for error checking
+        LoadedDataType Type = LoadedDataType::NoData;
 
         variant //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
             <
             //unique_ptr<unsigned const char>, //used for parsins byte info that is supposed to be immutable, mainly for preference not really required -- NOT SURE IF NEEDED OR NOT
-            TextureData, //used for parsing raw byte information, mainly for audio at the moment
-            AudioData
+            unique_ptr<TextureData>, //used for parsing raw byte information, mainly for audio at the moment
+            unique_ptr<AudioData>
             //unique_ptr<nlohmann::json> //used for parsing JSON metadata if required WARNING: CHANGING TO JUST CEREAL SINCE WE DESERIALIZE IN CHUNKS AND SERIALIZE IN KNOWN CHUNKS
 
             > ResourceData;
 
-        LoadedResourcePackage(const string& fp_ID, TextureData& fp_TextureData)
-            : PeachObjectID((fp_ID)), ResourceData(move(fp_TextureData)) {}
+        explicit 
+            LoadedResourcePackage
+            (
+                const string& fp_ID, 
+                unique_ptr<TextureData> fp_TextureData
+            )
+        {
+            PeachObjectID = fp_ID; 
+            ResourceData = move(fp_TextureData);
+            Type = LoadedDataType::TextureData;
+        }
 
-        LoadedResourcePackage(const string& fp_ID, AudioData& fp_AudioData)
-            : PeachObjectID((fp_ID)), ResourceData(move(fp_AudioData)) {}
-
-        //LoadedResourcePackage(const string& fp_ID, unique_ptr<nlohmann::json> fp_JSONData) WARNING: TOOL FOR CEREAL 
-        //    : PeachObjectID((fp_ID)), ResourceData(move(fp_JSONData)) {}
-
-        LoadedResourcePackage() = default;
+        explicit 
+            LoadedResourcePackage
+            (
+                const string& fp_ID, 
+                unique_ptr<AudioData> fp_AudioData
+            )
+        {
+            PeachObjectID = fp_ID; 
+            ResourceData = move(fp_AudioData);
+            Type = LoadedDataType::AudioData;
+        }
     };
 
     struct LoadCommand //actual command that gets passed strictly one way from RenderingManager or AudioManager --> ResourceLoadingManager via their respective queues
@@ -93,7 +123,7 @@ namespace PeachCore {
 
     private:
         queue<LoadCommand> pm_LoadCommandQueue;
-        queue<unique_ptr<LoadedResourcePackage>> pm_LoadedResourceQueue;
+        queue<LoadedResourcePackage> pm_LoadedResourceQueue;
         mutex Mutex;
 
         //////////////////////////////////////////////
@@ -102,19 +132,31 @@ namespace PeachCore {
 
     public:
         // Push a new command onto the queue
-        void PushLoadCommandQueue(const LoadCommand& command) //Never supposed to be used by ResourceLoadingManager
+        bool 
+            PushLoadCommandQueue(const LoadCommand& command) //Never supposed to be used by ResourceLoadingManager
         {
-            lock_guard<mutex> lock(Mutex);
+            unique_lock<mutex> lock(Mutex);
+
+            if (not lock.owns_lock())
+            {
+                return false;
+            } // lock not acquired, return early
+
             pm_LoadCommandQueue.push(command);
+
+            return true;
         }
 
         // Pop the next command from the queue
-        bool PopLoadCommandQueue(LoadCommand& command) //returns true if empty, returns false if there are more commands to process--for use in while loops
+        bool 
+            PopLoadCommandQueue(LoadCommand& command) //returns true if empty, returns false if there are more commands to process--for use in while loops
         {
             lock_guard<mutex> lock(Mutex);
 
             if (pm_LoadCommandQueue.empty())
-                {return true;}
+            {
+                return true;
+            }
 
             command = move(pm_LoadCommandQueue.front());
             pm_LoadCommandQueue.pop();
@@ -127,11 +169,12 @@ namespace PeachCore {
         //////////////////////////////////////////////
 
         // Push a new command onto the queue
-        bool PushLoadedResourcePackage(vector<unique_ptr<LoadedResourcePackage>>& fp_ListOfPackages) //used exclusively by ResourceLoadingManager, NO OTHER CLASS SHOULD EVER USE THIS
+        bool 
+            PushLoadedResourcePackages(vector<LoadedResourcePackage>& fp_ListOfPackages) //used exclusively by ResourceLoadingManager, NO OTHER CLASS SHOULD EVER USE THIS
         {
             unique_lock<mutex> lock(Mutex, try_to_lock);
             //used for lazy pushing of LoadedPackages because i decided that loading assets while rendering and gameplay isnt a high priority, and this is better for level memory paging
-            if (!lock.owns_lock()) 
+            if (not lock.owns_lock()) 
             {
                 return false;
             } // lock not acquired, return early
@@ -140,13 +183,16 @@ namespace PeachCore {
             {
                 pm_LoadedResourceQueue.push(move(package));
             }
- 
+            
+            //fp_ListOfPackages.clear(); //clear heap
+
             return true;
         }
 
 
         // pass by ref since Rendering and Audio Manager pass a placeholder ptr
-        bool PopLoadedResourceQueue(unique_ptr<LoadedResourcePackage>& fp_Package) //returns false if empty, returns true if there are more packages to process--for use in while loops
+        bool 
+            PopLoadedResourceQueue(LoadedResourcePackage& fp_Package) //returns false if empty, returns true if there are more packages to process--for use in while loops
         {
             lock_guard<mutex> lock(Mutex);
 

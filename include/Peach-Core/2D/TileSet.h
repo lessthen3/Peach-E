@@ -9,8 +9,6 @@
 
 #include "../Managers/PhysicsManager2D.h"
 
-using namespace std;
-
 namespace PeachCore {
 
     struct Tile
@@ -50,9 +48,6 @@ namespace PeachCore {
         void
             QueueRemoval();
 
-        void //nlohmann::json
-            SerializePeachNodeToJSON();
-
     //Class Specific Methods
     public:
         Tile 
@@ -61,7 +56,7 @@ namespace PeachCore {
 
         //void DefinePhysicsForTile(int index, b2World& world, float metersPerPixel); //int index, b2World& world, const b2BodyDef& bodyDef, const b2FixtureDef& fixtureDef
         void 
-            SetCurrentTexture(TextureData& fp_NewTexture);
+            SetCurrentTexture(const uint32_t fp_TextureHandle);
 
         bool
             SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight);

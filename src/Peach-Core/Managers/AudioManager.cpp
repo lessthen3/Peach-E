@@ -25,7 +25,7 @@ namespace PeachCore {
         // Initialize Logger
         //////////////////////////////////////////////
         audio_logger = make_unique<LogManager>();
-        audio_logger->Initialize("audio_thread", fp_LogOutputDirectory, "AudioManager", fp_Console);
+        audio_logger->Initialize(ThreadName::AudioThread, fp_LogOutputDirectory, "AudioManager", fp_Console, LogManager::LogLevel::All);
         audio_logger->LogAndPrint("AudioLogger successfully initialized", "AudioManager", PeachCore::LogManager::LogLevel::Debug);
 
         //pm_Device = alcOpenDevice(nullptr); // Open default device
@@ -186,20 +186,20 @@ namespace PeachCore {
     void 
         AudioManager::ProcessLoadedResourcePackages()
     {
-        unique_ptr<LoadedResourcePackage> ResourcePackage;
-        while (pm_LoadedAudioResourceQueue->PopLoadedResourceQueue(ResourcePackage)) {
-            visit(overloaded
-                {
-                [&](AudioData& fp_RawByteData)
-                {
-                    // Handle creation logic here
-                },
-                [](auto&&)
-                {
-                    // Default handler for any unhandled types
-                    //audio_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "AudioManager", "warn");
-                }
-                }, ResourcePackage.get()->ResourceData);
-        }
+        //unique_ptr<LoadedResourcePackage> ResourcePackage;
+        //while (pm_LoadedAudioResourceQueue->PopLoadedResourceQueue(ResourcePackage)) {
+        //    visit(overloaded
+        //        {
+        //        [&](AudioData& fp_RawByteData)
+        //        {
+        //            // Handle creation logic here
+        //        },
+        //        [](auto&&)
+        //        {
+        //            // Default handler for any unhandled types
+        //            //audio_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "AudioManager", "warn");
+        //        }
+        //        }, ResourcePackage.get()->ResourceData);
+        //}
     }
 }
