@@ -6,7 +6,7 @@
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                         Peach-E is an open-source game engine
+ *                     Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
@@ -23,6 +23,8 @@
 #include <format>
 
 #include <thread>
+
+#include "../General/RingBuffer.h"
 
 using namespace std;
 
@@ -192,22 +194,22 @@ namespace PeachCore {
     public:
         Console()
         {
-            pm_MainThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
-            pm_RenderThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
-            pm_AudioThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
-            pm_ResourceThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
-            pm_PhysicsThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
-            pm_NetworkThreadLogBuffer.reserve(MAX_NUMBER_OF_LOGS);
+            pm_MainThreadLogSnapshotBuffer = make_unique<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>>();
+            pm_RenderThreadLogSnapshotBuffer = make_unique<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>>();
+            pm_AudioThreadLogSnapshotBuffer = make_unique<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>>();
+            pm_ResourceThreadLogSnapshotBuffer = make_unique<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>>();
+            pm_PhysicsThreadLogSnapshotBuffer = make_unique<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>>();
+            pm_NetworkThreadLogSnapshotBuffer = make_unique<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>>();
         }
 
         ~Console() //idk i think windows heap cleanup is more efficient but whatever this feels better uwu
         {
-            pm_MainThreadLogBuffer.clear();
-            pm_RenderThreadLogBuffer.clear();
-            pm_AudioThreadLogBuffer.clear();
-            pm_ResourceThreadLogBuffer.clear();
-            pm_PhysicsThreadLogBuffer.clear();
-            pm_NetworkThreadLogBuffer.clear();
+            //pm_MainThreadLogSnapshotBuffer.clear();
+            //pm_RenderThreadLogSnapshotBuffer.clear();
+            //pm_AudioThreadLogSnapshotBuffer.clear();
+            //pm_ResourceThreadLogBuffer.clear();
+            //pm_PhysicsThreadLogBuffer.clear();
+            //pm_NetworkThreadLogBuffer.clear();
         }
 
         void
@@ -236,9 +238,9 @@ namespace PeachCore {
 
             //switch (fp_NameOfLogBuffer)
             //{
-            //case ThreadName::MainThread: pm_MainThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            //case ThreadName::RenderThread: pm_RenderThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            //case ThreadName::AudioThread: pm_AudioThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //case ThreadName::MainThread: pm_MainThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //case ThreadName::RenderThread: pm_RenderThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //case ThreadName::AudioThread: pm_AudioThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
             //case ThreadName::ResourceThread: pm_ResourceThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
             //case ThreadName::PhysicsThread: pm_PhysicsThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
             //case ThreadName::NetworkThread: pm_NetworkThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
@@ -256,28 +258,28 @@ namespace PeachCore {
                 const ThreadName fp_ThreadName
             )
         {
-            switch (fp_ThreadName)
-            {
-            case ThreadName::MainThread: pm_MainThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            case ThreadName::RenderThread: pm_RenderThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            case ThreadName::AudioThread: pm_AudioThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            case ThreadName::ResourceThread: pm_ResourceThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            case ThreadName::PhysicsThread: pm_PhysicsThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            case ThreadName::NetworkThread: pm_NetworkThreadLogBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            default:
-                PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
-            }
+            //switch (fp_ThreadName)
+            //{
+            //case ThreadName::MainThread: pm_MainThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            //case ThreadName::RenderThread: pm_RenderThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            //case ThreadName::AudioThread: pm_AudioThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            //case ThreadName::ResourceThread: pm_ResourceThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            //case ThreadName::PhysicsThread: pm_PhysicsThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            //case ThreadName::NetworkThread: pm_NetworkThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
+            //default:
+            //    PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
+            //}
         }
 
     private:
         //logs are all related to the current project game logs
 
-        vector<LogMessage> pm_MainThreadLogBuffer;
-        vector<LogMessage> pm_RenderThreadLogBuffer;
-        vector<LogMessage> pm_AudioThreadLogBuffer;
-        vector<LogMessage> pm_ResourceThreadLogBuffer;
-        vector<LogMessage> pm_PhysicsThreadLogBuffer;
-        vector<LogMessage> pm_NetworkThreadLogBuffer;
+        unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_MainThreadLogSnapshotBuffer = nullptr;
+        unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_RenderThreadLogSnapshotBuffer = nullptr;
+        unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_AudioThreadLogSnapshotBuffer = nullptr;
+        unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_ResourceThreadLogSnapshotBuffer = nullptr;
+        unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_PhysicsThreadLogSnapshotBuffer = nullptr;
+        unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_NetworkThreadLogSnapshotBuffer = nullptr;
 
         mutex pm_ConsoleMutex;
     };
@@ -637,9 +639,9 @@ namespace PeachCore {
                     return true;
                 }
 
-                stringstream f_UckCPP; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
-                f_UckCPP << this_thread::get_id();
-                string f_CallerThreadID = f_UckCPP.str();
+                stringstream f_UckCPlusPlus; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
+                f_UckCPlusPlus << this_thread::get_id();
+                string f_CallerThreadID = f_UckCPlusPlus.str();
 
                 PrintError(format("Logger name: '{}' called method '{}' from the wrong thread, [Caller Thread ID]: {}", pm_LoggerName, fp_FunctionName, f_CallerThreadID));
 

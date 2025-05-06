@@ -8,8 +8,6 @@
 #include <string>
 #include <glm/glm.hpp>
 
-using namespace std;
-
 namespace PeachCore {
 
 	class CollisionSegment2D

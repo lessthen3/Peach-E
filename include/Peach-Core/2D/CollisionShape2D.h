@@ -12,7 +12,6 @@
 
 #include <box2d/box2d.h>
 
-using namespace std;
 
 namespace PeachCore {
 

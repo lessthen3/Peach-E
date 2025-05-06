@@ -16,8 +16,6 @@
 
 #include <unordered_map>
 
-using namespace std;
-
 namespace PeachCore {
 
     enum CollisionShapeType
@@ -36,17 +34,28 @@ namespace PeachCore {
         PlatformSensor
     };
 
-    enum CollisionLayer //Box2D supports up 32 layers for collision filtering
+    /*
+    This is a bit mask since a single collision object can be in multiple layers or no layers, 
+    so we can store every layer in a single uint32_t for ease and fast bitwise comparisons
+    */
+    enum CollisionLayer : uint32_t //Box2D supports up 32 layers for collision filtering
     {
-        Layer_1 = 0x00000001, Layer_2 = 0x00000002, Layer_3 = 0x00000003, Layer_4 = 0x00000004, 
-        Layer_5 = 0x00000005, Layer_6 = 0x00000006, Layer_7 = 0x00000007, Layer_8 = 0x00000008,
-        Layer_9 = 0x00000009, Layer_10 = 0x00000010, Layer_11 = 0x00000011, Layer_12 = 0x00000012,
-        Layer_13 = 0x00000013, Layer_14 = 0x00000014, Layer_15 = 0x00000015, Layer_16 = 0x00000016,
+        Layer_1 = 1 << 0, Layer_2 = 1 << 1, Layer_3 = 1 << 2, Layer_4 = 1 << 3,
+        Layer_5 = 1 << 4, Layer_6 = 1 << 5, Layer_7 = 1 << 6, Layer_8 = 1 << 7,
+        Layer_9 = 1 << 8, Layer_10 = 1 << 9, Layer_11 = 1 << 10, Layer_12 = 1 << 11,
+        Layer_13 = 1 << 12, Layer_14 = 1 << 13, Layer_15 = 1 << 14, Layer_16 = 1 << 15,
 
-        Layer_17 = 0x00000017, Layer_18 = 0x00000018, Layer_19 = 0x00000019, Layer_20 = 0x00000020,
-        Layer_21 = 0x00000021, Layer_22 = 0x00000022, Layer_23 = 0x00000023, Layer_24 = 0x00000024,
-        Layer_25 = 0x00000025, Layer_26 = 0x00000026, Layer_27 = 0x00000027, Layer_28 = 0x00000028,
-        Layer_29 = 0x00000029, Layer_30 = 0x00000030, Layer_31 = 0x00000031, Layer_32 = 0x00000032,
+        Layer_17 = 1 << 16, Layer_18 = 1 << 17, Layer_19 = 1 << 18, Layer_20 = 1 << 19,
+        Layer_21 = 1 << 20, Layer_22 = 1 << 21, Layer_23 = 1 << 22, Layer_24 = 1 << 23,
+        Layer_25 = 1 << 24, Layer_26 = 1 << 25, Layer_27 = 1 << 26, Layer_28 = 1 << 27,
+        Layer_29 = 1 << 28, Layer_30 = 1 << 29, Layer_31 = 1 << 30, Layer_32 = 1 << 31,
+
+        NO_LAYER = 0,
+
+        ALL_LAYERS = 
+        Layer_1 | Layer_2 | Layer_3 | Layer_4 | Layer_5 | Layer_6 | Layer_7 | Layer_8 | Layer_9 | Layer_10 | Layer_11 | Layer_12 |
+        Layer_13 | Layer_14 | Layer_15 | Layer_16 | Layer_17 | Layer_18 | Layer_19 | Layer_20 | Layer_21 | Layer_22 | Layer_23 | Layer_24 |
+        Layer_25 | Layer_26 | Layer_27 | Layer_28 | Layer_29 | Layer_30 | Layer_31 | Layer_32
     };
 
     ////////////////////////////////////////////////
