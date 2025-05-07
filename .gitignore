@@ -18,6 +18,9 @@
 # Logs
 /logs
 
+#possible additions
+/idk maybe
+
 # JSON
 **.json
 

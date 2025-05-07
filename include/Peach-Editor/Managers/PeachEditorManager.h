@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../Peach-Engine/GameManager.h"
+#include "../../Peach-Core/Managers/GameManager.h"
 #include "PeachEditorRenderingManager.h"
 #include "../Editor/PeachProject.h"
 
@@ -77,7 +77,7 @@ namespace PeachEditor{
             StartPeachEditorMainLoop()
             const
         {
-            auto peach_engine = &PeachEngine::GameManager::PeachEngine();
+            auto peach_engine = &PeachCore::GameManager::PeachEngine();
             auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
 
             bool mf_IsEditorOpen = true;
@@ -136,7 +136,7 @@ namespace PeachEditor{
         bool
             InitializePeachEditor(const string& fp_RootPath) //XXX: idk this method seems kinda weird idk how im gonna manage error codes but w/e thats for future me to handle UwU
         {
-            auto peach_engine = &PeachEngine::GameManager::PeachEngine();
+            auto peach_engine = &PeachCore::GameManager::PeachEngine();
 
             if (not peach_engine->InitializePeachEngine(fp_RootPath, PeachCore::RendererType::Vulkan))
             {

@@ -20,7 +20,7 @@
 
 #define MINIAUDIO_IMPLEMENTATION
 
-#include "../../include/Peach-Engine/GameManager.h"
+#include "../../include/Peach-Core/Managers/GameManager.h"
 
 #include <csignal>
 
@@ -41,7 +41,7 @@ int
 
     try
     {
-        auto engine_manager = &PeachEngine::GameManager::PeachEngine();
+        auto engine_manager = &PeachCore::GameManager::PeachEngine();
 
         engine_manager->InitializePeachEngine(string(fp_ArgVector[0]), PeachCore::RendererType::OpenGL);
         engine_manager->StartMainGameLoop();
