@@ -229,23 +229,16 @@ namespace PeachCore {
                 const uint8_t fp_DesiredLogLevelQuery
             )
         {
-            unique_lock<mutex> lock(pm_ConsoleMutex, try_to_lock);
-
-            if (not lock.owns_lock())
-            {
-                return false;
-            } // lock not acquired, return early
-
             //switch (fp_NameOfLogBuffer)
             //{
-            //case ThreadName::MainThread: pm_MainThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
-            //case ThreadName::RenderThread: pm_RenderThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
-            //case ThreadName::AudioThread: pm_AudioThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
-            //case ThreadName::ResourceThread: pm_ResourceThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            //case ThreadName::PhysicsThread: pm_PhysicsThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            //case ThreadName::NetworkThread: pm_NetworkThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
-            //default:
-            //    PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
+            //    case ThreadName::MainThread: pm_MainThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //    case ThreadName::RenderThread: pm_RenderThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //    case ThreadName::AudioThread: pm_AudioThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //    case ThreadName::ResourceThread: pm_ResourceThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //    case ThreadName::PhysicsThread: pm_PhysicsThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //    case ThreadName::NetworkThread: pm_NetworkThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+            //    default:
+            //        PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
             //}
         }
 
@@ -258,17 +251,17 @@ namespace PeachCore {
                 const ThreadName fp_ThreadName
             )
         {
-            //switch (fp_ThreadName)
-            //{
-            //case ThreadName::MainThread: pm_MainThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            //case ThreadName::RenderThread: pm_RenderThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            //case ThreadName::AudioThread: pm_AudioThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            //case ThreadName::ResourceThread: pm_ResourceThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            //case ThreadName::PhysicsThread: pm_PhysicsThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            //case ThreadName::NetworkThread: pm_NetworkThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender, fp_LogLevel); break;
-            //default:
-            //    PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
-            //}
+            switch (fp_ThreadName)
+            {
+                case ThreadName::MainThread: pm_MainThreadLogSnapshotBuffer->ForceEmplace(fp_Message, fp_Sender, fp_LogLevel); break;
+                case ThreadName::RenderThread: pm_RenderThreadLogSnapshotBuffer->ForceEmplace(fp_Message, fp_Sender, fp_LogLevel); break;
+                case ThreadName::AudioThread: pm_AudioThreadLogSnapshotBuffer->ForceEmplace(fp_Message, fp_Sender, fp_LogLevel); break;
+                case ThreadName::ResourceThread: pm_ResourceThreadLogSnapshotBuffer->ForceEmplace(fp_Message, fp_Sender, fp_LogLevel); break;
+                case ThreadName::PhysicsThread: pm_PhysicsThreadLogSnapshotBuffer->ForceEmplace(fp_Message, fp_Sender, fp_LogLevel); break;
+                case ThreadName::NetworkThread: pm_NetworkThreadLogSnapshotBuffer->ForceEmplace(fp_Message, fp_Sender, fp_LogLevel); break;
+                default:
+                    PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
+            }
         }
 
     private:
@@ -328,7 +321,7 @@ namespace PeachCore {
             All = Trace | Debug | Info | Warning | Error | Fatal
         };
 
-        inline bool 
+        constexpr inline bool 
             HasFlag
             (
                 const LogLevel __Val, 

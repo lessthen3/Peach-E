@@ -88,7 +88,7 @@ namespace PeachEditor {
         struct nk_font_atlas* mf_FontAtlas;
         nk_sdl_font_stash_begin(&mf_FontAtlas);
 
-        string f_DesiredFontDirectory = static_cast<string>(PHYSFS_getWriteDir()) + "/fonts/ComicSansMS.ttf";
+        string f_DesiredFontDirectory = static_cast<string>(PHYSFS_getWriteDir()) + "/res/fonts/ComicSansMS.ttf";
 
         struct nk_font* mf_ComicSans = nk_font_atlas_add_from_file(mf_FontAtlas, f_DesiredFontDirectory.c_str(), 18, 0);
 
@@ -109,7 +109,6 @@ namespace PeachEditor {
 
         SDL_GetWindowSizeInPixels(pm_MainWindow, &f_CurrentWindowWidth, &f_CurrentWindowHeight);
 
-        pm_Viewport = PeachCore::Viewport();
         pm_Viewport.SetupViewport(400, 200, PeachCore::RenderingManager::Renderer().GetPeachRenderer(), rendering_logger);
 
         pm_IsRenderingInitialized = true;

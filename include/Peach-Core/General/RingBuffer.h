@@ -44,6 +44,15 @@ namespace PeachCore {
             Push(move(value)); // Move into buffer
         }
 
+        template<typename... Args>
+        constexpr void SafeEmplace(Args&&... args)
+        {
+            assert(not IsFull() and "RingBuffer overflow (consider overwriting or increasing capacity)");
+            pm_Buffer[pm_Head] = T(forward<Args>(args)...);
+            pm_Head = (pm_Head + 1) % pm_MaxCapacity;
+            ++pm_Size;
+        }
+
         constexpr void ForcePush(const T& value)
         {
             if (IsFull()) 
@@ -64,6 +73,19 @@ namespace PeachCore {
             Push(move(value)); // Move into buffer
         }
 
+        template<typename... Args>
+        constexpr void ForceEmplace(Args&&... args)
+        {
+            if (IsFull())
+            {
+                Pop(); // Make room
+            }
+
+            pm_Buffer[pm_Head] = T(forward<Args>(args)...); // Construct T using args, assign to slot
+            pm_Head = (pm_Head + 1) % pm_MaxCapacity;
+            ++pm_Size;
+        }
+
         constexpr void Pop() 
         {
             assert(not IsEmpty() and "Cannot pop from empty RingBuffer");
@@ -81,6 +103,18 @@ namespace PeachCore {
         {
             assert(not IsEmpty() and "Cannot access front of empty RingBuffer");
             return pm_Buffer[pm_Tail];
+        }
+
+        [[nodiscard]] constexpr T& Back()
+        {
+            assert(not IsEmpty() and "Cannot access back of empty RingBuffer");
+            return pm_Buffer[(pm_Head + pm_MaxCapacity - 1) % pm_MaxCapacity];
+        }
+        
+        [[nodiscard]] constexpr const T& Back() const
+        {
+            assert(not IsEmpty() and "Cannot access back of empty RingBuffer");
+            return pm_Buffer[(pm_Head + pm_MaxCapacity - 1) % pm_MaxCapacity];
         }
 
         [[nodiscard]] constexpr T& At(size_t index)

@@ -243,20 +243,22 @@ namespace PeachCore {
             return false;
         }
 
-        pm_VulkanRenderer.DrawFrame();
-
         SDL_Event event;
 
-        while (SDL_PollEvent(&event) or true)
+        while(1)
         {
-            //ImGui_ImplSDL2_ProcessEvent(&event);
+            pm_VulkanRenderer.DrawFrame();
 
-            if (event.type == SDL_EVENT_QUIT)
+            while (SDL_PollEvent(&event))
             {
-                break;
+                if (event.type == SDL_EVENT_QUIT)
+                {
+                    goto outside;
+                }
             }
+            this_thread::sleep_for(chrono::milliseconds(16));
         }
-
+        outside:
         return true; // >w<
     }
 
