@@ -24,7 +24,7 @@
 
 #include <thread>
 
-#include "../General/RingBuffer.h"
+#include "../Utils/RingBuffer.h"
 
 using namespace std;
 
@@ -378,14 +378,14 @@ namespace PeachCore {
             pm_ThreadOwnerName = fp_ThreadName;
             pm_ThreadOwnerID = this_thread::get_id();
 
-            pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory;
+            pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + pm_LoggerName;
 
             // Ensure log directory exists
             if ((not filesystem::exists(pm_CurrentWorkingDirectory)) and fp_ShouldCreateOutputDirectory)
             {
                 try
                 {
-                    filesystem::create_directories(pm_CurrentWorkingDirectory);
+                    filesystem::create_directories(pm_CurrentWorkingDirectory); //XXX: this can throw so we wrap it in a try catch
                 }
                 catch (const exception& f_Exception)
                 {
@@ -442,31 +442,6 @@ namespace PeachCore {
         }
 
         //////////////////// Logging Functions  ////////////////////
-
-        string
-            Log
-            (
-                const string& fp_Message,
-                const string& fp_Sender,
-                const string& fp_LogLevel,
-                const LogLevel fp_EnumLogLevel //used for adding a log to console
-            )
-        {
-            string f_TimeStamp = GetCurrentTimestamp();
-            string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + fp_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
-
-            // Log to specific file and all-logs file
-            const string f_LogFileName = fp_LogLevel + ".log";
-
-            if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
-            {
-                pm_LogFiles[f_LogFileName] << f_LogEntry;
-            }
-
-            pm_Console->AddLog(format("[{}][{}]: {}", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, fp_EnumLogLevel, pm_ThreadOwnerName);
-
-            return f_LogEntry;
-        }
 
         void
             Log
@@ -572,6 +547,36 @@ namespace PeachCore {
     // Protected Methods
     //////////////////////////////////////////////
     protected:
+
+        //////////////////// Protected Logging Function  ////////////////////
+        //XXX: this is protected since it's supposed to be only called from LogAndPrint()
+        string
+            Log
+            (
+                const string& fp_Message,
+                const string& fp_Sender,
+                const string& fp_LogLevel,
+                const LogLevel fp_EnumLogLevel //used for adding a log to console
+            )
+        {
+            string f_TimeStamp = GetCurrentTimestamp();
+            string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + fp_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
+
+            // Log to specific file and all-logs file
+            const string f_LogFileName = fp_LogLevel + ".log";
+
+            if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+            {
+                pm_LogFiles[f_LogFileName] << f_LogEntry;
+            }
+
+            pm_Console->AddLog(format("[{}][{}]: {}", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, fp_EnumLogLevel, pm_ThreadOwnerName);
+
+            return f_LogEntry;
+        }
+
+        //////////////////// Utility Functions  ////////////////////
+
         void
             CreateLogFile
             (
@@ -581,7 +586,7 @@ namespace PeachCore {
         {
             ofstream f_LogFile;
 
-            f_LogFile.open(fp_FilePath + "/" + pm_LoggerName + "/" + fp_FileName, ios::out | ios::app);
+            f_LogFile.open(fp_FilePath + "/" + fp_FileName, ios::out | ios::app);
 
             if (not f_LogFile.is_open())
             {
@@ -593,12 +598,20 @@ namespace PeachCore {
             }
         }
 
-        string //thank you chat-gpt uwu
+        inline string //thank you chat-gpt uwu
             GetCurrentTimestamp()
+            const noexcept
         {
             auto now = chrono::system_clock::now();
             auto time_t_now = chrono::system_clock::to_time_t(now);
-            auto local_time = *localtime(&time_t_now);
+           
+            tm local_time{};
+
+            #if defined(_WIN32) || defined(_WIN64) //needa do this since localtime() isnt threadsafe uwu
+                localtime_s(&local_time, &time_t_now);
+            #else
+                localtime_r(&time_t_now, &local_time);
+            #endif
 
             stringstream ss;
             ss << put_time(&local_time, "%Y-%m-%d %H:%M:%S");
@@ -622,6 +635,7 @@ namespace PeachCore {
                 }
             }
         }
+
         #ifdef _DEBUG
             inline bool ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
                 AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the LogManager instance

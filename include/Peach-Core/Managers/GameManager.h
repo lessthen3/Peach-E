@@ -26,7 +26,7 @@ namespace PeachCore {
     // Private Destructor
     //////////////////////////////////////////////
     private:
-        ~GameManager() {}
+        ~GameManager() = default;
 
     //////////////////////////////////////////////
     // Singleton Instance
@@ -42,7 +42,7 @@ namespace PeachCore {
     // Private Constructor
     //////////////////////////////////////////////
     private:
-        GameManager() {}
+        GameManager() = default;
 
         GameManager(const GameManager&) = delete;
         GameManager& operator=(const GameManager&) = delete;
@@ -54,7 +54,8 @@ namespace PeachCore {
         unique_ptr<LogManager> main_logger = nullptr;
         PeachConsole peach_engine_console;
 
-        shared_ptr<CommandQueue> pm_RenderingManagerLoadingQueue = nullptr;
+        shared_ptr<CommandQueue> pm_DrawCommandQueue = nullptr;
+        shared_ptr<CommandQueue> pm_AudioCommandQueue = nullptr;
 
         //////////////////// Plugin Stuff ////////////////////
 
@@ -174,14 +175,7 @@ namespace PeachCore {
             );
 
         bool
-            InitializeQueues()
-        {
-            auto engine_renderer = &RenderingManager::Renderer();
-
-            pm_RenderingManagerLoadingQueue = engine_renderer->InitializeQueues();
-
-            return true;
-        }
+            InitializeQueues();
 
         bool
             InitializePhysFS(const char* fp_RootPath);

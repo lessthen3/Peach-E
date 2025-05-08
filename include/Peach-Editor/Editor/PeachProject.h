@@ -1,8 +1,6 @@
 #pragma once
 
-#include <General/Serializer.h>
-
-using namespace std;
+#include <Utils/Serializer.h>
 
 namespace PeachEditor{
 

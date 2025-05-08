@@ -19,38 +19,39 @@ namespace PeachCore
         GameManager::InitializePeachEngine
         (
             const string& fp_RootPath,
-            const PeachCore::RendererType fp_RenderingBackend
+            const RendererType fp_RenderingBackend
         )
     {
         //Enable ANSI colour codes for windows console grumble grumble
-        #if defined(_WIN32) or defined(_WIN64)
+        #if defined(_WIN32) || defined(_WIN64)
             EnableColors();
         #endif
 
-        main_logger = make_unique<PeachCore::LogManager>();
-        main_logger->Initialize(PeachCore::ThreadName::MainThread, fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger(), PeachCore::LogManager::LogLevel::All);
-        main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", PeachCore::LogManager::LogLevel::Debug);
+        main_logger = make_unique<LogManager>();
+        main_logger->Initialize(ThreadName::MainThread, fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger(), LogManager::LogLevel::All);
+        main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", LogManager::LogLevel::Debug);
 
         if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop
         {
-            main_logger->LogAndPrint(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
+            main_logger->LogAndPrint(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "GameManager", LogManager::LogLevel::Fatal);
             return false;
         }
         else if (not InitializePhysFS(fp_RootPath.c_str()))
         {
-            main_logger->LogAndPrint("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
-            return false;
-        }
-        else if (not InitializeQueues())
-        {
-
+            main_logger->LogAndPrint("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "GameManager", LogManager::LogLevel::Fatal);
             return false;
         }
         else if (not InitalizeManagers(fp_RootPath, fp_RenderingBackend))
         {
-            main_logger->LogAndPrint("Failed to initialize Peach Engine managers, ending engine program execution immediately", "PeachEngineManager", PeachCore::LogManager::LogLevel::Fatal);
+            main_logger->LogAndPrint("Failed to initialize Peach Engine managers, ending engine program execution immediately", "GameManager", LogManager::LogLevel::Fatal);
             return false;
         }
+        else if (not InitializeQueues())
+        {
+            main_logger->LogAndPrint("Command Queue acquisiton failed, exiting engine execution immediately", "GameManager", LogManager::LogLevel::Fatal);
+            return false;
+        }
+        
 
         //////////////////////////////////////////////
         // Load and Setup Plugins
@@ -96,29 +97,55 @@ namespace PeachCore
     }
 
     bool
+        GameManager::InitializeQueues()
+    {
+        auto engine_renderer = &RenderingManager::Renderer();
+
+        pm_DrawCommandQueue = engine_renderer->GetDrawCommandQueue();
+
+        if (not pm_DrawCommandQueue)
+        {
+            main_logger->LogAndPrint("Failed to retrieve Draw Command Queue from RenderingManager, engine cannot continue execution", "GameManager", LogManager::LogLevel::Fatal);
+            return false;
+        }
+
+        main_logger->LogAndPrint("Successfully retrieved Draw Command Queue from RenderingManager", "GameManager", LogManager::LogLevel::Info);
+
+        pm_AudioCommandQueue = AudioManager::get_single().GetAudioCommandQueue();
+
+        if (not pm_DrawCommandQueue)
+        {
+            main_logger->LogAndPrint("Failed to retrieve Audio Command Queue from AudioManager, engine cannot continue execution", "GameManager", LogManager::LogLevel::Fatal);
+            return false;
+        }
+
+        main_logger->LogAndPrint("Successfully retrieved Audio Command Queue from AudioManaager", "GameManager", LogManager::LogLevel::Info);
+
+        return true;
+    }
+
+    bool
         GameManager::InitializePhysFS(const char* fp_RootPath)
     {
         if (not PHYSFS_init(fp_RootPath))
         {
-            main_logger->LogAndPrint("Failed to initialize PhysFS: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", PeachCore::LogManager::LogLevel::Fatal);
+            main_logger->LogAndPrint("Failed to initialize PhysFS: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager", LogManager::LogLevel::Fatal);
             return false;
         }
-
         // Set the writable directory to the repo root
-        if (not PHYSFS_setWriteDir(fp_RootPath))
+        else if (not PHYSFS_setWriteDir(fp_RootPath))
         {
-            main_logger->LogAndPrint("Failed to set write directory: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", PeachCore::LogManager::LogLevel::Fatal);
+            main_logger->LogAndPrint("Failed to set write directory: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager", LogManager::LogLevel::Fatal);
             return false;
         }
-
         // Mount the root directory for asset loading
-        if (not PHYSFS_mount(fp_RootPath, nullptr, 1))
+        else if (not PHYSFS_mount(fp_RootPath, nullptr, 1))
         {
-            main_logger->LogAndPrint("Failed to set search path: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "PeachEngineManger", PeachCore::LogManager::LogLevel::Fatal);
+            main_logger->LogAndPrint("Failed to set search path: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager", LogManager::LogLevel::Fatal);
             return false;
         }
 
-        main_logger->LogAndPrint("PhysFS initialized at root: " + static_cast<string>(fp_RootPath), "PeachEngineManger", PeachCore::LogManager::LogLevel::Debug);
+        main_logger->LogAndPrint("PhysFS initialized at root: " + static_cast<string>(fp_RootPath), "GameManager", LogManager::LogLevel::Debug);
         return true;
     }
 
@@ -126,21 +153,22 @@ namespace PeachCore
         GameManager::InitalizeManagers
         (
             const string& fp_RootPath, 
-            const PeachCore::RendererType fp_RenderingBackend
+            const RendererType fp_RenderingBackend
         )
     {
         const string f_LogDir = fp_RootPath + "/logs";
 
-        PeachCore::PhysicsManager2D::PhysicsWorld().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
-        PeachCore::AudioManager::AudioPlayer().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
-        PeachCore::RenderingManager::Renderer().Initialize(fp_RenderingBackend, f_LogDir, peach_engine_console.GetConsoleLogger());
-        PeachCore::ResourceManager::ResourceLoader().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
-        //PeachCore::LogManager::NetworkLogger().Initialize(f_LogDir, "NetworkLogger");
-        //PeachCore::LogManager::NetworkLogger().LogAndPrint("NetworkLogger successfully initialized", "Peach-E", "debug");
+        //resource manager should be initialized first, otherwise the loading queues will be nullptr
+        ResourceManager::ResourceLoader().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
+
+        PhysicsManager2D::PhysicsWorld().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
+        AudioManager::get_single().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
+        RenderingManager::Renderer().Initialize(fp_RenderingBackend, f_LogDir, peach_engine_console.GetConsoleLogger());
+        NetworkManager::get_single().InitializeNetworking(f_LogDir, peach_engine_console.GetConsoleLogger()); //stole get_single from godot style uwu
 
         cout << "Hello World!\n"; //>w<
-        main_logger->LogAndPrint("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E", PeachCore::LogManager::LogLevel::Warning);
-        main_logger->LogAndPrint("Success! This Built Correctly", "Peach-E", PeachCore::LogManager::LogLevel::Trace);
+        main_logger->LogAndPrint("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E", LogManager::LogLevel::Warning);
+        main_logger->LogAndPrint("Success! This Built Correctly", "Peach-E", LogManager::LogLevel::Trace);
 
         return true;
     }
@@ -209,8 +237,8 @@ namespace PeachCore
     {
         for (int index = 0; index < fp_ListOfPluginsToLoad.size(); index++)
         {
-            PeachCore::PluginInfo f_TempPlugin = {};
-            PeachCore::ResourceManager::ResourceLoader().LoadPlugin(fp_ListOfPluginsToLoad[index], f_TempPlugin);
+            PluginInfo f_TempPlugin = {};
+            ResourceManager::ResourceLoader().LoadPlugin(fp_ListOfPluginsToLoad[index], f_TempPlugin);
 
             pm_PluginInstances.emplace_back(move(f_TempPlugin.Pwugin), f_TempPlugin.Handle);
         }

@@ -6,14 +6,14 @@
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                         Peach-E is an open-source game engine
+ *                     Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
 //#define VK_USE_PLATFORM_WIN32_KHR
 
 ///PeachCore
-#include "ShaderUtils.h"
+#include "../Utils/ShaderUtils.h"
 
 ///Vulkan
 #include <vma/vk_mem_alloc.h>

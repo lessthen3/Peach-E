@@ -11,20 +11,18 @@
 #pragma once
 
 ///PeachCore
-#include "../Rendering/ShaderUtils.h"
-#include "../General/Serializer.h"
-#include "../General/LoadingQueue.h"
 #include "../General/Plugin.h"
 
-#include "../General/DynamicLoader.h"
-
-///STL
-#include <memory>
-#include <assert.h>
+#include "../Utils/ShaderUtils.h"
+#include "../Utils/Serializer.h"
+#include "../Utils/LoadingQueue.h"
+#include "../Utils/CommandQueue.h"
+#include "../Utils/DynamicLoader.h"
 
 ///External
 #include <physfs.h>
 #include <stb/stb_image.h>
+#include <miniaudio/miniaudio.h>
 
 typedef Plugin* (*CreatePluginFunc)();
 typedef void (*DestroyPluginFunc)(Plugin*);
@@ -43,7 +41,7 @@ namespace PeachCore {
 	// Private Destructor
 	//////////////////////////////////////////////
 	private:
-		~ResourceManager() {};
+		~ResourceManager() = default;
 
 	//////////////////////////////////////////////
 	// Singleton Instance
@@ -68,13 +66,19 @@ namespace PeachCore {
 	// Private Members
 	//////////////////////////////////////////////
 	private:
-		shared_ptr<LoadingQueue> pm_AudioResourceLoadingQueue; //used to push load commands that are destined for AudioManager
-		shared_ptr<LoadingQueue> pm_DrawableResourceLoadingQueue; //used to push load commands that are destined for RenderingManager
+		//used to push loaded assets that are destined for AudioManager
+		shared_ptr<LoadingQueue> pm_AudioResourceLoadingQueue = nullptr;
+		//used to push loaded assets that are destined for RenderingManager
+		shared_ptr<LoadingQueue> pm_DrawableResourceLoadingQueue = nullptr; 
+		//used for asking ResourceManager to load something from the main thread
+		shared_ptr<CommandQueue> pm_LoadCommandQueue = nullptr;
 
-		unsigned int pm_AudioQueueReferenceCount = 0;
-		unsigned int pm_DrawableQueueReferenceCount = 0;
+		bool pm_IsInitialized = false;
 
-		vector<LoadedResourcePackage> pm_WaitingFullyLoadedResourcePackages;
+		// Holds mesh, texture, shader and animation data
+		vector<LoadedResourcePackage> pm_WaitingLoadedGraphicsAssets;
+		//Holds mp3, wav and flac files
+		vector<LoadedResourcePackage> pm_WaitingLoadedAudioAssets;
 
 		unique_ptr<LogManager> resource_logger = nullptr;
 
@@ -95,61 +99,34 @@ namespace PeachCore {
 			shared_ptr<Console> fp_Console
 		);
 
-		shared_ptr<LoadingQueue> GetAudioResourceLoadingQueue();
-		shared_ptr<LoadingQueue> GetDrawableResourceLoadingQueue();
+		[[nodiscard]] shared_ptr<LoadingQueue>
+			GetAudioResourceLoadingQueue();
 
-	public: //PUBLIC FOR TESTING
-		bool TryPushingLoadedTexture(const string& fp_ObjectID, unique_ptr<TextureData> fp_TextureDataPtr);
-		bool LoadTextureFromFile(const string& fp_FilePath);
+		[[nodiscard]] shared_ptr<LoadingQueue>
+			GetDrawableResourceLoadingQueue();
 
-	//////////////////////////////////////////////
-	// Private Methods
-	//////////////////////////////////////////////
-	private:
-
-	public:
 		bool
 			LoadPlugin
 			(
 				const string& fp_PluginFilePath,
 				PluginInfo& fp_Plugin
-			)
-		{
-			DYNLIB_HANDLE f_Handle;
+			);
 
-			if (not (filesystem::exists(fp_PluginFilePath) and filesystem::is_regular_file(fp_PluginFilePath)))
-			{
-				resource_logger->LogAndPrint("Failed to locate DLL at: " + fp_PluginFilePath, "PluginManager", LogManager::LogLevel::Error);
-				return false;
-			}
+		bool 
+			LoadTextureFromFile(const string& fp_TextureFilePath);
 
-			f_Handle = DYNLIB_LOAD(fp_PluginFilePath.c_str());
-			resource_logger->LogAndPrint("Successfully located DLL at: " + fp_PluginFilePath, "PluginManager", LogManager::LogLevel::Debug);
+		bool
+			LoadWavFromFile(const string& fp_WavFilePath);
 
-			if (not f_Handle)
-			{
-				resource_logger->LogAndPrint("Failed to load plugin at path: " + fp_PluginFilePath, "PluginManager", LogManager::LogLevel::Error);
-				return false;
-			}
-			
-			resource_logger->LogAndPrint("Successfully loaded plugin at: " + fp_PluginFilePath, "PluginManager", LogManager::LogLevel::Debug);
-			
-			auto f_CreateFunc = (CreatePluginFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
-			auto f_DestroyFunc = (DestroyPluginFunc)DYNLIB_GETSYM(f_Handle, "destroyPlugin");
-
-			if (not f_CreateFunc or not f_DestroyFunc)
-			{
-				resource_logger->LogAndPrint("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "PluginManager", LogManager::LogLevel::Error);
-				DYNLIB_UNLOAD(f_Handle);
-				return false;
-			}
-			
-			resource_logger->LogAndPrint("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "PluginManager", LogManager::LogLevel::Debug);
-
-			fp_Plugin.Pwugin = unique_ptr<Plugin, DestroyPluginFunc>(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;
-			fp_Plugin.Handle = f_Handle;
-
-			return true;
-		}
+	//////////////////////////////////////////////
+	// Private Methods
+	//////////////////////////////////////////////
+	private:
+		bool 
+			TryPushingLoadedTexture
+			(
+				const string& fp_ObjectID, 
+				unique_ptr<TextureData> fp_TextureDataPtr
+			);
 	};
 }

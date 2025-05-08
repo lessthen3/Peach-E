@@ -39,7 +39,7 @@ namespace PeachEditor {
         }
 
         pm_CommandQueue = make_shared<PeachCore::CommandQueue>();
-        pm_LoadedResourceQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
+        //pm_LoadedResourceQueue = PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue();
 
         //pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, false);
 

@@ -18,6 +18,7 @@
 #include "Managers/RenderingManager.h"
 #include "Managers/ResourceManager.h"
 #include "Managers/PhysicsManager2D.h"
+#include "Managers/NetworkManager.h"
 
 //////////////////////////////////////////////
 // Graphics2D
@@ -65,15 +66,17 @@
 #include "General/PeachNode.h"
 #include "General/PeachObject.h"
 #include "General/Scene.h"
-
 #include "General/PeachConsole.h"
 
-#include "General/Serializer.h"
+//////////////////////////////////////////////
+// Utils
+//////////////////////////////////////////////
 
-#include "General/NoiseGenerator.h"
+#include "Utils/InputHandler.h"
+#include "Utils/EventQueue.h"
+#include "Utils/Serializer.h"
+#include "Utils/NoiseGenerator.h"
 
-#include "General/InputHandler.h"
-#include "General/EventQueue.h"
 
 //////////////////////////////////////////////
 // Rendering

@@ -120,11 +120,11 @@ namespace PeachEditor{
             //    return false;
             //}
 
-            if(not PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger(f_LogDir, pm_PeachEditorConsole))
-            {
-                main_editor_logger->LogAndPrint("Initialization error: PeachEditorResourceLoader failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
-                return false;
-            }
+            //if(not PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger(f_LogDir, pm_PeachEditorConsole))
+            //{
+            //    main_editor_logger->LogAndPrint("Initialization error: PeachEditorResourceLoader failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
+            //    return false;
+            //}
 
             //main_editor_logger->LogAndPrint("InternalMainLogger successfully initialized", "Peach-E", "debug");
             //InternalLogManager::InternalAudioLogger().LogAndPrint("InternalAudioLogger successfully initialized", "Peach-E", "debug");
@@ -245,7 +245,7 @@ namespace PeachEditor{
             //used for pushing update commands to the Render Thread
             //Initialize methods, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
             pm_PeachEditorRenderingManagersCommandQueue = editor_renderer->InitializeQueues(); //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
-            pm_PeachEditorDrawableResourceLoadingQueue = PeachEditor::PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue(); //used to push load commands that are destined for RenderingManager
+            //pm_PeachEditorDrawableResourceLoadingQueue = PeachEditor::PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue(); //used to push load commands that are destined for RenderingManager
 
             // ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
             //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;

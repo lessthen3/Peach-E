@@ -6,7 +6,7 @@
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                 Peach Editor is an open source editor for Peach-E
+ *              Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
 #define SDL_MAIN_HANDLED
 

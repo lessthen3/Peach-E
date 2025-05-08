@@ -10,14 +10,11 @@
 ********************************************************************/
 #pragma once
 
+///PeachCore
 #include "../Managers/LogManager.h"
 #include "PeachNode2D.h"
 
-#include "../General/LoadingQueue.h"
-
-#include <iostream>
-#include <filesystem>
-#include <vector>
+///STL
 #include <tuple>
 #include <future>
 

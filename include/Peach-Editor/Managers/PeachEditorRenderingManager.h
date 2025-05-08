@@ -10,7 +10,6 @@
 ********************************************************************/
 #pragma once
 
-#include "PeachEditorResourceLoadingManager.h"
 #include "../../include/Peach-Core/Managers/RenderingManager.h"
 
 #include <atomic> //should be used for communicating whether the scene execution thread is currently running or not

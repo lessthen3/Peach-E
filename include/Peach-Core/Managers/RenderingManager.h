@@ -10,19 +10,13 @@
 /////////////////////////////////////////////////////////
 #pragma once
 
+///PeachCore
 #include "ResourceManager.h"
-
 #include <Rendering/OpenGLRenderer.h>
 #include <Rendering/VulkanRenderer.h>
-
 #include "../2D/PeachTexture2D.h"
-
-#include "../General/CommandQueue.h"
-#include "../General/LoadingQueue.h"
-
 #include "../General/PeachNode.h"
 
-#include <memory>
 
 namespace PeachCore {
 
@@ -96,8 +90,6 @@ namespace PeachCore {
         bool pm_IsVSyncEnabled = false;
         bool pm_IsShutDown = false;
 
-        bool pm_IsRenderingInitialized = false;
-        bool pm_AreQueuesInitialized = false;
         bool pm_IsInitialized = false;
 
         // Object ID : CurrentPosition
@@ -108,7 +100,7 @@ namespace PeachCore {
         // DrawableObject.ObjectID : DrawableObject dict
         map<string, DrawableObject> pm_ListOfAllDrawables;
 
-        shared_ptr<CommandQueue> pm_CommandQueue = nullptr;
+        shared_ptr<CommandQueue> pm_DrawCommandQueue = nullptr;
         shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
         unique_ptr<OpenGLRenderer> pm_Renderer = nullptr;
@@ -130,11 +122,18 @@ namespace PeachCore {
             shared_ptr<Console> fp_Console
         );
 
-        shared_ptr<CommandQueue>
-            InitializeQueues();
+        bool
+            InitializeLoadingQueue();
+
+        bool
+            InitializeDrawCommandQueue();
+
+        [[nodiscard]] shared_ptr<CommandQueue>
+            GetDrawCommandQueue();
 
         void 
-            ProcessCommands();
+            ProcessDrawCommands();
+
         void 
             ProcessLoadedResourcePackages();
 

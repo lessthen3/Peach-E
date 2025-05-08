@@ -1,16 +1,14 @@
 ﻿/*******************************************************************
  *                                             Peach-E v0.0.1
- *                           Created by Ranyodh Mandur - � 2024
+ *                           Created by Ranyodh Mandur - 🍑 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                         Peach-E is an open-source game engine
+ *                     Peach-E is a free open source game engine
 ********************************************************************/
 #include "../../include/Peach-Core/Managers/AudioManager.h"
-
-using namespace std;
 
 namespace PeachCore {
 
@@ -21,48 +19,93 @@ namespace PeachCore {
             shared_ptr<Console> fp_Console
         )
     {
-        //////////////////////////////////////////////
-        // Initialize Logger
-        //////////////////////////////////////////////
+        //////////////////// Nullptr check for PeachConsole ref ////////////////////
+
+        if (not fp_Console)
+        {
+            PrintError("Tried to initialize AudioManager with a nullptr reference to the Console");
+            return false;
+        }
+
+        //////////////////// Initialize Logger ////////////////////
+
         audio_logger = make_unique<LogManager>();
         audio_logger->Initialize(ThreadName::AudioThread, fp_LogOutputDirectory, "AudioManager", fp_Console, LogManager::LogLevel::All);
         audio_logger->LogAndPrint("AudioLogger successfully initialized", "AudioManager", PeachCore::LogManager::LogLevel::Debug);
 
-        //pm_Device = alcOpenDevice(nullptr); // Open default device
-        //
-        //if (!pm_Device)
-        //{
-        //    audio_logger->LogAndPrint("Failed to open audio device", "AudioManager", PeachCore::LogManager::LogLevel::Error);
-        //    return false;
-        //}
-        //
-        //pm_Context = alcCreateContext(pm_Device, nullptr);
+        //////////////////// Initialize Loading and Command Queues ////////////////////
 
-        //shared_ptr<LoadingQueue> pm_LoadedAudioResourceQueue = ResourceLoadingManager::ResourceLoader().GetAudioResourceLoadingQueue();
-        //
-        //if (!pm_Context || !alcMakeContextCurrent(pm_Context))
-        //{
-        //    audio_logger->LogAndPrint("Failed to create or set audio context", "AudioManager", PeachCore::LogManager::LogLevel::Error);
+        if (not InitializeLoadingQueue())
+        {
+            audio_logger->LogAndPrint("Initialization failed: AudioManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "AudioManager", PeachCore::LogManager::LogLevel::Fatal);
+            return false;
+        }
 
-        //    if (pm_Context) 
-        //    {
-        //        alcDestroyContext(pm_Context);
-        //    }
+        InitializeAudioCommandQueue();
 
-        //    alcCloseDevice(pm_Device);
+        //////////////////// Initialized Successfully! ////////////////////
 
-        //    return false;
-        //}
+        pm_IsInitialized = true;
 
         return true;
     }
 
     void 
-        AudioManager::Shutdown() 
+        AudioManager::ShutdownAudioEngine()
     {
         //alcMakeContextCurrent(nullptr);
         //if (pm_Context) {alcDestroyContext(pm_Context);}
         //if (pm_Device) {alcCloseDevice(pm_Device);}
+    }
+
+    bool
+        AudioManager::InitializeLoadingQueue()
+    {
+        if (pm_LoadedAudioResourceQueue)
+        {
+            audio_logger->LogAndPrint("AudioManager already retrieved the loaded resource queue from ResourceManager >O<", "AudioManager", LogManager::LogLevel::Warning);
+            return false;
+        }
+
+        pm_LoadedAudioResourceQueue = ResourceManager::ResourceLoader().GetAudioResourceLoadingQueue();
+
+        if (not pm_LoadedAudioResourceQueue)
+        {
+            audio_logger->LogAndPrint("AudioManager failed to retrieve LoadingQueue from ResourceManager, nullptr ref was found >O<", "AudioManager", LogManager::LogLevel::Error);
+            return false;
+        }
+
+        audio_logger->LogAndPrint("AudioManager successfully retrieved loaded resource queue from ResourceManager", "AudioManager", LogManager::LogLevel::Info);
+
+        return true;
+    }
+
+    bool
+        AudioManager::InitializeAudioCommandQueue()
+    {
+        if (pm_AudioCommandQueue)
+        {
+            audio_logger->LogAndPrint("AudioManager already initialized the draw command queue >O<", "AudioManager", LogManager::LogLevel::Warning);
+            return false;
+        }
+
+        pm_AudioCommandQueue = make_shared<CommandQueue>();
+
+        audio_logger->LogAndPrint("AudioManager successfully initialized the draw command queue", "AudioManager", LogManager::LogLevel::Info);
+
+        return true; //returns one and only one ptr to whoever initializes AudioManager, this is meant only for the main thread
+    }
+
+    [[nodiscard]] shared_ptr<CommandQueue>
+        AudioManager::GetAudioCommandQueue()
+    {
+        if (pm_AudioCommandQueue.use_count() == 2)
+        {
+            audio_logger->LogAndPrint("AudioManager has already issued a reference to the audio command queue, fuck off", "AudioManager", LogManager::LogLevel::Warning);
+            return nullptr;
+        }
+
+        return pm_AudioCommandQueue;
     }
 
     void 
@@ -88,100 +131,18 @@ namespace PeachCore {
     }
 
     string 
-        AudioManager::GetCurrentTrack() const 
+        AudioManager::GetCurrentTrack() 
+        const 
     {
         shared_lock<shared_mutex> lock(mutex_);
         return pm_CurrentTrack;
     }
 
     void 
-        AudioManager::SetCurrentTrack(const string& track)
+        AudioManager::SetCurrentTrack(const string& track) //this doesnt need a lock since the command queue tells audiomanager to do this
  {
-        unique_lock<shared_mutex> lock(mutex_);
         pm_CurrentTrack = track;
     }
-
-    //bool 
-    //    AudioManager::LoadWAVFile(const string& filename, ALuint buffer) 
-    //{
-    //    ifstream file(filename, ios::binary);
-    //    if (!file) 
-    //    {
-    //        cerr << "Failed to open WAV file: " << filename << endl;
-    //        return false;
-    //    }
-
-    //    char f_ChunkID[4];
-    //    file.read(f_ChunkID, 4);
-
-    //    if (strncmp(f_ChunkID, "RIFF", 4) != 0)
-    //    {
-    //        cerr << "Invalid WAV file: " << filename << endl;
-    //        return false;
-    //    }
-
-    //    file.seekg(4, ios::cur); // Skip Chunk Size
-
-    //    char f_Type[4];
-    //    file.read(f_Type, 4);
-
-    //    if (strncmp(f_Type, "WAVE", 4) != 0) 
-    //    {
-    //        cerr << "Invalid WAV file format: " << filename << endl;
-    //        return false;
-    //    }
-
-    //    char f_SubChunk1ID[4];
-    //    file.read(f_SubChunk1ID, 4);
-
-    //    if (strncmp(f_SubChunk1ID, "fmt ", 4) != 0)
-    //    {
-    //        cerr << "Invalid WAV file fmt subchunk: " << filename << endl;
-    //        return false;
-    //    }
-
-    //    uint32_t f_SubChunk1Size;
-    //    file.read(reinterpret_cast<char*>(&f_SubChunk1Size), sizeof(f_SubChunk1Size));
-
-    //    uint16_t f_AudioFormat;
-    //    file.read(reinterpret_cast<char*>(&f_AudioFormat), sizeof(f_AudioFormat));
-
-    //    uint16_t f_NumChannels;
-    //    file.read(reinterpret_cast<char*>(&f_NumChannels), sizeof(f_NumChannels));
-
-    //    uint32_t f_SampleRate;
-    //    file.read(reinterpret_cast<char*>(&f_SampleRate), sizeof(f_SampleRate));
-
-    //    file.seekg(6, ios::cur); // Skip ByteRate and BlockAlign
-
-    //    uint16_t f_BitsPerSample;
-    //    file.read(reinterpret_cast<char*>(&f_BitsPerSample), sizeof(f_BitsPerSample));
-
-    //    char subchunk2ID[4];
-    //    file.read(subchunk2ID, 4);
-    //    if (strncmp(subchunk2ID, "data", 4) != 0) {
-    //        cerr << "Invalid WAV file data subchunk: " << filename << endl;
-    //        return false;
-    //    }
-
-    //    uint32_t subchunk2Size;
-    //    file.read(reinterpret_cast<char*>(&subchunk2Size), sizeof(subchunk2Size));
-
-    //    vector<char> data(subchunk2Size);
-    //    file.read(data.data(), subchunk2Size);
-
-    //    ALenum format;
-    //    if (f_NumChannels == 1) {
-    //        format = (f_BitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
-    //    }
-    //    else {
-    //        format = (f_BitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
-    //    }
-
-    //    alBufferData(buffer, format, data.data(), subchunk2Size, f_SampleRate);
-
-    //    return true;
-    //}
     
     void 
         AudioManager::ProcessLoadedResourcePackages()

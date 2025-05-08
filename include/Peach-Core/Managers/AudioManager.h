@@ -6,26 +6,21 @@
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                         Peach-E is an open-source game engine
+ *                     Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
 ///PeachCore
-#include "LogManager.h"
 #include "ResourceManager.h"
 
 ///STL
 #include <thread>
 #include <shared_mutex>
 
-///External
-#include <miniaudio/miniaudio.h>
-
 namespace PeachCore {
 
     class AudioManager 
     {
-
     //////////////////////////////////////////////
     // Private Destructor
     //////////////////////////////////////////////
@@ -36,10 +31,10 @@ namespace PeachCore {
     // Singleton Instance
     //////////////////////////////////////////////
     public:
-        static AudioManager& AudioPlayer()
+        static AudioManager& get_single()
         {
-            static AudioManager audioplayer;
-            return audioplayer;
+            static AudioManager audio_player;
+            return audio_player;
         }
 
     //////////////////////////////////////////////
@@ -56,10 +51,11 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
-        shared_ptr<LoadingQueue> pm_LoadedAudioResourceQueue;
+        shared_ptr<LoadingQueue> pm_LoadedAudioResourceQueue = nullptr;
+        shared_ptr<CommandQueue> pm_AudioCommandQueue = nullptr;
 
-        //ALCdevice* pm_Device;
-        //ALCcontext* pm_Context;
+        bool pm_IsInitialized = false;
+
         mutable shared_mutex mutex_;
         string pm_CurrentTrack;
         //vector<ALuint> pm_Sources;
@@ -82,16 +78,30 @@ namespace PeachCore {
             shared_ptr<Console> fp_Console
         );
 
+        bool
+            InitializeLoadingQueue();
+
+        bool
+            InitializeAudioCommandQueue();
+
+        [[nodiscard]] shared_ptr<CommandQueue>
+            GetAudioCommandQueue();
+
         void PlaySoundOnce(const string& soundFile); //SUSUSUSUSUSUSUSUSSSYYYY FUNCTION (is PlaySound a predefined funciton in openal?)
         string GetCurrentTrack() const;
         void SetCurrentTrack(const string& track);
 
-        float GetBPM(); //idk get bpm of current track, probably uneccesary but could be useful for rhythm games where users can import custom audio files, and then can generate a bpm map for it
+        //idk get bpm of current track, probably uneccesary but could be useful for rhythm games where users can import custom audio files, and then can generate a bpm map for it
+        float 
+            GetBPM(); 
 
-        void SyncToEventCallback(); //used to sync a particular audio event to a user defined function handle to allow for easier integration of dynamic sound environments
+        //used to sync a particular audio event to a user defined function handle to allow for easier integration of dynamic sound environments
+        void 
+            SyncToEventCallback(); 
  
 
-        void Shutdown();
+        void 
+            ShutdownAudioEngine();
 
     //////////////////////////////////////////////
     // Private Methods

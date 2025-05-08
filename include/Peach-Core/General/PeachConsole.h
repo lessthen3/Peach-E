@@ -1,23 +1,21 @@
 ﻿/*******************************************************************
- *                                             Peach-E v0.1
- *                           Created by Ranyodh Mandur - � 2024
+ *                                             Peach-E v0.0.1
+ *                           Created by Ranyodh Mandur - 🍑 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                         Peach-E is an open-source game engine
+ *                     Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
-#include <vector>
-#include <sstream>
+///STL
 #include <memory>
 
+///PeachCore
 #include "../Managers/LogManager.h"
 
-
-using namespace std;
 
 namespace PeachCore {
 

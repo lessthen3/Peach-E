@@ -6,9 +6,9 @@
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                         Peach-E is an open-source game engine
+ *                     Peach-E is a free open source game engine
 ********************************************************************/
-#include "../../../include/Peach-Core/Rendering/ShaderUtils.h"
+#include "../../../include/Peach-Core/Utils/ShaderUtils.h"
 
 namespace PeachCore {
 namespace ShaderUtils {

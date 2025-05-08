@@ -46,15 +46,31 @@ namespace PeachCore {
             shared_ptr<Console> fp_Console
         )   
     {
+        //////////////////// Nullptr check for PeachConsole ref ////////////////////
+
         if (not fp_Console)
         {
             PrintError("Tried to initialize RenderingManager with a nullptr reference to the Console");
             return false;
         }
 
+        //////////////////// Initialize Logger ////////////////////
+
         rendering_logger = make_shared<LogManager>(); 
         rendering_logger->Initialize(ThreadName::RenderThread, fp_LogOutputDirectory, "RenderingManager", fp_Console, LogManager::LogLevel::All);
         rendering_logger->LogAndPrint("RenderingLogger successfully initialized", "RenderingManager", LogManager::LogLevel::Debug);
+
+        //////////////////// Initialize Loading and Command Queues ////////////////////
+
+        if (not InitializeLoadingQueue())
+        {
+            rendering_logger->LogAndPrint("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            return false;
+        }
+
+        InitializeDrawCommandQueue();
+
+        //////////////////// Initialize Rendering Backend ////////////////////
 
         if(fp_DesiredRenderer == RendererType::OpenGL)
         {
@@ -73,9 +89,8 @@ namespace PeachCore {
             }
         }
 
-        //InitializeQueues(); IM NOT SURE IF THIS SHOULD BE HERE AHHHHHHHHH WHY DID I REMAKE THE LOGGING SYSTEM I SHOULDA HIT A COMMIT THEN DID THIS AHHHH IM RETARDED
-
         pm_IsInitialized = true;
+
         return true;
     }
 
@@ -157,37 +172,62 @@ namespace PeachCore {
     }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
-    [[nodiscard]] shared_ptr<CommandQueue> 
-        RenderingManager::InitializeQueues()
+    bool 
+        RenderingManager::InitializeLoadingQueue()
     {
-        if (pm_CommandQueue || pm_LoadedResourceQueue)
+        if (pm_LoadedResourceQueue)
         {
-            //rendering_logger->LogAndPrint("RenderingManager already initialized.", "RenderingManager", LogManager::LogLevel::Warning);
-            return nullptr;
+            rendering_logger->LogAndPrint("RenderingManager already retrieved the loaded resource queue from ResourceManager >O<", "RenderingManager", LogManager::LogLevel::Warning);
+            return false;
         }
 
-        pm_CommandQueue = make_shared<CommandQueue>();
         pm_LoadedResourceQueue = ResourceManager::ResourceLoader().GetDrawableResourceLoadingQueue();
 
-        //rendering_logger->LogAndPrint("RenderingManager successfully initialized >w<", "RenderingManager", LogManager::LogLevel::Debug);
+        if (not pm_LoadedResourceQueue)
+        {
+            rendering_logger->LogAndPrint("RenderingManager failed to retrieve LoadingQueue from ResourceManager, nullptr ref was found >O<", "RenderingManager", LogManager::LogLevel::Error);
+            return false;
+        }
 
-        pm_AreQueuesInitialized = true;
+        rendering_logger->LogAndPrint("RenderingManager successfully retrieved loaded resource queue from ResourceManager", "RenderingManager", LogManager::LogLevel::Info);
 
-        return pm_CommandQueue; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
+        return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
+    }
+
+    bool
+        RenderingManager::InitializeDrawCommandQueue()
+    {
+        if (pm_DrawCommandQueue)
+        {
+            rendering_logger->LogAndPrint("RenderingManager already initialized the draw command queue >O<", "RenderingManager", LogManager::LogLevel::Warning);
+            return false;
+        }
+
+        pm_DrawCommandQueue = make_shared<CommandQueue>();
+
+        rendering_logger->LogAndPrint("RenderingManager successfully initialized the draw command queue", "RenderingManager", LogManager::LogLevel::Info);
+
+        return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
+    }
+
+    [[nodiscard]] shared_ptr<CommandQueue>
+        RenderingManager::GetDrawCommandQueue()
+    {
+        if (pm_DrawCommandQueue.use_count() == 2)
+        {
+            rendering_logger->LogAndPrint("RenderingManager has already issued a reference to the draw command queue, fuck off", "RenderingManager", LogManager::LogLevel::Warning);
+            return nullptr;
+        }
+        
+        return pm_DrawCommandQueue;
     }
 
     bool
         RenderingManager::InitializeOpenGL()
     {
-        if (pm_IsRenderingInitialized)
+        if (pm_IsInitialized)
         {
             rendering_logger->LogAndPrint("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager", LogManager::LogLevel::Warning);
-            return false;
-        }
-
-        if (not pm_AreQueuesInitialized)
-        {
-            rendering_logger->LogAndPrint("RenderingManager tried to initialize OpenGL before initializing command/loading queues!", "RenderingManager", LogManager::LogLevel::Error);
             return false;
         }
 
@@ -212,7 +252,6 @@ namespace PeachCore {
 
         rendering_logger->LogAndPrint("Peach Editor successfully initialized OpenGL", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
 
-        pm_IsRenderingInitialized = true;
         return true;
     }
 
@@ -263,62 +302,9 @@ namespace PeachCore {
     }
 
     void 
-        RenderingManager::ProcessCommands() 
-    {
-        DrawCommand f_DrawCommand;
-        while (pm_CommandQueue->PopSendersQueue(f_DrawCommand))
-        {
-            for (auto& drawable_data : f_DrawCommand.DrawableData)
-            {
-                visit(overloaded
-                    {
-                    [&](const vector<CreateDrawableData>& fp_Data)
-                    {
-                        // Handle creation logic here
-                    },
-                    [&](const vector<UpdateActiveDrawableData>& fp_Data)
-                    {
-                        // Handle update logic here
-                        // This could involve updating position based on deltaPosition
-                        // Setting visibility, layer sorting, etc.
-                    },
-                    [&](const vector<DeleteDrawableData>& fp_Data)
-                    {
-                        // Handle deletion logic here
-                        // Ensure resources are properly released and objects are cleaned up
-                    }
-                    }, drawable_data);
-            }
-        }
-    }
-
-    void 
-        RenderingManager::ProcessLoadedResourcePackages()
-    {
-        //LoadedResourcePackage ResourcePackage;
-
-        //while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage)) 
-        //{
-        //    //visit(overloaded
-        //    //    {
-        //    //    [&](unique_ptr<TextureData> fp_RawByteData)
-        //    //    {
-        //    //        // Handle creation logic here
-        //    //    },
-        //    //    [](auto&&)
-        //    //    {
-        //    //        //THIS DOESN'T WORK AND IDK Y LAMBDA SMTH IDK FUCK IT ill come back to it later
-        //    //        // Default handler for any unhandled types
-        //    //        //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "RenderingManager", LogManager::LogLevel::Warning);
-        //    //    }
-        //    //    }, ResourcePackage.get()->ResourceData);
-        //}
-    }
-
-    void 
         RenderingManager::RenderFrame(bool fp_IsStressTest)
     {
-        if (not pm_IsRenderingInitialized)
+        if (not pm_IsInitialized)
         {
             rendering_logger->LogAndPrint("Please initialize RenderingManager before trying to render anything!", "RenderingManager", LogManager::LogLevel::Warning);
             return;
@@ -366,6 +352,59 @@ namespace PeachCore {
         Shutdown(); //cleanup everything here
     }
 
+    void
+        RenderingManager::ProcessDrawCommands()
+    {
+        DrawCommand f_DrawCommand;
+        while (pm_DrawCommandQueue->PopSendersQueue(f_DrawCommand))
+        {
+            for (auto& drawable_data : f_DrawCommand.DrawableData)
+            {
+                visit(overloaded
+                    {
+                    [&](const vector<CreateDrawableData>& fp_Data)
+                    {
+                        // Handle creation logic here
+                    },
+                    [&](const vector<UpdateActiveDrawableData>& fp_Data)
+                    {
+                        // Handle update logic here
+                        // This could involve updating position based on deltaPosition
+                        // Setting visibility, layer sorting, etc.
+                    },
+                    [&](const vector<DeleteDrawableData>& fp_Data)
+                    {
+                        // Handle deletion logic here
+                        // Ensure resources are properly released and objects are cleaned up
+                    }
+                    }, drawable_data);
+            }
+        }
+    }
+
+    void
+        RenderingManager::ProcessLoadedResourcePackages()
+    {
+        //LoadedResourcePackage ResourcePackage;
+
+        //while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage)) 
+        //{
+        //    //visit(overloaded
+        //    //    {
+        //    //    [&](unique_ptr<TextureData> fp_RawByteData)
+        //    //    {
+        //    //        // Handle creation logic here
+        //    //    },
+        //    //    [](auto&&)
+        //    //    {
+        //    //        //THIS DOESN'T WORK AND IDK Y LAMBDA SMTH IDK FUCK IT ill come back to it later
+        //    //        // Default handler for any unhandled types
+        //    //        //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "RenderingManager", LogManager::LogLevel::Warning);
+        //    //    }
+        //    //    }, ResourcePackage.get()->ResourceData);
+        //}
+    }
+
     void 
         RenderingManager::ResizeWindow()
     {
@@ -385,7 +424,7 @@ namespace PeachCore {
         return pm_FrameRateLimit;
     }
 
-    bool 
+    [[nodiscard]] bool 
         RenderingManager::IsVSyncEnabled() 
         const
     {
