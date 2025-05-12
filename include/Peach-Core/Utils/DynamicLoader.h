@@ -41,43 +41,49 @@ namespace PeachCore {
         DYNLIB_HANDLE
             LoadDynamicLibrary
             (
-                const string& DylibPath
+                const string& fp_DylibPath,
+                LogManager* logger
             )
         {
-            if (not filesystem::exists(DylibPath))
+            if (not filesystem::exists(fp_DylibPath))
             {
-                cerr << "Library path does not exist: " << DylibPath << endl;
+                logger->LogAndPrint(format("Library path does not exist: '{}'", fp_DylibPath), "DynamicLoader", LogManager::LogLevel::Error);
                 return nullptr;
             }
 
-            DYNLIB_HANDLE f_LibraryHandle = DYNLIB_LOAD(DylibPath.c_str());
+            DYNLIB_HANDLE f_LibraryHandle = DYNLIB_LOAD(fp_DylibPath.c_str());
 
             if (not f_LibraryHandle)
             {
-                cerr << "Failed to load library: " << DylibPath << " Error: " << GetLastErrorAsString() << endl;
+                logger->LogAndPrint(format("Failed to load library: '{}',  Error: '{}'", fp_DylibPath, GetLastErrorAsString()), "DynamicLoader", LogManager::LogLevel::Error);
+                return nullptr;
             }
 
-            cout << "Library loaded successfully: " << DylibPath << endl;
+            logger->LogAndPrint(("Library loaded successfully: '{}'", fp_DylibPath), "DynamicLoader", LogManager::LogLevel::Info);
 
             return f_LibraryHandle;
         }
 
         bool
-            UnloadLibrary(DYNLIB_HANDLE fp_LibraryHandle)
+            UnloadLibrary
+            (
+                DYNLIB_HANDLE fp_LibraryHandle,
+                LogManager* logger
+            )
         {
             if (not fp_LibraryHandle)
             {
-                cerr << "Tried passing a nullptr reference to a DYNLIB_HANDLE inside GetSymbol()" << endl;
+                logger->LogAndPrint("Tried passing a nullptr reference to a DYNLIB_HANDLE inside GetSymbol()", "DynamicLoader", LogManager::LogLevel::Error);
                 return false;
             }
 
             if (not DYNLIB_UNLOAD(fp_LibraryHandle))
             {
-                cerr << "Failed to unload library. Error: " << GetLastErrorAsString() << endl;
+                logger->LogAndPrint(format("Failed to unload library. Error: '{}'", GetLastErrorAsString()), "DynamicLoader", LogManager::LogLevel::Error);
                 return false;
             }
             
-            cout << "Library unloaded successfully." << endl;
+            logger->LogAndPrint("Library unloaded successfully", "DynamicLoader", LogManager::LogLevel::Info);
 
             return true; //Unloaded Library Successfully! >W<
         }
@@ -87,14 +93,15 @@ namespace PeachCore {
             GetSymbol
             (
                 const string& fp_SymbolName, 
-                DYNLIB_HANDLE fp_LibraryHandle
+                DYNLIB_HANDLE fp_LibraryHandle,
+                LogManager* logger
             )
         {
             void* symbol = nullptr;
 
             if (not fp_LibraryHandle)
             {
-                cerr << "Tried passing a nullptr reference to a DYNLIB_HANDLE inside GetSymbol()" << endl;
+                logger->LogAndPrint("Tried passing a nullptr reference to a DYNLIB_HANDLE inside GetSymbol()", "DynamicLoader", LogManager::LogLevel::Error);
                 return nullptr;
             }
 
@@ -102,18 +109,16 @@ namespace PeachCore {
 
             if (not symbol)
             {
-                cerr << "Failed to locate symbol: " << fp_SymbolName << " Error: " << GetLastErrorAsString() << endl;
+                logger->LogAndPrint(format("Failed to locate symbol: '{}', Error: '{}'", fp_SymbolName, GetLastErrorAsString()), "DynamicLoader", LogManager::LogLevel::Error);
+                return nullptr; //its already nullptr but its nice to be explicit here
             }
-            else
-            {
-                cout << "Symbol located: " << fp_SymbolName << endl;
-            }
+            
+            logger->LogAndPrint(format("Symbol located: '{}'", fp_SymbolName), "DynamicLoader", LogManager::LogLevel::Debug);
 
             return symbol;
         }
 
     private:
-
         // Helper function to get the error message string
         string 
             GetLastErrorAsString()

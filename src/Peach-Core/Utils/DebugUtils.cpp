@@ -8,10 +8,11 @@
  *
  *                     Peach-E is a free open source game engine
 ********************************************************************/
-#include "../../include/Peach-Core/Managers/DebugManager.h"
+#include "../../../include/Peach-Core/Utils/DebugUtils.h"
 
-namespace PeachCore{
-
-
+namespace PeachCore {
+namespace DebugUtils{
     
-}
+
+}//namespace DebugUtils
+}//namespace PeachCore

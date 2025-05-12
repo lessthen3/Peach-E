@@ -12,263 +12,370 @@
 
 namespace PeachCore {
 
-	bool
-		ResourceManager::Initialize
-		(
-			const string& fp_LogOutputDirectory,
-			shared_ptr<Console> fp_Console
-		)
-	{
-		if (not fp_Console)
-		{
-			PrintError("Tried to initialize ResourceManager with a nullptr reference to the Console");
-			return false;
-		}
+    bool
+        ResourceManager::Initialize
+        (
+            const string& fp_LogOutputDirectory,
+            const string& fp_RootPhysfsDirectory,
+            shared_ptr<Console> fp_Console
+        )
+    {
+        //////////////////// Resource Logger Initialization ////////////////////
 
-		resource_logger = make_unique<LogManager>();
-		resource_logger->Initialize(ThreadName::ResourceThread, fp_LogOutputDirectory, "ResourceThreadLogger", fp_Console, LogManager::LogLevel::All);
-		resource_logger->LogAndPrint("ResourceLoadingLogger successfully initialized", "ResourceLoadingManager", LogManager::LogLevel::Debug);
+        if (not fp_Console)
+        {
+            PrintError("Tried to initialize ResourceManager with a nullptr reference to the Console");
+            return false;
+        }
 
-		pm_AudioResourceLoadingQueue = make_shared<LoadingQueue>();
-		pm_DrawableResourceLoadingQueue = make_shared<LoadingQueue>();
+        resource_logger = make_unique<LogManager>();
+        resource_logger->Initialize(ThreadName::ResourceThread, fp_LogOutputDirectory, "ResourceThreadLogger", fp_Console, LogManager::LogLevel::All);
+        resource_logger->LogAndPrint("ResourceThreadLogger successfully initialized", "ResourceManager", LogManager::LogLevel::Debug);
 
-		pm_IsInitialized = true;
+        //////////////////// Initialize Queues ////////////////////
 
-		return true;
-	}
+        pm_AudioResourceLoadingQueue = make_shared<LoadingQueue>();
+        pm_DrawableResourceLoadingQueue = make_shared<LoadingQueue>();
+        pm_MainThreadLoadingQueue = make_shared<LoadingQueue>();
 
-	//THESE METHODS ONLY ALLOW A MAXIMUM OF ONE REFERENCE PASSED OUT, TO ANYONE ASKING THIS IS MEANT FOR THE AUDIO/RENDER THREAD
+        pm_LoadCommandQueue = make_shared<CommandQueue>();
 
-	[[nodiscard]] shared_ptr<LoadingQueue>
-		ResourceManager::GetAudioResourceLoadingQueue() //This method should be one of the first methods called on startup
-	{
-		if (not pm_IsInitialized)
-		{
-			resource_logger->LogAndPrint("Attempted to get a reference to ResourceManager's AudioResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager", LogManager::LogLevel::Error);
-			return nullptr;
-		}
-		else if (pm_AudioResourceLoadingQueue.use_count() >= 2)
-		{
-			resource_logger->LogAndPrint("Attempted to get more than one reference to ResourceManager's AudioResourceLoadingQueue >O<", "ResourceManager", LogManager::LogLevel::Error);
-			return nullptr;
-		}
+        //////////////////// Set Executable Root Directory ////////////////////
 
-		return pm_AudioResourceLoadingQueue;
-	}
+        pm_RootDirectory = fp_RootPhysfsDirectory;
 
-	[[nodiscard]] shared_ptr<LoadingQueue>
-		ResourceManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
-	{
-		if (not pm_IsInitialized)
-		{
-			resource_logger->LogAndPrint("Attempted to get a reference to ResourceManager's DrawableResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager", LogManager::LogLevel::Error);
-			return nullptr;
-		}
-		else if (pm_DrawableResourceLoadingQueue.use_count() >= 2)
-		{
-			resource_logger->LogAndPrint("Attempted to get more than one reference to ResourceManager's DrawableResourceLoadingQueue >O<", "ResourceManager", LogManager::LogLevel::Error);
-			return nullptr;
-		}
+        resource_logger->LogAndPrint("ResourceManager successfully initialized the all queues", "ResourceManager", LogManager::LogLevel::Info);
 
-		return pm_DrawableResourceLoadingQueue;
-	}
+        pm_IsInitialized = true;
 
+        return true;
+    }
+ 
+    [[nodiscard]] shared_ptr<CommandQueue>
+        ResourceManager::GetLoadCommandQueue()
+    {
+        if (not pm_IsInitialized)
+        {
+            resource_logger->LogAndPrint("Attempted to get a reference to ResourceManager's LoadCommandQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager", LogManager::LogLevel::Error);
+            return nullptr;
+        }
+        else if (pm_LoadCommandQueue.use_count() >= 2)
+        {
+            resource_logger->LogAndPrint("Attempted to get more than one reference to ResourceManager's LoadCommandQueue >O<", "ResourceManager", LogManager::LogLevel::Error);
+            return nullptr;
+        }
 
-	/*
-	This should probably be used in the Peach Editor since all textures will be loaded from a compact .peachbin file that was created by the serializer
-	on game export from the editor, where it will contain data flags that describe what each chunk is used for, so we can encode texture names,
-	peachnode owner of the texture, where it's used, if its visible, associated shaders/pipeline, texture filtering, initial size
-	*/
-	bool 
-		ResourceManager::LoadTextureFromFile(const string& fp_TextureFilePath)
-	{
-		// Ensure directory exists
-		if (not filesystem::exists(fp_TextureFilePath))
-		{
-			resource_logger->LogAndPrint("Tried to pass invalid directory to LoadTextureFromFile(), Failed to load texture!", "ResourceManager", LogManager::LogLevel::Error);
-			return false;
-		}
+        return pm_LoadCommandQueue;
+    }
 
-		int width, height, nrChannels = 0;
-		unsigned char* f_RawTextureDataPtr = nullptr;
+    //THESE METHODS ONLY ALLOW A MAXIMUM OF ONE REFERENCE PASSED OUT, TO ANYONE ASKING THIS IS MEANT FOR THE AUDIO/RENDER THREAD
 
-		try
-		{
-			//FIX THIS NEED TO WRAP RAW PTR IN UNIQUE PTR
-			f_RawTextureDataPtr = stbi_load(fp_TextureFilePath.c_str(), &width, &height, &nrChannels, 0);
-		}
-		catch (const exception& ex)
-		{
-			resource_logger->LogAndPrint(format("Failed to load texture image!, error: '{}'", ex.what()), "ResourceManager", LogManager::LogLevel::Error);
-			return false;
-		}
+    [[nodiscard]] shared_ptr<LoadingQueue>
+        ResourceManager::GetAudioResourceLoadingQueue() //This method should be one of the first methods called on startup
+    {
+        if (not pm_IsInitialized)
+        {
+            resource_logger->LogAndPrint("Attempted to get a reference to ResourceManager's AudioResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager", LogManager::LogLevel::Error);
+            return nullptr;
+        }
+        else if (pm_AudioResourceLoadingQueue.use_count() >= 2)
+        {
+            resource_logger->LogAndPrint("Attempted to get more than one reference to ResourceManager's AudioResourceLoadingQueue >O<", "ResourceManager", LogManager::LogLevel::Error);
+            return nullptr;
+        }
 
-		if (not f_RawTextureDataPtr)
-		{
-			resource_logger->LogAndPrint("Failed to load texture image!", "ResourceManager", LogManager::LogLevel::Error);
-			return false;
-		}
+        return pm_AudioResourceLoadingQueue;
+    }
 
-		unique_ptr<TextureData> f_TextureData = make_unique<TextureData>
-		(
-			f_RawTextureDataPtr,
-			static_cast<uint32_t>(width),
-			static_cast<uint32_t>(height),
-			static_cast<uint32_t>(nrChannels)
-		);
+    [[nodiscard]] shared_ptr<LoadingQueue>
+        ResourceManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
+    {
+        if (not pm_IsInitialized)
+        {
+            resource_logger->LogAndPrint("Attempted to get a reference to ResourceManager's DrawableResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager", LogManager::LogLevel::Error);
+            return nullptr;
+        }
+        else if (pm_DrawableResourceLoadingQueue.use_count() >= 2)
+        {
+            resource_logger->LogAndPrint("Attempted to get more than one reference to ResourceManager's DrawableResourceLoadingQueue >O<", "ResourceManager", LogManager::LogLevel::Error);
+            return nullptr;
+        }
 
-		TryPushingLoadedTexture("someObjectID", move(f_TextureData));
+        return pm_DrawableResourceLoadingQueue;
+    }
 
-		return true; //texture loaded successfully!
-	}
+    bool
+        ResourceManager::LoadLuaRuntime()
+    {
 
-	bool 
-	    ResourceManager::LoadWavFromFile(const string& fp_WavFilePath)
-	{
-	//    ifstream file(filename, ios::binary);
-	//    if (!file) 
-	//    {
-	//        cerr << "Failed to open WAV file: " << filename << endl;
-	//        return false;
-	//    }
+        return true;
+    }
 
-	//    char f_ChunkID[4];
-	//    file.read(f_ChunkID, 4);
+    bool
+        ResourceManager::LoadDotNetRuntime
+        (
+            const string& fp_RelativeHostExrPath,
+            DotNetRuntimeContext& fp_DotNetRuntimeContext
+        )
+    {
+        const string f_FullPath = pm_RootDirectory + "/" + fp_RelativeHostExrPath;
 
-	//    if (strncmp(f_ChunkID, "RIFF", 4) != 0)
-	//    {
-	//        cerr << "Invalid WAV file: " << filename << endl;
-	//        return false;
-	//    }
+        DYNLIB_HANDLE f_HostExr = pm_DynamicLoader.LoadDynamicLibrary(f_FullPath, resource_logger.get());
 
-	//    file.seekg(4, ios::cur); // Skip Chunk Size
+        if (not f_HostExr)
+        {
+            resource_logger->LogAndPrint(format("Failed to load hostexr at path: '{}'", f_FullPath), "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
 
-	//    char f_Type[4];
-	//    file.read(f_Type, 4);
+        resource_logger->LogAndPrint(format("Successfully found hostexr at path: '{}'", f_FullPath), "ResourceManager", LogManager::LogLevel::Info);
 
-	//    if (strncmp(f_Type, "WAVE", 4) != 0) 
-	//    {
-	//        cerr << "Invalid WAV file format: " << filename << endl;
-	//        return false;
-	//    }
+        fp_DotNetRuntimeContext.RuntimeInit = (hostfxr_initialize_for_runtime_config_fn)pm_DynamicLoader.GetSymbol
+        (
+            "hostfxr_initialize_for_runtime_config", 
+            f_HostExr, 
+            resource_logger.get()
+        );
 
-	//    char f_SubChunk1ID[4];
-	//    file.read(f_SubChunk1ID, 4);
+        if (not fp_DotNetRuntimeContext.RuntimeInit)
+        {
+            resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_initialize_for_runtime_config'", "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
 
-	//    if (strncmp(f_SubChunk1ID, "fmt ", 4) != 0)
-	//    {
-	//        cerr << "Invalid WAV file fmt subchunk: " << filename << endl;
-	//        return false;
-	//    }
+        fp_DotNetRuntimeContext.GetDelegate = (hostfxr_get_runtime_delegate_fn)pm_DynamicLoader.GetSymbol
+        (
+            "hostfxr_get_runtime_delegate",
+            f_HostExr,
+            resource_logger.get()
+        );
 
-	//    uint32_t f_SubChunk1Size;
-	//    file.read(reinterpret_cast<char*>(&f_SubChunk1Size), sizeof(f_SubChunk1Size));
+        if (not fp_DotNetRuntimeContext.GetDelegate)
+        {
+            resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_get_runtime_delegate'", "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
 
-	//    uint16_t f_AudioFormat;
-	//    file.read(reinterpret_cast<char*>(&f_AudioFormat), sizeof(f_AudioFormat));
+        fp_DotNetRuntimeContext.Close = (hostfxr_close_fn)pm_DynamicLoader.GetSymbol
+        (
+            "hostfxr_close",
+            f_HostExr,
+            resource_logger.get()
+        );
 
-	//    uint16_t f_NumChannels;
-	//    file.read(reinterpret_cast<char*>(&f_NumChannels), sizeof(f_NumChannels));
+        if (not fp_DotNetRuntimeContext.Close)
+        {
+            resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_close'", "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
 
-	//    uint32_t f_SampleRate;
-	//    file.read(reinterpret_cast<char*>(&f_SampleRate), sizeof(f_SampleRate));
+        resource_logger->LogAndPrint("Located hostfxr symbols required for running dotnet successfully!", "ResourceManager", LogManager::LogLevel::Info);
 
-	//    file.seekg(6, ios::cur); // Skip ByteRate and BlockAlign
+        return true;
+    }
 
-	//    uint16_t f_BitsPerSample;
-	//    file.read(reinterpret_cast<char*>(&f_BitsPerSample), sizeof(f_BitsPerSample));
+    bool
+        ResourceManager::LoadPythonRuntime()
+    {
 
-	//    char subchunk2ID[4];
-	//    file.read(subchunk2ID, 4);
-	//    if (strncmp(subchunk2ID, "data", 4) != 0) {
-	//        cerr << "Invalid WAV file data subchunk: " << filename << endl;
-	//        return false;
-	//    }
+        return true;
+    }
 
-	//    uint32_t subchunk2Size;
-	//    file.read(reinterpret_cast<char*>(&subchunk2Size), sizeof(subchunk2Size));
+    /*
+    This should probably be used in the Peach Editor since all textures will be loaded from a compact .peachbin file that was created by the serializer
+    on game export from the editor, where it will contain data flags that describe what each chunk is used for, so we can encode texture names,
+    peachnode owner of the texture, where it's used, if its visible, associated shaders/pipeline, texture filtering, initial size
+    */
+    bool 
+        ResourceManager::LoadTextureFromFile(const string& fp_TextureFilePath)
+    {
+        // Ensure directory exists
+        if (not filesystem::exists(fp_TextureFilePath))
+        {
+            resource_logger->LogAndPrint("Tried to pass invalid directory to LoadTextureFromFile(), Failed to load texture!", "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
 
-	//    vector<char> data(subchunk2Size);
-	//    file.read(data.data(), subchunk2Size);
+        int width, height, nrChannels = 0;
+        unsigned char* f_RawTextureDataPtr = nullptr;
 
-	//    ALenum format;
-	//    if (f_NumChannels == 1) {
-	//        format = (f_BitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
-	//    }
-	//    else {
-	//        format = (f_BitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
-	//    }
+        try
+        {
+            //FIX THIS NEED TO WRAP RAW PTR IN UNIQUE PTR
+            f_RawTextureDataPtr = stbi_load(fp_TextureFilePath.c_str(), &width, &height, &nrChannels, 0);
+        }
+        catch (const exception& ex)
+        {
+            resource_logger->LogAndPrint(format("Failed to load texture image!, error: '{}'", ex.what()), "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
 
-	//    alBufferData(buffer, format, data.data(), subchunk2Size, f_SampleRate);
+        if (not f_RawTextureDataPtr)
+        {
+            resource_logger->LogAndPrint("Failed to load texture image!", "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
 
-	    return true;
-	}
+        unique_ptr<TextureData> f_TextureData = make_unique<TextureData>
+        (
+            f_RawTextureDataPtr,
+            static_cast<uint32_t>(width),
+            static_cast<uint32_t>(height),
+            static_cast<uint32_t>(nrChannels)
+        );
 
-	/* 
-	Called by the rendering thread  //TODO TRY PUSHING THE PACKAGES IN VECTORS ALWAYS AND ONLY UNPACK IN RENDERINGMANAGER,
-	WE SHOULD FIGURE OUT A WAY TO LOAD THINGS IN BUNCHES, OR GET ALL LOADED OBJECTS IN ONEGO AND ONLY PUSH THEM ONCE ITS ALL LOADED
-	THAT WOULD BE GOOD FOR LOADING SCENES, WE DONT WANT TO PUSH ANY RESOURCES EARLIER THAN NEEDED UNTIL THE ENTIRE SCENE IS LOADED
-	I'm kinda tired of working on the loading manager and i wanna do physics now so gl future ryan i hope things go well >w< 
-	*/
-	bool 
-		ResourceManager::TryPushingLoadedTexture
-		(
-			const string& fp_ObjectID,
-			unique_ptr<TextureData> fp_TextureDataPtr
-		)
-	{
-		pm_WaitingLoadedGraphicsAssets.emplace_back(fp_ObjectID, move(fp_TextureDataPtr)); //construct package in vector
+        TryPushingLoadedTexture("someObjectID", move(f_TextureData));
 
-		if (not pm_DrawableResourceLoadingQueue->PushLoadedResourcePackages(pm_WaitingLoadedGraphicsAssets))
-		{
-			resource_logger->LogAndPrint("Load put off until later", "ResourceManager", LogManager::LogLevel::Trace);
-			return false;
-		}
+        return true; //texture loaded successfully!
+    }
 
-		return true;
-	}
+    bool 
+        ResourceManager::LoadWavFromFile(const string& fp_WavFilePath)
+    {
+    //    ifstream file(filename, ios::binary);
+    //    if (!file) 
+    //    {
+    //        cerr << "Failed to open WAV file: " << filename << endl;
+    //        return false;
+    //    }
 
-	bool
-		ResourceManager::LoadPlugin
-		(
-			const string& fp_PluginFilePath,
-			PluginInfo& fp_Plugin
-		)
-	{
-		DYNLIB_HANDLE f_Handle;
+    //    char f_ChunkID[4];
+    //    file.read(f_ChunkID, 4);
 
-		if (not (filesystem::exists(fp_PluginFilePath) and filesystem::is_regular_file(fp_PluginFilePath)))
-		{
-			resource_logger->LogAndPrint("Failed to locate DLL at: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Error);
-			return false;
-		}
+    //    if (strncmp(f_ChunkID, "RIFF", 4) != 0)
+    //    {
+    //        cerr << "Invalid WAV file: " << filename << endl;
+    //        return false;
+    //    }
 
-		f_Handle = DYNLIB_LOAD(fp_PluginFilePath.c_str());
-		resource_logger->LogAndPrint("Successfully located DLL at: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Debug);
+    //    file.seekg(4, ios::cur); // Skip Chunk Size
 
-		if (not f_Handle)
-		{
-			resource_logger->LogAndPrint("Failed to load plugin at path: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Error);
-			return false;
-		}
+    //    char f_Type[4];
+    //    file.read(f_Type, 4);
 
-		resource_logger->LogAndPrint("Successfully loaded plugin at: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Debug);
+    //    if (strncmp(f_Type, "WAVE", 4) != 0) 
+    //    {
+    //        cerr << "Invalid WAV file format: " << filename << endl;
+    //        return false;
+    //    }
 
-		auto f_CreateFunc = (CreatePluginFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
-		auto f_DestroyFunc = (DestroyPluginFunc)DYNLIB_GETSYM(f_Handle, "destroyPlugin");
+    //    char f_SubChunk1ID[4];
+    //    file.read(f_SubChunk1ID, 4);
 
-		if (not f_CreateFunc or not f_DestroyFunc)
-		{
-			resource_logger->LogAndPrint("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Error);
-			DYNLIB_UNLOAD(f_Handle);
-			return false;
-		}
+    //    if (strncmp(f_SubChunk1ID, "fmt ", 4) != 0)
+    //    {
+    //        cerr << "Invalid WAV file fmt subchunk: " << filename << endl;
+    //        return false;
+    //    }
 
-		resource_logger->LogAndPrint("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Debug);
+    //    uint32_t f_SubChunk1Size;
+    //    file.read(reinterpret_cast<char*>(&f_SubChunk1Size), sizeof(f_SubChunk1Size));
 
-		fp_Plugin.Pwugin = unique_ptr<Plugin, DestroyPluginFunc>(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;
-		fp_Plugin.Handle = f_Handle;
+    //    uint16_t f_AudioFormat;
+    //    file.read(reinterpret_cast<char*>(&f_AudioFormat), sizeof(f_AudioFormat));
 
-		return true;
-	}
+    //    uint16_t f_NumChannels;
+    //    file.read(reinterpret_cast<char*>(&f_NumChannels), sizeof(f_NumChannels));
+
+    //    uint32_t f_SampleRate;
+    //    file.read(reinterpret_cast<char*>(&f_SampleRate), sizeof(f_SampleRate));
+
+    //    file.seekg(6, ios::cur); // Skip ByteRate and BlockAlign
+
+    //    uint16_t f_BitsPerSample;
+    //    file.read(reinterpret_cast<char*>(&f_BitsPerSample), sizeof(f_BitsPerSample));
+
+    //    char subchunk2ID[4];
+    //    file.read(subchunk2ID, 4);
+    //    if (strncmp(subchunk2ID, "data", 4) != 0) {
+    //        cerr << "Invalid WAV file data subchunk: " << filename << endl;
+    //        return false;
+    //    }
+
+    //    uint32_t subchunk2Size;
+    //    file.read(reinterpret_cast<char*>(&subchunk2Size), sizeof(subchunk2Size));
+
+    //    vector<char> data(subchunk2Size);
+    //    file.read(data.data(), subchunk2Size);
+
+    //    ALenum format;
+    //    if (f_NumChannels == 1) {
+    //        format = (f_BitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
+    //    }
+    //    else {
+    //        format = (f_BitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
+    //    }
+
+    //    alBufferData(buffer, format, data.data(), subchunk2Size, f_SampleRate);
+
+        return true;
+    }
+
+    /* 
+    Called by the rendering thread  //TODO TRY PUSHING THE PACKAGES IN VECTORS ALWAYS AND ONLY UNPACK IN RENDERINGMANAGER,
+    WE SHOULD FIGURE OUT A WAY TO LOAD THINGS IN BUNCHES, OR GET ALL LOADED OBJECTS IN ONEGO AND ONLY PUSH THEM ONCE ITS ALL LOADED
+    THAT WOULD BE GOOD FOR LOADING SCENES, WE DONT WANT TO PUSH ANY RESOURCES EARLIER THAN NEEDED UNTIL THE ENTIRE SCENE IS LOADED
+    I'm kinda tired of working on the loading manager and i wanna do physics now so gl future ryan i hope things go well >w< 
+    */
+    bool 
+        ResourceManager::TryPushingLoadedTexture
+        (
+            const string& fp_ObjectID,
+            unique_ptr<TextureData> fp_TextureDataPtr
+        )
+    {
+        pm_WaitingLoadedGraphicsAssets.emplace_back(fp_ObjectID, move(fp_TextureDataPtr)); //construct package in vector
+
+        if (not pm_DrawableResourceLoadingQueue->PushLoadedResourcePackages(pm_WaitingLoadedGraphicsAssets))
+        {
+            resource_logger->LogAndPrint("Load put off until later", "ResourceManager", LogManager::LogLevel::Trace);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool
+        ResourceManager::LoadPlugin
+        (
+            const string& fp_PluginFilePath,
+            PluginInfo& fp_Plugin
+        )
+    {
+        DYNLIB_HANDLE f_Handle;
+
+        if (not (filesystem::exists(fp_PluginFilePath) and filesystem::is_regular_file(fp_PluginFilePath)))
+        {
+            resource_logger->LogAndPrint("Failed to locate DLL at: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
+
+        f_Handle = DYNLIB_LOAD(fp_PluginFilePath.c_str());
+        resource_logger->LogAndPrint("Successfully located DLL at: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Debug);
+
+        if (not f_Handle)
+        {
+            resource_logger->LogAndPrint("Failed to load plugin at path: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
+
+        resource_logger->LogAndPrint("Successfully loaded plugin at: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Debug);
+
+        auto f_CreateFunc = (CreatePluginFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
+        auto f_DestroyFunc = (DestroyPluginFunc)DYNLIB_GETSYM(f_Handle, "destroyPlugin");
+
+        if (not f_CreateFunc or not f_DestroyFunc)
+        {
+            resource_logger->LogAndPrint("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Error);
+            DYNLIB_UNLOAD(f_Handle);
+            return false;
+        }
+
+        resource_logger->LogAndPrint("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Debug);
+
+        fp_Plugin.Pwugin = unique_ptr<Plugin, DestroyPluginFunc>(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;
+        fp_Plugin.Handle = f_Handle;
+
+        return true;
+    }
 }

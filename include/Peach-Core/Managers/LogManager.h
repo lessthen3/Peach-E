@@ -350,6 +350,8 @@ namespace PeachCore {
 
         LogLevel pm_ActiveLogMask = LogLevel::All;
         LogLevel pm_FlushMask = static_cast<LogLevel>(LogLevel::Error | LogLevel::Fatal); // or make this user-configurable
+        
+        uint32_t pm_LogSizeCounter = 0;
 
     //////////////////////////////////////////////
     // Public Methods
@@ -495,6 +497,77 @@ namespace PeachCore {
             if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
             {
                 pm_LogFiles[f_LogFileName] << f_LogEntry;
+                Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
+                //pm_LogSizeCounter++;
+
+                //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
+                //{
+                //    pm_LogFiles[f_LogFileName].flush();
+                //}
+            }
+
+            pm_Console->AddLog(format("[{}][{}]: {}", f_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, fp_LogLevel, pm_ThreadOwnerName);
+        }
+
+        void
+            Logf
+            (
+                const string& fp_Message,
+                const string& fp_Sender,
+                const LogLevel fp_LogLevel
+            )
+        {
+            //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
+            #ifdef _DEBUG
+                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("Log"))) return;
+            #else
+                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized)) return;
+            #endif
+
+            string f_LogLevel;
+
+            switch (fp_LogLevel)
+            {
+                case LogLevel::Trace:
+                    f_LogLevel = "trace";
+                    break;
+                case LogLevel::Debug:
+                    f_LogLevel = "debug";
+                    break;
+                case LogLevel::Info:
+                    f_LogLevel = "info";
+                    break;
+                case LogLevel::Warning:
+                    f_LogLevel = "warn";
+                    break;
+                case LogLevel::Error:
+                    f_LogLevel = "error"; //not bright oooo soo dark and moody and complex and hard to reach and engage with ><
+                    break;
+                case LogLevel::Fatal:
+                    f_LogLevel = "fatal";
+                    break;
+                default:
+                    PrintError(Log("Did not input a valid option for log level in Log()", pm_LoggerName, "error", fp_LogLevel));
+                    Print(Log(fp_Message, fp_Sender, "error", fp_LogLevel));
+                    return;
+            }
+
+            string f_TimeStamp = GetCurrentTimestamp();
+            string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + f_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
+
+            // Log to specific file and all-logs file
+            const string f_LogFileName = f_LogLevel + ".log";
+
+            if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+            {
+                pm_LogFiles[f_LogFileName] << f_LogEntry;
+                Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
+                //pm_LogSizeCounter++;
+
+                //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
+                //{
+                //    pm_LogFiles[f_LogFileName].flush();
+                //}
             }
 
             pm_Console->AddLog(format("[{}][{}]: {}", f_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, fp_LogLevel, pm_ThreadOwnerName);
@@ -571,6 +644,8 @@ namespace PeachCore {
             }
 
             pm_Console->AddLog(format("[{}][{}]: {}", fp_LogLevel, pm_LoggerName, fp_Message), pm_LoggerName, fp_EnumLogLevel, pm_ThreadOwnerName);
+
+            pm_LogSizeCounter++;
 
             return f_LogEntry;
         }

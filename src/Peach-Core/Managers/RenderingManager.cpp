@@ -181,7 +181,7 @@ namespace PeachCore {
             return false;
         }
 
-        pm_LoadedResourceQueue = ResourceManager::ResourceLoader().GetDrawableResourceLoadingQueue();
+        pm_LoadedResourceQueue = ResourceManager::get_single().GetDrawableResourceLoadingQueue();
 
         if (not pm_LoadedResourceQueue)
         {
@@ -213,7 +213,12 @@ namespace PeachCore {
     [[nodiscard]] shared_ptr<CommandQueue>
         RenderingManager::GetDrawCommandQueue()
     {
-        if (pm_DrawCommandQueue.use_count() == 2)
+        if (not pm_IsInitialized)
+        {
+            rendering_logger->LogAndPrint("Attempted to get a reference to RenderingManager's DrawCommandQueue before RenderingManager was initialized, please initialize RenderingManager first UwU", "RenderingManager", LogManager::LogLevel::Error);
+            return nullptr;
+        }
+        else if (pm_DrawCommandQueue.use_count() >= 2)
         {
             rendering_logger->LogAndPrint("RenderingManager has already issued a reference to the draw command queue, fuck off", "RenderingManager", LogManager::LogLevel::Warning);
             return nullptr;

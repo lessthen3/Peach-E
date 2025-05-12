@@ -51,8 +51,7 @@ file(
     GLOB_RECURSE 
     PEACH_ENGINE_SOURCES 
     CONFIGURE_DEPENDS 
-    "src/Peach-Engine/*.cpp" 
-    "include/Peach-Engine/*.h"
+    "src/Peach-Engine/main.cpp" #thin wrapper for Peach Engine executable
 )
 
 # Peach Editor
@@ -148,15 +147,9 @@ if(WIN32)
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
-    STATIC_IMPORT(Lua_Symbols 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/lua/release/win64/lua_shared.lib"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/lua/debug/win64/lua_shared.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
-    )
-
     STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/lua/release/win64/lua_compiler.lib"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/lua/debug/win64/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
     )
 
@@ -278,6 +271,18 @@ elseif(APPLE)
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
+    # STATIC_IMPORT(Lua_Compiler 
+    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
+    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
+    #     "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    # )
+
+    # STATIC_IMPORT(moltenVK 
+    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
+    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
+    #     "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    # )
+
     ############ Vulkan Specific Imports XXX: doing these later when i compile on my mac mini >w<
 
     # add_library(moltenVK SHARED IMPORTED)
@@ -289,102 +294,102 @@ elseif(APPLE)
     ############ Vulkan Specific Imports
 
     STATIC_IMPORT(shaderC 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libshaderc.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libshaderc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libshaderc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libshaderc.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
     )
 
     STATIC_IMPORT(volk 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libvolk.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libvolk.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libvolk.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
     )
 
     ############ SPIRV Tools
 
     STATIC_IMPORT(SPIRV_Tools 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Diff 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-diff.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-diff.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-diff.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-diff.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Link 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-link.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-link.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-link.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-link.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Lint 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-lint.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-lint.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-lint.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-lint.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Opt 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-opt.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-opt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-opt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-opt.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Reduce 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-reduce.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-reduce.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-reduce.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPIRV-Tools-reduce.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Remapper 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPVRemapper.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPVRemapper.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPVRemapper.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libSPVRemapper.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     ############ SPIRV Cross
 
     STATIC_IMPORT(SPIRV_Cross_Core 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-core.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-core.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_CPP 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-cpp.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-cpp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-cpp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-cpp.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_GLSL 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-glsl.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-glsl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-glsl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-glsl.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_HLSL 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-hlsl.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-hlsl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-hlsl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-hlsl.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_MSL 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-msl.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-msl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-msl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-msl.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Reflect 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-reflect.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-reflect.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-reflect.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-reflect.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Util 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-util.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-util.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-util.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libspirv-cross-util.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
@@ -402,6 +407,12 @@ elseif(UNIX) #XXX: doing these later when i compile on my linux machine, future 
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/tux64/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
+
+    # STATIC_IMPORT(Lua_Compiler 
+    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
+    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
+    #     "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    # )
 
     ############ Vulkan Specific Imports
 
@@ -551,8 +562,6 @@ target_link_libraries(peach PUBLIC
     glm::glm
     #SDL
     SDL3
-    #Lua
-    Lua_Symbols
 )
 
 if(APPLE ) #link moltenVK for mac compatibility

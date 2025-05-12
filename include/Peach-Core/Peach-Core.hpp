@@ -76,6 +76,7 @@
 #include "Utils/EventQueue.h"
 #include "Utils/Serializer.h"
 #include "Utils/NoiseGenerator.h"
+#include "Utils/DebugUtils.h"
 
 
 //////////////////////////////////////////////

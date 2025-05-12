@@ -79,6 +79,9 @@ namespace PeachCore {
         );
 
         bool
+            InitializeAudioEngine();
+
+        bool
             InitializeLoadingQueue();
 
         bool

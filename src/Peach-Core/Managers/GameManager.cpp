@@ -52,6 +52,7 @@ namespace PeachCore
             return false;
         }
         
+        LoadScriptRuntime(); //WARNING: this just loads the dotnet stuff for now
 
         //////////////////////////////////////////////
         // Load and Setup Plugins
@@ -159,7 +160,7 @@ namespace PeachCore
         const string f_LogDir = fp_RootPath + "/logs";
 
         //resource manager should be initialized first, otherwise the loading queues will be nullptr
-        ResourceManager::ResourceLoader().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
+        ResourceManager::get_single().Initialize(f_LogDir, fp_RootPath, peach_engine_console.GetConsoleLogger());
 
         PhysicsManager2D::PhysicsWorld().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
         AudioManager::get_single().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
@@ -172,6 +173,23 @@ namespace PeachCore
 
         return true;
     }
+
+    bool
+        GameManager::LoadScriptRuntime()
+    {
+        //WARNING: hard coded path for hostfxr for testing on windows rn to get things workin
+        if (not ResourceManager::get_single().LoadDotNetRuntime("res/script_runtimes/win64/dotnet/hostfxr.dll", pm_DotNetRuntime.m_DotNetRuntimeContext))
+        {
+
+            return false;
+        }
+
+        return true;
+    }
+
+    //////////////////////////////////////////////
+    // Main Loop for Peach Engine >O<
+    //////////////////////////////////////////////
 
     void
         GameManager::StartMainGameLoop()
@@ -238,7 +256,7 @@ namespace PeachCore
         for (int index = 0; index < fp_ListOfPluginsToLoad.size(); index++)
         {
             PluginInfo f_TempPlugin = {};
-            ResourceManager::ResourceLoader().LoadPlugin(fp_ListOfPluginsToLoad[index], f_TempPlugin);
+            ResourceManager::get_single().LoadPlugin(fp_ListOfPluginsToLoad[index], f_TempPlugin);
 
             pm_PluginInstances.emplace_back(move(f_TempPlugin.Pwugin), f_TempPlugin.Handle);
         }

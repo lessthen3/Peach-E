@@ -58,6 +58,14 @@ namespace PeachCore {
         //if (pm_Device) {alcCloseDevice(pm_Device);}
     }
 
+
+    bool
+        AudioManager::InitializeAudioEngine()
+    {
+
+        return true;
+    }
+
     bool
         AudioManager::InitializeLoadingQueue()
     {
@@ -67,7 +75,7 @@ namespace PeachCore {
             return false;
         }
 
-        pm_LoadedAudioResourceQueue = ResourceManager::ResourceLoader().GetAudioResourceLoadingQueue();
+        pm_LoadedAudioResourceQueue = ResourceManager::get_single().GetAudioResourceLoadingQueue();
 
         if (not pm_LoadedAudioResourceQueue)
         {
@@ -85,13 +93,13 @@ namespace PeachCore {
     {
         if (pm_AudioCommandQueue)
         {
-            audio_logger->LogAndPrint("AudioManager already initialized the draw command queue >O<", "AudioManager", LogManager::LogLevel::Warning);
+            audio_logger->LogAndPrint("AudioManager already initialized the audio command queue >O<", "AudioManager", LogManager::LogLevel::Warning);
             return false;
         }
 
         pm_AudioCommandQueue = make_shared<CommandQueue>();
 
-        audio_logger->LogAndPrint("AudioManager successfully initialized the draw command queue", "AudioManager", LogManager::LogLevel::Info);
+        audio_logger->LogAndPrint("AudioManager successfully initialized the audio command queue", "AudioManager", LogManager::LogLevel::Info);
 
         return true; //returns one and only one ptr to whoever initializes AudioManager, this is meant only for the main thread
     }
@@ -99,7 +107,12 @@ namespace PeachCore {
     [[nodiscard]] shared_ptr<CommandQueue>
         AudioManager::GetAudioCommandQueue()
     {
-        if (pm_AudioCommandQueue.use_count() == 2)
+        if (not pm_IsInitialized)
+        {
+            audio_logger->LogAndPrint("Attempted to get a reference to AudioManager's AudioCommandQueue before AudioManager was initialized, please initialize AudioManager first UwU", "AudioManager", LogManager::LogLevel::Error);
+            return nullptr;
+        }
+        else if (pm_AudioCommandQueue.use_count() >= 2)
         {
             audio_logger->LogAndPrint("AudioManager has already issued a reference to the audio command queue, fuck off", "AudioManager", LogManager::LogLevel::Warning);
             return nullptr;

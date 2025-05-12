@@ -20,6 +20,10 @@
 
 #define MINIAUDIO_IMPLEMENTATION
 
+#ifdef _DEBUG
+    #define PEACH_DEBUG
+#endif
+
 #include "../../include/Peach-Editor/Managers/PeachEditorManager.h"
 
 #include <csignal>

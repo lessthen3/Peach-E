@@ -51,8 +51,12 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
+        //////////////////// Main Logger and Console Buffers ////////////////////
+
         unique_ptr<LogManager> main_logger = nullptr;
         PeachConsole peach_engine_console;
+
+        //////////////////// Loading/Command Queues ////////////////////
 
         shared_ptr<CommandQueue> pm_DrawCommandQueue = nullptr;
         shared_ptr<CommandQueue> pm_AudioCommandQueue = nullptr;
@@ -60,6 +64,10 @@ namespace PeachCore {
         //////////////////// Plugin Stuff ////////////////////
 
         vector<PluginInfo> pm_PluginInstances;
+
+        //////////////////// Script Runtimes ////////////////////
+
+        DotNetRuntime pm_DotNetRuntime;
 
         //string CurrentlySelectedRenderer = "Nothing";
         //map<string, Scene> DictionaryOfAllScenesInCurrentProject = {};
@@ -85,12 +93,14 @@ namespace PeachCore {
                 const RendererType fp_RenderingBackend
             );
 
+        bool 
+            LoadScriptRuntime(); //WARNING: this is public for testing
+
         void
             StartMainGameLoop();
 
-        //////////////////////////////////////////////
-        // Shutdown and Cleanup OwO
-        //////////////////////////////////////////////
+        //////////////////// Shutdown and Cleanup OwO ////////////////////
+
         bool
             ShutdownPeachEngine();
 
@@ -98,9 +108,8 @@ namespace PeachCore {
     // Private Methods
     //////////////////////////////////////////////
     private:
-        //////////////////////////////////////////////
-        // Thread Methods
-        //////////////////////////////////////////////
+
+        //////////////////// Thread Methods ////////////////////
 
         bool
             InitializeThreads() //XXX: used for kickstarting threads needed for engine execution
@@ -164,9 +173,8 @@ namespace PeachCore {
             }
         }
 
-        //////////////////////////////////////////////
-        // Engine Initialization Methods
-        //////////////////////////////////////////////
+        //////////////////// Engine Initialization Methods ////////////////////
+
         bool
             InitalizeManagers
             (
@@ -255,9 +263,7 @@ namespace PeachCore {
 
         }
 
-        //////////////////////////////////////////////
-        // Plugin Stuff
-        //////////////////////////////////////////////
+        //////////////////// Plugin Stuff ////////////////////
 
         void
             InitializePlugins();
@@ -274,16 +280,67 @@ namespace PeachCore {
         void
             LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad);
 
-        //////////////////////////////////////////////
-        // Pushing Commands To RenderingManager
-        //////////////////////////////////////////////
-        // 
-        //MEANT TO BE CALLED ONCE EVERY FRAME, SO WE BATCH ALL CALLS TOGETHER FOR EACH CATEGORY
+        //////////////////// Issue Command Call Methods ////////////////////
+
         void 
-            PushCommands
+            PushDrawCommands //XXX: MEANT TO BE CALLED ONCE EVERY FRAME, SO WE BATCH ALL CALLS TOGETHER FOR EACH CATEGORY
             (
                 const CreateDrawableData& fp_CreateData, 
                 const UpdateActiveDrawableData& fp_UpdateData, 
+                const DeleteDrawableData& fp_DeleteData
+            )
+        {
+            /*if (!createData.objectIDs.empty()) {
+                Command createCmd{ CommandType::CreateAsset, createData };
+                commandQueue.push(createCmd);
+            }
+            if (!updateData.objectIDs.empty()) {
+                Command updateCmd{ CommandType::UpdateAsset, updateData };
+                commandQueue.push(updateCmd);
+            }
+            if (!deleteData.objectIDs.empty()) {
+                Command deleteCmd{ CommandType::DeleteAsset, deleteData };
+                commandQueue.push(deleteCmd);
+            }*/
+        }
+
+        void
+            PushAudioCommands //XXX: MEANT TO BE CALLED ONCE EVERY FRAME, SO WE BATCH ALL CALLS TOGETHER FOR EACH CATEGORY
+            (
+                const CreateDrawableData& fp_CreateData,
+                const UpdateActiveDrawableData& fp_UpdateData,
+                const DeleteDrawableData& fp_DeleteData
+            )
+        {
+            /*if (!createData.objectIDs.empty()) {
+                Command createCmd{ CommandType::CreateAsset, createData };
+                commandQueue.push(createCmd);
+            }
+            if (!updateData.objectIDs.empty()) {
+                Command updateCmd{ CommandType::UpdateAsset, updateData };
+                commandQueue.push(updateCmd);
+            }
+            if (!deleteData.objectIDs.empty()) {
+                Command deleteCmd{ CommandType::DeleteAsset, deleteData };
+                commandQueue.push(deleteCmd);
+            }*/
+        }
+        /*
+        Needa figure out how to sync commands and loaded assets, since if the main thread asks the renderthread to draw smth or the audio thread to play a sound
+        then, if the asset isnt fully loaded or present then it can cause issues, there needs to be a efficient protocol for figuring this stuff out, like a flag set or
+        the ResourceManager sends an ack response to the main thread to indicate that its been loaded, and the main thread can keep a list of objects that have been
+        asked to be loaded, and only after its been fully loaded, then the main thread takes it outta the waiting to be loaded list. 
+
+        and only after that, does the main thread actually tell the other threads it can use those because i dont wanna check EVERY FRAME for EVERY ASSET
+        if they exist or not lmfao.
+
+        XXX: if a loaded packge is pushed towards a thread it means "just take this and store it for later use when instructed by the command queue"
+        */
+        void
+            PushLoadCommands
+            (
+                const CreateDrawableData& fp_CreateData,
+                const UpdateActiveDrawableData& fp_UpdateData,
                 const DeleteDrawableData& fp_DeleteData
             )
         {

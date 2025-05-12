@@ -19,6 +19,8 @@
 #include "../Utils/CommandQueue.h"
 #include "../Utils/DynamicLoader.h"
 
+#include "../Language-Support/DotNetRuntime.h"
+
 ///External
 #include <physfs.h>
 #include <stb/stb_image.h>
@@ -29,104 +31,165 @@ typedef void (*DestroyPluginFunc)(Plugin*);
 
 namespace PeachCore {
 
-	struct PluginInfo
-	{
-		unique_ptr<Plugin, DestroyPluginFunc> Pwugin = { nullptr, nullptr }; //>O<
-		DYNLIB_HANDLE Handle = nullptr; //>w<
-	};
+    //////////////////////////////////////////////
+    // Plugin Stuff
+    //////////////////////////////////////////////
+    struct PluginInfo
+    {
+        unique_ptr<Plugin, DestroyPluginFunc> Pwugin = { nullptr, nullptr }; //>O<
+        DYNLIB_HANDLE Handle = nullptr; //>w<
+    };
 
-	class ResourceManager 
-	{
-	//////////////////////////////////////////////
-	// Private Destructor
-	//////////////////////////////////////////////
-	private:
-		~ResourceManager() = default;
+    struct LuaRuntimeContext
+    {
 
-	//////////////////////////////////////////////
-	// Singleton Instance
-	//////////////////////////////////////////////
-	public:
-		static ResourceManager& ResourceLoader()
-		{
-			static ResourceManager resourceloader;
-			return resourceloader;
-		}
+    };
 
-	//////////////////////////////////////////////
-	// Private Constructor
-	//////////////////////////////////////////////
-	private:
-		ResourceManager() = default;
+    struct PythonRuntimeContext
+    {
 
-		ResourceManager(const ResourceManager&) = delete;
-		ResourceManager& operator=(const ResourceManager&) = delete;
+    };
 
-	//////////////////////////////////////////////
-	// Private Members
-	//////////////////////////////////////////////
-	private:
-		//used to push loaded assets that are destined for AudioManager
-		shared_ptr<LoadingQueue> pm_AudioResourceLoadingQueue = nullptr;
-		//used to push loaded assets that are destined for RenderingManager
-		shared_ptr<LoadingQueue> pm_DrawableResourceLoadingQueue = nullptr; 
-		//used for asking ResourceManager to load something from the main thread
-		shared_ptr<CommandQueue> pm_LoadCommandQueue = nullptr;
+    //////////////////////////////////////////////
+    // ResourceManager Class
+    //////////////////////////////////////////////
+    class ResourceManager 
+    {
+    //////////////////////////////////////////////
+    // Private Destructor
+    //////////////////////////////////////////////
+    private:
+        ~ResourceManager() = default;
 
-		bool pm_IsInitialized = false;
+    //////////////////////////////////////////////
+    // Singleton Instance
+    //////////////////////////////////////////////
+    public:
+        static ResourceManager& get_single()
+        {
+            static ResourceManager resource_loader;
+            return resource_loader;
+        }
 
-		// Holds mesh, texture, shader and animation data
-		vector<LoadedResourcePackage> pm_WaitingLoadedGraphicsAssets;
-		//Holds mp3, wav and flac files
-		vector<LoadedResourcePackage> pm_WaitingLoadedAudioAssets;
+    //////////////////////////////////////////////
+    // Private Constructor
+    //////////////////////////////////////////////
+    private:
+        ResourceManager() = default;
 
-		unique_ptr<LogManager> resource_logger = nullptr;
+        ResourceManager(const ResourceManager&) = delete;
+        ResourceManager& operator=(const ResourceManager&) = delete;
 
-	//////////////////////////////////////////////
-	// Public Members
-	//////////////////////////////////////////////
-	public:
-		mutex resourceMutex;
+    //////////////////////////////////////////////
+    // Private Members
+    //////////////////////////////////////////////
+    private:
+        //////////////////// Queue Pointers ////////////////////
 
-	//////////////////////////////////////////////
-	// Public Methods
-	//////////////////////////////////////////////
-	public:
-		bool 
-			Initialize
-		(
-			const string& fp_LogOutputDirectory,
-			shared_ptr<Console> fp_Console
-		);
+        //used to push loaded assets that are destined for AudioManager
+        shared_ptr<LoadingQueue> pm_AudioResourceLoadingQueue = nullptr;
+        //used to push loaded assets that are destined for RenderingManager
+        shared_ptr<LoadingQueue> pm_DrawableResourceLoadingQueue = nullptr; 
+        //used to push loaded scripts and config stuff -> MainThread/GameManager
+        shared_ptr<LoadingQueue> pm_MainThreadLoadingQueue = nullptr;
+        //used for asking ResourceManager to load something from the main thread
+        shared_ptr<CommandQueue> pm_LoadCommandQueue = nullptr;
 
-		[[nodiscard]] shared_ptr<LoadingQueue>
-			GetAudioResourceLoadingQueue();
+        //////////////////// Waiting Buffers ////////////////////
 
-		[[nodiscard]] shared_ptr<LoadingQueue>
-			GetDrawableResourceLoadingQueue();
+        // Holds mesh, texture, shader and animation data
+        vector<LoadedResourcePackage> pm_WaitingLoadedGraphicsAssets;
+        //Holds mp3, wav and flac files
+        vector<LoadedResourcePackage> pm_WaitingLoadedAudioAssets;
 
-		bool
-			LoadPlugin
-			(
-				const string& fp_PluginFilePath,
-				PluginInfo& fp_Plugin
-			);
+        //////////////////// Resource Logger ////////////////////
 
-		bool 
-			LoadTextureFromFile(const string& fp_TextureFilePath);
+        //Resource Logger owned by ResourceManager only
+        unique_ptr<LogManager> resource_logger = nullptr;
 
-		bool
-			LoadWavFromFile(const string& fp_WavFilePath);
+        //////////////////// Utility Structs ////////////////////
 
-	//////////////////////////////////////////////
-	// Private Methods
-	//////////////////////////////////////////////
-	private:
-		bool 
-			TryPushingLoadedTexture
-			(
-				const string& fp_ObjectID, 
-				unique_ptr<TextureData> fp_TextureDataPtr
-			);
-	};
+        //1 byte bois UwU
+        Serializer pm_Serializer; 
+        DynamicLoader pm_DynamicLoader;
+
+        //////////////////// Script Runtime Contexts ////////////////////
+
+        LuaRuntimeContext pm_LuaRuntimeContext;
+        PythonRuntimeContext pm_PythonRuntimeContext;
+
+        string pm_RootDirectory;
+
+        bool pm_IsInitialized = false;
+
+    //////////////////////////////////////////////
+    // Public Members
+    //////////////////////////////////////////////
+    public:
+        mutex resourceMutex;
+
+    //////////////////////////////////////////////
+    // Public Methods
+    //////////////////////////////////////////////
+    public:
+        bool 
+            Initialize
+        (
+            const string& fp_LogOutputDirectory,
+            const string& fp_RootPhysfsDirectory,
+            shared_ptr<Console> fp_Console
+        );
+
+        [[nodiscard]] shared_ptr<LoadingQueue>
+            GetAudioResourceLoadingQueue();
+
+        [[nodiscard]] shared_ptr<LoadingQueue>
+            GetDrawableResourceLoadingQueue();
+
+        [[nodiscard]] shared_ptr<CommandQueue>
+            GetLoadCommandQueue();
+
+        bool
+            LoadLuaRuntime();
+
+        bool
+            LoadDotNetRuntime
+            (
+                const string& fp_RelativeHostExrPath,
+                DotNetRuntimeContext& fp_DotNetRuntimeContext
+            );
+
+        bool
+            LoadDotNetScript
+            (
+
+            );
+
+        bool
+            LoadPythonRuntime();
+
+        bool
+            LoadPlugin
+            (
+                const string& fp_PluginFilePath,
+                PluginInfo& fp_Plugin
+            );
+
+        bool 
+            LoadTextureFromFile(const string& fp_TextureFilePath);
+
+        bool
+            LoadWavFromFile(const string& fp_WavFilePath);
+
+    //////////////////////////////////////////////
+    // Private Methods
+    //////////////////////////////////////////////
+    private:
+        bool 
+            TryPushingLoadedTexture
+            (
+                const string& fp_ObjectID, 
+                unique_ptr<TextureData> fp_TextureDataPtr
+            );
+    };
 }
