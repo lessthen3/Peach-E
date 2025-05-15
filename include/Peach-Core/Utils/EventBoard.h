@@ -1,6 +1,7 @@
 #pragma once
-#include <map>
-#include <vector>
+
+#include "../Managers/LogManager.h"
+
 #include <queue>
 #include <memory>
 #include <typeindex>
@@ -9,12 +10,13 @@
 namespace PeachCore {
 
     template<typename Event>
-    struct EventQueueManager 
+    struct EventBoard 
     {
     public:
-        static EventQueueManager& EventQueue() {
-            static EventQueueManager<Event> instance;
-            return instance;
+        static EventBoard& get_single() 
+        {
+            static EventBoard<Event> event_board;
+            return event_board;
         }
 
     public:
@@ -78,12 +80,12 @@ namespace PeachCore {
         struct TimedEvent
         {
             shared_ptr<Event> event;
-            unsigned long int frameQueued;
+            uint64_t frameQueued;
         };
 
         map<type_index, queue<TimedEvent>> m_Events;
         map<type_index, vector<function<void(shared_ptr<Event>)>>> handlers;
-        unsigned long int m_CurrentFrame = 0; // Tracks global frame count for 'game' runtime
+        uint64_t m_CurrentFrame = 0; // Tracks global frame count for 'game' runtime
     };
 
 }

@@ -771,7 +771,7 @@ namespace PeachEditor {
 
         pm_CatShader =  //what a dumb fucking language, "oh yeah bro use RAII but also we create 2 copies of a value so the destructor fucks ur RAII up srry its in the standard >w<"
         
-            PeachCore::ShaderProgram
+            PeachCore::OpenGLShaderProgram
             (
                 "Cat_Shader",
                 f_BaseDir + "/shaders/vert.vs",

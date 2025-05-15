@@ -8,12 +8,22 @@
  *
  *                     Peach-E is a free open source game engine
 ********************************************************************/
-using Peach;
+namespace Peach;
 
-public class Player : PeachScript
+using System;
+using System.Runtime.InteropServices;
+
+public abstract class PeachScript
 {
-    public override void OnEnter() => Console.WriteLine("Start!");
-    public override void OnConstantUpdate() => Console.WriteLine("Constant Update!");
-    public override void OnUpdate() => Console.WriteLine("Update!");
-    public override void OnExit() => Console.WriteLine("Exit!");
+    public abstract void OnEnter();
+    public abstract void OnUpdate();
+    public abstract void OnConstantUpdate();
+    public abstract void OnExit();
 }
+
+public static class Peach
+{
+    [DllImport("peach_api", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void Peach_Log(string msg);
+}
+

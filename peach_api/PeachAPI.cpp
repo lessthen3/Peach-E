@@ -8,12 +8,13 @@
  *
  *                     Peach-E is a free open source game engine
 ********************************************************************/
-using Peach;
+#include "PeachAPI.h"
 
-public class Player : PeachScript
-{
-    public override void OnEnter() => Console.WriteLine("Start!");
-    public override void OnConstantUpdate() => Console.WriteLine("Constant Update!");
-    public override void OnUpdate() => Console.WriteLine("Update!");
-    public override void OnExit() => Console.WriteLine("Exit!");
+namespace PeachCore{
+
+    void Peach_Log(const char* msg)
+    {
+        GameManager::get_single().m_UserLogger->LogAndPrint(msg, "PeachAPI", LogManager::LogLevel::Info);
+    }
+
 }

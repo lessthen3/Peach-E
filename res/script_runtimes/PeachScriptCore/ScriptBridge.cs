@@ -1,13 +1,35 @@
+/*******************************************************************
+ *                                             Peach-E v0.0.1
+ *                           Created by Ranyodh Mandur - 🍑 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *                     Peach-E is a free open source game engine
+********************************************************************/
+namespace PeachScriptCore;
+
 using System;
 using System.Runtime.InteropServices;
+
 using Peach;
 
 public static class ScriptBridge
 {
     [UnmanagedCallersOnly(EntryPoint = "CreateScriptInstance")]
-    public static IntPtr CreateScriptInstance(string fp_ScriptName, string fp_TypeName)
+    public static IntPtr CreateScriptInstance(IntPtr fp_ScriptName, IntPtr fp_TypeName)
     {
-        var type = Type.GetType(fp_TypeName + ", " + fp_ScriptName);
+        if (fp_ScriptName == IntPtr.Zero || fp_TypeName == IntPtr.Zero)
+            return IntPtr.Zero;
+
+        string f_ScriptName = Marshal.PtrToStringUTF8(fp_ScriptName);
+        string f_TypeName = Marshal.PtrToStringUTF8(fp_TypeName);
+
+        if (string.IsNullOrEmpty(f_ScriptName) || string.IsNullOrEmpty(f_TypeName))
+            return IntPtr.Zero;
+
+        var type = Type.GetType(f_TypeName + ", " + f_ScriptName);
 
         if (type == null)
             return IntPtr.Zero;
@@ -22,14 +44,14 @@ public static class ScriptBridge
         return GCHandle.ToIntPtr(handle);
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "CallOnStart")]
-    public static void CallOnStart(IntPtr handlePtr)
+    [UnmanagedCallersOnly(EntryPoint = "CallOnEnter")]
+    public static void CallOnEnter(IntPtr handlePtr)
     {
         var handle = GCHandle.FromIntPtr(handlePtr);
         var script = (PeachScript)handle.Target;
-        script.OnStart();
+        script.OnEnter();
     }
-    
+
     [UnmanagedCallersOnly(EntryPoint = "CallOnUpdate")]
     public static void CallOnUpdate(IntPtr handlePtr)
     {

@@ -89,7 +89,7 @@ namespace PeachEditor {
 
         GLuint pm_TestTexture = 69;
         GLuint pm_TestVAO = 69;
-        PeachCore::ShaderProgram pm_CatShader; //>w<
+        PeachCore::OpenGLShaderProgram pm_CatShader; //>w<
 
         const glm::vec4 pm_ClearColour = { 0.10f, 0.18f, 0.24f, 1.0f };
 

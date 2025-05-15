@@ -32,7 +32,7 @@ namespace PeachCore {
     // Singleton Instance
     //////////////////////////////////////////////
     public:
-        static GameManager& PeachEngine()
+        static GameManager& get_single()
         {
             static GameManager peach_engine;
             return peach_engine;
@@ -67,7 +67,7 @@ namespace PeachCore {
 
         //////////////////// Script Runtimes ////////////////////
 
-        DotNetRuntime pm_DotNetRuntime;
+        DotNetUtils pm_DotNetContext;
 
         //string CurrentlySelectedRenderer = "Nothing";
         //map<string, Scene> DictionaryOfAllScenesInCurrentProject = {};
@@ -81,6 +81,8 @@ namespace PeachCore {
         const float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
         const float USER_DEFINED_UPDATE_FPS = 60.0f;
         float        USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game so no const >w<
+
+        shared_ptr<LogManager> m_UserLogger;
 
     //////////////////////////////////////////////
     // Public Methods

@@ -8,6 +8,11 @@
  *
  *                     Peach-E is a free open source game engine
 ********************************************************************/
+
+#ifdef _DEBUG
+    #define PEACH_DEBUG
+#endif
+
 #include "../../include/Peach-Core/Managers/GameManager.h"
 
 namespace PeachCore
@@ -30,6 +35,10 @@ namespace PeachCore
         main_logger = make_unique<LogManager>();
         main_logger->Initialize(ThreadName::MainThread, fp_RootPath + "/logs", "MainLogger", peach_engine_console.GetConsoleLogger(), LogManager::LogLevel::All);
         main_logger->LogAndPrint("MainLogger successfully initialized", "PeachEngineManager", LogManager::LogLevel::Debug);
+
+        m_UserLogger = make_shared<LogManager>();
+        m_UserLogger->Initialize(ThreadName::MainThread, fp_RootPath + "/logs", "UserLogger", peach_engine_console.GetConsoleLogger(), LogManager::LogLevel::All);
+        m_UserLogger->LogAndPrint("UserLogger successfully initialized", "PeachEngineManager", LogManager::LogLevel::Debug);
 
         if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop
         {
@@ -60,7 +69,7 @@ namespace PeachCore
 
         vector<string> f_ListOfPluginsToLoad;
 
-        #if defined(_WIN32) or defined(_WIN64) //hard coded for now, will be dynamically loaded using a project file encoded in JSON or binary in the future
+        #if defined(_WIN32) || defined(_WIN64) //hard coded for now, will be dynamically loaded using a project file encoded in JSON or binary in the future
             //DLL's
             f_ListOfPluginsToLoad =
             {
@@ -178,7 +187,7 @@ namespace PeachCore
         GameManager::LoadScriptRuntime()
     {
         //WARNING: hard coded path for hostfxr for testing on windows rn to get things workin
-        if (not ResourceManager::get_single().LoadDotNetRuntime("res/script_runtimes/win64/dotnet/hostfxr.dll", pm_DotNetRuntime.m_DotNetRuntimeContext))
+        if (not ResourceManager::get_single().LoadDotNetRuntime("res/script_runtimes/win64/dotnet/hostfxr.dll", pm_DotNetContext.m_DotNetRuntimeContext))
         {
 
             return false;

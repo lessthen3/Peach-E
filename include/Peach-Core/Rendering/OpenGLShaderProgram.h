@@ -1,38 +1,34 @@
 #pragma once
 
+///PeachCore
 #include "../Managers/LogManager.h"
 
+///External
 #include <GL/glew.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <map>
-
-
-using namespace std;
-
 namespace PeachCore {
 
-    class ShaderProgram 
+    class OpenGLShaderProgram 
     {
     public:
-        ~ShaderProgram()
+        ~OpenGLShaderProgram()
         {
             if (pm_ProgramID != 0) //delete program if it has been set only
             {
                 CleanUp();
             }
 
-            std::cout << "Destroyed program ID: " << pm_ProgramID << " for object " << this << std::endl;
+            cout << "Destroyed program ID: " << pm_ProgramID << " for object " << this << endl;
         }
 
-        ShaderProgram(const ShaderProgram&) = delete;
-        ShaderProgram& operator=(const ShaderProgram&) = delete;
-        //ShaderProgram(ShaderProgram&& other) noexcept = default; // Implement this
+        OpenGLShaderProgram(const OpenGLShaderProgram&) = delete;
+        OpenGLShaderProgram& operator=(const OpenGLShaderProgram&) = delete;
+        //OpenGLShaderProgram(OpenGLShaderProgram&& other) noexcept = default; // Implement this
 
-        ShaderProgram&
-            operator=(ShaderProgram&& other) //move operator
+        OpenGLShaderProgram&
+            operator=(OpenGLShaderProgram&& other) //move operator
             noexcept
         {
             if (this != &other)
@@ -57,12 +53,12 @@ namespace PeachCore {
             return *this;
         }
 
-        ShaderProgram(ShaderProgram&& other) 
+        OpenGLShaderProgram(OpenGLShaderProgram&& other) 
             noexcept
             :   
-            pm_Shaders(std::move(other.pm_Shaders)),
-            pm_Uniforms(std::move(other.pm_Uniforms)),
-            pm_ProgramName(std::move(other.pm_ProgramName))
+            pm_Shaders(move(other.pm_Shaders)),
+            pm_Uniforms(move(other.pm_Uniforms)),
+            pm_ProgramName(move(other.pm_ProgramName))
         {
             if (pm_ProgramID != 0) //delete program if it has been set only
             {
@@ -74,10 +70,10 @@ namespace PeachCore {
         }
 
 
-        ShaderProgram() = default;
+        OpenGLShaderProgram() = default;
 
     private:
-        map<string, GLuint> pm_Shaders; //stores references to all shader IDs that have been registered with the ShaderProgram
+        map<string, GLuint> pm_Shaders; //stores references to all shader IDs that have been registered with the OpenGLShaderProgram
         map<string, GLuint> pm_Uniforms; //stores all information relevant to program uniforms
 
         string pm_ProgramName;
@@ -85,7 +81,7 @@ namespace PeachCore {
         GLuint pm_ProgramID = 0;
 
     public:
-        ShaderProgram
+        OpenGLShaderProgram
             (
                 const string& fp_ShaderName, 
                 const string& fp_VertexSourceFilePath, 
@@ -103,7 +99,7 @@ namespace PeachCore {
             ///vertex shader
             if (not ReadFileIntoString(fp_VertexSourceFilePath, &f_VertexSourceCode, fp_RenderingLogger))
             {
-                fp_RenderingLogger->LogAndPrint("Unable to read vertex shader code into a string", "ShaderProgram: " + pm_ProgramName, LogManager::LogLevel::Error);
+                fp_RenderingLogger->LogAndPrint("Unable to read vertex shader code into a string", "OpenGLShaderProgram: " + pm_ProgramName, LogManager::LogLevel::Error);
             }
             else if(CreateVertexShader(f_VertexSourceCode, fp_RenderingLogger))
             {
@@ -112,7 +108,7 @@ namespace PeachCore {
             ///fragment shader
             if (not ReadFileIntoString(fp_FragmentSourceFilePath, &f_FragmentSourceCode, fp_RenderingLogger))
             {
-                fp_RenderingLogger->LogAndPrint("Unable to read fragment shader code into a string", "ShaderProgram: " + pm_ProgramName, LogManager::LogLevel::Error);
+                fp_RenderingLogger->LogAndPrint("Unable to read fragment shader code into a string", "OpenGLShaderProgram: " + pm_ProgramName, LogManager::LogLevel::Error);
             }
             else if (CreateFragmentShader(f_FragmentSourceCode, fp_RenderingLogger))
             {
@@ -125,7 +121,7 @@ namespace PeachCore {
             }
             else
             {
-                fp_RenderingLogger->LogAndPrint("Shader failed to link due to invalid shader(s)", "ShaderProgram: " + pm_ProgramName, LogManager::LogLevel::Error);
+                fp_RenderingLogger->LogAndPrint("Shader failed to link due to invalid shader(s)", "OpenGLShaderProgram: " + pm_ProgramName, LogManager::LogLevel::Error);
             }
         }
 
@@ -352,7 +348,7 @@ namespace PeachCore {
 
             glLinkProgram(pm_ProgramID);
 
-            fp_RenderingLogger->LogAndPrint("Successfully Linked!", "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
+            fp_RenderingLogger->LogAndPrint("Successfully Linked!", "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
 
             GLint success;
             GLchar infoLog[512];
@@ -361,7 +357,7 @@ namespace PeachCore {
             if (not success)
             {
                 glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
-                fp_RenderingLogger->LogAndPrint("ERROR::SHADER::PROGRAM::LINKING_FAILED" + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
+                fp_RenderingLogger->LogAndPrint("ERROR::SHADER::PROGRAM::LINKING_FAILED" + static_cast<string>(infoLog), "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
             }
 
             for (auto& shader : pm_Shaders)
@@ -376,7 +372,7 @@ namespace PeachCore {
             if (not success)
             {
                 glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
-                fp_RenderingLogger->LogAndPrint("Shader validation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
+                fp_RenderingLogger->LogAndPrint("Shader validation error: " + static_cast<string>(infoLog), "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
             }
 
             AutoCaptureActiveUniforms(fp_RenderingLogger);
@@ -409,7 +405,7 @@ namespace PeachCore {
 
                 pm_Uniforms.insert({ f_temp, location });
 
-                fp_RenderingLogger->LogAndPrint("Uniform #: " + to_string(i) + ", Type(GLenum): " + to_string(type) + ", Name: " + f_temp + ", Location(GLuint): " + to_string(location), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
+                fp_RenderingLogger->LogAndPrint("Uniform #: " + to_string(i) + ", Type(GLenum): " + to_string(type) + ", Name: " + f_temp + ", Location(GLuint): " + to_string(location), "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
             }
         }
 
@@ -485,7 +481,7 @@ namespace PeachCore {
             if (not success)
             {
                 glGetShaderInfoLog(f_ShaderID, 512, NULL, infoLog);
-                fp_RenderingLogger->LogAndPrint("Shader compilation error: " + static_cast<string>(infoLog), "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
+                fp_RenderingLogger->LogAndPrint("Shader compilation error: " + static_cast<string>(infoLog), "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
                 return 0; // Or handle the error appropriately
             }
 
@@ -521,7 +517,7 @@ namespace PeachCore {
 
             if (lastDotIndex == string::npos)
             {
-                fp_RenderingLogger->LogAndPrint("No file extension found for GLSL Shader at specified filepath: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
+                fp_RenderingLogger->LogAndPrint("No file extension found for GLSL Shader at specified filepath: " + fp_ScriptFilePath, "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -529,7 +525,7 @@ namespace PeachCore {
 
             if (f_FileExtension != ".fs" and f_FileExtension != ".vs" and f_FileExtension != ".glsl")
             {
-                fp_RenderingLogger->LogAndPrint("Invalid file extension found when GLSL Shader was expected at specified filepath: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
+                fp_RenderingLogger->LogAndPrint("Invalid file extension found when GLSL Shader was expected at specified filepath: " + fp_ScriptFilePath, "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -537,7 +533,7 @@ namespace PeachCore {
 
             if (not f_FileStream)
             {
-                fp_RenderingLogger->LogAndPrint("Shader failed to load at file path: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
+                fp_RenderingLogger->LogAndPrint("Shader failed to load at file path: " + fp_ScriptFilePath, "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -545,7 +541,7 @@ namespace PeachCore {
             f_Buffer << f_FileStream.rdbuf();
             *fp_SourceCode = f_Buffer.str();
 
-            fp_RenderingLogger->LogAndPrint("Shader successfully loaded at file path: " + fp_ScriptFilePath, "ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
+            fp_RenderingLogger->LogAndPrint("Shader successfully loaded at file path: " + fp_ScriptFilePath, "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName, LogManager::LogLevel::Debug);
 
             return true;
         }

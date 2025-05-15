@@ -19,7 +19,7 @@
 #include "../Utils/CommandQueue.h"
 #include "../Utils/DynamicLoader.h"
 
-#include "../Language-Support/DotNetRuntime.h"
+#include "../Language-Support/DotNetUtils.h"
 
 ///External
 #include <physfs.h>
@@ -180,6 +180,9 @@ namespace PeachCore {
 
         bool
             LoadWavFromFile(const string& fp_WavFilePath);
+
+        bool
+            LoadCompiledShader(const string& fp_ShaderFilePath);
 
     //////////////////////////////////////////////
     // Private Methods

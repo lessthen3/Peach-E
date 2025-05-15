@@ -63,7 +63,16 @@ file(
     "include/Peach-Editor/*.h"
 )
 
-####################################### Library Target
+# Peach API
+file(
+    GLOB_RECURSE 
+    PEACH_API_SOURCES 
+    CONFIGURE_DEPENDS 
+    "peach_api/PeachAPI.h"
+    "peach_api/PeachAPI.cpp"
+)
+
+####################################### Static Library Target
 
 # Create a static library
 add_library(peach STATIC 
@@ -114,6 +123,16 @@ add_executable(
 
 # Link Peach_Editor to Peach Core
 target_link_libraries(Peach_Editor PRIVATE 
+    peach
+)
+
+####################################### Dynamic API Library
+
+add_library(peach_api SHARED
+    ${PEACH_API_SOURCES}
+)
+
+target_link_libraries(peach_api PRIVATE
     peach
 )
 

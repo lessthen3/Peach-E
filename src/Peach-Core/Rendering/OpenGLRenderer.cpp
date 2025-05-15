@@ -56,7 +56,7 @@ namespace PeachCore {
 
         string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
 
-        pm_ViewportShader = new ShaderProgram
+        pm_ViewportShader = new OpenGLShaderProgram
         (
             "Viewport Shader",
             f_BaseDir + "/shaders/viewport.vs",

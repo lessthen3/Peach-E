@@ -39,7 +39,7 @@ namespace PeachCore {
         TextureData DrawableResourceData; //actual data for graphic //used for parsing raw byte information, mainly for audio at the moment
             //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
         Drawable GraphicsType; 
-        ShaderProgram Shaders; //Contains multiple shaders relevant to drawing the object
+        OpenGLShaderProgram Shaders; //Contains multiple shaders relevant to drawing the object
     };
 
     //////////////////////////////////////////////

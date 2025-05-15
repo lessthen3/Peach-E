@@ -10,7 +10,7 @@
 
 #include "nuklear/nuklear_impl_opengl3.h"
 
-#include "ShaderProgram.h"
+#include "OpenGLShaderProgram.h"
 #include "../2D/PeachCamera2D.h"
 
 #include <physfs.h>
@@ -35,7 +35,7 @@ namespace PeachCore {
 
         vector<unique_ptr<PeachCamera2D>> pm_ListOfScenePeachCameras2D; //only the renderer cares about cameras
 
-        map<string, ShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which ShaderProgram
+        map<string, OpenGLShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which OpenGLShaderProgram
 
         map<string, GLuint> pm_ListOfRegisteredTextures;
 
@@ -269,7 +269,7 @@ namespace PeachCore {
         void
             DrawTexture
             (
-                const ShaderProgram& fp_Shader,
+                const OpenGLShaderProgram& fp_Shader,
                 GLuint fp_VAO,
                 GLuint fp_Texture
             )
@@ -292,7 +292,7 @@ namespace PeachCore {
         void
             DrawShapePrimitive
             (
-                const ShaderProgram& fp_Shader,
+                const OpenGLShaderProgram& fp_Shader,
                 GLuint fp_VAO
             )
         {
@@ -393,7 +393,7 @@ namespace PeachCore {
             return vao;
         }
 
-        ShaderProgram*
+        OpenGLShaderProgram*
             GetShaderProgram(const string& fp_Name)
         {
             return &pm_ShaderPrograms.at(fp_Name);
@@ -451,7 +451,7 @@ namespace PeachCore{
 
         GLuint pm_VAO = -1;
 
-        ShaderProgram* pm_ViewportShader = nullptr;
+        OpenGLShaderProgram* pm_ViewportShader = nullptr;
 
         unsigned int pm_CurrentViewportHeight = 0;
         unsigned int pm_CurrentViewportWidth = 0;

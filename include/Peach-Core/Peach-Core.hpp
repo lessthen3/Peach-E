@@ -4,7 +4,7 @@
 // Language Support
 //////////////////////////////////////////////
 
-#include "Language-Support/DotNetRuntime.h"
+#include "Language-Support/DotNetUtils.h"
 #include "Language-Support/LuaScriptRuntime.h"
 #include "Language-Support/PythonScriptComponent.h"
 #include "Language-Support/PythonScriptRuntime.h"
@@ -73,7 +73,7 @@
 //////////////////////////////////////////////
 
 #include "Utils/InputHandler.h"
-#include "Utils/EventQueue.h"
+#include "Utils/EventBoard.h"
 #include "Utils/Serializer.h"
 #include "Utils/NoiseGenerator.h"
 #include "Utils/DebugUtils.h"
@@ -83,7 +83,7 @@
 // Rendering
 //////////////////////////////////////////////
 
-#include "Rendering/ShaderProgram.h"
+#include "Rendering/OpenGLShaderProgram.h"
 
 //////////////////////////////////////////////
 // Import Header For Peach Engine's Core Library

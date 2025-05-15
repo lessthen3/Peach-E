@@ -63,6 +63,12 @@ constexpr const int FAILED_TO_INITIALIZE_VULKAN = -1002;
 
 constexpr const int FATAL_SEGMENTATION_FAULT = -6969;
 
+#ifdef PEACH_DEBUG
+    #define PEACH_LOG LogAndPrint
+#else
+    #define PEACH_LOG Log
+#endif
+
 namespace PeachCore {
 
     enum class Colours : int
@@ -430,8 +436,11 @@ namespace PeachCore {
         void
             FlushAllLogs()
         {
-            #ifdef _DEBUG
-                AssertThreadAccess("FlushAllLogs");
+            #ifdef PEACH_DEBUG
+                if (not AssertThreadAccess("FlushAllLogs"))
+                {
+                    return;
+                }
             #endif
 
             for (auto& _f : pm_LogFiles)
@@ -454,7 +463,7 @@ namespace PeachCore {
             )
         {
             //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
-            #ifdef _DEBUG
+            #ifdef PEACH_DEBUG
                 if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("Log"))) return;
             #else
                 if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized)) return;
@@ -518,7 +527,7 @@ namespace PeachCore {
             )
         {
             //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
-            #ifdef _DEBUG
+            #ifdef PEACH_DEBUG
                 if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("Log"))) return;
             #else
                 if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized)) return;
@@ -582,7 +591,7 @@ namespace PeachCore {
             )
         {
             //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
-            #ifdef _DEBUG
+            #ifdef PEACH_DEBUG
                 if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("LogAndPrint"))) return;
             #else
                 if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized)) return;
@@ -711,7 +720,7 @@ namespace PeachCore {
             }
         }
 
-        #ifdef _DEBUG
+        #ifdef PEACH_DEBUG
             inline bool ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
                 AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the LogManager instance
                 const

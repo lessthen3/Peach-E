@@ -118,6 +118,8 @@ namespace PeachCore {
             DotNetRuntimeContext& fp_DotNetRuntimeContext
         )
     {
+        //////////////////// Get hostexr.dll ////////////////////
+
         const string f_FullPath = pm_RootDirectory + "/" + fp_RelativeHostExrPath;
 
         DYNLIB_HANDLE f_HostExr = pm_DynamicLoader.LoadDynamicLibrary(f_FullPath, resource_logger.get());
@@ -129,6 +131,12 @@ namespace PeachCore {
         }
 
         resource_logger->LogAndPrint(format("Successfully found hostexr at path: '{}'", f_FullPath), "ResourceManager", LogManager::LogLevel::Info);
+
+        //////////////////// Store Handle in Context ////////////////////
+
+        fp_DotNetRuntimeContext.HostFxr = (hostfxr_handle)f_HostExr;
+
+        //////////////////// Find hostfxr_initialize_for_runtime_config_fn ////////////////////
 
         fp_DotNetRuntimeContext.RuntimeInit = (hostfxr_initialize_for_runtime_config_fn)pm_DynamicLoader.GetSymbol
         (
@@ -143,6 +151,8 @@ namespace PeachCore {
             return false;
         }
 
+        //////////////////// Find hostfxr_get_runtime_delegate_fn ////////////////////
+
         fp_DotNetRuntimeContext.GetDelegate = (hostfxr_get_runtime_delegate_fn)pm_DynamicLoader.GetSymbol
         (
             "hostfxr_get_runtime_delegate",
@@ -156,6 +166,23 @@ namespace PeachCore {
             return false;
         }
 
+        //////////////////// Find load_assembly_and_get_function_pointer_fn ////////////////////
+
+        fp_DotNetRuntimeContext.LoadAssembly = (load_assembly_and_get_function_pointer_fn)pm_DynamicLoader.GetSymbol
+        (
+            "load_assembly_and_get_function_pointer_fn",
+            f_HostExr,
+            resource_logger.get()
+        );
+
+        if (not fp_DotNetRuntimeContext.LoadAssembly)
+        {
+            resource_logger->LogAndPrint("Failed to find symbol: 'load_assembly_and_get_function_pointer_fn'", "ResourceManager", LogManager::LogLevel::Error);
+            return false;
+        }
+
+        //////////////////// Find hostfxr_close_fn ////////////////////
+
         fp_DotNetRuntimeContext.Close = (hostfxr_close_fn)pm_DynamicLoader.GetSymbol
         (
             "hostfxr_close",
@@ -168,6 +195,8 @@ namespace PeachCore {
             resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_close'", "ResourceManager", LogManager::LogLevel::Error);
             return false;
         }
+
+        //////////////////// Log Success and Return ////////////////////
 
         resource_logger->LogAndPrint("Located hostfxr symbols required for running dotnet successfully!", "ResourceManager", LogManager::LogLevel::Info);
 
@@ -307,6 +336,13 @@ namespace PeachCore {
     //    }
 
     //    alBufferData(buffer, format, data.data(), subchunk2Size, f_SampleRate);
+
+        return true;
+    }
+
+    bool
+        ResourceManager::LoadCompiledShader(const string& fp_ShaderFilePath)
+    {
 
         return true;
     }
