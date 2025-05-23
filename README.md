@@ -1,9 +1,9 @@
 # Peach-E
-Hey! This is a game engine that you are free to do whatever with!
-
 Peach-E is a free open source and cross-platform 2D/3D game engine built with modern C++ 20 licensed under the permissive MIT License. 
 
-Currently you can target Windows, MacOS(ARM64) and Linux. Peach-E may work on UNIX systems, but support isn't guaranteed.
+Peach-E is and will always be free, no stupid fucking licensing garbage, and no royalties—built by a game developer for game developers of any skill level.
+
+Currently you can target Windows, MacOS(ARM64) and Linux with Android/iOS support being worked on. Peach-E may work on other POSIX compliant systems, but support isn't guaranteed.
 
 >[!WARNING]
 >Peach-E is still in early alpha and extensive testing is still required. Work is being done to add features constantly, and the API is subject to breaking changes at any moment while work is being done to get Peach-E to a complete 1.0 release.
@@ -20,7 +20,9 @@ Features:
 
 🍑 Built from the ground up for Vulkan
 
-🍑 Scripting support for C#, Python, and Lua
+🍑 Scripting support for C#, Python, and Lua 
+
+🍑Support for making games with C++ but idk why you'd want that lmfao
 
 🍑 Planned support for visual scripting and a ShaderGraph
 
@@ -57,7 +59,7 @@ Because I wanted to make one.
 
 Also I'm not a huge fan of whats on the market currently. Unity was alright... but the whole TOS drama really turned me off the engine, and __I really just don't trust Unity as a company anymore.__
 
-Unreal Engine feels like a mess to use, and I don't want to touch Blueprints. I like visual scripting, but the Unreal Engine implementation leaves a lot to be desired in my opinion. Also the lack of scripting language support is a massive L. I like C++ and that's why I'm using it to build Peach-E—but using it to write an entire game? Way overkill and unnecessary for most use cases. Scripting languages offer better development velocity in my experience.
+Unreal Engine feels like a mess to use, and I don't want to touch Blueprints. I like visual scripting, but the Unreal Engine implementation leaves a lot to be desired in my opinion. Also the lack of official scripting language support is a massive L. I like C++ and that's why I'm using it to build Peach-E—but using it to write an entire game? Way overkill and unnecessary for most use cases. Scripting languages offer better development velocity in my experience.
 
 Godot feels good to use, has great plugin support, and amazing documentation to boot. In spite of that, Godot feels unfinished. Feature development is slow, and the ones that do get added often feel inconsequential or sometimes just make the engine more awkward to use. Development doesn't seem focused on pressing issues, driven by whatever contributors feel like doing. As a result, Godot doesn't feel production ready to me. 
 

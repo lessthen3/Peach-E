@@ -18,6 +18,9 @@
 **/obj
 **.csproj
 
+#tests
+/local_tests
+
 # Logs
 /logs
 

@@ -8,17 +8,6 @@
  *
  *              Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
-#define SDL_MAIN_HANDLED
-
-#define NK_SDL3_GL3_IMPLEMENTATION
-#define NK_IMPLEMENTATION
-
-#define STB_IMAGE_IMPLEMENTATION
-
-#define VOLK_IMPLEMENTATION
-#define VMA_IMPLEMENTATION
-
-#define MINIAUDIO_IMPLEMENTATION
 
 #include "../../include/Peach-Editor/Managers/PeachEditorManager.h"
 
@@ -30,6 +19,18 @@ static void
     PeachCore::PrintError(format("[!] Crash signal received: {}", fp_Signal));
     // possibly notify watchdog or dump stack trace
     exit(FATAL_SEGMENTATION_FAULT); //clean exit so everything calls their destructors
+}
+
+static inline constexpr void 
+    ReplaceChar(string* fp_String, char fp_OldChar, char fp_NewChar)
+{
+    for (size_t i = 0; i < fp_String->length(); ++i)
+    {
+        if ((*fp_String)[i] == fp_OldChar)
+        {
+            (*fp_String)[i] = fp_NewChar;
+        }
+    }
 }
 
 //////////////////////////////////////////////
@@ -62,6 +63,9 @@ int
 
     string mf_PeachERootPath = mf_TopLevelDir.string();
 
+    //itll just leave the string unaffected for good OS' like linux or linux im not gonna say mac beacuse that shit fucking sucks
+    ReplaceChar(&mf_PeachERootPath, '\\', '/'); //XXX: used to relace stupid windows shit
+
     ////////////////////////////////////////////////
     // Setup Environment
     ////////////////////////////////////////////////
@@ -74,7 +78,7 @@ int
             mf_PeachERootPath
         );
 
-        //peach_editor->StartPeachEditorMainLoop();
+        peach_editor->StartPeachEditorMainLoop();
 
         return EXIT_SUCCESS;
     }

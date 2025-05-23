@@ -1,19 +1,21 @@
 #pragma once
 
-#define NK_INCLUDE_FIXED_TYPES
-#define NK_INCLUDE_STANDARD_IO
-#define NK_INCLUDE_STANDARD_VARARGS
-#define NK_INCLUDE_DEFAULT_ALLOCATOR
-#define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
-#define NK_INCLUDE_FONT_BAKING
-#define NK_INCLUDE_DEFAULT_FONT
+//#define NK_INCLUDE_FIXED_TYPES
+//#define NK_INCLUDE_STANDARD_IO
+//#define NK_INCLUDE_STANDARD_VARARGS
+//#define NK_INCLUDE_DEFAULT_ALLOCATOR
+//#define NK_INCLUDE_VERTEX_BUFFER_OUTPUT
+//#define NK_INCLUDE_FONT_BAKING
+//#define NK_INCLUDE_DEFAULT_FONT
+//
+//#include "nuklear/nuklear_impl_opengl3.h"
 
-#include "nuklear/nuklear_impl_opengl3.h"
+#include <SDL3/SDL.h>
 
 #include "OpenGLShaderProgram.h"
 #include "../2D/PeachCamera2D.h"
 
-#include <physfs.h>
+#include <physfs.h> //THIS IS AN ARTIFACE FROM THE REFACTOR PLEASE REMOVE THIS FUTURE RYAN
 
 namespace PeachCore {
 
@@ -456,7 +458,7 @@ namespace PeachCore{
         unsigned int pm_CurrentViewportHeight = 0;
         unsigned int pm_CurrentViewportWidth = 0;
 
-        vector<SDL_Event> pm_CurrentPolledEvents;
+        //vector<SDL_Event> pm_CurrentPolledEvents;
 
         OpenGLRenderer* pm_Render = nullptr;
 

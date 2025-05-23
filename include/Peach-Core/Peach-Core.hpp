@@ -4,7 +4,7 @@
 // Language Support
 //////////////////////////////////////////////
 
-#include "Language-Support/DotNetUtils.h"
+#include "Language-Support/DotnetRuntime.h"
 #include "Language-Support/LuaScriptRuntime.h"
 #include "Language-Support/PythonScriptComponent.h"
 #include "Language-Support/PythonScriptRuntime.h"
@@ -84,6 +84,12 @@
 //////////////////////////////////////////////
 
 #include "Rendering/OpenGLShaderProgram.h"
+
+//////////////////////////////////////////////
+// UI
+//////////////////////////////////////////////
+
+#include "UI/PeachUI.h"
 
 //////////////////////////////////////////////
 // Import Header For Peach Engine's Core Library

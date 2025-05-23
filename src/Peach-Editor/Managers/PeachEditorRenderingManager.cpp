@@ -1,3 +1,13 @@
+﻿/*******************************************************************
+ *                                        Peach Editor v0.0.7
+ *                           Created by Ranyodh Mandur - 🍑 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *              Peach Editor is a free open source editor for Peach-E
+********************************************************************/
 #include "../../include/Peach-Editor/Managers/PeachEditorRenderingManager.h"
 /*
     This class is used to manage the render thread, and queue/unqueue objects safely
@@ -16,7 +26,7 @@ namespace PeachEditor {
     {
         ////////////////////////////////////////////////////////////////////////////////////////////////
         // cleans up ImGui, OpenGL, and our SDL window context
-        nk_sdl_shutdown();
+        //nk_sdl_shutdown();
 
         //if (pm_MainWindow)
         //{
@@ -34,7 +44,7 @@ namespace PeachEditor {
     {
         if (pm_AreQueuesInitialized)
         {
-            rendering_logger->LogAndPrint("RenderingManager queues have already been initialized.", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning);
+            rendering_logger->PEACH_LOG("RenderingManager queues have already been initialized.", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Warning);
             return nullptr;
         }
 
@@ -43,7 +53,7 @@ namespace PeachEditor {
 
         //pm_PeachRenderer = make_unique<PeachCore::PeachRenderer>(pm_MainWindow, false);
 
-        rendering_logger->LogAndPrint("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug);
+        rendering_logger->PEACH_LOG("PeachEditorRenderingManager successfully initialized >w<", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug);
 
         pm_AreQueuesInitialized = true;
 
@@ -70,36 +80,14 @@ namespace PeachEditor {
             return false;
         }
 
-        rendering_logger->LogAndPrint("PeachEditorRenderingLogger successfully initialized", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug);
+        rendering_logger->PEACH_LOG("PeachEditorRenderingLogger successfully initialized", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Debug);
 
         //////////////////////////////////////////////
         // Grab Reference to the Main Window
         //////////////////////////////////////////////
-        pm_MainWindow = PeachCore::RenderingManager::Renderer()
-            .GetPeachRenderer()
-            ->GetMainWindow();
 
-        ////////////////////////////////////////////////
-        // Setup Nuklear GUI
-        ////////////////////////////////////////////////
-
-        pm_NuklearCtx = nk_sdl_init(pm_MainWindow);
-
-        struct nk_font_atlas* mf_FontAtlas;
-        nk_sdl_font_stash_begin(&mf_FontAtlas);
-
-        string f_DesiredFontDirectory = static_cast<string>(PHYSFS_getWriteDir()) + "/res/fonts/ComicSansMS.ttf";
-
-        struct nk_font* mf_ComicSans = nk_font_atlas_add_from_file(mf_FontAtlas, f_DesiredFontDirectory.c_str(), 18, 0);
-
-        nk_sdl_font_stash_end();
-
-        if (mf_ComicSans)
-        {
-            nk_style_set_font(pm_NuklearCtx, &(mf_ComicSans->handle));
-        }
-
-        pm_BackgroundColour = { 0.10f, 0.18f, 0.24f, 1.0f };
+        pm_MainWindow = PeachCore::RenderingManager::Renderer().GetMainWindow();
+        //pm_NuklearCtx = PeachCore::RenderingManager::Renderer().GetVulkanRenderer()->GetNuklearContext();
 
         ////////////////////////////////////////////////
         // Create Viewport
@@ -109,7 +97,7 @@ namespace PeachEditor {
 
         SDL_GetWindowSizeInPixels(pm_MainWindow, &f_CurrentWindowWidth, &f_CurrentWindowHeight);
 
-        pm_Viewport.SetupViewport(400, 200, PeachCore::RenderingManager::Renderer().GetPeachRenderer(), rendering_logger);
+        pm_Viewport.SetupViewport(400, 200, PeachCore::RenderingManager::Renderer().GetOpenGLRenderer(), rendering_logger);
 
         pm_IsRenderingInitialized = true;
             
@@ -164,7 +152,7 @@ namespace PeachEditor {
         //        [](auto&&) 
         //        {
         //            // Default handler for any unhandled types
-        //            //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", LogManager::LogLevel::Warning);
+        //            //rendering_logger->PEACH_LOG("Unhandled type in variant for ProcessLoadedResourcePackage", "PeachEditorRenderingManager", LogManager::LogLevel::Warning);
         //        }
         //        }, ResourcePackage.get()->ResourceData);
         //}
@@ -176,28 +164,24 @@ namespace PeachEditor {
             bool* fp_IsProgramRuntimeOver
         )
     {
+        //////////////////// Validation Stuff for Debug ////////////////////
+#ifdef _DEBUG
         if (not pm_IsRenderingInitialized)
         {
             //rendering_logger isn't initialized yet if rendering hasn't been initialized yet so we use the full singleton call here instead for safety
-            rendering_logger->LogAndPrint("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             throw runtime_error("Tried to render frame before rendering was initialized inside of PeachEditorRenderingManager");
         }
-
-        if (not fp_IsProgramRuntimeOver)
+        else if (not fp_IsProgramRuntimeOver)
         {
-            rendering_logger->LogAndPrint("Tried to pass nullptr bool to RenderFrame inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Tried to pass nullptr bool to RenderFrame inside of PeachEditorRenderingManager", "PeachEditorRenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             throw runtime_error("Tried to pass nullptr bool to RenderFrame");
         }
+#endif
+        //////////////////// Window Size Stuff ////////////////////
 
-        //////////////////////////////////////////////////
-        //// Clear Screen
-        //////////////////////////////////////////////////
-        glClearColor(pm_ClearColour.x, pm_ClearColour.y, pm_ClearColour.z, pm_ClearColour.w);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //PLEASE GOD DO NOT MOVE THIS HOLY FUCK
-
-        //adjusts for the main menu bar offset
-        //also makings only one call to the windowsize each loop, just feels cleaner and easier to read
-        int f_CurrentWindowHeight, f_CurrentWindowWidth;
+        //adjusts for the main menu bar offset also makings only one call to the windowsize each loop, just feels cleaner and easier to read
+        int f_CurrentWindowHeight, f_CurrentWindowWidth = 0;
 
         SDL_GetWindowSizeInPixels(pm_MainWindow, &f_CurrentWindowWidth, &f_CurrentWindowHeight);
 
@@ -207,13 +191,69 @@ namespace PeachEditor {
         f_MainMenuBarHeight = clamp(f_MainMenuBarHeight, 30, 40);
 
         //f_CurrentWindowHeight -= f_MainMenuBarHeight; //subtract menu bar since we want the available 
-        glViewport(0, 0, f_CurrentWindowWidth, f_CurrentWindowHeight);
 
-        ////////////////////////////////////////////////
-        // Input Handling
-        ////////////////////////////////////////////////
+        //////////////////// Get Input ////////////////////
+
+        PollWindowInput(fp_IsProgramRuntimeOver);
+
+        //////////////////// Draw Menu Bar ////////////////////
+
+        //RenderMenuBar(f_CurrentWindowWidth, f_CurrentWindowHeight, f_MainMenuBarHeight, fp_IsProgramRuntimeOver);
+
+        //////////////////// Draw Colour Picker ////////////////////
+
+        //RenderColourPicker();
+
+        //////////////////// Draw File Browser ////////////////////
+
+        //RenderFileBrowser("../", f_CurrentWindowWidth * 0.85f, f_CurrentWindowHeight*0.70f, f_CurrentWindowWidth*0.15f, f_CurrentWindowHeight*0.30f);
+
+        //////////////////// Draw Editor Console ////////////////////
+
+        //RenderConsole();
+
+        //////////////////// Render Viewport ////////////////////
+
+        //unsigned int mf_ViewportHeight = f_CurrentWindowHeight * 0.60f;
+        //unsigned int mf_ViewportWidth = f_CurrentWindowWidth * 0.70f;
+
+        //glm::vec2 mf_ViewportPosition = glm::vec2(0.0f, f_CurrentWindowHeight - mf_ViewportHeight - f_MainMenuBarHeight); //glViewPort x and y args arent based on the 4th quadrant scheme for some reason lmfao it treats the screen as the first quadrant?_?
+
+        //pm_Viewport.RenderViewport(mf_ViewportPosition, mf_ViewportWidth, mf_ViewportHeight);
+
+        //////////////////// Submit Draw Calls ////////////////////
+
+        PeachCore::VulkanRenderer* renderer = PeachCore::RenderingManager::Renderer().GetVulkanRenderer();
+
+        if (renderer->GetSwapChain()->extent.width != 0 or renderer->GetSwapChain()->extent.height != 0)
+        {
+            renderer->BeginFrame();
+
+            //VkSemaphore nuklear_signal = nk_sdl_render
+            //(
+            //    renderer->GetGraphicsQueue(),                  // VkQueue
+            //    renderer->GetCurrentSwapchainImageIndex(),     // uint32_t image index
+            //    renderer->GetCurrentFrameAvailableSemaphore(), // VkSemaphore wait for image
+            //    NK_ANTI_ALIASING_ON                            // anti-aliasing mode
+            //);
+
+            ////// This will submit command buffers and present the swapchain
+            //renderer->SubmitNuklearFrame(nuklear_signal);
+
+            renderer->DrawFrame();
+
+            renderer->EndFrame();
+        }
+    }
+
+    ////////////////////////////////////////////////
+    // Input Handling
+    ////////////////////////////////////////////////
+    void
+        PeachEditorRenderingManager::PollWindowInput(bool* fp_IsProgramRuntimeOver)
+    {
         SDL_Event f_Event;
-        nk_input_begin(pm_NuklearCtx);
+
         while (SDL_PollEvent(&f_Event))
         {
             if (f_Event.window.windowID == SDL_GetWindowID(pm_MainWindow) and f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
@@ -227,254 +267,225 @@ namespace PeachEditor {
                     DestroyCurrentScene();
                 }
             }
-
-            nk_sdl_handle_event(&f_Event);
         }
-        nk_sdl_handle_grab();
-        nk_input_end(pm_NuklearCtx);
-
-        ////////////////////////////////////////////////
-        // Draw GUI
-        ////////////////////////////////////////////////
-        if 
-            (
-                nk_begin
-                (
-                    pm_NuklearCtx, 
-                    "Colour Picker", 
-                    nk_rect(50, 50, 200, 100),
-                    NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE
-                )
-            )
-        {
-            nk_layout_row_dynamic(pm_NuklearCtx, 25, 1);
-
-            if (nk_combo_begin_color(pm_NuklearCtx, nk_rgb_cf(pm_BackgroundColour), nk_vec2(nk_widget_width(pm_NuklearCtx), 400))) 
-            {
-                nk_layout_row_dynamic(pm_NuklearCtx, 120, 1);
-                pm_BackgroundColour = nk_color_picker(pm_NuklearCtx, pm_BackgroundColour, NK_RGBA);
-                nk_layout_row_dynamic(pm_NuklearCtx, 25, 1);
-                pm_BackgroundColour.r = nk_propertyf(pm_NuklearCtx, "#R:", 0, pm_BackgroundColour.r, 1.0f, 0.01f, 0.005f);
-                pm_BackgroundColour.g = nk_propertyf(pm_NuklearCtx, "#G:", 0, pm_BackgroundColour.g, 1.0f, 0.01f, 0.005f);
-                pm_BackgroundColour.b = nk_propertyf(pm_NuklearCtx, "#B:", 0, pm_BackgroundColour.b, 1.0f, 0.01f, 0.005f);
-                pm_BackgroundColour.a = nk_propertyf(pm_NuklearCtx, "#A:", 0, pm_BackgroundColour.a, 1.0f, 0.01f, 0.005f);
-                nk_combo_end(pm_NuklearCtx);
-            }
-        }
-        nk_end(pm_NuklearCtx);
-
-        ////////////////////////////////////////////////
-        // Menubar
-        ////////////////////////////////////////////////
-
-        //nk_style_push_style_item(pm_NuklearCtx, )
-
-        if (nk_begin(pm_NuklearCtx, "Menu_Bar", nk_rect(0, 0, f_CurrentWindowWidth, f_MainMenuBarHeight), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
-        {
-            nk_menubar_begin(pm_NuklearCtx);
-
-            // Menu label, must match with nk_menu_begin_label call
-            nk_layout_row_begin(pm_NuklearCtx, NK_STATIC, 25, NUMBER_OF_HORIZONTAL_MAIN_MENU_BAR_ELEMENTS);
-            nk_layout_row_push(pm_NuklearCtx, 45);
-
-            if (nk_menu_begin_label(pm_NuklearCtx, "File", NK_TEXT_LEFT, nk_vec2(static_cast<float>(f_CurrentWindowWidth/4), static_cast<float>(f_CurrentWindowHeight /3))))
-            {
-                nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
-
-                if (nk_menu_item_label(pm_NuklearCtx, "Open Project", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Open menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Save Everything", NK_TEXT_LEFT))
-                {
-                    // Handle save action
-                    cout << ("Save menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Save as", NK_TEXT_LEFT))
-                {
-                    // Handle save action
-                    cout << ("Save as menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "New Project", NK_TEXT_LEFT))
-                {
-                    cout << ("New Project menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Exit", NK_TEXT_LEFT))
-                {
-                    *fp_IsProgramRuntimeOver = false;
-                    if (m_IsSceneCurrentlyRunning)
-                    {
-                        DestroyCurrentScene();
-                    }
-                }
-
-                nk_menu_end(pm_NuklearCtx);
-            }
-            if (nk_menu_begin_label(pm_NuklearCtx, "Edit", NK_TEXT_LEFT, nk_vec2(static_cast<float>(f_CurrentWindowWidth / 4), static_cast<float>(f_CurrentWindowHeight / 3))))
-            {
-                nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
-
-                if (nk_menu_item_label(pm_NuklearCtx, "Undo", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Undo menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Redo", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Redo menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Show Action History", NK_TEXT_LEFT))
-                {
-                    // Handle save action
-                    cout << ("Show Action History menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Show Clipboard History", NK_TEXT_LEFT))
-                {
-                    cout << ("Show Clipboard History menu item clicked\n");
-                }
-
-                nk_menu_end(pm_NuklearCtx);
-            }
-            if (nk_menu_begin_label(pm_NuklearCtx, "Run", NK_TEXT_LEFT, nk_vec2(static_cast<float>(f_CurrentWindowWidth / 4), static_cast<float>(f_CurrentWindowHeight / 3))))
-            {
-                nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
-
-                if (nk_menu_item_label(pm_NuklearCtx, "Run Peach-E Project", NK_TEXT_LEFT) and not m_IsSceneCurrentlyRunning)
-                {   
-                    CreateCurrentScene();
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Force Quit Peach-E Project", NK_TEXT_LEFT) and m_IsSceneCurrentlyRunning)
-                {
-                    DestroyCurrentScene();
-                }
-
-                nk_menu_end(pm_NuklearCtx);
-            }
-
-            nk_layout_row_push(pm_NuklearCtx, 60); //adjust the spacing ratio for the elements, since these are longer it looks a bit weirder
-
-            if (nk_menu_begin_label(pm_NuklearCtx, "Project", NK_TEXT_LEFT, nk_vec2(static_cast<float>(f_CurrentWindowWidth / 4), static_cast<float>(f_CurrentWindowHeight / 3))))
-            {
-                nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
-
-                if (nk_menu_item_label(pm_NuklearCtx, "Project Settings", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Project Settings menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Input Map", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Input Map menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Refresh Project", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Refresh Project menu item clicked\n");
-                }
-
-                nk_menu_end(pm_NuklearCtx);
-            }
-            if (nk_menu_begin_label(pm_NuklearCtx, "Editor", NK_TEXT_LEFT, nk_vec2(static_cast<float>(f_CurrentWindowWidth / 4), static_cast<float>(f_CurrentWindowHeight / 3))))
-            {
-                nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
-
-                if (nk_menu_item_label(pm_NuklearCtx, "Editor Settings", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Editor Settings menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Editor Theme", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Editor Theme menu item clicked\n");
-                }
-
-                nk_menu_end(pm_NuklearCtx);
-            }
-            if (nk_menu_begin_label(pm_NuklearCtx, "Tools", NK_TEXT_LEFT, nk_vec2(static_cast<float>(f_CurrentWindowWidth / 4), static_cast<float>(f_CurrentWindowHeight / 3))))
-            {
-                nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
-
-                if (nk_menu_item_label(pm_NuklearCtx, "Open Terminal", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Open Terminal menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "Run Stress Test", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Run Stress Test menu item clicked\n");
-                }
-
-                nk_menu_end(pm_NuklearCtx);
-            }
-            if (nk_menu_begin_label(pm_NuklearCtx, "Plugins", NK_TEXT_LEFT, nk_vec2(static_cast<float>(f_CurrentWindowWidth / 4), static_cast<float>(f_CurrentWindowHeight / 3))))
-            {
-                nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
-
-                if (nk_menu_item_label(pm_NuklearCtx, "Load Plugin", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("Load Plugin menu item clicked\n");
-                }
-                if (nk_menu_item_label(pm_NuklearCtx, "List of Active Plugins", NK_TEXT_LEFT))
-                {
-                    // Handle open action
-                    cout << ("List of Active Plugins menu item clicked\n");
-                }
-
-                nk_menu_end(pm_NuklearCtx);
-            }
-
-            nk_layout_row_end(pm_NuklearCtx);
-            nk_menubar_end(pm_NuklearCtx);
-        }
-        nk_end(pm_NuklearCtx);
-
-        ////////////////////////////////////////////////
-        // Render File Browser
-        ////////////////////////////////////////////////
-
-        RenderFileBrowser("../", f_CurrentWindowWidth * 0.85f, f_CurrentWindowHeight*0.70f, f_CurrentWindowWidth*0.15f, f_CurrentWindowHeight*0.30f, pm_NuklearCtx);
-
-        ////////////////////////////////////////////////
-        // Render Console
-        ////////////////////////////////////////////////
-
-        RenderConsole(pm_NuklearCtx);
-
-        ////////////////////////////////////////////////
-        // Render Viewport
-        ////////////////////////////////////////////////
-
-        unsigned int mf_ViewportHeight = f_CurrentWindowHeight * 0.60f;
-        unsigned int mf_ViewportWidth = f_CurrentWindowWidth * 0.70f;
-
-        glm::vec2 mf_ViewportPosition = glm::vec2(0.0f, f_CurrentWindowHeight - mf_ViewportHeight - f_MainMenuBarHeight); //glViewPort x and y args arent based on the 4th quadrant scheme for some reason lmfao it treats the screen as the first quadrant?_?
-
-        pm_Viewport.RenderViewport(mf_ViewportPosition, mf_ViewportWidth, mf_ViewportHeight);
-
-        ////////////////////////////////////////////////
-        // Render Nuklear Context
-        ////////////////////////////////////////////////
-
-        nk_sdl_render(NK_ANTI_ALIASING_ON, 512 * 1024, 128 * 1024);
-
-        SDL_GL_SwapWindow(pm_MainWindow);
-
-        SDL_GL_MakeCurrent(pm_GameInstanceWindow, *PeachCore::RenderingManager::Renderer().GetPeachRenderer()->GetGLContext());
-
-        if (m_IsSceneCurrentlyRunning)
-        {
-            RunCurrentScene();
-        }
-
-        SDL_GL_MakeCurrent(pm_MainWindow, *PeachCore::RenderingManager::Renderer().GetPeachRenderer()->GetGLContext());
     }
 
+    ////////////////////////////////////////////////
+    // Draw Colour Picker
+    ////////////////////////////////////////////////
+    void
+        PeachEditorRenderingManager::RenderColourPicker()
+    {
+        //if(nk_begin
+        //    (
+        //        pm_NuklearCtx,
+        //        "Colour Picker",
+        //        nk_rect(50, 50, 200, 100),
+        //        NK_WINDOW_BORDER | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE | NK_WINDOW_MINIMIZABLE | NK_WINDOW_TITLE
+        //    )
+        //   )
+        //{
+        //    nk_layout_row_dynamic(pm_NuklearCtx, 25, 1);
+
+        //    if (nk_combo_begin_color(pm_NuklearCtx, nk_rgb_cf(pm_BackgroundColour), nk_vec2(nk_widget_width(pm_NuklearCtx), 400)))
+        //    {
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 120, 1);
+        //        pm_BackgroundColour = nk_color_picker(pm_NuklearCtx, pm_BackgroundColour, NK_RGBA);
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 25, 1);
+        //        pm_BackgroundColour.r = nk_propertyf(pm_NuklearCtx, "#R:", 0, pm_BackgroundColour.r, 1.0f, 0.01f, 0.005f);
+        //        pm_BackgroundColour.g = nk_propertyf(pm_NuklearCtx, "#G:", 0, pm_BackgroundColour.g, 1.0f, 0.01f, 0.005f);
+        //        pm_BackgroundColour.b = nk_propertyf(pm_NuklearCtx, "#B:", 0, pm_BackgroundColour.b, 1.0f, 0.01f, 0.005f);
+        //        pm_BackgroundColour.a = nk_propertyf(pm_NuklearCtx, "#A:", 0, pm_BackgroundColour.a, 1.0f, 0.01f, 0.005f);
+        //        nk_combo_end(pm_NuklearCtx);
+        //    }
+        //}
+        //nk_end(pm_NuklearCtx);
+    }
+
+    ////////////////////////////////////////////////
+    // Menubar
+    ////////////////////////////////////////////////
+    void
+        PeachEditorRenderingManager::RenderMenuBar
+        (
+            const int fp_CurrentWindowWidth,
+            const int fp_CurrentWindowHeight, 
+            const int fp_MainMenuBarHeight, 
+            bool* fp_IsProgramRuntimeOver
+        )
+    {
+        //nk_style_push_style_item(pm_NuklearCtx, )
+
+        //if (nk_begin(pm_NuklearCtx, "Menu_Bar", nk_rect(0, 0, fp_CurrentWindowWidth, fp_MainMenuBarHeight), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR))
+        //{
+        //    nk_menubar_begin(pm_NuklearCtx);
+
+        //    // Menu label, must match with nk_menu_begin_label call
+        //    nk_layout_row_begin(pm_NuklearCtx, NK_STATIC, 25, NUMBER_OF_HORIZONTAL_MAIN_MENU_BAR_ELEMENTS);
+        //    nk_layout_row_push(pm_NuklearCtx, 45);
+
+        //    if (nk_menu_begin_label(pm_NuklearCtx, "File", NK_TEXT_LEFT, nk_vec2(static_cast<float>(fp_CurrentWindowWidth / 4), static_cast<float>(fp_CurrentWindowHeight / 3))))
+        //    {
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
+
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Open Project", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Open menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Save Everything", NK_TEXT_LEFT))
+        //        {
+        //            // Handle save action
+        //            cout << ("Save menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Save as", NK_TEXT_LEFT))
+        //        {
+        //            // Handle save action
+        //            cout << ("Save as menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "New Project", NK_TEXT_LEFT))
+        //        {
+        //            cout << ("New Project menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Exit", NK_TEXT_LEFT))
+        //        {
+        //            *fp_IsProgramRuntimeOver = false;
+        //            if (m_IsSceneCurrentlyRunning)
+        //            {
+        //                DestroyCurrentScene();
+        //            }
+        //        }
+
+        //        nk_menu_end(pm_NuklearCtx);
+        //    }
+        //    if (nk_menu_begin_label(pm_NuklearCtx, "Edit", NK_TEXT_LEFT, nk_vec2(static_cast<float>(fp_CurrentWindowWidth / 4), static_cast<float>(fp_CurrentWindowHeight / 3))))
+        //    {
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
+
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Undo", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Undo menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Redo", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Redo menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Show Action History", NK_TEXT_LEFT))
+        //        {
+        //            // Handle save action
+        //            cout << ("Show Action History menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Show Clipboard History", NK_TEXT_LEFT))
+        //        {
+        //            cout << ("Show Clipboard History menu item clicked\n");
+        //        }
+
+        //        nk_menu_end(pm_NuklearCtx);
+        //    }
+        //    if (nk_menu_begin_label(pm_NuklearCtx, "Run", NK_TEXT_LEFT, nk_vec2(static_cast<float>(fp_CurrentWindowWidth / 4), static_cast<float>(fp_CurrentWindowHeight / 3))))
+        //    {
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
+
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Run Peach-E Project", NK_TEXT_LEFT) and not m_IsSceneCurrentlyRunning)
+        //        {
+        //            CreateCurrentScene();
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Force Quit Peach-E Project", NK_TEXT_LEFT) and m_IsSceneCurrentlyRunning)
+        //        {
+        //            DestroyCurrentScene();
+        //        }
+
+        //        nk_menu_end(pm_NuklearCtx);
+        //    }
+
+        //    nk_layout_row_push(pm_NuklearCtx, 60); //adjust the spacing ratio for the elements, since these are longer it looks a bit weirder
+
+        //    if (nk_menu_begin_label(pm_NuklearCtx, "Project", NK_TEXT_LEFT, nk_vec2(static_cast<float>(fp_CurrentWindowWidth / 4), static_cast<float>(fp_CurrentWindowHeight / 3))))
+        //    {
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
+
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Project Settings", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Project Settings menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Input Map", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Input Map menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Refresh Project", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Refresh Project menu item clicked\n");
+        //        }
+
+        //        nk_menu_end(pm_NuklearCtx);
+        //    }
+        //    if (nk_menu_begin_label(pm_NuklearCtx, "Editor", NK_TEXT_LEFT, nk_vec2(static_cast<float>(fp_CurrentWindowWidth / 4), static_cast<float>(fp_CurrentWindowHeight / 3))))
+        //    {
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
+
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Editor Settings", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Editor Settings menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Editor Theme", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Editor Theme menu item clicked\n");
+        //        }
+
+        //        nk_menu_end(pm_NuklearCtx);
+        //    }
+        //    if (nk_menu_begin_label(pm_NuklearCtx, "Tools", NK_TEXT_LEFT, nk_vec2(static_cast<float>(fp_CurrentWindowWidth / 4), static_cast<float>(fp_CurrentWindowHeight / 3))))
+        //    {
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
+
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Open Terminal", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Open Terminal menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Run Stress Test", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Run Stress Test menu item clicked\n");
+        //        }
+
+        //        nk_menu_end(pm_NuklearCtx);
+        //    }
+        //    if (nk_menu_begin_label(pm_NuklearCtx, "Plugins", NK_TEXT_LEFT, nk_vec2(static_cast<float>(fp_CurrentWindowWidth / 4), static_cast<float>(fp_CurrentWindowHeight / 3))))
+        //    {
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 30, 1);
+
+        //        if (nk_menu_item_label(pm_NuklearCtx, "Load Plugin", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("Load Plugin menu item clicked\n");
+        //        }
+        //        if (nk_menu_item_label(pm_NuklearCtx, "List of Active Plugins", NK_TEXT_LEFT))
+        //        {
+        //            // Handle open action
+        //            cout << ("List of Active Plugins menu item clicked\n");
+        //        }
+
+        //        nk_menu_end(pm_NuklearCtx);
+        //    }
+
+        //    nk_layout_row_end(pm_NuklearCtx);
+        //    nk_menubar_end(pm_NuklearCtx);
+        //}
+
+        //nk_end(pm_NuklearCtx);
+    }
+
+    ////////////////////////////////////////////////
+    // Render File Browser
+    ////////////////////////////////////////////////
     void 
         PeachEditorRenderingManager::RenderDirectory
         (
@@ -482,73 +493,73 @@ namespace PeachEditor {
             const filesystem::path& fp_CurrentPath
         )
     {
-        for (const auto& entry : filesystem::directory_iterator(fp_CurrentPath))
-        {
-            string f_FileName = entry.path().filename().string();
-            string f_FullPathName = entry.path().string();
+        //for (const auto& entry : filesystem::directory_iterator(fp_CurrentPath))
+        //{
+        //    string f_FileName = entry.path().filename().string();
+        //    string f_FullPathName = entry.path().string();
 
-            if (entry.is_directory()) 
-            {
-                enum nk_collapse_states f_IsOpen = 
-                    (pm_CurrentlyOpenDirectories.find(f_FullPathName) != pm_CurrentlyOpenDirectories.end())
-                    ? 
-                    NK_MAXIMIZED: 
-                    NK_MINIMIZED;
+        //    if (entry.is_directory()) 
+        //    {
+        //        enum nk_collapse_states f_IsOpen = 
+        //            (pm_CurrentlyOpenDirectories.find(f_FullPathName) != pm_CurrentlyOpenDirectories.end())
+        //            ? 
+        //            NK_MAXIMIZED: 
+        //            NK_MINIMIZED;
 
-                if (nk_tree_state_push(ctx, NK_TREE_NODE, f_FileName.c_str(), &f_IsOpen))
-                {
-                    RenderDirectory(ctx, entry.path());
-                    pm_CurrentlyOpenDirectories.insert(f_FullPathName);
-                    nk_tree_pop(ctx);
-                }
-                else
-                {
-                    pm_CurrentlyOpenDirectories.erase(f_FullPathName);
-                }
-            }
-            else 
-            {
-                int isSelected = pm_SelectionState.SelectedFiles.find(f_FullPathName) != pm_SelectionState.SelectedFiles.end() ? 1 : 0;
-                
-                // Update this every frame before rendering the UI
-                bool ctrlPressed = nk_input_is_key_down(&ctx->input, NK_KEY_CTRL);
-                bool shiftPressed = nk_input_is_key_down(&ctx->input, NK_KEY_SHIFT);
+        //        if (nk_tree_state_push(ctx, NK_TREE_NODE, f_FileName.c_str(), &f_IsOpen))
+        //        {
+        //            RenderDirectory(ctx, entry.path());
+        //            pm_CurrentlyOpenDirectories.insert(f_FullPathName);
+        //            nk_tree_pop(ctx);
+        //        }
+        //        else
+        //        {
+        //            pm_CurrentlyOpenDirectories.erase(f_FullPathName);
+        //        }
+        //    }
+        //    else 
+        //    {
+        //        int isSelected = pm_SelectionState.SelectedFiles.find(f_FullPathName) != pm_SelectionState.SelectedFiles.end() ? 1 : 0;
+        //        
+        //        // Update this every frame before rendering the UI
+        //        bool ctrlPressed = nk_input_is_key_down(&ctx->input, NK_KEY_CTRL);
+        //        bool shiftPressed = nk_input_is_key_down(&ctx->input, NK_KEY_SHIFT);
 
-                if (nk_selectable_label(ctx, f_FileName.c_str(), NK_TEXT_LEFT, &isSelected)) 
-                {
-                    if (ctrlPressed)
-                    {
-                        cout << "ctrl pressd \n";
-                        // Control key is pressed, add or remove from the selection
-                        if (isSelected) 
-                        {
-                            pm_SelectionState.SelectedFiles.insert(f_FullPathName);
-                            pm_SelectionState.LastSelectedItem = f_FullPathName;
-                        }
-                        else 
-                        {
-                            pm_SelectionState.SelectedFiles.erase(f_FullPathName);
-                        }
-                    }
-                    else if (shiftPressed and not pm_SelectionState.LastSelectedItem.empty())
-                    {
-                        // Shift key is pressed, select all items between this item and the last selected item
-                        // This requires knowing the order of files which might need additional logic
-                        HandleRangeSelection(pm_SelectionState.LastSelectedItem, f_FullPathName);
-                    }
-                    else 
-                    {
-                        // No modifier keys, select only this item
-                        pm_SelectionState.SelectedFiles.clear();
-                        pm_SelectionState.SelectedFiles.insert(f_FullPathName);
-                        pm_SelectionState.LastSelectedItem = f_FullPathName;
+        //        if (nk_selectable_label(ctx, f_FileName.c_str(), NK_TEXT_LEFT, &isSelected)) 
+        //        {
+        //            if (ctrlPressed)
+        //            {
+        //                cout << "ctrl pressd \n";
+        //                // Control key is pressed, add or remove from the selection
+        //                if (isSelected) 
+        //                {
+        //                    pm_SelectionState.SelectedFiles.insert(f_FullPathName);
+        //                    pm_SelectionState.LastSelectedItem = f_FullPathName;
+        //                }
+        //                else 
+        //                {
+        //                    pm_SelectionState.SelectedFiles.erase(f_FullPathName);
+        //                }
+        //            }
+        //            else if (shiftPressed and not pm_SelectionState.LastSelectedItem.empty())
+        //            {
+        //                // Shift key is pressed, select all items between this item and the last selected item
+        //                // This requires knowing the order of files which might need additional logic
+        //                HandleRangeSelection(pm_SelectionState.LastSelectedItem, f_FullPathName);
+        //            }
+        //            else 
+        //            {
+        //                // No modifier keys, select only this item
+        //                pm_SelectionState.SelectedFiles.clear();
+        //                pm_SelectionState.SelectedFiles.insert(f_FullPathName);
+        //                pm_SelectionState.LastSelectedItem = f_FullPathName;
 
-                        //HANDLE FILE ACTION HERE FUTURE ME ;)
-                        HandleFileSelection(f_FullPathName);
-                    }
-                }
-            }
-        }
+        //                //HANDLE FILE ACTION HERE FUTURE ME ;)
+        //                HandleFileSelection(f_FullPathName);
+        //            }
+        //        }
+        //    }
+        //}
     }
 
     void
@@ -580,8 +591,7 @@ namespace PeachEditor {
             float x, 
             float y, 
             float width, 
-            float height,
-            struct nk_context* ctx
+            float height
         )
     {
         static filesystem::path current_path = fp_TopLevelDirectoryPath;  // Holds the current directory path
@@ -591,104 +601,103 @@ namespace PeachEditor {
             current_path = fp_TopLevelDirectoryPath;  // Reset to base directory if the current path is not valid
         }
 
-        struct nk_style_item f_ButtonDefaultStyle = { NK_STYLE_ITEM_COLOR, nk_rgba(45, 55, 159, 255) };
-        struct nk_style_item f_ButtonHoverStyle = { NK_STYLE_ITEM_COLOR, nk_rgba(40, 40, 40, 255) };
-        struct nk_style_item f_ButtonActiveStyle = { NK_STYLE_ITEM_COLOR, nk_rgba(20, 20, 20, 255) };
+        //struct nk_style_item f_ButtonDefaultStyle = { NK_STYLE_ITEM_COLOR, nk_rgba(45, 55, 159, 255) };
+        //struct nk_style_item f_ButtonHoverStyle = { NK_STYLE_ITEM_COLOR, nk_rgba(40, 40, 40, 255) };
+        //struct nk_style_item f_ButtonActiveStyle = { NK_STYLE_ITEM_COLOR, nk_rgba(20, 20, 20, 255) };
 
-        nk_style_push_style_item(ctx, (&ctx->style.button.normal), f_ButtonDefaultStyle); // Transparent normal state
-        nk_style_push_style_item(ctx, &ctx->style.button.hover, f_ButtonHoverStyle);  // Darker hover state
-        nk_style_push_style_item(ctx, &ctx->style.button.active, f_ButtonActiveStyle); // Even darker active state
+        //nk_style_push_style_item(pm_NuklearCtx, (&pm_NuklearCtx->style.button.normal), f_ButtonDefaultStyle); // Transparent normal state
+        //nk_style_push_style_item(pm_NuklearCtx, &pm_NuklearCtx->style.button.hover, f_ButtonHoverStyle);  // Darker hover state
+        //nk_style_push_style_item(pm_NuklearCtx, &pm_NuklearCtx->style.button.active, f_ButtonActiveStyle); // Even darker active state
 
-        //nk_style_push_color(ctx, &ctx->style.button.border_color, nk_rgba(45, 55, 159, 255)); // No border
-        //nk_style_push_vec2(ctx, &ctx->style.button.padding, nk_vec2(0, 0));             // No padding
-        nk_style_push_color(ctx, &ctx->style.selectable.text_normal, nk_rgb(100, 100, 255));
-        nk_style_push_color(ctx, &ctx->style.selectable.text_hover, nk_rgb(0, 255, 255));
-        nk_style_push_color(ctx, &ctx->style.selectable.text_normal_active, nk_rgb(255, 0, 255));
+        ////nk_style_push_color(ctx, &ctx->style.button.border_color, nk_rgba(45, 55, 159, 255)); // No border
+        ////nk_style_push_vec2(ctx, &ctx->style.button.padding, nk_vec2(0, 0));             // No padding
+        //nk_style_push_color(pm_NuklearCtx, &pm_NuklearCtx->style.selectable.text_normal, nk_rgb(100, 100, 255));
+        //nk_style_push_color(pm_NuklearCtx, &pm_NuklearCtx->style.selectable.text_hover, nk_rgb(0, 255, 255));
+        //nk_style_push_color(pm_NuklearCtx, &pm_NuklearCtx->style.selectable.text_normal_active, nk_rgb(255, 0, 255));
 
-        nk_style_push_style_item(ctx, &ctx->style.selectable.normal, { NK_STYLE_ITEM_COLOR, nk_rgba(50, 50, 50, 255) });
-        nk_style_push_style_item(ctx, &ctx->style.selectable.hover, { NK_STYLE_ITEM_COLOR, nk_rgba(50, 50, 150, 255) });
-        nk_style_push_style_item(ctx, &ctx->style.selectable.pressed, { NK_STYLE_ITEM_COLOR,nk_rgba(50, 50, 200, 255) });
-        nk_style_push_style_item(ctx, &ctx->style.selectable.normal_active, { NK_STYLE_ITEM_COLOR,nk_rgba(50, 50, 200, 255) });
-        nk_style_push_style_item(ctx, &ctx->style.selectable.hover_active, { NK_STYLE_ITEM_COLOR,nk_rgba(50, 50, 255, 255) });
+        //nk_style_push_style_item(pm_NuklearCtx, &pm_NuklearCtx->style.selectable.normal, { NK_STYLE_ITEM_COLOR, nk_rgba(50, 50, 50, 255) });
+        //nk_style_push_style_item(pm_NuklearCtx, &pm_NuklearCtx->style.selectable.hover, { NK_STYLE_ITEM_COLOR, nk_rgba(50, 50, 150, 255) });
+        //nk_style_push_style_item(pm_NuklearCtx, &pm_NuklearCtx->style.selectable.pressed, { NK_STYLE_ITEM_COLOR,nk_rgba(50, 50, 200, 255) });
+        //nk_style_push_style_item(pm_NuklearCtx, &pm_NuklearCtx->style.selectable.normal_active, { NK_STYLE_ITEM_COLOR,nk_rgba(50, 50, 200, 255) });
+        //nk_style_push_style_item(pm_NuklearCtx, &pm_NuklearCtx->style.selectable.hover_active, { NK_STYLE_ITEM_COLOR,nk_rgba(50, 50, 255, 255) });
 
 
-        struct nk_rect space = nk_rect(x, y, width, height);
+        //struct nk_rect space = nk_rect(x, y, width, height);
 
-        if (nk_begin(ctx, "File Browser", space, NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_SCROLL_AUTO_HIDE))
-        {
-            nk_layout_row_dynamic(ctx, 1, 1);  // Dynamic row layout with one column
+        //if (nk_begin(pm_NuklearCtx, "File Browser", space, NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_SCROLL_AUTO_HIDE))
+        //{
+        //    nk_layout_row_dynamic(pm_NuklearCtx, 1, 1);  // Dynamic row layout with one column
 
-            // Iterating over each entry in the directory
-            RenderDirectory(ctx, current_path);
-        }
-        nk_end(ctx);
+        //    // Iterating over each entry in the directory
+        //    RenderDirectory(pm_NuklearCtx, current_path);
+        //}
+        //nk_end(pm_NuklearCtx);
 
-        // Pop styles
-        nk_style_pop_style_item(ctx);
-        nk_style_pop_style_item(ctx);
-        nk_style_pop_style_item(ctx);
+        //// Pop styles
+        //nk_style_pop_style_item(pm_NuklearCtx);
+        //nk_style_pop_style_item(pm_NuklearCtx);
+        //nk_style_pop_style_item(pm_NuklearCtx);
 
-        nk_style_pop_color(ctx);
-        nk_style_pop_color(ctx);
-        nk_style_pop_color(ctx);
-        //nk_style_pop_color(ctx);
-        //nk_style_pop_vec2(ctx);
-        
-        nk_style_pop_style_item(ctx);
-        nk_style_pop_style_item(ctx);
-        nk_style_pop_style_item(ctx);
-        nk_style_pop_style_item(ctx);
-        nk_style_pop_style_item(ctx);
+        //nk_style_pop_color(pm_NuklearCtx);
+        //nk_style_pop_color(pm_NuklearCtx);
+        //nk_style_pop_color(pm_NuklearCtx);
+        ////nk_style_pop_color(ctx);
+        ////nk_style_pop_vec2(ctx);
+        //
+        //nk_style_pop_style_item(pm_NuklearCtx);
+        //nk_style_pop_style_item(pm_NuklearCtx);
+        //nk_style_pop_style_item(pm_NuklearCtx);
+        //nk_style_pop_style_item(pm_NuklearCtx);
+        //nk_style_pop_style_item(pm_NuklearCtx);
     }
 
+    ////////////////////////////////////////////////
+    // Render Console
+    ////////////////////////////////////////////////
     void 
-        PeachEditorRenderingManager::RenderConsole
-        (
-            struct nk_context* ctx
-        )
+        PeachEditorRenderingManager::RenderConsole()
     {
         static int activeTab = 0; // 0 = Logs, 1 = Warnings, 2 = Errors
 
-        if (nk_begin(ctx, "Developer Console", nk_rect(50, 50, 600, 400),
-            NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE))
-        {
-            // Tabs for Log Types
-            nk_layout_row_static(ctx, 30, 80, 3);
-            if (nk_button_label(ctx, "Logs")) activeTab = 0;
-            if (nk_button_label(ctx, "Warnings")) activeTab = 1;
-            if (nk_button_label(ctx, "Errors")) activeTab = 2;
+        //if (nk_begin(pm_NuklearCtx, "Developer Console", nk_rect(50, 50, 600, 400), NK_WINDOW_BORDER | NK_WINDOW_TITLE | NK_WINDOW_MOVABLE | NK_WINDOW_SCALABLE))
+        //{
+        //    // Tabs for Log Types
+        //    nk_layout_row_static(pm_NuklearCtx, 30, 80, 3);
+        //    if (nk_button_label(pm_NuklearCtx, "Logs")) activeTab = 0;
+        //    if (nk_button_label(pm_NuklearCtx, "Warnings")) activeTab = 1;
+        //    if (nk_button_label(pm_NuklearCtx, "Errors")) activeTab = 2;
 
-            // Scrollable Console Output
-            nk_layout_row_dynamic(ctx, 250, 1);
-            if (nk_group_begin(ctx, "ConsoleOutput", NK_WINDOW_BORDER))
-            {
-                nk_layout_row_dynamic(ctx, 18, 1);
+        //    // Scrollable Console Output
+        //    nk_layout_row_dynamic(pm_NuklearCtx, 250, 1);
+        //    if (nk_group_begin(pm_NuklearCtx, "ConsoleOutput", NK_WINDOW_BORDER))
+        //    {
+        //        nk_layout_row_dynamic(pm_NuklearCtx, 18, 1);
 
-                std::vector<std::string>* selectedLog = nullptr;
-                //if (activeTab == 0) selectedLog = &consoleLogs;
-                //else if (activeTab == 1) selectedLog = &consoleWarnings;
-                //else selectedLog = &consoleErrors;
+        //        std::vector<std::string>* selectedLog = nullptr;
+        //        //if (activeTab == 0) selectedLog = &consoleLogs;
+        //        //else if (activeTab == 1) selectedLog = &consoleWarnings;
+        //        //else selectedLog = &consoleErrors;
 
-                //for (const auto& msg : *selectedLog)
-                //{
-                //    nk_label(ctx, msg.c_str(), NK_TEXT_LEFT);
-                //}
+        //        //for (const auto& msg : *selectedLog)
+        //        //{
+        //        //    nk_label(ctx, msg.c_str(), NK_TEXT_LEFT);
+        //        //}
 
-                nk_group_end(ctx);
-            }
+        //        nk_group_end(pm_NuklearCtx);
+        //    }
 
-            // Input Box for Commands
-            nk_layout_row_dynamic(ctx, 25, 2);
-            //nk_edit_string_zero_terminated(ctx, NK_EDIT_SIMPLE, commandBuffer, sizeof(commandBuffer), nk_filter_default);
-            //if (nk_button_label(ctx, "Run"))
-            //{
-            //    // Add command to logs and clear buffer
-            //    consoleLogs.push_back(std::string("> ") + commandBuffer);
-            //    std::cout << "Command Entered: " << commandBuffer << std::endl;
-            //    memset(commandBuffer, 0, sizeof(commandBuffer));
-            //}
-        }
-        nk_end(ctx);
+        //    // Input Box for Commands
+        //    nk_layout_row_dynamic(pm_NuklearCtx, 25, 2);
+        //    //nk_edit_string_zero_terminated(ctx, NK_EDIT_SIMPLE, commandBuffer, sizeof(commandBuffer), nk_filter_default);
+        //    //if (nk_button_label(ctx, "Run"))
+        //    //{
+        //    //    // Add command to logs and clear buffer
+        //    //    consoleLogs.push_back(std::string("> ") + commandBuffer);
+        //    //    std::cout << "Command Entered: " << commandBuffer << std::endl;
+        //    //    memset(commandBuffer, 0, sizeof(commandBuffer));
+        //    //}
+        //}
+        //nk_end(pm_NuklearCtx);
     }
 
     void 
@@ -706,19 +715,19 @@ namespace PeachEditor {
         SDL_GetWindowSizeInPixels(pm_GameInstanceWindow, &t_CurrentWindowWidth, &t_CurrentWindowHeight);
         glViewport(0, 0, t_CurrentWindowWidth, t_CurrentWindowHeight);
 
-        nk_colorf f_Temp = pm_BackgroundColour;
-        glm::vec4 f_Colour = { f_Temp.r, f_Temp.g, f_Temp.b, f_Temp.a };
+        //nk_colorf f_Temp = pm_BackgroundColour;
+        //glm::vec4 f_Colour = { f_Temp.r, f_Temp.g, f_Temp.b, f_Temp.a };
 
         mf_Transform = glm::rotate(mf_Transform, static_cast<float>(static_cast<int>(SDL_GetTicks()) % 10000) * 0.00001f, glm::vec3(0.0, 0.0, 1.0));
 
         glUseProgram(pm_CatShader.GetProgramID());
 
-        pm_CatShader.SetUniform("colourUniform", f_Colour);
+        //pm_CatShader.SetUniform("colourUniform", f_Colour);
         pm_CatShader.SetUniform("transform", mf_Transform);
 
         glUseProgram(0);
 
-        engine_renderer->GetPeachRenderer()->DrawTexture(pm_CatShader, pm_TestVAO, pm_TestTexture);
+        engine_renderer->GetOpenGLRenderer()->DrawTexture(pm_CatShader, pm_TestVAO, pm_TestTexture);
 
         SDL_GL_SwapWindow(pm_GameInstanceWindow);
     }
@@ -760,7 +769,7 @@ namespace PeachEditor {
             1, 2, 3    // second triangle
         };
 
-        pm_TestVAO = engine_renderer->GetPeachRenderer()->Generate2DBuffers(vertices, indices);
+        pm_TestVAO = engine_renderer->GetOpenGLRenderer()->Generate2DBuffers(vertices, indices);
 
         ////////////////////////////////////////////////
         // Shaders
@@ -790,7 +799,7 @@ namespace PeachEditor {
         int width, height, nrChannels;
         unsigned char* data = stbi_load(f_TexturePath.c_str(), &width, &height, &nrChannels, 0);
 
-        pm_TestTexture = engine_renderer->GetPeachRenderer()->RegisterTexture("Texture", data, width, height, nrChannels);
+        pm_TestTexture = engine_renderer->GetOpenGLRenderer()->RegisterTexture("Texture", data, width, height, nrChannels);
 
         m_IsSceneCurrentlyRunning = true;
     }

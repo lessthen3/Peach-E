@@ -115,7 +115,7 @@ namespace PeachCore {
         ResourceManager::LoadDotNetRuntime
         (
             const string& fp_RelativeHostExrPath,
-            DotNetRuntimeContext& fp_DotNetRuntimeContext
+            DotnetContext& fp_DotnetContext
         )
     {
         //////////////////// Get hostexr.dll ////////////////////
@@ -134,18 +134,18 @@ namespace PeachCore {
 
         //////////////////// Store Handle in Context ////////////////////
 
-        fp_DotNetRuntimeContext.HostFxr = (hostfxr_handle)f_HostExr;
+        fp_DotnetContext.HostFxr = (hostfxr_handle)f_HostExr;
 
         //////////////////// Find hostfxr_initialize_for_runtime_config_fn ////////////////////
 
-        fp_DotNetRuntimeContext.RuntimeInit = (hostfxr_initialize_for_runtime_config_fn)pm_DynamicLoader.GetSymbol
+        fp_DotnetContext.RuntimeInit = (hostfxr_initialize_for_runtime_config_fn)pm_DynamicLoader.GetSymbol
         (
             "hostfxr_initialize_for_runtime_config", 
             f_HostExr, 
             resource_logger.get()
         );
 
-        if (not fp_DotNetRuntimeContext.RuntimeInit)
+        if (not fp_DotnetContext.RuntimeInit)
         {
             resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_initialize_for_runtime_config'", "ResourceManager", LogManager::LogLevel::Error);
             return false;
@@ -153,14 +153,14 @@ namespace PeachCore {
 
         //////////////////// Find hostfxr_get_runtime_delegate_fn ////////////////////
 
-        fp_DotNetRuntimeContext.GetDelegate = (hostfxr_get_runtime_delegate_fn)pm_DynamicLoader.GetSymbol
+        fp_DotnetContext.GetDelegate = (hostfxr_get_runtime_delegate_fn)pm_DynamicLoader.GetSymbol
         (
             "hostfxr_get_runtime_delegate",
             f_HostExr,
             resource_logger.get()
         );
 
-        if (not fp_DotNetRuntimeContext.GetDelegate)
+        if (not fp_DotnetContext.GetDelegate)
         {
             resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_get_runtime_delegate'", "ResourceManager", LogManager::LogLevel::Error);
             return false;
@@ -168,14 +168,14 @@ namespace PeachCore {
 
         //////////////////// Find load_assembly_and_get_function_pointer_fn ////////////////////
 
-        fp_DotNetRuntimeContext.LoadAssembly = (load_assembly_and_get_function_pointer_fn)pm_DynamicLoader.GetSymbol
+        fp_DotnetContext.LoadAssembly = (load_assembly_and_get_function_pointer_fn)pm_DynamicLoader.GetSymbol
         (
             "load_assembly_and_get_function_pointer_fn",
             f_HostExr,
             resource_logger.get()
         );
 
-        if (not fp_DotNetRuntimeContext.LoadAssembly)
+        if (not fp_DotnetContext.LoadAssembly)
         {
             resource_logger->LogAndPrint("Failed to find symbol: 'load_assembly_and_get_function_pointer_fn'", "ResourceManager", LogManager::LogLevel::Error);
             return false;
@@ -183,14 +183,14 @@ namespace PeachCore {
 
         //////////////////// Find hostfxr_close_fn ////////////////////
 
-        fp_DotNetRuntimeContext.Close = (hostfxr_close_fn)pm_DynamicLoader.GetSymbol
+        fp_DotnetContext.Close = (hostfxr_close_fn)pm_DynamicLoader.GetSymbol
         (
             "hostfxr_close",
             f_HostExr,
             resource_logger.get()
         );
 
-        if (not fp_DotNetRuntimeContext.Close)
+        if (not fp_DotnetContext.Close)
         {
             resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_close'", "ResourceManager", LogManager::LogLevel::Error);
             return false;

@@ -9,9 +9,15 @@
  *                     Peach-E is a free open source game engine
 ********************************************************************/
 
-#ifdef _DEBUG
-    #define PEACH_DEBUG
-#endif
+#define SDL_MAIN_HANDLED
+
+#define STB_IMAGE_IMPLEMENTATION
+#define STB_TRUETYPE_IMPLEMENTATION
+
+#define VOLK_IMPLEMENTATION
+#define VMA_IMPLEMENTATION
+
+#define MINIAUDIO_IMPLEMENTATION
 
 #include "../../include/Peach-Core/Managers/GameManager.h"
 
@@ -100,7 +106,7 @@ namespace PeachCore
         GameManager::ShutdownPeachEngine()
     {
         //CLEAN-UP AND ANY CLOSING THINGS THAT SHOULD BE LOGGED TO CHECK THE STATE OF THE ENGINE AS IT EXITS
-        ShutdownPlugins();
+        //ShutdownPlugins();
         SDL_Quit(); //just makes more sense to have the ShutdownPeachEngine method to do this
 
         return true;
@@ -187,7 +193,7 @@ namespace PeachCore
         GameManager::LoadScriptRuntime()
     {
         //WARNING: hard coded path for hostfxr for testing on windows rn to get things workin
-        if (not ResourceManager::get_single().LoadDotNetRuntime("res/script_runtimes/win64/dotnet/hostfxr.dll", pm_DotNetContext.m_DotNetRuntimeContext))
+        if (not ResourceManager::get_single().LoadDotNetRuntime("res/script_runtimes/win64/dotnet/hostfxr.dll", pm_DotnetContext))
         {
 
             return false;
@@ -312,5 +318,82 @@ namespace PeachCore
         }
 
         pm_PluginInstances.clear(); //wait why am i clearing plugin handles before unloading them LMFAO, XXX: fixed it uwu ><
+    }
+
+    //////////////////////////////////////////////
+    // Thread Stuff
+    //////////////////////////////////////////////
+
+    void
+        GameManager::RenderThread()
+    {
+        while (true)
+        {
+            // Play audio
+            cout << "Playing ur mom LOL...\n";
+            this_thread::sleep_for(chrono::seconds(2)); // Simulate work
+        }
+    }
+
+    void
+        GameManager::AudioThread()
+    {
+        while (true)
+        {
+            // Play audio
+            cout << "Playing audio...\n";
+            this_thread::sleep_for(chrono::seconds(2)); // Simulate work
+        }
+    }
+
+    void
+        GameManager::ResourceThread()
+    {
+        while (true)
+        {
+            // Load resources
+            cout << "Loading resources...\n";
+            this_thread::sleep_for(chrono::seconds(2)); // Simulate work
+        }
+    }
+
+    void
+        GameManager::NetworkThread()
+    {
+        while (true)
+        {
+            // Handle network communication
+            cout << "Handling network...\n";
+            this_thread::sleep_for(chrono::seconds(2)); // Simulate work
+        }
+    }
+
+    void
+        GameManager::PhysicsThread() //processes all physics, changing structure of engine because main thread should execute scripts instead of physics calculations
+    {
+        while (true)
+        {
+            // Handle network communication
+            cout << "Handling network...\n";
+            this_thread::sleep_for(chrono::seconds(2)); // Simulate work
+        }
+    }
+
+    bool
+        GameManager::InitializeThreads() //XXX: used for kickstarting threads needed for engine execution
+    {
+        pm_RenderThread = thread(&GameManager::RenderThread, this);
+        pm_AudioThread = thread(&GameManager::AudioThread, this);
+        pm_ResourceThread = thread(&GameManager::ResourceThread, this);
+        pm_NetworkThread = thread(&GameManager::NetworkThread, this);
+        pm_PhysicsThread = thread(&GameManager::PhysicsThread, this);
+
+        pm_RenderThread.detach();
+        pm_AudioThread.detach();
+        pm_ResourceThread.detach();
+        pm_NetworkThread.detach();
+        pm_PhysicsThread.detach();
+
+        return true;
     }
 }

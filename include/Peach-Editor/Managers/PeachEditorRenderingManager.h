@@ -6,7 +6,7 @@
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                 Peach Editor is an open source editor for Peach-E
+ *              Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
 #pragma once
 
@@ -61,24 +61,12 @@ namespace PeachEditor {
 
         uint32_t pm_FrameRateLimit = 60;
 
-        unsigned long int pm_CurrentFrame = 0;
-
-        // Object ID : CurrentPosition
-        map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
-        
-        //but i could't give less of a fuck right now
-        // Object ID : DeltaPosition
-        map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
-
-        // DrawableObject.ObjectID : DrawableObject dict
-        map<string, PeachCore::DrawableObject> pm_ListOfAllDrawables;
+        uint64_t pm_CurrentFrame = 0;
 
         shared_ptr<PeachCore::CommandQueue> pm_CommandQueue = nullptr;
         shared_ptr<PeachCore::LoadingQueue> pm_LoadedResourceQueue = nullptr;
 
         SDL_Window* pm_MainWindow = nullptr;
-
-        struct nk_context* pm_NuklearCtx = nullptr;
 
         shared_ptr<PeachCore::LogManager> rendering_logger = nullptr;
 
@@ -99,9 +87,11 @@ namespace PeachEditor {
     public:
         atomic<bool> m_IsSceneCurrentlyRunning = false; //tracks whether the current working scene in the current peach project, is running in the editor
 
-        struct nk_colorf pm_BackgroundColour = { 0.10f, 0.18f, 0.24f, 1.0f };
-
         unordered_set<string> pm_CurrentlyOpenDirectories;
+
+        //TODO: AXE THESE MOFOS IDK WHERE TO DO INPUT HANDLING BUT NOT HERE UWU
+        //struct nk_context* pm_NuklearCtx = nullptr;
+        //struct nk_colorf pm_BackgroundColour = { 0.10f, 0.18f, 0.24f, 1.0f };
 
         struct FileSelectionState
         {
@@ -194,11 +184,26 @@ namespace PeachEditor {
         }
 
         void
+            RenderMenuBar
+            (
+                const int fp_CurrentWindowWidth,
+                const int fp_CurrentWindowHeight,
+                const int fp_MainMenuBarHeight,
+                bool* fp_IsProgramRuntimeOver
+            );
+
+        void
             RenderDirectory
             (
                 struct nk_context* ctx, 
                 const filesystem::path& path
             );
+
+        void
+            PollWindowInput(bool* fp_IsProgramRuntimeOver);
+
+        void
+            RenderColourPicker();
 
     //////////////////////////////////////////////
     // Private Methods
@@ -211,8 +216,7 @@ namespace PeachEditor {
                 float x, 
                 float y, 
                 float width, 
-                float height,
-                struct nk_context* ctx
+                float height
             );
 
         void
@@ -229,10 +233,7 @@ namespace PeachEditor {
             );
 
         void
-            RenderConsole
-            (
-                struct nk_context* ctx
-            );
+            RenderConsole();
     };
 
 }

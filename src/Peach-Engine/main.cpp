@@ -8,17 +8,6 @@
  *
  *                     Peach-E is a free open source game engine
 ********************************************************************/
-#define SDL_MAIN_HANDLED
-
-#define NK_SDL3_GL3_IMPLEMENTATION
-#define NK_IMPLEMENTATION
-
-#define STB_IMAGE_IMPLEMENTATION
-
-#define VOLK_IMPLEMENTATION
-#define VMA_IMPLEMENTATION
-
-#define MINIAUDIO_IMPLEMENTATION
 
 #include "Managers/GameManager.h"
 
@@ -50,7 +39,7 @@ int
         return EXIT_SUCCESS;
     }
 
-    catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
+    catch (const exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
     {
         PeachCore::PrintError(format("Unhandled exception: {}", Exception.what()));
 

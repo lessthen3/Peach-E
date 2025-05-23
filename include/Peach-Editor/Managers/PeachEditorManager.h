@@ -1,3 +1,13 @@
+﻿/*******************************************************************
+ *                                        Peach Editor v0.0.7
+ *                           Created by Ranyodh Mandur - 🍑 2024
+ *
+ *                         Licensed under the MIT License (MIT).
+ *                  For more details, see the LICENSE file or visit:
+ *                        https://opensource.org/licenses/MIT
+ *
+ *              Peach Editor is a free open source editor for Peach-E
+********************************************************************/
 #pragma once
 
 #include "../../Peach-Core/Managers/GameManager.h"
@@ -5,23 +15,9 @@
 #include "../Editor/PeachProject.h"
 
 #include "../Editor/ShaderCompilerUtils.h"
+#include "../Editor/LangUtils.h"
 
 namespace PeachEditor{
-
-    enum class TestEnum {
-        Wait,
-        Whos,
-        In,
-        Paris
-    };
-
-    struct TestStruct
-    {
-        TestEnum UwU;
-        bool OwO;
-
-        SERIALIZABLE_FIELDS(OwO)
-    };
 
     class PeachEditorManager
     {
@@ -52,6 +48,8 @@ namespace PeachEditor{
 
         shared_ptr<PeachCore::CommandQueue> pm_AudioManagersCommandQueue = nullptr; //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
         shared_ptr<PeachCore::LoadingQueue> pm_AudioResourceLoadingQueue = nullptr; //used to push load commands that are destined for AudioManager
+
+        DotnetConfigs pm_DotnetConfiguration;
 
     //////////////////////////////////////////////
     // Public Members
@@ -111,24 +109,11 @@ namespace PeachEditor{
 
             main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", PeachCore::LogManager::LogLevel::Debug);
 
-            //probably should have better error handling for the loggers, especially
-            //main_editor_logger->Initialize("..\\logs", f_PeachConsole);
-            //InternalLogManager::InternalAudioLogger().Initialize("..\\logs", "audio_thread", f_PeachConsole);
-            //if(not PeachEditorRenderingManager::PeachEditorRenderer().Initialize(f_LogDir, pm_PeachEditorConsole))
-            //{
-            //    main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
-            //    return false;
-            //}
-
-            //if(not PeachEditorResourceLoadingManager::PeachEditorResourceLoader().InitializeLogger(f_LogDir, pm_PeachEditorConsole))
-            //{
-            //    main_editor_logger->LogAndPrint("Initialization error: PeachEditorResourceLoader failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
-            //    return false;
-            //}
-
-            //main_editor_logger->LogAndPrint("InternalMainLogger successfully initialized", "Peach-E", "debug");
-            //InternalLogManager::InternalAudioLogger().LogAndPrint("InternalAudioLogger successfully initialized", "Peach-E", "debug");
-            //InternalLogManager::InternalResourceLoadingLogger().LogAndPrint("InternalResourceLoadingLogger successfully initialized", "Peach-E", "debug");
+            if(not PeachEditorRenderingManager::PeachEditorRenderer().Initialize(f_LogDir, pm_PeachEditorConsole))
+            {
+                main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
+                return false;
+            }
 
             return true;
         }
@@ -154,19 +139,20 @@ namespace PeachEditor{
             //    return false;
             //}
 
-            PeachCore::Serializer Serializer;
 
-            TestStruct tester = { TestEnum::Paris, true };
+        //Serializer f_Serializer;
 
-            Serializer.ToJSON(tester, "mwah", fp_RootPath, main_editor_logger.get());
-            
-            TestStruct fromTester;
+        //f_Serializer.ToJSON(pm_DotnetContext.RuntimeConfigs, "PeachGame.runtimeconfig", fp_RootPath + "/local_tests", main_logger.get());
 
-            Serializer.FromJSON(fromTester, fp_RootPath + "/mwah.json", main_editor_logger.get());
+        //DotnetUtils::GenerateDefaultScript("FirstGeneratedScript", "Sprite2D", fp_RootPath + "/local_tests", main_logger.get());
 
-            string f_Result = fromTester.OwO ? "true" : "false";
+            /*DotnetUtils::GenerateProjectFiles(pm_DotnetConfiguration, "PeachGame", fp_RootPath + "/local_tests", fp_RootPath + "res/script_runtimes/win64/dotnet/PeachScriptCore.dll", "", main_editor_logger.get());
+            DotnetUtils::BuildDotnetProject(pm_DotnetConfiguration.SolutionPath, main_editor_logger.get());*/
 
-            cout << "Bool result: " << f_Result << endl;
+            //ShaderCompilerUtils f_ShaderUtils;
+
+            //f_ShaderUtils.WriteSPIRVToFile(PackVector(nuklearshaders_nuklear_vert_spv), fp_RootPath, "nuklear.vert", main_editor_logger.get());
+            //f_ShaderUtils.WriteSPIRVToFile(PackVector(nuklearshaders_nuklear_frag_spv), fp_RootPath, "nuklear.frag", main_editor_logger.get());
 
             return true;
         }

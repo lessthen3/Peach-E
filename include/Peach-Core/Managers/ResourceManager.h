@@ -19,7 +19,7 @@
 #include "../Utils/CommandQueue.h"
 #include "../Utils/DynamicLoader.h"
 
-#include "../Language-Support/DotNetUtils.h"
+#include "../Language-Support/DotnetRuntime.h"
 
 ///External
 #include <physfs.h>
@@ -156,7 +156,7 @@ namespace PeachCore {
             LoadDotNetRuntime
             (
                 const string& fp_RelativeHostExrPath,
-                DotNetRuntimeContext& fp_DotNetRuntimeContext
+                DotnetContext& fp_DotnetContext
             );
 
         bool

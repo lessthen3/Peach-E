@@ -67,7 +67,13 @@ namespace PeachCore {
 
         //////////////////// Script Runtimes ////////////////////
 
-        DotNetUtils pm_DotNetContext;
+        DotnetContext pm_DotnetContext;
+
+        thread pm_RenderThread;
+        thread pm_PhysicsThread;
+        thread pm_ResourceThread;
+        thread pm_AudioThread;
+        thread pm_NetworkThread;
 
         //string CurrentlySelectedRenderer = "Nothing";
         //map<string, Scene> DictionaryOfAllScenesInCurrentProject = {};
@@ -114,66 +120,22 @@ namespace PeachCore {
         //////////////////// Thread Methods ////////////////////
 
         bool
-            InitializeThreads() //XXX: used for kickstarting threads needed for engine execution
-        {
+            InitializeThreads();
 
-            return true;
-        }
+        void
+            RenderThread();
 
-        void 
-            RenderThread()
-        {
-            while (true)
-            {
-                // Play audio
-                cout << "Playing ur mom LOL...\n";
-                this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-            }
-        }
+        void
+            AudioThread();
 
-        void 
-            AudioThread()
-        {
-            while (true)
-            {
-                // Play audio
-                cout << "Playing audio...\n";
-                this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-            }
-        }
+        void
+            ResourceThread();
 
-        void 
-            ResourceThread()
-        {
-            while (true)
-            {
-                // Load resources
-                cout << "Loading resources...\n";
-                this_thread::sleep_for(chrono::milliseconds(100)); // Simulate work
-            }
-        }
+        void
+            NetworkThread();
 
-        void 
-            NetworkThread()
-        {
-            while (true)
-            {
-                // Handle network communication
-                cout << "Handling network...\n";
-                this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-            }
-        }
-
-        void 
-            PhysicsThread() //processes all physics, changing structure of engine because main thread should execute scripts instead of physics calculations
-        {
-            while (true)
-            {
-                // Handle network communication
-                cout << "Handling network...\n";
-                this_thread::sleep_for(chrono::milliseconds(16)); // Simulate work
-            }
-        }
+        void
+            PhysicsThread();
 
         //////////////////// Engine Initialization Methods ////////////////////
 

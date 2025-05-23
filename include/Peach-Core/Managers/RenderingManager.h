@@ -26,16 +26,20 @@ namespace PeachCore {
     // Drawable Object Struct
     //////////////////////////////////////////////
     //holds all relevant information that the renderer needs to know
-    struct DrawableObject
+    struct DrawableObject2D
     {
         string ObjectID;
 
-        glm::vec2 Position;
+        //used for lerping when the FPS > physics ticks per frame
+        glm::vec2 CurrentFramePosition;
+        glm::vec2 PreviousFramePosition;
+
         uint32_t LayerNumber = 0; //can't imagine there'll be more than 4 billion drawing layers, at that point integer overflow is the least of ur worries lmfao
 
         bool IsVisible = true;
         bool IsQueuedForRemoval = false;
-            
+        
+        //TODO: fix this, need to just hold handles and metadata that maps -> descriptor sets, pipeline info
         TextureData DrawableResourceData; //actual data for graphic //used for parsing raw byte information, mainly for audio at the moment
             //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
         Drawable GraphicsType; 
@@ -84,7 +88,8 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
-        VulkanRenderer pm_VulkanRenderer;
+        unique_ptr<VulkanRenderer> pm_VulkanRenderer = nullptr;
+        unique_ptr<OpenGLRenderer> pm_OpenGLRenderer = nullptr;
 
         unsigned int pm_FrameRateLimit = 60;
         unsigned long int pm_CurrentFrame = 0;
@@ -94,18 +99,11 @@ namespace PeachCore {
 
         bool pm_IsInitialized = false;
 
-        // Object ID : CurrentPosition
-        map<string, glm::vec2> pm_CurrentPositionOfAllDrawables; //not sure if theres a better way to not use two dicts since lerping will require persistent storage across frames until the next physics update
-        //but i could't give less of a fuck right now
-        // Object ID : DeltaPosition
-        map<string, glm::vec2> pm_DeltaPositionForAllDrawablesThisFrame;
         // DrawableObject.ObjectID : DrawableObject dict
-        map<string, DrawableObject> pm_ListOfAllDrawables;
+        map<string, DrawableObject2D> pm_ListOfAllDrawables2D;
 
         shared_ptr<CommandQueue> pm_DrawCommandQueue = nullptr;
         shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
-
-        unique_ptr<OpenGLRenderer> pm_Renderer = nullptr;
 
         SDL_Window* pm_MainWindow = nullptr;
 
@@ -151,13 +149,13 @@ namespace PeachCore {
             const;
 
         bool
-            CreatePeachRenderer
+            CreateOpenGLRenderer
             (
                 SDL_Window* fp_Window
             );
 
         void
-            DestroyPeachRenderer();
+            DestroyOpenGLRenderer();
 
         void 
             ResizeWindow();
@@ -171,8 +169,11 @@ namespace PeachCore {
         void 
             GetCurrentViewPort();
 
-        OpenGLRenderer*
-            GetPeachRenderer();
+        [[nodiscard]] OpenGLRenderer*
+            GetOpenGLRenderer();
+
+        [[nodiscard]] VulkanRenderer*
+            GetVulkanRenderer();
 
         unsigned int GetFrameRateLimit() const;
 
@@ -184,6 +185,12 @@ namespace PeachCore {
         void ForceQuit()
         {
             pm_IsShutDown = true;
+        }
+
+        SDL_Window*
+            GetMainWindow()
+        {
+            return pm_MainWindow;
         }
 
     //////////////////////////////////////////////
@@ -218,5 +225,4 @@ namespace PeachCore {
         bool
             InitializeVulkan();
     };
-
 }

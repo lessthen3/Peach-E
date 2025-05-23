@@ -26,6 +26,14 @@
 
 #include "../Utils/RingBuffer.h"
 
+#ifdef _DEBUG
+    #define PEACH_DEBUG
+#endif
+
+//#ifndef $ //Used for bookkeeping and tracking what variables are mutable inside a function
+//#define $
+//#endif
+
 using namespace std;
 
 #if defined(_WIN32) || defined(_WIN64)

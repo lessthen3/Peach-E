@@ -20,16 +20,16 @@ namespace PeachCore {
 
     RenderingManager::~RenderingManager() 
     {
-        if (pm_Renderer)
+        if (pm_OpenGLRenderer)
         {
-            pm_Renderer.reset(nullptr);
+            pm_OpenGLRenderer.reset(nullptr);
         }
     }
 
     void 
         RenderingManager::Shutdown()
     {
-        if (pm_Renderer)
+        if (pm_OpenGLRenderer)
         {
             //SDL_DestroyWindow(pm_MainWindow);
 
@@ -145,7 +145,7 @@ namespace PeachCore {
     }
 
     bool
-        RenderingManager::CreatePeachRenderer
+        RenderingManager::CreateOpenGLRenderer
         (
             SDL_Window* fp_Window
         )
@@ -156,19 +156,19 @@ namespace PeachCore {
             return false;
         }
 
-        if (pm_Renderer.get())
+        if (pm_OpenGLRenderer.get())
         {
-            pm_Renderer.reset(nullptr);
+            pm_OpenGLRenderer.reset(nullptr);
         }
 
-        pm_Renderer = make_unique<OpenGLRenderer>(fp_Window, rendering_logger);
+        pm_OpenGLRenderer = make_unique<OpenGLRenderer>(fp_Window, rendering_logger);
         return true;
     }
 
     void
-        RenderingManager::DestroyPeachRenderer()
+        RenderingManager::DestroyOpenGLRenderer()
     {
-        pm_Renderer.reset(nullptr);
+        pm_OpenGLRenderer.reset(nullptr);
     }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
@@ -244,12 +244,12 @@ namespace PeachCore {
 
         rendering_logger->LogAndPrint("main SDL window successfully created", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
 
-        pm_Renderer = make_unique<OpenGLRenderer>(pm_MainWindow, rendering_logger, true);
+        pm_OpenGLRenderer = make_unique<OpenGLRenderer>(pm_MainWindow, rendering_logger, true);
 
         if (glewInit() != GLEW_OK)
         {
             rendering_logger->LogAndPrint("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager", LogManager::LogLevel::Fatal);
-            SDL_DestroyWindow(pm_Renderer->GetMainWindow());
+            SDL_DestroyWindow(pm_OpenGLRenderer->GetMainWindow());
             return false;
         }
 
@@ -280,29 +280,15 @@ namespace PeachCore {
         ShaderUtils::BakedPipelineData f_BakedPipelineData;
 
         ShaderUtils::BakePipelineData(f_BaseDir + "/res/compiled_shaders/triangle.vert.spv", f_BaseDir + "/res/compiled_shaders/triangle.frag.spv", f_BakedPipelineData, rendering_logger.get());
+
+        pm_VulkanRenderer = make_unique<VulkanRenderer>();
         
-        if (not pm_VulkanRenderer.Initialize(pm_MainWindow, f_BakedPipelineData, rendering_logger))
+        if (not pm_VulkanRenderer->Initialize(pm_MainWindow, f_BakedPipelineData, rendering_logger))
         {
             rendering_logger->LogAndPrint("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             return false;
         }
 
-        SDL_Event event;
-
-        while(1)
-        {
-            pm_VulkanRenderer.DrawFrame();
-
-            while (SDL_PollEvent(&event))
-            {
-                if (event.type == SDL_EVENT_QUIT)
-                {
-                    goto outside;
-                }
-            }
-            this_thread::sleep_for(chrono::milliseconds(16));
-        }
-        outside:
         return true; // >w<
     }
 
@@ -315,7 +301,7 @@ namespace PeachCore {
             return;
         }
 
-        if (not pm_Renderer->GetMainWindow())
+        if (not pm_OpenGLRenderer->GetMainWindow())
         {
             rendering_logger->LogAndPrint("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager", LogManager::LogLevel::Warning);
             return;
@@ -452,8 +438,14 @@ namespace PeachCore {
     }
 
     [[nodiscard]] OpenGLRenderer*
-        RenderingManager::GetPeachRenderer()
+        RenderingManager::GetOpenGLRenderer()
     {
-        return pm_Renderer.get();
+        return pm_OpenGLRenderer.get();
+    }
+
+    [[nodiscard]] VulkanRenderer*
+        RenderingManager::GetVulkanRenderer()
+    {
+        return pm_VulkanRenderer.get();
     }
 }

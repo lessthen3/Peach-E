@@ -1,4 +1,9 @@
 #version 330
 
-const int MAX_WEIGHTS = 4;
-const int MAX_JOINTS = 150;
+#ifndef MAX_WEIGHTS
+#define MAX_WEIGHTS 4
+#endif
+
+#ifndef MAX_JOINTS
+#define MAX_JOINTS 150
+#endif
