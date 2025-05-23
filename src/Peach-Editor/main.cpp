@@ -65,7 +65,7 @@ int
 
     //itll just leave the string unaffected for good OS' like linux or linux im not gonna say mac beacuse that shit fucking sucks
     ReplaceChar(&mf_PeachERootPath, '\\', '/'); //XXX: used to relace stupid windows shit
-
+    
     ////////////////////////////////////////////////
     // Setup Environment
     ////////////////////////////////////////////////

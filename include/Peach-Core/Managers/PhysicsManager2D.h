@@ -48,7 +48,7 @@ namespace PeachCore {
         Layer_17 = 1 << 16, Layer_18 = 1 << 17, Layer_19 = 1 << 18, Layer_20 = 1 << 19,
         Layer_21 = 1 << 20, Layer_22 = 1 << 21, Layer_23 = 1 << 22, Layer_24 = 1 << 23,
         Layer_25 = 1 << 24, Layer_26 = 1 << 25, Layer_27 = 1 << 26, Layer_28 = 1 << 27,
-        Layer_29 = 1 << 28, Layer_30 = 1 << 29, Layer_31 = 1 << 30, Layer_32 = 1 << 31,
+        Layer_29 = 1 << 28, Layer_30 = 1 << 29, Layer_31 = 1 << 30, Layer_32 = 1U << 31,
 
         NO_LAYER = 0,
 

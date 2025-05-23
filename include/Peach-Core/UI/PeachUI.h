@@ -16,6 +16,11 @@
 ///Vulkan
 #include <volk.h>
 
+///SDL
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_system.h>
+#include <SDL3/SDL_vulkan.h>
+
 ///STB stuff
 #include <stb/stb_truetype.h>
 
@@ -24,13 +29,51 @@
 #include <string>
 #include <unordered_map>
 
+constexpr uint32_t MAX_TEXT_SIZE = 128;
+
 namespace PeachCore{
+
+    enum class InputType
+    {
+        KeyDown,
+        KeyUp,
+        MouseDown,
+        MouseUp,
+        MouseMove,
+        MouseScroll,
+        TextInput
+    };
+
+    struct KeyboardEvent 
+    {
+        InputType type;
+        SDL_Scancode key;         // For key input
+        
+        char text[MAX_TEXT_SIZE]; // For typing
+        uint64_t timestamp;
+        bool consumed = false;    // UI can mark this so it doesn't reach gameplay
+    };
+
+    struct MouseEvent
+    {
+        SDL_Scancode key;         // For key input
+        uint32_t mouseButton;     // SDL_BUTTON_LEFT, etc.
+        float mouseX, mouseY;     // World-space or screen-space (decide!)
+        float deltaX, deltaY;     // For motion
+        int wheelX, wheelY;       // For scroll
+    };
+
+    struct GamePadEvent
+    {
+
+    };
+
 namespace PUI{
 
 struct Style 
 {
-    float BackGroundColour[4]; // RGBA
-    float BorderColour[4];
+    float BackGroundColour[4] = {0}; // RGBA
+    float BorderColour[4] = {0};
     float BorderWidth = 0.0f;
     float Radius = 0.0f;
     // Add more as needed: font, textColor, shadow, etc.

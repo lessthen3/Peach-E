@@ -35,7 +35,7 @@ namespace PeachEditor::DotnetUtils
         }
         else if (not fp_DotNetVersionString)
         {
-            logger->LogAndPrint("Tried passing a nullptr ref to string inside GetDotnetVersion(), nothing was done.", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG("Tried passing a nullptr ref to string inside GetDotnetVersion(), nothing was done.", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
@@ -45,7 +45,7 @@ namespace PeachEditor::DotnetUtils
 
             if (not pipe)
             {
-                logger->LogAndPrint("Failed to run 'dotnet --version' via _popen()", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG("Failed to run 'dotnet --version' via _popen()", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -64,7 +64,7 @@ namespace PeachEditor::DotnetUtils
 
             if (not pipe)
             {
-                logger->LogAndPrint("Failed to run 'dotnet --version' via popen()", "DotnetUtils", LogManager::LogLevel::Error);
+                logger->PEACH_LOG("Failed to run 'dotnet --version' via popen()", "DotnetUtils", LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -85,16 +85,16 @@ namespace PeachEditor::DotnetUtils
         // Validate version string (e.g., "6.9.0")
         if (fp_DotNetVersionString->empty())
         {
-            logger->LogAndPrint("Empty .NET SDK version string — is dotnet installed?", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG("Empty .NET SDK version string — is dotnet installed?", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
         else if (fp_DotNetVersionString->find('.') == string::npos)
         {
-            logger->LogAndPrint("Invalid .NET SDK version string — is dotnet installed?", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG("Invalid .NET SDK version string — is dotnet installed?", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
-        logger->LogAndPrint("Detected .NET SDK version: " + *fp_DotNetVersionString, "DotnetUtils", PeachCore::LogManager::LogLevel::Info);
+        logger->PEACH_LOG("Detected .NET SDK version: " + *fp_DotNetVersionString, "DotnetUtils", PeachCore::LogManager::LogLevel::Info);
 
         return true;
     }
@@ -122,7 +122,7 @@ namespace PeachEditor::DotnetUtils
 
         if (not filesystem::exists(fp_ProjectPath))
         {
-            logger->LogAndPrint(format("Failed to locate directory for C# project generation with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG(format("Failed to locate directory for C# project generation with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
@@ -132,7 +132,7 @@ namespace PeachEditor::DotnetUtils
 
         if (not GetDotnetVersion(&f_DotnetVersion, logger))
         {
-            logger->LogAndPrint(format("Failed to retrieve dotnet version, failed to generate valid C# project with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG(format("Failed to retrieve dotnet version, failed to generate valid C# project with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
@@ -144,13 +144,13 @@ namespace PeachEditor::DotnetUtils
 
             if (f_DotNetMajorVersion < 6)
             {
-                logger->LogAndPrint(format(".NET version '{}' found when Peach-E requires .NET SDK version 6.0 or higher", f_DotNetMajorVersion), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG(format(".NET version '{}' found when Peach-E requires .NET SDK version 6.0 or higher", f_DotNetMajorVersion), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
         }
         catch (const exception& Exception) //catch >O<
         {
-            logger->LogAndPrint(format("Failed to parse .NET version number >O<, version found: '{}', with error: '{}'", f_DotnetVersion, Exception.what()), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG(format("Failed to parse .NET version number >O<, version found: '{}', with error: '{}'", f_DotnetVersion, Exception.what()), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
@@ -166,7 +166,7 @@ namespace PeachEditor::DotnetUtils
 
         if (not csproj.is_open())
         {
-            logger->LogAndPrint(format("Failed to open csproj file for writing: '{}'", fp_DotnetConfigs.ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG(format("Failed to open csproj file for writing: '{}'", fp_DotnetConfigs.ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
@@ -214,7 +214,7 @@ namespace PeachEditor::DotnetUtils
 
         //////////////////// Log Info ////////////////////
 
-        logger->LogAndPrint(format("C# project generated with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Info);
+        logger->PEACH_LOG(format("C# project generated with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Info);
 
         //////////////////// Create C# Solution for vs ////////////////////
 
@@ -229,7 +229,7 @@ namespace PeachEditor::DotnetUtils
 
         if (result != 0)
         {
-            logger->LogAndPrint(format("Failed to create C# solution! Solution name: '{}', Project path: '{}'", fp_ProjectName, fp_DotnetConfigs.ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG(format("Failed to create C# solution! Solution name: '{}', Project path: '{}'", fp_ProjectName, fp_DotnetConfigs.ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
@@ -237,13 +237,13 @@ namespace PeachEditor::DotnetUtils
 
         if (result != 0)
         {
-            logger->LogAndPrint(format("Failed to add C# project -> Solution name: '{}', Project path: '{}'", fp_ProjectName, fp_DotnetConfigs.ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG(format("Failed to add C# project -> Solution name: '{}', Project path: '{}'", fp_ProjectName, fp_DotnetConfigs.ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
         //////////////////// Log Info ////////////////////
 
-        logger->LogAndPrint(format("C# solution generated with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Info);
+        logger->PEACH_LOG(format("C# solution generated with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Info);
 
         return true;
     }
@@ -262,7 +262,7 @@ namespace PeachEditor::DotnetUtils
 
         if (not f_ScriptFile.is_open())
         {
-            logger->LogAndPrint(format("Failed to generate default C# script file at: '{}'", f_FullFilePath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG(format("Failed to generate default C# script file at: '{}'", f_FullFilePath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
@@ -310,7 +310,7 @@ namespace PeachEditor::DotnetUtils
 
         if (result != 0)
         {
-            logger->LogAndPrint(format("Failed to build C# project! at path: '{}'", fp_SolutionPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
+            logger->PEACH_LOG(format("Failed to build C# project! at path: '{}'", fp_SolutionPath), "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 

@@ -87,7 +87,8 @@ namespace PeachCore {
         return true; //rawr UwU forgot this return path zzzzzzzzzzzz
     }
 
-    static void PrintPhysicalDeviceInfo(VkPhysicalDevice device) 
+    static void 
+        PrintPhysicalDeviceInfo(VkPhysicalDevice device) 
     {
         VkPhysicalDeviceProperties deviceProperties;
         vkGetPhysicalDeviceProperties(device, &deviceProperties);

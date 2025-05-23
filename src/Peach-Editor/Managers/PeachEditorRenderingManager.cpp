@@ -225,7 +225,7 @@ namespace PeachEditor {
 
         PeachCore::VulkanRenderer* renderer = PeachCore::RenderingManager::Renderer().GetVulkanRenderer();
 
-        if (renderer->GetSwapChain()->extent.width != 0 or renderer->GetSwapChain()->extent.height != 0)
+        if (renderer->GetSwapChain()->extent.width != 0 or renderer->GetSwapChain()->extent.height != 0) //WARNING: This doesnt work rn needa work into recreateswapchain()
         {
             renderer->BeginFrame();
 

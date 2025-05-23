@@ -58,13 +58,13 @@ namespace PeachCore {
 
         rendering_logger = make_shared<LogManager>(); 
         rendering_logger->Initialize(ThreadName::RenderThread, fp_LogOutputDirectory, "RenderingManager", fp_Console, LogManager::LogLevel::All);
-        rendering_logger->LogAndPrint("RenderingLogger successfully initialized", "RenderingManager", LogManager::LogLevel::Debug);
+        rendering_logger->PEACH_LOG("RenderingLogger successfully initialized", "RenderingManager", LogManager::LogLevel::Debug);
 
         //////////////////// Initialize Loading and Command Queues ////////////////////
 
         if (not InitializeLoadingQueue())
         {
-            rendering_logger->LogAndPrint("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             return false;
         }
 
@@ -76,7 +76,7 @@ namespace PeachCore {
         {
             if (not InitializeOpenGL())
             {
-                rendering_logger->LogAndPrint("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
                 exit(FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
             }
         }
@@ -84,7 +84,7 @@ namespace PeachCore {
         {
             if (not InitializeVulkan())
             {
-                rendering_logger->LogAndPrint("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
                 exit(FAILED_TO_INITIALIZE_VULKAN);
             }
         }
@@ -107,7 +107,7 @@ namespace PeachCore {
     {
         if (*fp_SDLWindow)
         {
-            rendering_logger->LogAndPrint("Tried passing a valid SDL_Window* handle for window creation, please cleanup original SDL window or dereference pointer before attempting to create a new SDL window", "RenderingManager", LogManager::LogLevel::Error);
+            rendering_logger->PEACH_LOG("Tried passing a valid SDL_Window* handle for window creation, please cleanup original SDL window or dereference pointer before attempting to create a new SDL window", "RenderingManager", LogManager::LogLevel::Error);
             return false;
         }
 
@@ -123,7 +123,7 @@ namespace PeachCore {
         }
         else
         {
-            rendering_logger->LogAndPrint("Invalid Renderer Type was passed to CreateSDLWindow(), please pass a valid rendering backend type", "RenderingManager", LogManager::LogLevel::Error);
+            rendering_logger->PEACH_LOG("Invalid Renderer Type was passed to CreateSDLWindow(), please pass a valid rendering backend type", "RenderingManager", LogManager::LogLevel::Error);
             return false;
         }
 
@@ -137,7 +137,7 @@ namespace PeachCore {
 
         if (not *fp_SDLWindow)
         {
-            rendering_logger->LogAndPrint("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager", LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager", LogManager::LogLevel::Fatal);
             return false;
         }
 
@@ -152,7 +152,7 @@ namespace PeachCore {
     {
         if (not fp_Window)
         {
-            rendering_logger->LogAndPrint("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->PEACH_LOG("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager", LogManager::LogLevel::Warning);
             return false;
         }
 
@@ -177,7 +177,7 @@ namespace PeachCore {
     {
         if (pm_LoadedResourceQueue)
         {
-            rendering_logger->LogAndPrint("RenderingManager already retrieved the loaded resource queue from ResourceManager >O<", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->PEACH_LOG("RenderingManager already retrieved the loaded resource queue from ResourceManager >O<", "RenderingManager", LogManager::LogLevel::Warning);
             return false;
         }
 
@@ -185,11 +185,11 @@ namespace PeachCore {
 
         if (not pm_LoadedResourceQueue)
         {
-            rendering_logger->LogAndPrint("RenderingManager failed to retrieve LoadingQueue from ResourceManager, nullptr ref was found >O<", "RenderingManager", LogManager::LogLevel::Error);
+            rendering_logger->PEACH_LOG("RenderingManager failed to retrieve LoadingQueue from ResourceManager, nullptr ref was found >O<", "RenderingManager", LogManager::LogLevel::Error);
             return false;
         }
 
-        rendering_logger->LogAndPrint("RenderingManager successfully retrieved loaded resource queue from ResourceManager", "RenderingManager", LogManager::LogLevel::Info);
+        rendering_logger->PEACH_LOG("RenderingManager successfully retrieved loaded resource queue from ResourceManager", "RenderingManager", LogManager::LogLevel::Info);
 
         return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
@@ -199,13 +199,13 @@ namespace PeachCore {
     {
         if (pm_DrawCommandQueue)
         {
-            rendering_logger->LogAndPrint("RenderingManager already initialized the draw command queue >O<", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->PEACH_LOG("RenderingManager already initialized the draw command queue >O<", "RenderingManager", LogManager::LogLevel::Warning);
             return false;
         }
 
         pm_DrawCommandQueue = make_shared<CommandQueue>();
 
-        rendering_logger->LogAndPrint("RenderingManager successfully initialized the draw command queue", "RenderingManager", LogManager::LogLevel::Info);
+        rendering_logger->PEACH_LOG("RenderingManager successfully initialized the draw command queue", "RenderingManager", LogManager::LogLevel::Info);
 
         return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
@@ -215,12 +215,12 @@ namespace PeachCore {
     {
         if (not pm_IsInitialized)
         {
-            rendering_logger->LogAndPrint("Attempted to get a reference to RenderingManager's DrawCommandQueue before RenderingManager was initialized, please initialize RenderingManager first UwU", "RenderingManager", LogManager::LogLevel::Error);
+            rendering_logger->PEACH_LOG("Attempted to get a reference to RenderingManager's DrawCommandQueue before RenderingManager was initialized, please initialize RenderingManager first UwU", "RenderingManager", LogManager::LogLevel::Error);
             return nullptr;
         }
         else if (pm_DrawCommandQueue.use_count() >= 2)
         {
-            rendering_logger->LogAndPrint("RenderingManager has already issued a reference to the draw command queue, fuck off", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->PEACH_LOG("RenderingManager has already issued a reference to the draw command queue, fuck off", "RenderingManager", LogManager::LogLevel::Warning);
             return nullptr;
         }
         
@@ -232,30 +232,30 @@ namespace PeachCore {
     {
         if (pm_IsInitialized)
         {
-            rendering_logger->LogAndPrint("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->PEACH_LOG("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager", LogManager::LogLevel::Warning);
             return false;
         }
 
         if (not CreateSDLWindow(&pm_MainWindow, RendererType::OpenGL, "Peach Window", 800, 600))
         {
-            rendering_logger->LogAndPrint("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
             exit(FAILED_TO_CREATE_MAIN_WINDOW);
         }
 
-        rendering_logger->LogAndPrint("main SDL window successfully created", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
+        rendering_logger->PEACH_LOG("main SDL window successfully created", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
 
         pm_OpenGLRenderer = make_unique<OpenGLRenderer>(pm_MainWindow, rendering_logger, true);
 
         if (glewInit() != GLEW_OK)
         {
-            rendering_logger->LogAndPrint("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager", LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager", LogManager::LogLevel::Fatal);
             SDL_DestroyWindow(pm_OpenGLRenderer->GetMainWindow());
             return false;
         }
 
-        rendering_logger->LogAndPrint("GLEW initialized properly", "RenderingManager", LogManager::LogLevel::Debug);
+        rendering_logger->PEACH_LOG("GLEW initialized properly", "RenderingManager", LogManager::LogLevel::Debug);
 
-        rendering_logger->LogAndPrint("Peach Editor successfully initialized OpenGL", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
+        rendering_logger->PEACH_LOG("Peach Editor successfully initialized OpenGL", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
 
         return true;
     }
@@ -265,13 +265,13 @@ namespace PeachCore {
     {
         if (not CreateSDLWindow(&pm_MainWindow, RendererType::Vulkan, "Peach Window", 800, 600))
         {
-            rendering_logger->LogAndPrint("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
             exit(FAILED_TO_CREATE_MAIN_WINDOW); //idk if i wanna exit here but it doesn really matter, i might want the "stack trace" from the false chain created by intialize failing
         }
 
         if (volkInitialize() != VK_SUCCESS)
         {
-            rendering_logger->LogAndPrint("Volk failed to initialize! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Volk failed to initialize! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             return false;
         }
 
@@ -285,7 +285,7 @@ namespace PeachCore {
         
         if (not pm_VulkanRenderer->Initialize(pm_MainWindow, f_BakedPipelineData, rendering_logger))
         {
-            rendering_logger->LogAndPrint("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             return false;
         }
 
@@ -297,13 +297,13 @@ namespace PeachCore {
     {
         if (not pm_IsInitialized)
         {
-            rendering_logger->LogAndPrint("Please initialize RenderingManager before trying to render anything!", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->PEACH_LOG("Please initialize RenderingManager before trying to render anything!", "RenderingManager", LogManager::LogLevel::Warning);
             return;
         }
 
         if (not pm_OpenGLRenderer->GetMainWindow())
         {
-            rendering_logger->LogAndPrint("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->PEACH_LOG("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager", LogManager::LogLevel::Warning);
             return;
         }
 
@@ -390,7 +390,7 @@ namespace PeachCore {
         //    //    {
         //    //        //THIS DOESN'T WORK AND IDK Y LAMBDA SMTH IDK FUCK IT ill come back to it later
         //    //        // Default handler for any unhandled types
-        //    //        //rendering_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "RenderingManager", LogManager::LogLevel::Warning);
+        //    //        //rendering_logger->PEACH_LOG("Unhandled type in variant for ProcessLoadedResourcePackage", "RenderingManager", LogManager::LogLevel::Warning);
         //    //    }
         //    //    }, ResourcePackage.get()->ResourceData);
         //}
