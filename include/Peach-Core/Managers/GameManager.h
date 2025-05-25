@@ -20,6 +20,13 @@
 
 namespace PeachCore {
 
+    enum class ScriptRuntimeType
+    {
+        Dotnet,
+        Python,
+        Lua
+    };
+
     class GameManager 
     {
     //////////////////////////////////////////////
@@ -60,6 +67,7 @@ namespace PeachCore {
 
         shared_ptr<CommandQueue> pm_DrawCommandQueue = nullptr;
         shared_ptr<CommandQueue> pm_AudioCommandQueue = nullptr;
+        shared_ptr<CommandQueue> pm_ResourceCommandQueue = nullptr;
 
         //////////////////// Plugin Stuff ////////////////////
 
@@ -69,14 +77,18 @@ namespace PeachCore {
 
         DotnetContext pm_DotnetContext;
 
+        //////////////////// Thread Handles ////////////////////
+
         thread pm_RenderThread;
         thread pm_PhysicsThread;
         thread pm_ResourceThread;
         thread pm_AudioThread;
         thread pm_NetworkThread;
 
-        //string CurrentlySelectedRenderer = "Nothing";
-        //map<string, Scene> DictionaryOfAllScenesInCurrentProject = {};
+        //////////////////// Scene Stuff ////////////////////
+
+        Scene pm_CurrentScene;
+        map<string, Scene> DictionaryOfAllScenesInCurrentProject;
 
     //////////////////////////////////////////////
     // Public Members
@@ -89,6 +101,7 @@ namespace PeachCore {
         float        USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game so no const >w<
 
         shared_ptr<LogManager> m_UserLogger;
+        shared_ptr<CommandQueue> m_UserScriptCommandQueue = nullptr; //XXX: used for submitting update commands -> GameManager from script runtimes
 
     //////////////////////////////////////////////
     // Public Methods

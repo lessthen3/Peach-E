@@ -12,9 +12,16 @@
 
 namespace PeachCore{
 
-    void Peach_Log(const char* msg)
+    PEACH_API void
+        Peach_Log(const char* msg)
     {
         GameManager::get_single().m_UserLogger->LogAndPrint(msg, "PeachAPI", LogManager::LogLevel::Info);
+    }
+
+    PEACH_API void 
+        Peach_ChangeScene(const char* fp_NewSceneName)
+    {
+
     }
 
 }

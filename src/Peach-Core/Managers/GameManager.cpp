@@ -115,9 +115,9 @@ namespace PeachCore
     bool
         GameManager::InitializeQueues()
     {
-        auto engine_renderer = &RenderingManager::Renderer();
+        //////////////////// Get Draw Command Queue ////////////////////
 
-        pm_DrawCommandQueue = engine_renderer->GetDrawCommandQueue();
+        pm_DrawCommandQueue = RenderingManager::get_single().GetDrawCommandQueue();
 
         if (not pm_DrawCommandQueue)
         {
@@ -126,6 +126,8 @@ namespace PeachCore
         }
 
         main_logger->PEACH_LOG("Successfully retrieved Draw Command Queue from RenderingManager", "GameManager", LogManager::LogLevel::Info);
+
+        //////////////////// Get Audio Command Queue ////////////////////
 
         pm_AudioCommandQueue = AudioManager::get_single().GetAudioCommandQueue();
 
@@ -136,6 +138,18 @@ namespace PeachCore
         }
 
         main_logger->PEACH_LOG("Successfully retrieved Audio Command Queue from AudioManaager", "GameManager", LogManager::LogLevel::Info);
+
+        //////////////////// Get Resource Loading Command Queue ////////////////////
+
+        pm_ResourceCommandQueue = ResourceManager::get_single().GetLoadCommandQueue();
+
+        if (not pm_ResourceCommandQueue)
+        {
+            main_logger->PEACH_LOG("Failed to retrieve Resource Loading Command Queue from ResourceManager, engine cannot continue execution", "GameManager", LogManager::LogLevel::Fatal);
+            return false;
+        }
+
+        main_logger->PEACH_LOG("Successfully retrieved Resource Loading Command Queue from ResourceManager", "GameManager", LogManager::LogLevel::Info);
 
         return true;
     }
@@ -176,10 +190,9 @@ namespace PeachCore
 
         //resource manager should be initialized first, otherwise the loading queues will be nullptr
         ResourceManager::get_single().Initialize(f_LogDir, fp_RootPath, peach_engine_console.GetConsoleLogger());
-
-        PhysicsManager2D::PhysicsWorld().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
+        PhysicsManager2D::get_single().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
         AudioManager::get_single().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
-        RenderingManager::Renderer().Initialize(fp_RenderingBackend, f_LogDir, peach_engine_console.GetConsoleLogger());
+        RenderingManager::get_single().Initialize(fp_RenderingBackend, f_LogDir, peach_engine_console.GetConsoleLogger());
         NetworkManager::get_single().InitializeNetworking(f_LogDir, peach_engine_console.GetConsoleLogger()); //stole get_single from godot style uwu
 
         cout << "Hello World!\n"; //>w<

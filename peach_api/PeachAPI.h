@@ -12,6 +12,7 @@
 
 #include "Managers/GameManager.h"
 
+//XXX: need to have C calling convention since this'll be called by external runtimes which probably just use a C calling convention esp C#
 #if defined(_WIN32) || defined(_WIN64)
     #define PEACH_API extern "C" __declspec(dllexport)
 #else
@@ -21,5 +22,7 @@
 namespace PeachCore{
 
     PEACH_API void Peach_Log(const char* msg);
+
+    PEACH_API void Peach_ChangeScene(const char* fp_NewSceneName);
 
 }

@@ -79,10 +79,10 @@ namespace PeachCore {
     // Singleton Instance
     ////////////////////////////////////////////////
     public:
-        static PhysicsManager2D& PhysicsWorld() 
+        static PhysicsManager2D& get_single()
         {
-            static PhysicsManager2D physicsworld;
-            return physicsworld;
+            static PhysicsManager2D physics_world;
+            return physics_world;
         }
 
     ////////////////////////////////////////////////

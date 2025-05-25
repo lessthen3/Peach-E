@@ -71,10 +71,10 @@ namespace PeachCore {
     // Singleton Instance
     //////////////////////////////////////////////
     public:
-        static RenderingManager& Renderer() 
+        static RenderingManager& get_single() 
         {
-            static RenderingManager instance;
-            return instance;
+            static RenderingManager rendering_manager;
+            return rendering_manager;
         }
     //////////////////////////////////////////////
     // Private Constructor

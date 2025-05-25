@@ -86,7 +86,7 @@ namespace PeachEditor {
         // Grab Reference to the Main Window
         //////////////////////////////////////////////
 
-        pm_MainWindow = PeachCore::RenderingManager::Renderer().GetMainWindow();
+        pm_MainWindow = PeachCore::RenderingManager::get_single().GetMainWindow();
         //pm_NuklearCtx = PeachCore::RenderingManager::Renderer().GetVulkanRenderer()->GetNuklearContext();
 
         ////////////////////////////////////////////////
@@ -97,7 +97,7 @@ namespace PeachEditor {
 
         SDL_GetWindowSizeInPixels(pm_MainWindow, &f_CurrentWindowWidth, &f_CurrentWindowHeight);
 
-        pm_Viewport.SetupViewport(400, 200, PeachCore::RenderingManager::Renderer().GetOpenGLRenderer(), rendering_logger);
+        pm_Viewport.SetupViewport(400, 200, PeachCore::RenderingManager::get_single().GetOpenGLRenderer(), rendering_logger);
 
         pm_IsRenderingInitialized = true;
             
@@ -223,7 +223,7 @@ namespace PeachEditor {
 
         //////////////////// Submit Draw Calls ////////////////////
 
-        PeachCore::VulkanRenderer* renderer = PeachCore::RenderingManager::Renderer().GetVulkanRenderer();
+        PeachCore::VulkanRenderer* renderer = PeachCore::RenderingManager::get_single().GetVulkanRenderer();
 
         if (renderer->GetSwapChain()->extent.width != 0 or renderer->GetSwapChain()->extent.height != 0) //WARNING: This doesnt work rn needa work into recreateswapchain()
         {
@@ -706,7 +706,7 @@ namespace PeachEditor {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glClearColor(0.10f, 0.18f, 0.24f, 1.0f);
 
-        auto engine_renderer = &PeachCore::RenderingManager::Renderer();
+        auto engine_renderer = &PeachCore::RenderingManager::get_single();
 
         glm::mat4 mf_Transform = glm::mat4(1.0f);
 
@@ -736,7 +736,7 @@ namespace PeachEditor {
         PeachEditorRenderingManager::CreateCurrentScene()
     {
         // Run the game in a new window
-        auto engine_renderer = &PeachCore::RenderingManager::Renderer();
+        auto engine_renderer = &PeachCore::RenderingManager::get_single();
 
         if (m_IsSceneCurrentlyRunning)
         {
@@ -807,7 +807,7 @@ namespace PeachEditor {
     void
         PeachEditorRenderingManager::DestroyCurrentScene()
     {
-        auto engine_renderer = &PeachCore::RenderingManager::Renderer();
+        auto engine_renderer = &PeachCore::RenderingManager::get_single();
         //this used to create a bug but doesnt anymore for some reason lmfao
         //engine_renderer->DestroyPeachRenderer(); //IMPORTANT THIS BREAKS THE PROGRAM ITS A THREADING BUG
         //WE BEED TO SYNCHRONIZE THREADS, CLEANUP RESOURCES IN APPROPRIATE ORDER THEN EXIT MAIN FUNCTION OWO
