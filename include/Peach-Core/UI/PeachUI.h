@@ -68,6 +68,21 @@ namespace PeachCore{
 
     };
 
+    struct InputState 
+    {
+        unordered_map<SDL_Scancode, bool> isDown;
+        unordered_map<SDL_Scancode, uint64_t> lastPressedTimestamp;
+        unordered_map<SDL_Scancode, int> repeatCount;
+        unordered_map<uint8_t, bool> mouseButtonDown;
+        float mouseX = 0.0f;
+        float mouseY = 0.0f;
+        float mouseDeltaX = 0.0f;
+        float mouseDeltaY = 0.0f;
+        float scrollX = 0.0f;
+        float scrollY = 0.0f;
+    };
+
+
 namespace PUI{
 
 struct Style 
@@ -101,7 +116,21 @@ struct Rectangle //(x, y) dictates top left corner, width and height dictate how
     float PosY = 0.0f;
     float Width = 0.0f; 
     float Height = 0.0f;
+
+    inline bool
+        IsWithinRectangle(const float fp_X, const float fp_Y)
+        const noexcept
+    {
+        return
+            (
+                (abs(fp_X) > abs(PosX) and abs(fp_X) < (abs(PosX) + abs(Width)))
+                and
+                (abs(fp_Y) > abs(PosY) and abs(fp_Y) < (abs(PosY) + abs(Height)))
+            );
+    }
 };
+
+
 
 struct ShaderAssets
 {

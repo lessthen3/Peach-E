@@ -19,8 +19,6 @@
 
 #include <glm/glm.hpp>
 
-using namespace std;
-
 namespace PeachCore
 {
     enum class Drawable //enum wrapper for indicating to RenderingManager which asset to create
@@ -114,6 +112,16 @@ namespace PeachCore
 
     };
 
+
+    enum class GameCommandType : uint8_t
+    {
+
+    };
+
+    struct GameCommand
+    {
+
+    };
 
     class CommandQueue 
     {
