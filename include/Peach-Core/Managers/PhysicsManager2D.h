@@ -10,9 +10,9 @@
 ********************************************************************/
 #pragma once
 
-#include "../2D/CollisionSegment2D.h"
-#include "../2D/CollisionPolygon2D.h"
-#include "../2D/CollisionShape2D.h"
+#include "../Scene-Items/2D/CollisionSegment2D.h"
+#include "../Scene-Items/2D/CollisionPolygon2D.h"
+#include "../Scene-Items/2D/CollisionShape2D.h"
 
 #include <unordered_map>
 

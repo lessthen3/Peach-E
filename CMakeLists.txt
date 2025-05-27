@@ -286,7 +286,7 @@ elseif(APPLE)
     add_library(SDL3 SHARED IMPORTED)
 
     set_target_properties(SDL3 PROPERTIES
-        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/lib_osxARM64/libSDL3.0.dylib"
+        IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/steveARM64/libSDL3.0.dylib"
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 

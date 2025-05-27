@@ -44,7 +44,7 @@ namespace PeachCore {
 
             for (auto& node : pm_PeachNodes) 
             {
-                node->Update(fp_TimeSinceLastFrame);
+                //node->Update(fp_TimeSinceLastFrame);
             }
         }
 

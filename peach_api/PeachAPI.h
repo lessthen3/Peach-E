@@ -25,4 +25,6 @@ namespace PeachCore{
 
     PEACH_API void Peach_ChangeScene(const char* fp_NewSceneName);
 
+    PEACH_API void Peach_QueueRemoval(); //queues for removal from scene tree at end of frame or whenever is convenient idk
+
 }

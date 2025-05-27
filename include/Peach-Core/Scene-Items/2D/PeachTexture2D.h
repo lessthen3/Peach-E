@@ -1,17 +1,17 @@
 ﻿/*******************************************************************
- *                                        Peach Core v0.0.3
- *                           Created by Ranyodh Mandur - � 2024
+ *                                             Peach-E v0.0.1
+ *                           Created by Ranyodh Mandur - 🍑 2024
  *
  *                         Licensed under the MIT License (MIT).
  *                  For more details, see the LICENSE file or visit:
  *                        https://opensource.org/licenses/MIT
  *
- *                 Peach Core is an open source game making library
+ *                     Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
 ///PeachCore
-#include "../Managers/LogManager.h"
+#include "../../Managers/LogManager.h"
 #include "PeachNode2D.h"
 
 ///STL

@@ -13,7 +13,7 @@
 #include <SDL3/SDL.h>
 
 #include "OpenGLShaderProgram.h"
-#include "../2D/PeachCamera2D.h"
+#include "../Scene-Items/2D/PeachCamera2D.h"
 
 #include <physfs.h> //THIS IS AN ARTIFACE FROM THE REFACTOR PLEASE REMOVE THIS FUTURE RYAN
 

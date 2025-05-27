@@ -232,6 +232,7 @@ namespace PeachCore
 
         auto f_CurrentTime = chrono::high_resolution_clock::now();
 
+        ///TODO: log whenever frametime is running late in debug
         while (m_Running)
         {
             auto f_NewTime = chrono::high_resolution_clock::now();
@@ -250,6 +251,7 @@ namespace PeachCore
 
             PollUserInputEvents();  // Handle user input
 
+            ///WARNING: IF THE ENGINE FALLS FAR ENOUGH BEHIND IT WILL STEP ALL PHYSICS FRAMES FIRST THEN STEP UPDATES WHICH IS UH NOT IDEAL
             // Physics and fixed interval updates
             while (f_PhysicsAccumulator >= f_PhysicsDeltaTime)
             {

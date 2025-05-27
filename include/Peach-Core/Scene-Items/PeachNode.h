@@ -4,36 +4,28 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "../General/PeachObject.h"
 
 using namespace std;
 
 namespace PeachCore {
 
-	class PeachNode : public PeachObject
+	class PeachNode
 	{
 	public:
 		virtual ~PeachNode();
-		PeachNode(const string& fp_Name) : PeachObject(fp_Name) {};
-		PeachNode() : PeachObject(){};
 
-		virtual void 
-			Initialize() = 0;
-		virtual void 
-			Update(float fp_TimeSinceLastFrame) = 0;
-		virtual void 
-			ConstantUpdate(float fp_TimeSinceLastFrame) = 0;
-		virtual void 
-			OnSceneTreeExit() = 0;
-		virtual void
-			QueueRemoval() = 0; //queues for removal from scene tree at end of frame or whenever is convenient idk
+        PeachNode(const string& fp_Name) 
+        {
+            m_Name = fp_Name;
+        }
 
-		virtual void //nlohmann::json WE'RE USING CEREAL FOR THIS NOW SINCE WE DONT NEED DYNAMIC JSON CREATION JUST SERIALIZATION USING WELL DEFINED STRUCTURES
-			SerializePeachNodeToJSON() = 0;
+		PeachNode() {} //??????????????????
 
 		bool IsPausable = true;
 		bool IsVisible = true;
-		bool ShouldBeInTree = false;
+		bool IsActive = true;
+
+        string m_Name; //this is the name set by the user inside the scene tree, so that a user script can call smth like GetNode("MyNamedNode") and find the appropriate thing
 
 		unsigned int m_DrawingLayer = 0;
 

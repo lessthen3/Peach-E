@@ -70,26 +70,24 @@ namespace PeachCore{
 
     struct InputState 
     {
-        unordered_map<SDL_Scancode, bool> isDown;
-        unordered_map<SDL_Scancode, uint64_t> lastPressedTimestamp;
-        unordered_map<SDL_Scancode, int> repeatCount;
-        unordered_map<uint8_t, bool> mouseButtonDown;
-        float mouseX = 0.0f;
-        float mouseY = 0.0f;
-        float mouseDeltaX = 0.0f;
-        float mouseDeltaY = 0.0f;
-        float scrollX = 0.0f;
-        float scrollY = 0.0f;
+        unordered_map<SDL_Scancode, bool> IsDown;
+        unordered_map<SDL_Scancode, uint64_t> LastPressedTimestamp;
+        unordered_map<SDL_Scancode, int> RepeatCount;
+        unordered_map<uint8_t, bool> MouseButtonDown;
+        float MouseX = 0.0f;
+        float MouseY = 0.0f;
+        float MouseDeltaX = 0.0f;
+        float MouseDeltaY = 0.0f;
+        float ScrollX = 0.0f;
+        float ScrollY = 0.0f;
     };
 
 
 namespace PUI{
 
-struct Style 
+struct TextStyle 
 {
-    float BackGroundColour[4] = {0}; // RGBA
-    float BorderColour[4] = {0};
-    float BorderWidth = 0.0f;
+    float Size = 0.0f;
     float Radius = 0.0f;
     // Add more as needed: font, textColor, shadow, etc.
 };
@@ -150,7 +148,6 @@ public:
     NodeType m_Type = NodeType::None;
 
     Rectangle m_Rectangle;
-    Style m_Style;
 
     vector<unique_ptr<PeachUserInterfaceNode>> m_Children;
 

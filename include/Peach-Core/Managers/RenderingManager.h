@@ -16,8 +16,8 @@
 #include <Rendering/OpenGLRenderer.h>
 #include <Rendering/VulkanRenderer.h>
 
-#include "../2D/PeachTexture2D.h"
-#include "../General/PeachNode.h"
+#include "../Scene-Items/2D/PeachTexture2D.h"
+#include "../Scene-Items/PeachNode.h"
 
 
 namespace PeachCore {

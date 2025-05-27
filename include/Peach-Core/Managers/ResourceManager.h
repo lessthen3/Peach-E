@@ -11,8 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "../General/Plugin.h"
-
+#include "../Utils/Plugin.h"
 #include "../Utils/ShaderUtils.h"
 #include "../Utils/Serializer.h"
 #include "../Utils/LoadingQueue.h"

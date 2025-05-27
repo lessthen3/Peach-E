@@ -1,13 +1,13 @@
 #pragma once
 
-#include "../Managers/LogManager.h"
-#include "../General/PeachNode.h"
+#include "../../Managers/LogManager.h"
+#include "../PeachNode.h"
 #include "PeachTexture2D.h"
 
 #include <vector>
 #include <tuple>
 
-#include "../Managers/PhysicsManager2D.h"
+#include "../../Managers/PhysicsManager2D.h"
 
 namespace PeachCore {
 
