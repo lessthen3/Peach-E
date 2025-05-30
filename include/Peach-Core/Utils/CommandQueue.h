@@ -98,11 +98,11 @@ namespace PeachCore
     {
         //Index 0 --> CreateData, Index 1 --> UpdateData, Index 2 --> DeleteData, always. don't need a special typing system because we dont need anything else
         variant
-            <
+        <
             vector<CreateDrawableData>, 
             vector<UpdateActiveDrawableData>, 
             vector<DeleteDrawableData>
-            > DrawableData[3];                   //stores a list of all data needed to be updated that frame only need 3 spaces for our commands
+        > DrawableData[3];                   //stores a list of all data needed to be updated that frame only need 3 spaces for our commands
     }; //implement a way to track what commands are going out on what frame, so implement a global frame tracker here for debugging purposes TOODODDODODODODODDOO
 
     //USED BY THE RENDERING THREAD TO SEND ANY RELEVANT DATA BACK TO THE MAIN THREAD
