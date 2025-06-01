@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#include "../../include/Peach-Core/Peach-Core.hpp"
+#include "../Peach-Core.hpp"
 
 #include <thread>
 

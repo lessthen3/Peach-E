@@ -1,4 +1,4 @@
-#include "../../include/Peach-Core/2D/ParallaxBackgroundPlayer.h"
+#include "../../include/Peach-Core/Scene-Items/2D/ParallaxBackgroundPlayer.h"
 
 namespace PeachCore {
 

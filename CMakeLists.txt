@@ -102,6 +102,8 @@ target_include_directories(peach PUBLIC
     ${PYTHON_INCLUDES}
 )
 
+set_target_properties(peach PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach PIC friendly UwU
+
 ####################################### Executable Targets
 
 # Peach Engine
@@ -427,11 +429,11 @@ elseif(UNIX) #XXX: doing these later when i compile on my linux machine, future 
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
-    # STATIC_IMPORT(Lua_Compiler 
-    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
-    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
-    #     "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
-    # )
+    STATIC_IMPORT(Lua_Compiler 
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    )
 
     ############ Vulkan Specific Imports
 
@@ -623,6 +625,12 @@ target_link_libraries(Peach_Editor PUBLIC
     #compilers
     shaderC
     Lua_Compiler
+)
+
+####################################### Define Peach_Debug for Debug Build Configuration
+
+target_compile_definitions(peach PRIVATE 
+    $<$<CONFIG:Debug>:PEACH_DEBUG>
 )
 
 ####################################### Set Startup Project (Visual Studio & Xcode)

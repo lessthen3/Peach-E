@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#include "../Managers/LogManager.h"
+#include "../../Managers/LogManager.h"
 
 //#include <CGAL/Cartesian/point_constructions_2.h>
 //#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>

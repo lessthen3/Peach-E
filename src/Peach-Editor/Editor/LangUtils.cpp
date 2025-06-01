@@ -64,7 +64,7 @@ namespace PeachEditor::DotnetUtils
 
             if (not pipe)
             {
-                logger->PEACH_LOG("Failed to run 'dotnet --version' via popen()", "DotnetUtils", LogManager::LogLevel::Error);
+                logger->PEACH_LOG("Failed to run 'dotnet --version' via popen()", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 

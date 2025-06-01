@@ -254,6 +254,8 @@ namespace PeachCore {
             //    default:
             //        PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
             //}
+
+            return true;
         }
 
         void
@@ -334,17 +336,6 @@ namespace PeachCore {
             Fatal = 1 << 5,
             All = Trace | Debug | Info | Warning | Error | Fatal
         };
-
-        constexpr inline bool 
-            HasFlag
-            (
-                const LogLevel __Val, 
-                const LogLevel __Flag
-            ) 
-            const noexcept
-        {
-            return static_cast<uint8_t>(__Val) & static_cast<uint8_t>(__Flag);
-        }
 
     //////////////////////////////////////////////
     // Protected Class Members
@@ -467,14 +458,14 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const LogLevel fp_LogLevel
+                const uint8_t fp_LogLevel
             )
         {
             //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
             #ifdef PEACH_DEBUG
-                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("Log"))) return;
+                if (not ((pm_ActiveLogMask & fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("Log"))) return;
             #else
-                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized)) return;
+                if (not ((pm_ActiveLogMask & fp_LogLevel) or pm_HasBeenInitialized)) return;
             #endif
 
             string f_LogLevel;
@@ -505,8 +496,8 @@ namespace PeachCore {
                     return;
             }
 
-            string f_TimeStamp = GetCurrentTimestamp();
-            string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + f_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
+            const string f_TimeStamp = GetCurrentTimestamp();
+            const string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + f_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
 
             // Log to specific file and all-logs file
             const string f_LogFileName = f_LogLevel + ".log";
@@ -531,14 +522,14 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const LogLevel fp_LogLevel
+                const uint8_t fp_LogLevel
             )
         {
             //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
             #ifdef PEACH_DEBUG
-                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("Log"))) return;
+                if (not ((pm_ActiveLogMask & fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("Log"))) return;
             #else
-                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized)) return;
+                if (not ((pm_ActiveLogMask & fp_LogLevel) or pm_HasBeenInitialized)) return;
             #endif
 
             string f_LogLevel;
@@ -569,8 +560,8 @@ namespace PeachCore {
                     return;
             }
 
-            string f_TimeStamp = GetCurrentTimestamp();
-            string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + f_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
+            const string f_TimeStamp = GetCurrentTimestamp();
+            const string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + f_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
 
             // Log to specific file and all-logs file
             const string f_LogFileName = f_LogLevel + ".log";
@@ -578,7 +569,7 @@ namespace PeachCore {
             if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
             {
                 pm_LogFiles[f_LogFileName] << f_LogEntry;
-                Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
+                // Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
                 //pm_LogSizeCounter++;
 
                 //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
@@ -595,14 +586,14 @@ namespace PeachCore {
             (
                 const string& fp_Message,
                 const string& fp_Sender,
-                const LogLevel fp_LogLevel
+                const uint8_t fp_LogLevel
             )
         {
             //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
             #ifdef PEACH_DEBUG
-                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("LogAndPrint"))) return;
+                if (not ((pm_ActiveLogMask & fp_LogLevel) or pm_HasBeenInitialized or AssertThreadAccess("LogAndPrint"))) return;
             #else
-                if (not (HasFlag(pm_ActiveLogMask, fp_LogLevel) or pm_HasBeenInitialized)) return;
+                if (not ((pm_ActiveLogMask & fp_LogLevel) or pm_HasBeenInitialized)) return;
             #endif
 
             // Log to console
@@ -646,10 +637,10 @@ namespace PeachCore {
                 const string& fp_Message,
                 const string& fp_Sender,
                 const string& fp_LogLevel,
-                const LogLevel fp_EnumLogLevel //used for adding a log to console
+                const uint8_t fp_EnumLogLevel //used for adding a log to console
             )
         {
-            string f_TimeStamp = GetCurrentTimestamp();
+            const string f_TimeStamp = GetCurrentTimestamp();
             string f_LogEntry = "[" + f_TimeStamp + "]" + "[" + fp_LogLevel + "]" + "[" + fp_Sender + "]: " + fp_Message + "\n";
 
             // Log to specific file and all-logs file
@@ -690,11 +681,11 @@ namespace PeachCore {
             }
         }
 
-        inline string //thank you chat-gpt uwu
+        [[nodiscard]] inline string //thank you chat-gpt uwu
             GetCurrentTimestamp()
             const noexcept
         {
-            auto now = chrono::system_clock::now();
+            const auto now = chrono::system_clock::now();
             auto time_t_now = chrono::system_clock::to_time_t(now);
            
             tm local_time{};
@@ -708,8 +699,8 @@ namespace PeachCore {
             stringstream ss;
             ss << put_time(&local_time, "%Y-%m-%d %H:%M:%S");
 
-            auto since_epoch = now.time_since_epoch();
-            auto milliseconds = chrono::duration_cast<chrono::milliseconds>(since_epoch).count() % 1000;
+            const auto since_epoch = now.time_since_epoch();
+            const auto milliseconds = chrono::duration_cast<chrono::milliseconds>(since_epoch).count() % 1000;
 
             ss << '.' << setfill('0') << setw(3) << milliseconds;
 
