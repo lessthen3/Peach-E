@@ -165,7 +165,7 @@ namespace PeachEditor {
         )
     {
         //////////////////// Validation Stuff for Debug ////////////////////
-#ifdef _DEBUG
+#ifdef PEACH_DEBUG
         if (not pm_IsRenderingInitialized)
         {
             //rendering_logger isn't initialized yet if rendering hasn't been initialized yet so we use the full singleton call here instead for safety

@@ -316,4 +316,46 @@ namespace PeachEditor::DotnetUtils
 
         return true;
     }
+
+    bool
+        GetHostFxrLocalPath
+        (
+            string* fp_HostFxrString,
+            PeachCore::LogManager* logger
+        )
+    {
+        //////////////////// Check for nullptr ////////////////////
+
+        if (not logger)
+        {
+            PeachCore::PrintError("Tried passing a nullptr ref to logger inside GetHostFxrLocalPath() from LangUtils.cpp");
+            return false;
+        }
+        else if (not fp_HostFxrString)
+        {
+            logger->PEACH_LOG("Tried to pass nullptr ref to host fxr string inside 'GetHostFxrLocalPath()', exiting function execution immediately", "LangUtils", PeachCore::LogManager::LogLevel::Error);
+            return false;
+        }
+
+        //////////////////// Find hostfxr Path ////////////////////
+
+        char_t buffer[MAX_PATH];
+        size_t buffer_size = sizeof(buffer) / sizeof(char_t);
+
+        const int rc = get_hostfxr_path(buffer, &buffer_size, nullptr);
+
+        if (rc != 0)
+        {
+            logger->PEACH_LOG("Failed to locate hostfxr", "LangUtils", PeachCore::LogManager::LogLevel::Error);
+            return false;
+        }
+
+        const filesystem::path f_HostFxrPath = buffer;
+
+        logger->PEACH_LOG(format("Successfully found hostexr at path: '{}'", f_HostFxrPath.string()), "LangUtils", PeachCore::LogManager::LogLevel::Info);
+
+        *fp_HostFxrString = f_HostFxrPath.string();
+
+        return true;
+    }
 }

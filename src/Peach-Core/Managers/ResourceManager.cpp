@@ -114,23 +114,19 @@ namespace PeachCore {
     bool
         ResourceManager::LoadDotNetRuntime
         (
-            const string& fp_RelativeHostExrPath,
+            const string& fp_HostFxrPath,
             DotnetContext& fp_DotnetContext
         )
     {
-        //////////////////// Get hostexr.dll ////////////////////
+        //////////////////// Load hostfxr ////////////////////
 
-        const string f_FullPath = pm_RootDirectory + "/" + fp_RelativeHostExrPath;
-
-        DYNLIB_HANDLE f_HostExr = pm_DynamicLoader.LoadDynamicLibrary(f_FullPath, resource_logger.get());
+        DYNLIB_HANDLE f_HostExr = pm_DynamicLoader.LoadDynamicLibrary(fp_HostFxrPath, resource_logger.get());
 
         if (not f_HostExr)
         {
-            resource_logger->LogAndPrint(format("Failed to load hostexr at path: '{}'", f_FullPath), "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->PEACH_LOG(format("Failed to load hostexr at path: '{}'", fp_HostFxrPath), "ResourceManager", LogManager::LogLevel::Error);
             return false;
         }
-
-        resource_logger->LogAndPrint(format("Successfully found hostexr at path: '{}'", f_FullPath), "ResourceManager", LogManager::LogLevel::Info);
 
         //////////////////// Store Handle in Context ////////////////////
 
@@ -140,8 +136,8 @@ namespace PeachCore {
 
         fp_DotnetContext.RuntimeInit = (hostfxr_initialize_for_runtime_config_fn)pm_DynamicLoader.GetSymbol
         (
-            "hostfxr_initialize_for_runtime_config", 
-            f_HostExr, 
+            "hostfxr_initialize_for_runtime_config",
+            f_HostExr,
             resource_logger.get()
         );
 
@@ -168,18 +164,18 @@ namespace PeachCore {
 
         //////////////////// Find load_assembly_and_get_function_pointer_fn ////////////////////
 
-        fp_DotnetContext.LoadAssembly = (load_assembly_and_get_function_pointer_fn)pm_DynamicLoader.GetSymbol
-        (
-            "load_assembly_and_get_function_pointer_fn",
-            f_HostExr,
-            resource_logger.get()
-        );
-
-        if (not fp_DotnetContext.LoadAssembly)
-        {
-            resource_logger->LogAndPrint("Failed to find symbol: 'load_assembly_and_get_function_pointer_fn'", "ResourceManager", LogManager::LogLevel::Error);
-            return false;
-        }
+        // fp_DotnetContext.LoadAssembly = (load_assembly_and_get_function_pointer_fn)pm_DynamicLoader.GetSymbol
+        // (
+        //     "load_assembly_and_get_function_pointer",
+        //     f_CoreClr,
+        //     resource_logger.get()
+        // );
+        //
+        // if (not fp_DotnetContext.LoadAssembly)
+        // {
+        //     resource_logger->LogAndPrint("Failed to find symbol: 'load_assembly_and_get_function_pointer_fn'", "ResourceManager", LogManager::LogLevel::Error);
+        //     return false;
+        // }
 
         //////////////////// Find hostfxr_close_fn ////////////////////
 
@@ -377,6 +373,7 @@ namespace PeachCore {
             const string& fp_PluginFilePath,
             PluginInfo& fp_Plugin
         )
+        const
     {
         DYNLIB_HANDLE f_Handle;
 

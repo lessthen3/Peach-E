@@ -12,6 +12,7 @@
 
 #include "Utils/Serializer.h"
 #include "Language-Support/DotnetRuntime.h"
+#include <dotnet/nethost.h>
 
 namespace PeachEditor{
 
@@ -50,6 +51,8 @@ namespace PeachEditor{
 
 namespace DotnetUtils{
 
+    constexpr int MAX_PATH = 1024;
+
     bool
         InitializeRuntime();
 
@@ -86,6 +89,9 @@ namespace DotnetUtils{
             const string& fp_SolutionPath,
             PeachCore::LogManager* logger
         );
+
+    bool
+        GetHostFxrLocalPath(string& fp_HostFxrString);
 
 }// namespace LangUtils
 }//namespace PeachEditor

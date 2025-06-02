@@ -70,14 +70,14 @@ namespace PeachCore {
             return resource_loader;
         }
 
+        ResourceManager(const ResourceManager&) = delete;
+        ResourceManager& operator=(const ResourceManager&) = delete;
+
     //////////////////////////////////////////////
     // Private Constructor
     //////////////////////////////////////////////
     private:
         ResourceManager() = default;
-
-        ResourceManager(const ResourceManager&) = delete;
-        ResourceManager& operator=(const ResourceManager&) = delete;
 
     //////////////////////////////////////////////
     // Private Members
@@ -154,15 +154,12 @@ namespace PeachCore {
         bool
             LoadDotNetRuntime
             (
-                const string& fp_RelativeHostExrPath,
+                const string& fp_HostFxrPath,
                 DotnetContext& fp_DotnetContext
             );
 
         bool
-            LoadDotNetScript
-            (
-
-            );
+            LoadDotNetScript();
 
         bool
             LoadPythonRuntime();
@@ -172,7 +169,8 @@ namespace PeachCore {
             (
                 const string& fp_PluginFilePath,
                 PluginInfo& fp_Plugin
-            );
+            )
+            const;
 
         bool 
             LoadTextureFromFile(const string& fp_TextureFilePath);

@@ -19,6 +19,10 @@
 
 #define MINIAUDIO_IMPLEMENTATION
 
+#if defined(_WIN32) || defined(_WIN64)
+    #define NETHOST_USE_AS_STATIC
+#endif
+
 #include "../../include/Peach-Core/Managers/GameManager.h"
 
 namespace PeachCore
@@ -56,7 +60,7 @@ namespace PeachCore
             main_logger->PEACH_LOG("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "GameManager", LogManager::LogLevel::Fatal);
             return false;
         }
-        else if (not InitalizeManagers(fp_RootPath, fp_RenderingBackend))
+        else if (not InitializeManagers(fp_RootPath, fp_RenderingBackend))
         {
             main_logger->PEACH_LOG("Failed to initialize Peach Engine managers, ending engine program execution immediately", "GameManager", LogManager::LogLevel::Fatal);
             return false;
@@ -67,7 +71,7 @@ namespace PeachCore
             return false;
         }
         
-        LoadScriptRuntime(); //WARNING: this just loads the dotnet stuff for now
+        LoadScriptRuntime(ScriptRuntimeType::Dotnet); //WARNING: this just loads the dotnet stuff for now
 
         //////////////////////////////////////////////
         // Load and Setup Plugins
@@ -180,7 +184,7 @@ namespace PeachCore
     }
 
     bool
-        GameManager::InitalizeManagers
+        GameManager::InitializeManagers
         (
             const string& fp_RootPath, 
             const RendererType fp_RenderingBackend
@@ -189,7 +193,11 @@ namespace PeachCore
         const string f_LogDir = fp_RootPath + "/logs";
 
         //resource manager should be initialized first, otherwise the loading queues will be nullptr
-        ResourceManager::get_single().Initialize(f_LogDir, fp_RootPath, peach_engine_console.GetConsoleLogger());
+        if (not ResourceManager::get_single().Initialize(f_LogDir, fp_RootPath, peach_engine_console.GetConsoleLogger()))
+        {
+
+            return false;
+        }
         PhysicsManager2D::get_single().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
         AudioManager::get_single().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
         RenderingManager::get_single().Initialize(fp_RenderingBackend, f_LogDir, peach_engine_console.GetConsoleLogger());
@@ -203,16 +211,29 @@ namespace PeachCore
     }
 
     bool
-        GameManager::LoadScriptRuntime()
+        GameManager::LoadScriptRuntime
+        (
+            const uint8_t fp_RequiredScriptRuntimes
+
+        )
     {
-        //WARNING: hard coded path for hostfxr for testing on windows rn to get things workin
-        if (not ResourceManager::get_single().LoadDotNetRuntime("res/script_runtimes/win64/dotnet/hostfxr.dll", pm_DotnetContext))
+        if (fp_RequiredScriptRuntimes & ScriptRuntimeType::Dotnet and not ResourceManager::get_single().LoadDotNetRuntime("/usr/share/dotnet/host/fxr/9.0.4/libhostfxr.so", pm_DotnetContext))
+        {
+
+            return false;
+        }
+        if (fp_RequiredScriptRuntimes & ScriptRuntimeType::Python and not ResourceManager::get_single().LoadPythonRuntime())
+        {
+
+            return false;
+        }
+        if (fp_RequiredScriptRuntimes & ScriptRuntimeType::Lua and not ResourceManager::get_single().LoadLuaRuntime())
         {
 
             return false;
         }
 
-        return true;
+            return true;
     }
 
     //////////////////////////////////////////////
@@ -283,10 +304,10 @@ namespace PeachCore
     void
         GameManager::LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad)
     {
-        for (int index = 0; index < fp_ListOfPluginsToLoad.size(); index++)
+        for (const auto& l_PluginPath : fp_ListOfPluginsToLoad)
         {
             PluginInfo f_TempPlugin = {};
-            ResourceManager::get_single().LoadPlugin(fp_ListOfPluginsToLoad[index], f_TempPlugin);
+            ResourceManager::get_single().LoadPlugin(l_PluginPath, f_TempPlugin);
 
             pm_PluginInstances.emplace_back(move(f_TempPlugin.Pwugin), f_TempPlugin.Handle);
         }
@@ -294,41 +315,44 @@ namespace PeachCore
 
     void 
         GameManager::InitializePlugins()
+        const
     {
-        for (auto& __plugin_info : pm_PluginInstances)
+        for (auto& l_PluginInfo : pm_PluginInstances)
         {
-            __plugin_info.Pwugin->Initialize();
+            l_PluginInfo.Pwugin->Initialize();
         }
     }
 
     void 
         GameManager::UpdatePlugins(float fp_TimeSinceLastFrame)
+        const
     {
-        for (auto& __plugin_info : pm_PluginInstances)
+        for (auto& l_PluginInfo : pm_PluginInstances)
         {
-            __plugin_info.Pwugin->Update(fp_TimeSinceLastFrame);
+            l_PluginInfo.Pwugin->Update(fp_TimeSinceLastFrame);
         }
     }
 
     void 
         GameManager::ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
+        const
     {
-        for (auto& __plugin_info : pm_PluginInstances)
+        for (auto& l_PluginInfo : pm_PluginInstances)
         {
-            __plugin_info.Pwugin->ConstantUpdate(fp_TimeSinceLastFrame);
+            l_PluginInfo.Pwugin->ConstantUpdate(fp_TimeSinceLastFrame);
         }
     }
 
     void 
         GameManager::ShutdownPlugins()
     {
-        for (auto& __plugin_info : pm_PluginInstances)
+        for (auto& l_PluginInfo : pm_PluginInstances)
         {
-            __plugin_info.Pwugin->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
+            l_PluginInfo.Pwugin->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
 
-            if (__plugin_info.Handle != nullptr)
+            if (l_PluginInfo.Handle != nullptr)
             {
-                DYNLIB_UNLOAD(__plugin_info.Handle);
+                DYNLIB_UNLOAD(l_PluginInfo.Handle);
             }
         }
 
@@ -342,6 +366,8 @@ namespace PeachCore
     void
         GameManager::RenderThread()
     {
+        // RenderingManager::get_single().Initialize();
+
         while (true)
         {
             // Play audio

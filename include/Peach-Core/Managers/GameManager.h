@@ -20,11 +20,11 @@
 
 namespace PeachCore {
 
-    enum class ScriptRuntimeType
+    enum ScriptRuntimeType : uint8_t
     {
-        Dotnet,
-        Python,
-        Lua
+        Dotnet = 1 <<0,
+        Python = 1 << 1,
+        Lua = 1 << 2
     };
 
     class GameManager 
@@ -45,14 +45,16 @@ namespace PeachCore {
             return peach_engine;
         }
 
+        GameManager(const GameManager&) = delete;
+        GameManager& operator=(const GameManager&) = delete;
+        GameManager(GameManager&&) = delete;
+        GameManager& operator=(GameManager&&) = delete;
+
     //////////////////////////////////////////////
     // Private Constructor
     //////////////////////////////////////////////
     private:
         GameManager() = default;
-
-        GameManager(const GameManager&) = delete;
-        GameManager& operator=(const GameManager&) = delete;
 
     //////////////////////////////////////////////
     // Private Members
@@ -115,7 +117,7 @@ namespace PeachCore {
             );
 
         bool 
-            LoadScriptRuntime(); //WARNING: this is public for testing
+            LoadScriptRuntime(const uint8_t fp_RequiredScriptRuntimes); //WARNING: this is public for testing
 
         void
             StartMainGameLoop();
@@ -153,7 +155,7 @@ namespace PeachCore {
         //////////////////// Engine Initialization Methods ////////////////////
 
         bool
-            InitalizeManagers
+            InitializeManagers
             (
                 const string& fp_RootPath, 
                 const RendererType fp_RenderingBackend
@@ -243,13 +245,16 @@ namespace PeachCore {
         //////////////////// Plugin Stuff ////////////////////
 
         void
-            InitializePlugins();
+            InitializePlugins()
+            const;
 
         void
-            UpdatePlugins(float fp_TimeSinceLastFrame);
+            UpdatePlugins(float fp_TimeSinceLastFrame)
+            const;
 
         void
-            ConstantUpdatePlugins(float fp_TimeSinceLastFrame);
+            ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
+            const;
 
         void
             ShutdownPlugins();

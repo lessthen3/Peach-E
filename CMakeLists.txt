@@ -174,6 +174,12 @@ if(WIN32)
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
     )
 
+    STATIC_IMPORT(nethost 
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/libnethost.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/libnethost.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/dotnet"
+    )
+
     ############ Vulkan Specific Imports
 
     STATIC_IMPORT(shaderC 
@@ -292,27 +298,25 @@ elseif(APPLE)
         INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
-    # STATIC_IMPORT(Lua_Compiler 
-    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
-    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
-    #     "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
-    # )
+    STATIC_IMPORT(Lua_Compiler 
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    )
 
-    # STATIC_IMPORT(moltenVK 
-    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
-    #     "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
-    #     "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
-    # )
-
-    ############ Vulkan Specific Imports XXX: doing these later when i compile on my mac mini >w<
-
-    # add_library(moltenVK SHARED IMPORTED)
-
-    # set_target_properties(moltenVK PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/lib_osxARM64/libMoltenVK.dylib"
-    # )
+    STATIC_IMPORT(nethost 
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/libnethost.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/libnethost.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/dotnet"
+    )
 
     ############ Vulkan Specific Imports
+
+    STATIC_IMPORT(moltenVK 
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    )
 
     STATIC_IMPORT(shaderC 
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/steveARM64/libshaderc.a"
@@ -433,6 +437,12 @@ elseif(UNIX) #XXX: doing these later when i compile on my linux machine, future 
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    )
+
+    STATIC_IMPORT(nethost 
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/dotnet/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/dotnet/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/dotnet"
     )
 
     ############ Vulkan Specific Imports
@@ -625,6 +635,8 @@ target_link_libraries(Peach_Editor PUBLIC
     #compilers
     shaderC
     Lua_Compiler
+    #dotnet
+    nethost
 )
 
 ####################################### Define Peach_Debug for Debug Build Configuration

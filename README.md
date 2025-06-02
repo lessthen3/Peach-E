@@ -18,9 +18,11 @@ Peach-E is designed around the PeachCore library and utilizes a component based 
 
 Features:
 
-🍑 Built from the ground up for Vulkan
+🍑 Scripting support for C#, Python, and Lua
 
-🍑 Scripting support for C#, Python, and Lua 
+🍑 Bundled editor so you can hit the ground running
+
+🍑 Built from the ground up for Vulkan
 
 🍑Support for making games with C++ but idk why you'd want that lmfao
 
@@ -105,7 +107,7 @@ build_type=Release
 compiler=clang
 compiler.cppstd=20
 compiler.libcxx=libc++
-compiler.version=18
+compiler.version=19
 os=Linux
 ```
 

@@ -26,10 +26,6 @@
 
 #include "../Utils/RingBuffer.h"
 
-#ifdef _DEBUG
-    #define PEACH_DEBUG
-#endif
-
 //#ifndef $ //Used for bookkeeping and tracking what variables are mutable inside a function
 //#define $
 //#endif
@@ -505,7 +501,7 @@ namespace PeachCore {
             if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
             {
                 pm_LogFiles[f_LogFileName] << f_LogEntry;
-                Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
+                // Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
                 //pm_LogSizeCounter++;
 
                 //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
@@ -720,7 +716,7 @@ namespace PeachCore {
         }
 
         #ifdef PEACH_DEBUG
-            inline bool ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
+            [[nodiscard]] inline bool ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
                 AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the LogManager instance
                 const
             {
