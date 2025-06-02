@@ -23,6 +23,12 @@ if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
     message(FATAL_ERROR "Peach-E only supports 64-bit platforms.")
 endif()
 
+####################################### Add Compiler Warnings for Clang/GCC
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
 ####################################### Conan Toolchain Setup
 
 # Try to find `conan_toolchain.cmake` inside the build directory automatically

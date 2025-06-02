@@ -59,8 +59,8 @@ else:
 def get_conan_compiler(fp_ProfileName: str) -> str:
 
     conan_api = ConanAPI()
-    app = ProfilesAPI(conan_api)
-    profile_data = app.get_profile(profiles=[fp_ProfileName])
+    profiles_api = ProfilesAPI(conan_api)
+    profile_data = profiles_api.get_profile(profiles=[fp_ProfileName])
     
     compiler = profile_data.settings["compiler"]
 
@@ -135,7 +135,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
     
     f_IsMultiConfig = fp_Generator in ["vs2022", "vs2019", "vs2017", "vs2015", "xcode", "ninja-mc"]
 
-    f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator]]
+    f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator], '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
 
     if not f_IsMultiConfig:
         if fp_BuildType == "both":

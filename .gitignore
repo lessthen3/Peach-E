@@ -5,6 +5,10 @@
 **.vcxproj.user
 **.vcxproj.filters
 
+#Vscode
+/.vscode
+/.cache
+
 #CLion
 /.idea
 
