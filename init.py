@@ -318,7 +318,7 @@ def main() -> bool:
     )   
     
     args = parser.parse_args()
-
+    
     ############# Validate Build Config #############
 
     if(not args.debug and not args.release and not args.both):

@@ -113,11 +113,16 @@ namespace PeachCore {
             InitializePeachEngine
             (
                 const string& fp_RootPath,
+                const string& fp_BootConfPath,
                 const RendererType fp_RenderingBackend
             );
 
         bool 
-            LoadScriptRuntime(const uint8_t fp_RequiredScriptRuntimes); //WARNING: this is public for testing
+            LoadScriptRuntime
+            (
+                const string& fp_BootConfPath,
+                const uint8_t fp_RequiredScriptRuntimes
+            ); //WARNING: this is public for testing
 
         void
             StartMainGameLoop();
@@ -135,7 +140,7 @@ namespace PeachCore {
         //////////////////// Thread Methods ////////////////////
 
         bool
-            InitializeThreads();
+            InitializeThreads(uint8_t fp_RequiredThreads);
 
         void
             RenderThread();

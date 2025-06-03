@@ -55,7 +55,7 @@ namespace PeachEditor{
     // Public Members
     //////////////////////////////////////////////
     public:
-        static PeachEditorManager& PeachEditor() 
+        static PeachEditorManager& get_single() 
         {
             static PeachEditorManager peach_editor;
             return peach_editor;
@@ -93,23 +93,10 @@ namespace PeachEditor{
         }
 
         bool
-            SetupInternalLogManagers(const string& fp_RootPath)
+            SetupInternalManagers(const string& fp_LogDir)
         {
-            const string f_LogDir = fp_RootPath + "/logs";
-
-            pm_PeachEditorConsole = make_shared<PeachCore::Console>();
-
-            main_editor_logger = make_unique<PeachCore::LogManager>();
-
-            if (not main_editor_logger->Initialize(PeachCore::ThreadName::MainThread, f_LogDir, "PeachEditorManager", pm_PeachEditorConsole, PeachCore::LogManager::LogLevel::All))
-            {
-                PeachCore::PrintError("Initialization error: Was not able to initialize PeachEditorManager's main logger");
-                return false;
-            }
-
-            main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", PeachCore::LogManager::LogLevel::Debug);
-
-            if(not PeachEditorRenderingManager::PeachEditorRenderer().Initialize(f_LogDir, pm_PeachEditorConsole))
+            
+            if(not PeachEditorRenderingManager::PeachEditorRenderer().Initialize(fp_LogDir, pm_PeachEditorConsole))
             {
                 main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
@@ -121,14 +108,39 @@ namespace PeachEditor{
         bool
             InitializePeachEditor(const string& fp_RootPath) //XXX: idk this method seems kinda weird idk how im gonna manage error codes but w/e thats for future me to handle UwU
         {
-            auto peach_engine = &PeachCore::GameManager::get_single();
+            //////////////////// Create Console for Entire Editor ////////////////////
 
-            if (not peach_engine->InitializePeachEngine(fp_RootPath, PeachCore::RendererType::Vulkan))
+            pm_PeachEditorConsole = make_shared<PeachCore::Console>();
+
+            //////////////////// Create Main Thread Logger ////////////////////
+
+            const string f_LogDir = fp_RootPath + "/logs";
+
+            main_editor_logger = make_unique<PeachCore::LogManager>();
+
+            if (not main_editor_logger->Initialize(PeachCore::ThreadName::MainThread, f_LogDir, "PeachEditorManager", pm_PeachEditorConsole, PeachCore::LogManager::LogLevel::All))
+            {
+                PeachCore::PrintError("Initialization error: Was not able to initialize PeachEditorManager's main logger");
+                return false;
+            }
+
+            main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", PeachCore::LogManager::LogLevel::Debug);
+
+            //////////////////// Get Local HostFxr Path and Validate Dotnet Exists ////////////////////
+
+            DotnetUtils::AssertDotnetExists(); //dummy call but should actually make lmfao
+
+            string f_HostFxrPath;
+            DotnetUtils::GetHostFxrLocalPath(&f_HostFxrPath, main_editor_logger.get());
+
+            //////////////////// Main Initialization Calls ////////////////////
+
+            if (not SetupInternalManagers(f_LogDir))
             {
 
                 return false;
             }
-            else if (not SetupInternalLogManagers(fp_RootPath))
+            if (not PeachCore::GameManager::get_single().InitializePeachEngine(fp_RootPath, f_HostFxrPath, PeachCore::RendererType::Vulkan))
             {
 
                 return false;
@@ -139,20 +151,18 @@ namespace PeachEditor{
             //    return false;
             //}
 
+            //////////////////// Dotnet Testing not Real Production Code ////////////////////
 
-        //Serializer f_Serializer;
+            //Serializer f_Serializer;
 
-        //f_Serializer.ToJSON(pm_DotnetContext.RuntimeConfigs, "PeachGame.runtimeconfig", fp_RootPath + "/local_tests", main_logger.get());
+            //f_Serializer.ToJSON(pm_DotnetContext.RuntimeConfigs, "PeachGame.runtimeconfig", fp_RootPath + "/local_tests", main_logger.get());
 
-        //DotnetUtils::GenerateDefaultScript("FirstGeneratedScript", "Sprite2D", fp_RootPath + "/local_tests", main_logger.get());
+            //DotnetUtils::GenerateDefaultScript("FirstGeneratedScript", "Sprite2D", fp_RootPath + "/local_tests", main_logger.get());
 
             /*DotnetUtils::GenerateProjectFiles(pm_DotnetConfiguration, "PeachGame", fp_RootPath + "/local_tests", fp_RootPath + "res/script_runtimes/win64/dotnet/PeachScriptCore.dll", "", main_editor_logger.get());
             DotnetUtils::BuildDotnetProject(pm_DotnetConfiguration.SolutionPath, main_editor_logger.get());*/
 
-            //ShaderCompilerUtils f_ShaderUtils;
-
-            //f_ShaderUtils.WriteSPIRVToFile(PackVector(nuklearshaders_nuklear_vert_spv), fp_RootPath, "nuklear.vert", main_editor_logger.get());
-            //f_ShaderUtils.WriteSPIRVToFile(PackVector(nuklearshaders_nuklear_frag_spv), fp_RootPath, "nuklear.frag", main_editor_logger.get());
+            //////////////////// Success! ////////////////////
 
             return true;
         }

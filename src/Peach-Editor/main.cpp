@@ -71,7 +71,7 @@ int
     ////////////////////////////////////////////////
     try
     {
-        auto peach_editor = &PeachEditor::PeachEditorManager::PeachEditor();
+        auto peach_editor = &PeachEditor::PeachEditorManager::get_single();
 
         peach_editor->InitializePeachEditor
         (

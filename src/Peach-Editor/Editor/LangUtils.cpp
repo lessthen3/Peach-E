@@ -20,6 +20,13 @@ namespace PeachEditor::DotnetUtils
     }
 
     bool
+        AssertDotnetExists()
+    {
+
+        return true;
+    }
+
+    bool
         GetDotnetVersion
         (
             string* fp_DotNetVersionString,
@@ -339,7 +346,7 @@ namespace PeachEditor::DotnetUtils
 
         //////////////////// Find hostfxr Path ////////////////////
 
-        char_t buffer[MAX_PATH];
+        char_t buffer[MAX_PATH_LENGTH];
         size_t buffer_size = sizeof(buffer) / sizeof(char_t);
 
         const int rc = get_hostfxr_path(buffer, &buffer_size, nullptr);

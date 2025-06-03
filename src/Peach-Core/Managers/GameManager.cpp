@@ -19,10 +19,6 @@
 
 #define MINIAUDIO_IMPLEMENTATION
 
-#if defined(_WIN32) || defined(_WIN64)
-    #define NETHOST_USE_AS_STATIC
-#endif
-
 #include "../../include/Peach-Core/Managers/GameManager.h"
 
 namespace PeachCore
@@ -34,6 +30,7 @@ namespace PeachCore
         GameManager::InitializePeachEngine
         (
             const string& fp_RootPath,
+            const string& fp_BootConfPath,
             const RendererType fp_RenderingBackend
         )
     {
@@ -71,7 +68,7 @@ namespace PeachCore
             return false;
         }
         
-        LoadScriptRuntime(ScriptRuntimeType::Dotnet); //WARNING: this just loads the dotnet stuff for now
+        LoadScriptRuntime(fp_BootConfPath, ScriptRuntimeType::Dotnet); //WARNING: this just loads the dotnet stuff for now
 
         //////////////////////////////////////////////
         // Load and Setup Plugins
@@ -213,11 +210,11 @@ namespace PeachCore
     bool
         GameManager::LoadScriptRuntime
         (
+            const string& fp_BootConfPath,
             const uint8_t fp_RequiredScriptRuntimes
-
         )
     {
-        if (fp_RequiredScriptRuntimes & ScriptRuntimeType::Dotnet and not ResourceManager::get_single().LoadDotNetRuntime("/usr/share/dotnet/host/fxr/9.0.4/libhostfxr.so", pm_DotnetContext))
+        if (fp_RequiredScriptRuntimes & ScriptRuntimeType::Dotnet and not ResourceManager::get_single().LoadDotNetRuntime(fp_BootConfPath, pm_DotnetContext))
         {
 
             return false;
@@ -317,9 +314,9 @@ namespace PeachCore
         GameManager::InitializePlugins()
         const
     {
-        for (auto& l_PluginInfo : pm_PluginInstances)
+        for (auto& lp_PluginInfo : pm_PluginInstances)
         {
-            l_PluginInfo.Pwugin->Initialize();
+            lp_PluginInfo.Pwugin->Initialize();
         }
     }
 
@@ -327,9 +324,9 @@ namespace PeachCore
         GameManager::UpdatePlugins(float fp_TimeSinceLastFrame)
         const
     {
-        for (auto& l_PluginInfo : pm_PluginInstances)
+        for (auto& lp_PluginInfo : pm_PluginInstances)
         {
-            l_PluginInfo.Pwugin->Update(fp_TimeSinceLastFrame);
+            lp_PluginInfo.Pwugin->Update(fp_TimeSinceLastFrame);
         }
     }
 
@@ -337,23 +334,25 @@ namespace PeachCore
         GameManager::ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
         const
     {
-        for (auto& l_PluginInfo : pm_PluginInstances)
+        for (auto& lp_PluginInfo : pm_PluginInstances)
         {
-            l_PluginInfo.Pwugin->ConstantUpdate(fp_TimeSinceLastFrame);
+            lp_PluginInfo.Pwugin->ConstantUpdate(fp_TimeSinceLastFrame);
         }
     }
 
     void 
         GameManager::ShutdownPlugins()
     {
-        for (auto& l_PluginInfo : pm_PluginInstances)
+        for (auto& lp_PluginInfo : pm_PluginInstances)
         {
-            l_PluginInfo.Pwugin->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
+            lp_PluginInfo.Pwugin->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
 
-            if (l_PluginInfo.Handle != nullptr)
+            if (lp_PluginInfo.Handle != nullptr)
             {
-                DYNLIB_UNLOAD(l_PluginInfo.Handle);
+                DYNLIB_UNLOAD(lp_PluginInfo.Handle);
             }
+
+            lp_PluginInfo.Pwugin.reset(); //clear plugin and let it delete but should change this to be explicit and not inside the plugin itself shutdown is sufficient tbh
         }
 
         pm_PluginInstances.clear(); //wait why am i clearing plugin handles before unloading them LMFAO, XXX: fixed it uwu ><
@@ -420,20 +419,39 @@ namespace PeachCore
         }
     }
 
+    //TODO: get a signal from each thread when initialization is done then start the next one so startup can be consisitent and no race conditions for safety
     bool
-        GameManager::InitializeThreads() //XXX: used for kickstarting threads needed for engine execution
+        GameManager::InitializeThreads(uint8_t fp_RequiredThreads) //XXX: used for kickstarting threads needed for engine execution
     {
-        pm_RenderThread = thread(&GameManager::RenderThread, this);
-        pm_AudioThread = thread(&GameManager::AudioThread, this);
-        pm_ResourceThread = thread(&GameManager::ResourceThread, this);
-        pm_NetworkThread = thread(&GameManager::NetworkThread, this);
-        pm_PhysicsThread = thread(&GameManager::PhysicsThread, this);
+        //IMPORTANT: resource thread needs to be initialized first so queues get created properly
+        //Lazy initialization is used for everything since it isnt guaranteed that all threads will be active, only if a node is needed for a corresponding thread then the thread is started
+        //otherwise we just leave it be
+        if (fp_RequiredThreads & ThreadName::ResourceThread)
+        {
+            pm_ResourceThread = thread(&GameManager::ResourceThread, this);
+            pm_ResourceThread.detach();
+        }
+        if(fp_RequiredThreads & ThreadName::RenderThread)
+        {
+            pm_RenderThread = thread(&GameManager::RenderThread, this);
+            pm_RenderThread.detach();
+        }
+        if (fp_RequiredThreads & ThreadName::AudioThread)
+        {
+            pm_AudioThread = thread(&GameManager::AudioThread, this);
+            pm_AudioThread.detach();
+        }
+        if (fp_RequiredThreads & ThreadName::NetworkThread)
+        {
+            pm_NetworkThread = thread(&GameManager::NetworkThread, this);
+            pm_NetworkThread.detach();
 
-        pm_RenderThread.detach();
-        pm_AudioThread.detach();
-        pm_ResourceThread.detach();
-        pm_NetworkThread.detach();
-        pm_PhysicsThread.detach();
+        }
+        if (fp_RequiredThreads & ThreadName::PhysicsThread)
+        {
+            pm_PhysicsThread = thread(&GameManager::PhysicsThread, this);
+            pm_PhysicsThread.detach();
+        }
 
         return true;
     }

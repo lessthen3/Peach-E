@@ -23,12 +23,6 @@ if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
     message(FATAL_ERROR "Peach-E only supports 64-bit platforms.")
 endif()
 
-####################################### Add Compiler Warnings for Clang/GCC
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wall -Wextra -Wpedantic)
-endif()
-
 ####################################### Conan Toolchain Setup
 
 # Try to find `conan_toolchain.cmake` inside the build directory automatically
@@ -181,8 +175,8 @@ if(WIN32)
     )
 
     STATIC_IMPORT(nethost 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/libnethost.lib"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/libnethost.lib"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/libnethost.lib" #juicy static linkage UwU
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/nethost.lib" #debug dll
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/dotnet"
     )
 
@@ -606,13 +600,15 @@ if(APPLE ) #link moltenVK for mac compatibility
         moltenVK
     )
 elseif(WIN32)
-    target_link_libraries(peach PRIVATE 
+    target_link_libraries(peach PRIVATE  
+        #dont change these, the build breaks for debug otherwise
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:msvcrt>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:advapi32>
+
         setupapi 
         version 
         imm32 
         winmm 
-        gdi32 
-        user32 
         kernel32
     ) #needed for statically linking SDL3
 endif()
@@ -645,11 +641,51 @@ target_link_libraries(Peach_Editor PUBLIC
     nethost
 )
 
-####################################### Define Peach_Debug for Debug Build Configuration
+####################################### Compiler Options and Definitions
 
 target_compile_definitions(peach PRIVATE 
     $<$<CONFIG:Debug>:PEACH_DEBUG>
 )
+
+target_compile_definitions(Peach_Editor PRIVATE
+    $<$<CONFIG:Debug>:PEACH_DEBUG>
+)
+
+target_compile_definitions(peach PUBLIC
+    
+)
+
+if(WIN32)
+    target_compile_definitions(Peach_Editor PRIVATE
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:NETHOST_USE_AS_STATIC>
+    )
+
+    target_compile_options(Peach_Editor PRIVATE 
+        $<$<CONFIG:Debug>:/MDd> 
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+    )
+
+    target_compile_options(${PROJECT_NAME} PRIVATE 
+        $<$<CONFIG:Debug>:/MDd> 
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+    )
+
+    target_compile_options(peach PRIVATE 
+        $<$<CONFIG:Debug>:/MDd> 
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+    )
+
+    target_compile_options(peach_api PRIVATE 
+        $<$<CONFIG:Debug>:/MDd> 
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+    )
+
+endif()
+
+# Add Compiler Warnings for Clang/GCC (assuming those are the only two ur using on unix like systems uwu)
+if (UNIX OR APPLE)
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
 
 ####################################### Set Startup Project (Visual Studio & Xcode)
 
@@ -666,4 +702,12 @@ endif()
 if(CMAKE_GENERATOR MATCHES "Visual Studio")
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Peach_Editor)
     message(STATUS "Setting Peach_Editor as the default startup project for VS2022")
+    
+    set(NETHOST_DLL_PATH "$<SHELL_PATH:${CMAKE_SOURCE_DIR}/res/script_runtimes/win64/dotnet>")
+
+    set_property(TARGET Peach_Editor PROPERTY VS_DEBUGGER_ENVIRONMENT 
+        "$<$<CONFIG:Debug>:PATH=${NETHOST_DLL_PATH};%PATH%>"
+    )
+
+    set_property(TARGET Peach_Editor PROPERTY VS_DEBUGGER_COMMAND_ARGUMENTS "")
 endif()

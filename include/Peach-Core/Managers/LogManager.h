@@ -286,7 +286,7 @@ namespace PeachCore {
         unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_PhysicsThreadLogSnapshotBuffer = nullptr;
         unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_NetworkThreadLogSnapshotBuffer = nullptr;
 
-        mutex pm_ConsoleMutex;
+        //mutex pm_ConsoleMutex;
     };
 
     //////////////////////////////////////////////

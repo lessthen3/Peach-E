@@ -51,10 +51,13 @@ namespace PeachEditor{
 
 namespace DotnetUtils{
 
-    constexpr int MAX_PATH = 1024;
+    constexpr int MAX_PATH_LENGTH = 1024;
 
     bool
         InitializeRuntime();
+
+    bool
+        AssertDotnetExists();
 
     bool
         GetDotnetVersion
@@ -91,7 +94,7 @@ namespace DotnetUtils{
         );
 
     bool
-        GetHostFxrLocalPath(string& fp_HostFxrString);
+        GetHostFxrLocalPath(string* fp_HostFxrString, PeachCore::LogManager* logger);
 
 }// namespace LangUtils
 }//namespace PeachEditor
