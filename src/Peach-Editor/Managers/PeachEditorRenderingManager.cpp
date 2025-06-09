@@ -225,25 +225,21 @@ namespace PeachEditor {
 
         PeachCore::VulkanRenderer* renderer = PeachCore::RenderingManager::get_single().GetVulkanRenderer();
 
-        if (renderer->GetSwapChain()->extent.width != 0 or renderer->GetSwapChain()->extent.height != 0) //WARNING: This doesnt work rn needa work into recreateswapchain()
+        if (renderer->GetSwapChain()->extent.width == 0 or renderer->GetSwapChain()->extent.height == 0) //WARNING: This doesnt work rn needa work into recreateswapchain()
         {
-            renderer->BeginFrame();
-
-            //VkSemaphore nuklear_signal = nk_sdl_render
-            //(
-            //    renderer->GetGraphicsQueue(),                  // VkQueue
-            //    renderer->GetCurrentSwapchainImageIndex(),     // uint32_t image index
-            //    renderer->GetCurrentFrameAvailableSemaphore(), // VkSemaphore wait for image
-            //    NK_ANTI_ALIASING_ON                            // anti-aliasing mode
-            //);
-
-            ////// This will submit command buffers and present the swapchain
-            //renderer->SubmitNuklearFrame(nuklear_signal);
-
-            renderer->DrawFrame();
-
-            renderer->EndFrame();
+            //skip rendering if the surface isnt even visible >w<
+            return;
         }
+        
+        if(not renderer->BeginFrame()) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
+        {
+            return;
+        }
+
+        renderer->DrawFrame();
+
+        renderer->EndFrame();
+        
     }
 
     ////////////////////////////////////////////////
@@ -253,10 +249,11 @@ namespace PeachEditor {
         PeachEditorRenderingManager::PollWindowInput(bool* fp_IsProgramRuntimeOver)
     {
         SDL_Event f_Event;
-
+        //window id doesnt work for some reaso and im too lazy to figure out y rn MAC VULKAN LES GOOOO AHHHHHHHHH
+        //f_Event.window.windowID == SDL_GetWindowID(pm_MainWindow) and 
         while (SDL_PollEvent(&f_Event))
         {
-            if (f_Event.window.windowID == SDL_GetWindowID(pm_MainWindow) and f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            if (f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
             {
                 *fp_IsProgramRuntimeOver = false;
             }

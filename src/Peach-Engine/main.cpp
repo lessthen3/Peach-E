@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                                             Peach-E v0.0.1
  *                           Created by Ranyodh Mandur - 🍑 2024
  *
@@ -32,9 +32,9 @@ int
     {
         auto engine_manager = &PeachCore::GameManager::get_single();
 
-        engine_manager->InitializePeachEngine(string(fp_ArgVector[0]), PeachCore::RendererType::OpenGL);
-        engine_manager->StartMainGameLoop();
-        engine_manager->ShutdownPeachEngine();
+//        engine_manager->InitializePeachEngine(string(fp_ArgVector[0]), PeachCore::RendererType::OpenGL);
+//        engine_manager->StartMainGameLoop();
+//        engine_manager->ShutdownPeachEngine();
 
         return EXIT_SUCCESS;
     }

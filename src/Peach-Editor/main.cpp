@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                                        Peach Editor v0.0.7
  *                           Created by Ranyodh Mandur - 🍑 2024
  *
@@ -16,7 +16,7 @@
 static void 
     SegFaultHandler(int fp_Signal) //primitive segfault handler
 {
-    PeachCore::PrintError(format("[!] Crash signal received: {}", fp_Signal));
+    PeachCore::PrintError(format("[!] Crash signal received: {}, FATAL_SEGMENTATION_FAULT", fp_Signal));
     // possibly notify watchdog or dump stack trace
     exit(FATAL_SEGMENTATION_FAULT); //clean exit so everything calls their destructors
 }

@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                                             Peach-E v0.0.1
  *                           Created by Ranyodh Mandur - 🍑 2024
  *
@@ -110,40 +110,6 @@ namespace PeachCore {
     {
         PrintPhysicalDeviceInfo(pm_Init.Device.physical_device.physical_device);
 
-        //pm_NuklearContext = nk_sdl_init
-        //(
-        //    pm_Init.MainWindow,
-        //    pm_Init.Device.device,
-        //    pm_Init.Device.physical_device.physical_device, //wow
-        //    pm_Init.Device.get_queue_index(vkb::QueueType::graphics).value(),
-        //    pm_RenderData.SwapChainImageViews.data(),
-        //    static_cast<uint32_t>(pm_RenderData.SwapChainImageViews.size()),
-        //    pm_Init.SwapChain.image_format,
-        //    NK_SDL_DEFAULT,
-        //    512 * 1024,  // max_vertex_buffer
-        //    128 * 1024   // max_element_buffer
-        //);
-
-        //struct nk_font_atlas* mf_FontAtlas;
-        //nk_sdl_font_stash_begin(&mf_FontAtlas);
-
-        //string f_DesiredFontDirectory = static_cast<string>(PHYSFS_getWriteDir()) + "/res/fonts/ComicSansMS.ttf";
-
-        //struct nk_font* mf_ComicSans = nk_font_atlas_add_from_file(mf_FontAtlas, f_DesiredFontDirectory.c_str(), 18, 0);
-
-        //nk_sdl_font_stash_end(pm_RenderData.GraphicsQueue);
-
-        ////TODO: handle this better later, should have a default font to load instead because crashing everything just for a font is fucking stupid
-        //if (not mf_ComicSans) 
-        //{
-        //    rendering_logger->PEACH_LOG("failed to load comic sans font file ;;", "VulkanRenderer", LogManager::LogLevel::Error);
-        //    return false;
-        //}
-
-        //nk_style_set_font(pm_NuklearContext, &(mf_ComicSans->handle));
-
-        //pm_BackgroundColour = { 0.10f, 0.18f, 0.24f, 1.0f };
-
         return true;
     }
 
@@ -169,10 +135,18 @@ namespace PeachCore {
             &pm_RenderData.CurrentSwapchainImageIndex
         );
 
-        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        Print("acquired image index: " + std::to_string(pm_RenderData.CurrentSwapchainImageIndex) + " currentframe: " + to_string(pm_RenderData.CurrentFrameNumber), Colours::Magenta);
+
+        int new_width = 0, new_height = 0;
+        SDL_GetWindowSize(pm_Init.MainWindow, &new_width, &new_height);
+
+        if (result == VK_ERROR_OUT_OF_DATE_KHR or result == VK_SUBOPTIMAL_KHR or new_width != pm_Init.SwapChain.extent.width or new_height != pm_Init.SwapChain.extent.height)
         {
             rendering_logger->PEACH_LOG("Attempting to recreate swapchain", "VulkanRenderer", LogManager::LogLevel::Info);
-            RecreateSwapChain();
+            //WARNING: this approach always assumes the swapchain can successfully be recreated, gotta handle if it fails somehow but idk lemme read the docs some more
+            pm_RenderData.WasSwapchainRecreatedLastFrame = RecreateSwapChain();
+            pm_RenderData.CurrentFrameNumber = 0;
+            return false;
         }
         else if (result != VK_SUCCESS and result != VK_SUBOPTIMAL_KHR)
         {
@@ -226,6 +200,12 @@ namespace PeachCore {
     bool
         VulkanRenderer::DrawFrame()
     {
+        if (not pm_IsFrameStarted)
+        {
+            rendering_logger->PEACH_LOG("Tried calling DrawFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer", LogManager::LogLevel::Warning);
+            return false;
+        }
+
         VkCommandBuffer cmd = pm_RenderData.CommandBuffers[pm_RenderData.CurrentSwapchainImageIndex];
 
         // Set viewport and scissor
@@ -365,49 +345,16 @@ namespace PeachCore {
         present_info.pImageIndices = &pm_RenderData.CurrentSwapchainImageIndex;
 
         VkResult result = pm_Init.Dispatch.queuePresentKHR(pm_RenderData.PresentQueue, &present_info);
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-        {
-            rendering_logger->PEACH_LOG("Attempting to recreate swapchain", "VulkanRenderer", LogManager::LogLevel::Info);
-            RecreateSwapChain();
-        }
-        else if (result != VK_SUCCESS)
+
+    if (result != VK_SUCCESS)
         {
             rendering_logger->PEACH_LOG("Failed to present swapchain image", "VulkanRenderer", LogManager::LogLevel::Error);
             return false;
         }
 
-        pm_RenderData.CurrentFrameNumber = (pm_RenderData.CurrentFrameNumber + 1) % MAX_FRAMES_IN_FLIGHT;
+        pm_RenderData.CurrentFrameNumber = (pm_RenderData.CurrentFrameNumber + 1) % pm_Init.SwapChain.image_count;
 
         pm_IsFrameStarted = false;
-
-        return true;
-    }
-
-
-    bool 
-        VulkanRenderer::SubmitNuklearFrame(VkSemaphore nuklear_signal)
-    {
-        VkPresentInfoKHR present_info{};
-        present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-        present_info.waitSemaphoreCount = 1;
-        present_info.pWaitSemaphores = &nuklear_signal;
-        present_info.swapchainCount = 1;
-        VkSwapchainKHR swapChains[] = { pm_Init.SwapChain };
-        present_info.pSwapchains = swapChains;
-        present_info.pImageIndices = &pm_RenderData.CurrentSwapchainImageIndex;
-
-        VkResult result = pm_Init.Dispatch.queuePresentKHR(pm_RenderData.PresentQueue, &present_info);
-        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
-        {
-            RecreateSwapChain();
-        }
-        else if (result != VK_SUCCESS) 
-        {
-            rendering_logger->PEACH_LOG("Failed to present swapchain image", "VulkanRenderer", LogManager::LogLevel::Error);
-            return false;
-        }
-
-        pm_RenderData.CurrentFrameNumber = (pm_RenderData.CurrentFrameNumber + 1) % MAX_FRAMES_IN_FLIGHT;
 
         return true;
     }
@@ -415,7 +362,7 @@ namespace PeachCore {
     void
         VulkanRenderer::CleanUp()
     {
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        for (size_t i = 0; i < pm_Init.SwapChain.image_count; i++)
         {
             pm_Init.Dispatch.destroySemaphore(pm_RenderData.FinishedSemaphores[i], nullptr);
             pm_Init.Dispatch.destroySemaphore(pm_RenderData.AvailableSemaphores[i], nullptr);
@@ -527,7 +474,7 @@ namespace PeachCore {
             .set_minimum_version(1, 2)
             //.add_required_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
             //.add_required_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME)
-            .require_dedicated_transfer_queue()
+            // .require_dedicated_transfer_queue()
             .select();
 
         if (not phys_device_ret)
@@ -792,9 +739,9 @@ namespace PeachCore {
     bool
         VulkanRenderer::CreateSyncObjects()
     {
-        pm_RenderData.AvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        pm_RenderData.FinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        pm_RenderData.InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+        pm_RenderData.AvailableSemaphores.resize(pm_Init.SwapChain.image_count);
+        pm_RenderData.FinishedSemaphores.resize(pm_Init.SwapChain.image_count);
+        pm_RenderData.InFlightFences.resize(pm_Init.SwapChain.image_count);
         pm_RenderData.ImageInFlight.resize(pm_Init.SwapChain.image_count, VK_NULL_HANDLE);
 
         VkSemaphoreCreateInfo semaphore_info = {};
@@ -804,7 +751,7 @@ namespace PeachCore {
         fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+        for (size_t i = 0; i < pm_Init.SwapChain.image_count; i++)
         {
             if (
                 pm_Init.Dispatch.createSemaphore(&semaphore_info, nullptr, &pm_RenderData.AvailableSemaphores[i]) != VK_SUCCESS or

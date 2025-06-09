@@ -22,13 +22,12 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_system.h>
 #include <SDL3/SDL_vulkan.h>
+#include <SDL3/SDL_video.h>
 
 ///STL
 #include <unordered_map>
 
 #include <physfs.h> //this shouldnt be her but is for testing UWU
-
-constexpr const int MAX_FRAMES_IN_FLIGHT = 2;
 
 namespace PeachCore{
 
@@ -83,8 +82,11 @@ namespace PeachCore{
             vector<VkSemaphore> FinishedSemaphores;
             vector<VkFence> InFlightFences;
             vector<VkFence> ImageInFlight;
+
             size_t CurrentFrameNumber = 0;
             uint32_t CurrentSwapchainImageIndex = 0;
+
+            bool WasSwapchainRecreatedLastFrame = false;
         };
 
     private:
@@ -92,9 +94,6 @@ namespace PeachCore{
         RenderData pm_RenderData;
 
         VmaAllocator pm_Allocator;
-
-        //struct nk_context* pm_NuklearContext = nullptr;
-        //struct nk_colorf pm_BackgroundColour = { 0.10f, 0.18f, 0.24f, 1.0f };
 
         VkDescriptorPool pm_DescriptorPool;
 
@@ -146,12 +145,6 @@ namespace PeachCore{
         vkb::Swapchain*
             GetSwapChain()
             noexcept;
-
-        VkCommandBuffer
-            GetCMD()
-        {
-           return  pm_RenderData.CommandBuffers[pm_RenderData.CurrentSwapchainImageIndex];
-        }
 
     private:
         

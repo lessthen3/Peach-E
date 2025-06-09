@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#include "../../Peach-Core/Managers/GameManager.h"
+#include "Managers/GameManager.h"
 #include "PeachEditorRenderingManager.h"
 #include "../Editor/PeachProject.h"
 
@@ -27,14 +27,14 @@ namespace PeachEditor{
     public:
         ~PeachEditorManager() {}
 
+        PeachEditorManager(const PeachEditorManager&) = delete;
+        PeachEditorManager& operator=(const PeachEditorManager&) = delete;
+
     //////////////////////////////////////////////
     // Private Constructor
     //////////////////////////////////////////////
     private:
         PeachEditorManager() = default;
-
-        PeachEditorManager(const PeachEditorManager&) = delete;
-        PeachEditorManager& operator=(const PeachEditorManager&) = delete;
 
     //////////////////////////////////////////////
     // Private Members
@@ -82,7 +82,7 @@ namespace PeachEditor{
 
             while (mf_IsEditorOpen)
             {
-                this_thread::sleep_for(chrono::milliseconds(16)); //60 fps oh i just realized the fps flickers by 1 because the floating point conversion isnt exact
+                this_thread::sleep_for(chrono::milliseconds(200)); //60 fps oh i just realized the fps flickers by 1 because the floating point conversion isnt exact
                 editor_renderer->RenderFrame(&mf_IsEditorOpen);
             }
 

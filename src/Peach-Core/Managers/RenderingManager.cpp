@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                                             Peach-E v0.0.1
  *                           Created by Ranyodh Mandur - 🍑 2024
  *
@@ -263,17 +263,42 @@ namespace PeachCore {
     bool
         RenderingManager::InitializeVulkan()
     {
+        //Manually load libvulkan.1.dylib since volk cant find it w the regular init method, and run volkInitializeCustom and pass the proc pointer
+        #ifdef __APPLE__ //fuck u tim apple we won REST IN PISS BOZO
+
+            void* f_VulkanDylib = dlopen("@executable_path/../Frameworks/libvulkan.1.dylib", RTLD_NOW | RTLD_LOCAL);
+
+            if (not f_VulkanDylib) 
+            {
+                rendering_logger->PEACH_LOG(format("Couldn't load libvulkan.1.dylib with Error: {}", dlerror()), "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                return false;
+            }
+
+            auto f_GetProcAddress = reinterpret_cast<PFN_vkGetInstanceProcAddr>(dlsym(f_VulkanDylib, "vkGetInstanceProcAddr"));
+            
+            if (not f_GetProcAddress)
+            {
+                rendering_logger->PEACH_LOG(format("Couldn't find symbol: 'vkGetInstanceProcAddr' with Error: {}", dlerror()), "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                return false;
+            }
+            
+            volkInitializeCustom(f_GetProcAddress);  //custom initialize since volk cant find the libvulkan inside the Frameworks part of the bundle
+
+        #else ///Used for everything that isnt dumb fuck tim apple
+
+            if (volkInitialize() != VK_SUCCESS)
+            {
+                rendering_logger->PEACH_LOG("Volk failed to initialize! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                return false;
+            }
+        
+        #endif
+
         if (not CreateSDLWindow(&pm_MainWindow, RendererType::Vulkan, "Peach Window", 800, 600))
         {
             rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
             exit(FAILED_TO_CREATE_MAIN_WINDOW); //idk if i wanna exit here but it doesn really matter, i might want the "stack trace" from the false chain created by intialize failing
-        }
-
-        if (volkInitialize() != VK_SUCCESS)
-        {
-            rendering_logger->PEACH_LOG("Volk failed to initialize! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
-            return false;
-        }
+        }   
 
         string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCEMANAGER
 
@@ -288,6 +313,8 @@ namespace PeachCore {
             rendering_logger->PEACH_LOG("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
             return false;
         }
+
+        rendering_logger->PEACH_LOG("Success! VulkanRenderer initialized properly, full rendering capabilities should be ready UwU", "RenderingManager", PeachCore::LogManager::LogLevel::Info);
 
         return true; // >w<
     }

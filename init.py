@@ -388,10 +388,11 @@ def main() -> bool:
     print(CreateColouredText(f"Conan Profile: {f_DesiredConanProfile}", "bright magenta"))
     print(CreateColouredText(f"Platform: {platform.system()}", "bright magenta"))
 
+    #extra \n here so that in CLI it spaces nicely against the next command UwU
     if is_conan_api_available:
         print(CreateColouredText(f"Compiler: {get_conan_compiler(f_DesiredConanProfile)}\n", "bright magenta"))
     else:
-        print(CreateColouredText("[INFO]: Compiler info unavailable since Conan's Python API wasn't found", "bright green"))
+        print(CreateColouredText("[INFO]: Compiler info unavailable since Conan's Python API wasn't found\n", "bright green"))
 
     return True
 
