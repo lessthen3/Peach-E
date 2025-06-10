@@ -224,102 +224,102 @@ if(WIN32)
     ############ Vulkan Specific Imports
 
     STATIC_IMPORT(shaderC 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/shaderc.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/shadercd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/shaderc.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/shadercd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
     )
 
     STATIC_IMPORT(volk 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/volk.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/volkd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/volk.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/volkd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
     )
 
     ############ SPIRV Tools
 
     STATIC_IMPORT(SPIRV_Tools 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Toolsd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/SPIRV-Tools.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/SPIRV-Toolsd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Diff 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-diff.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-diffd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/SPIRV-Tools-diff.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/SPIRV-Tools-diffd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Link 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-link.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-linkd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/SPIRV-Tools-link.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/SPIRV-Tools-linkd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Lint 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-lint.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-lintd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/SPIRV-Tools-lint.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/SPIRV-Tools-lintd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Opt 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-opt.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-optd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/SPIRV-Tools-opt.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/SPIRV-Tools-optd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Reduce 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPIRV-Tools-reduce.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPIRV-Tools-reduced.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/SPIRV-Tools-reduce.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/SPIRV-Tools-reduced.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Remapper 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/SPVRemapper.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/SPVRemapperd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/SPVRemapper.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/SPVRemapperd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     ############ SPIRV Cross
 
     STATIC_IMPORT(SPIRV_Cross_Core 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-core.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-cored.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/spirv-cross-core.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/spirv-cross-cored.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_CPP 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-cpp.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-cppd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/spirv-cross-cpp.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/spirv-cross-cppd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_GLSL 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-glsl.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-glsld.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/spirv-cross-glsl.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/spirv-cross-glsld.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_HLSL 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-hlsl.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-hlsld.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/spirv-cross-hlsl.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/spirv-cross-hlsld.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_MSL 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-msl.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-msld.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/spirv-cross-msl.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/spirv-cross-msld.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Reflect 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-reflect.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-reflectd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/spirv-cross-reflect.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/spirv-cross-reflectd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Util 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/win64/spirv-cross-util.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/debug/win64/spirv-cross-utild.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/release/spirv-cross-util.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/win64/debug/spirv-cross-utild.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
@@ -482,102 +482,102 @@ elseif(UNIX) #XXX: doing these later when i compile on my linux machine, future 
     ############ Vulkan Specific Imports
 
     STATIC_IMPORT(shaderC 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libshaderc.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libshaderc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libshaderc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libshaderc.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/shaderc"
     )
 
     STATIC_IMPORT(volk 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libvolk.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libvolk.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libvolk.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/Volk"
     )
 
     ############ SPIRV Tools
 
     STATIC_IMPORT(SPIRV_Tools 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Diff 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-diff.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-diff.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-diff.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-diff.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Link 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-link.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-link.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-link.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-link.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Lint 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-lint.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-lint.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-lint.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-lint.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Opt 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-opt.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-opt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-opt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-opt.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Reduce 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-reduce.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPIRV-Tools-reduce.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-reduce.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPIRV-Tools-reduce.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Remapper 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPVRemapper.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libSPVRemapper.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPVRemapper.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libSPVRemapper.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv-tools"
     )
 
     ############ SPIRV Cross
 
     STATIC_IMPORT(SPIRV_Cross_Core 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-core.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-core.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_CPP 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-cpp.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-cpp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-cpp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-cpp.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_GLSL 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-glsl.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-glsl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-glsl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-glsl.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_HLSL 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-hlsl.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-hlsl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-hlsl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-hlsl.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_MSL 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-msl.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-msl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-msl.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-msl.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Reflect 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-reflect.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-reflect.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-reflect.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-reflect.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Util 
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-util.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/release/tux64/libspirv-cross-util.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-util.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/tux64/libspirv-cross-util.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
