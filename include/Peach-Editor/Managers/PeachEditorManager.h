@@ -135,16 +135,17 @@ namespace PeachEditor{
 
             //////////////////// Main Initialization Calls ////////////////////
 
-            if (not SetupInternalManagers(f_LogDir))
-            {
-
-                return false;
-            }
             if (not PeachCore::GameManager::get_single().InitializePeachEngine(fp_RootPath, f_HostFxrPath, PeachCore::RendererType::Vulkan))
             {
 
                 return false;
             }
+            else if (not SetupInternalManagers(f_LogDir))
+            {
+
+                return false;
+            }
+
             //else if (not InitializeQueues())
             //{
 

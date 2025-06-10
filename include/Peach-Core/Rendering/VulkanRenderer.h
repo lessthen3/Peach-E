@@ -29,6 +29,8 @@
 
 #include <physfs.h> //this shouldnt be her but is for testing UWU
 
+constexpr uint32_t MINIMUM_SWAPCHAIN_SIZE = 2;
+
 namespace PeachCore{
 
     struct VulkanRenderer 
@@ -83,10 +85,13 @@ namespace PeachCore{
             vector<VkFence> InFlightFences;
             vector<VkFence> ImageInFlight;
 
-            size_t CurrentFrameNumber = 0;
+            uint32_t CurrentFrameCycle = 0; //used for cycling available resources independent of swapchain image
             uint32_t CurrentSwapchainImageIndex = 0;
 
-            bool WasSwapchainRecreatedLastFrame = false;
+            int CurrentWindowWidth = 0;
+            int CurrentWindowHeight = 0;
+
+            //bool WasSwapchainRecreatedLastFrame = false;
         };
 
     private:
@@ -125,26 +130,11 @@ namespace PeachCore{
         bool
             EndFrame();
 
-        bool 
-            SubmitNuklearFrame(VkSemaphore nuklear_signal);
-
         VkShaderModule
             CreateShaderModule
             (
                 const vector<uint32_t>& fp_SpirvBytecode
             );
-
-
-
-        uint32_t GetCurrentSwapchainImageIndex() const noexcept;
-
-        VkQueue GetGraphicsQueue() const noexcept;
-
-        VkSemaphore GetCurrentFrameAvailableSemaphore() const noexcept;
-
-        vkb::Swapchain*
-            GetSwapChain()
-            noexcept;
 
     private:
         

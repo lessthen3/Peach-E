@@ -87,17 +87,15 @@ namespace PeachEditor {
         //////////////////////////////////////////////
 
         pm_MainWindow = PeachCore::RenderingManager::get_single().GetMainWindow();
-        //pm_NuklearCtx = PeachCore::RenderingManager::Renderer().GetVulkanRenderer()->GetNuklearContext();
 
         ////////////////////////////////////////////////
         // Create Viewport
         ////////////////////////////////////////////////
 
-        int f_CurrentWindowWidth, f_CurrentWindowHeight;
+        //int f_CurrentWindowWidth, f_CurrentWindowHeight;
+        //SDL_GetWindowSizeInPixels(pm_MainWindow, &f_CurrentWindowWidth, &f_CurrentWindowHeight);
 
-        SDL_GetWindowSizeInPixels(pm_MainWindow, &f_CurrentWindowWidth, &f_CurrentWindowHeight);
-
-        pm_Viewport.SetupViewport(400, 200, PeachCore::RenderingManager::get_single().GetOpenGLRenderer(), rendering_logger);
+        //pm_Viewport.SetupViewport(400, 200, PeachCore::RenderingManager::get_single().GetOpenGLRenderer(), rendering_logger);
 
         pm_IsRenderingInitialized = true;
             
@@ -224,12 +222,6 @@ namespace PeachEditor {
         //////////////////// Submit Draw Calls ////////////////////
 
         PeachCore::VulkanRenderer* renderer = PeachCore::RenderingManager::get_single().GetVulkanRenderer();
-
-        if (renderer->GetSwapChain()->extent.width == 0 or renderer->GetSwapChain()->extent.height == 0) //WARNING: This doesnt work rn needa work into recreateswapchain()
-        {
-            //skip rendering if the surface isnt even visible >w<
-            return;
-        }
         
         if(not renderer->BeginFrame()) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
         {
@@ -249,11 +241,12 @@ namespace PeachEditor {
         PeachEditorRenderingManager::PollWindowInput(bool* fp_IsProgramRuntimeOver)
     {
         SDL_Event f_Event;
-        //window id doesnt work for some reaso and im too lazy to figure out y rn MAC VULKAN LES GOOOO AHHHHHHHHH
-        //f_Event.window.windowID == SDL_GetWindowID(pm_MainWindow) and 
+        //window id doesnt work for some reaso and im too lazy to figure out y rn MAC VULKAN LES GOOOO AHHHHHHHHH, 
+        //future me: it was a initialization order thing, i was grabbing the window handle before initializing RenderingManager
+        
         while (SDL_PollEvent(&f_Event))
         {
-            if (f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
+            if (f_Event.window.windowID == SDL_GetWindowID(pm_MainWindow) and f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
             {
                 *fp_IsProgramRuntimeOver = false;
             }

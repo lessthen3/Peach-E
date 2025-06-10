@@ -36,6 +36,8 @@ namespace PeachCore {
 
         pm_Init.MainWindow = fp_MainWindow;
 
+        SDL_GetWindowSize(pm_Init.MainWindow, &pm_RenderData.CurrentWindowWidth, &pm_RenderData.CurrentWindowHeight); //grab window size so render loop can start properly and not be thwarted at beginframe()
+
         if (not InitializeDevice())
         {
             rendering_logger->PEACH_LOG("Failed to create Vulkan device, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
@@ -116,39 +118,32 @@ namespace PeachCore {
     bool
         VulkanRenderer::BeginFrame()
     {
-        if (pm_IsFrameStarted)
+        if (SDL_GetWindowFlags(pm_Init.MainWindow) & SDL_WINDOW_MINIMIZED) //Check if window is minimized
+        {
+            return false;
+        }
+        else if (pm_IsFrameStarted)
         {
             rendering_logger->PEACH_LOG("Frame already began, please only call BeginFrame() once ya done goofed", "VulkanRenderer", LogManager::LogLevel::Warning);
             return false;
         }
 
         // Wait for the current frame to finish
-        pm_Init.Dispatch.waitForFences(1, &pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameNumber], VK_TRUE, UINT64_MAX);
+        pm_Init.Dispatch.waitForFences(1, &pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameCycle], VK_TRUE, UINT64_MAX);
 
         // Acquire next image from swapchain
         VkResult result = pm_Init.Dispatch.acquireNextImageKHR
         (
             pm_Init.SwapChain, 
             UINT64_MAX, 
-            pm_RenderData.AvailableSemaphores[pm_RenderData.CurrentFrameNumber], 
+            pm_RenderData.AvailableSemaphores[pm_RenderData.CurrentFrameCycle], 
             VK_NULL_HANDLE, 
             &pm_RenderData.CurrentSwapchainImageIndex
         );
 
-        Print("acquired image index: " + std::to_string(pm_RenderData.CurrentSwapchainImageIndex) + " currentframe: " + to_string(pm_RenderData.CurrentFrameNumber), Colours::Magenta);
+        Print("acquired image index: " + std::to_string(pm_RenderData.CurrentSwapchainImageIndex) + " currentframe: " + to_string(pm_RenderData.CurrentFrameCycle), Colours::Magenta);
 
-        int new_width = 0, new_height = 0;
-        SDL_GetWindowSize(pm_Init.MainWindow, &new_width, &new_height);
-
-        if (result == VK_ERROR_OUT_OF_DATE_KHR or result == VK_SUBOPTIMAL_KHR or new_width != pm_Init.SwapChain.extent.width or new_height != pm_Init.SwapChain.extent.height)
-        {
-            rendering_logger->PEACH_LOG("Attempting to recreate swapchain", "VulkanRenderer", LogManager::LogLevel::Info);
-            //WARNING: this approach always assumes the swapchain can successfully be recreated, gotta handle if it fails somehow but idk lemme read the docs some more
-            pm_RenderData.WasSwapchainRecreatedLastFrame = RecreateSwapChain();
-            pm_RenderData.CurrentFrameNumber = 0;
-            return false;
-        }
-        else if (result != VK_SUCCESS and result != VK_SUBOPTIMAL_KHR)
+        if (result != VK_SUCCESS and result != VK_SUBOPTIMAL_KHR)
         {
             rendering_logger->PEACH_LOG(format("failed to acquire swapchain image. Error: {} ", static_cast<int>(result)), "VulkanRenderer", LogManager::LogLevel::Fatal);
             return false;
@@ -160,10 +155,10 @@ namespace PeachCore {
             pm_Init.Dispatch.waitForFences(1, &pm_RenderData.ImageInFlight[pm_RenderData.CurrentSwapchainImageIndex], VK_TRUE, UINT64_MAX);
         }
 
-        pm_RenderData.ImageInFlight[pm_RenderData.CurrentSwapchainImageIndex] = pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameNumber];
+        pm_RenderData.ImageInFlight[pm_RenderData.CurrentSwapchainImageIndex] = pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameCycle];
 
         // Reset fence
-        pm_Init.Dispatch.resetFences(1, &pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameNumber]);
+        pm_Init.Dispatch.resetFences(1, &pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameCycle]);
 
         //grab reference to current command buffer
         VkCommandBuffer cmd = pm_RenderData.CommandBuffers[pm_RenderData.CurrentSwapchainImageIndex];
@@ -236,55 +231,10 @@ namespace PeachCore {
 
         pm_Init.Dispatch.cmdDraw(cmd, 3, 1, 0, 0);
 
-                //for (size_t i = 0; i < pm_RenderData.CommandBuffers.size(); i++)
+        //for (const auto& [lv_Key, lv_Val] : )
         //{
-        //    VkCommandBufferBeginInfo begin_info = {};
-        //    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-        //    if (pm_Init.Dispatch.beginCommandBuffer(pm_RenderData.CommandBuffers[i], &begin_info) != VK_SUCCESS)
-        //    {
-        //        rendering_logger->PEACH_LOG("failed to begin recording command buffer, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
-        //        return false; // failed to begin recording command buffer
-        //    }
 
-        //    VkRenderPassBeginInfo render_pass_info = {};
-        //    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        //    render_pass_info.renderPass = pm_RenderData.RenderPass;
-        //    render_pass_info.framebuffer = pm_RenderData.FrameBuffers[i];
-        //    render_pass_info.renderArea.offset = { 0, 0 };
-        //    render_pass_info.renderArea.extent = pm_Init.SwapChain.extent;
-        //    VkClearValue clearColor{ { { 0.0f, 0.0f, 0.0f, 1.0f } } };
-        //    render_pass_info.clearValueCount = 1;
-        //    render_pass_info.pClearValues = &clearColor;
-
-        //    VkViewport viewport = {};
-        //    viewport.x = 0.0f;
-        //    viewport.y = 0.0f;
-        //    viewport.width = static_cast<float>(pm_Init.SwapChain.extent.width);
-        //    viewport.height = static_cast<float>(pm_Init.SwapChain.extent.height);
-        //    viewport.minDepth = 0.0f;
-        //    viewport.maxDepth = 1.0f;
-
-        //    VkRect2D scissor = {};
-        //    scissor.offset = { 0, 0 };
-        //    scissor.extent = pm_Init.SwapChain.extent;
-
-        //    pm_Init.Dispatch.cmdSetViewport(pm_RenderData.CommandBuffers[i], 0, 1, &viewport);
-        //    pm_Init.Dispatch.cmdSetScissor(pm_RenderData.CommandBuffers[i], 0, 1, &scissor);
-
-        //    pm_Init.Dispatch.cmdBeginRenderPass(pm_RenderData.CommandBuffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
-
-        //    pm_Init.Dispatch.cmdBindPipeline(pm_RenderData.CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pm_RenderData.GraphicsPipelines.at("name"));
-
-        //    pm_Init.Dispatch.cmdDraw(pm_RenderData.CommandBuffers[i], 3, 1, 0, 0);
-
-        //    pm_Init.Dispatch.cmdEndRenderPass(pm_RenderData.CommandBuffers[i]);
-
-        //    if (pm_Init.Dispatch.endCommandBuffer(pm_RenderData.CommandBuffers[i]) != VK_SUCCESS)
-        //    {
-        //        rendering_logger->PEACH_LOG("failed to record command buffer, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
-        //        return false; // failed to record command buffer!
-        //    }
         //}
 
         return true;
@@ -293,11 +243,15 @@ namespace PeachCore {
     bool 
         VulkanRenderer::EndFrame() 
     {
+        //////////////////// Check if Frame Began Properly ////////////////////
+
         if (not pm_IsFrameStarted)
         {
             rendering_logger->PEACH_LOG("Tried calling EndFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer", LogManager::LogLevel::Warning);
             return false;
         }
+
+        //////////////////// Obtain Command Buffer and End it ////////////////////
 
         VkCommandBuffer cmd = pm_RenderData.CommandBuffers[pm_RenderData.CurrentSwapchainImageIndex];
 
@@ -309,11 +263,12 @@ namespace PeachCore {
             return false;
         }
 
-        // Submit command buffer
+        //////////////////// Submit Command Buffer ////////////////////
+
         VkSubmitInfo submit_info{};
         submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-        VkSemaphore wait_semaphores[] = { pm_RenderData.AvailableSemaphores[pm_RenderData.CurrentFrameNumber] };
+        VkSemaphore wait_semaphores[] = { pm_RenderData.AvailableSemaphores[pm_RenderData.CurrentFrameCycle] };
         VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
         submit_info.waitSemaphoreCount = 1;
         submit_info.pWaitSemaphores = wait_semaphores;
@@ -322,17 +277,18 @@ namespace PeachCore {
         submit_info.commandBufferCount = 1;
         submit_info.pCommandBuffers = &cmd;
 
-        VkSemaphore signal_semaphores[] = { pm_RenderData.FinishedSemaphores[pm_RenderData.CurrentFrameNumber] };
+        VkSemaphore signal_semaphores[] = { pm_RenderData.FinishedSemaphores[pm_RenderData.CurrentFrameCycle] };
         submit_info.signalSemaphoreCount = 1;
         submit_info.pSignalSemaphores = signal_semaphores;
 
-        if (pm_Init.Dispatch.queueSubmit(pm_RenderData.GraphicsQueue, 1, &submit_info, pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameNumber]) != VK_SUCCESS)
+        if (pm_Init.Dispatch.queueSubmit(pm_RenderData.GraphicsQueue, 1, &submit_info, pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameCycle]) != VK_SUCCESS)
         {
             rendering_logger->PEACH_LOG("Failed to submit draw command buffer", "VulkanRenderer", LogManager::LogLevel::Error);
             return false;
         }
 
-        // Present
+        //////////////////// Present Swapchain Image ////////////////////
+
         VkPresentInfoKHR present_info{};
         present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         present_info.waitSemaphoreCount = 1;
@@ -346,17 +302,34 @@ namespace PeachCore {
 
         VkResult result = pm_Init.Dispatch.queuePresentKHR(pm_RenderData.PresentQueue, &present_info);
 
-    if (result != VK_SUCCESS)
+        //////////////////// Frame Over So Signal as Such ////////////////////
+
+        pm_IsFrameStarted = false;
+
+        //////////////////// Check for Window Resize ////////////////////
+
+        SDL_GetWindowSize(pm_Init.MainWindow, &pm_RenderData.CurrentWindowWidth, &pm_RenderData.CurrentWindowHeight);
+
+        if (pm_RenderData.CurrentWindowWidth == 0 or pm_RenderData.CurrentWindowHeight == 0) //this executes first, then when the window is resized properly to be visible, it will trigger the regular swapchain recreation >O<
+        {
+            return false; //>w<
+        }
+        else if (result == VK_ERROR_OUT_OF_DATE_KHR or result == VK_SUBOPTIMAL_KHR or pm_RenderData.CurrentWindowWidth != pm_Init.SwapChain.extent.width or pm_RenderData.CurrentWindowHeight != pm_Init.SwapChain.extent.height)
+        {
+            rendering_logger->PEACH_LOG("Attempting to recreate swapchain", "VulkanRenderer", LogManager::LogLevel::Info);
+            pm_RenderData.CurrentFrameCycle = 0;
+            return RecreateSwapChain(); //WARNING: this approach always assumes the swapchain can successfully be recreated, gotta handle if it fails somehow but idk lemme read the docs some more
+        }
+        else if (result != VK_SUCCESS)
         {
             rendering_logger->PEACH_LOG("Failed to present swapchain image", "VulkanRenderer", LogManager::LogLevel::Error);
             return false;
         }
-
-        pm_RenderData.CurrentFrameNumber = (pm_RenderData.CurrentFrameNumber + 1) % pm_Init.SwapChain.image_count;
-
-        pm_IsFrameStarted = false;
-
-        return true;
+        else
+        {
+            pm_RenderData.CurrentFrameCycle = (pm_RenderData.CurrentFrameCycle + 1) % pm_Init.SwapChain.image_count;
+            return true;
+        }
     }
 
     void
@@ -514,6 +487,7 @@ namespace PeachCore {
         auto swap_ret = swapchain_builder
             .set_old_swapchain(pm_Init.SwapChain)
             .set_image_usage_flags(VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
+            .set_desired_min_image_count(MINIMUM_SWAPCHAIN_SIZE)
             .build();
 
         if (not swap_ret)
@@ -787,28 +761,5 @@ namespace PeachCore {
         if (not CreateCommandBuffers()) return false;
 
         return true;
-    }
-
-
-    uint32_t VulkanRenderer::GetCurrentSwapchainImageIndex() const noexcept
-    {
-        return pm_RenderData.CurrentSwapchainImageIndex;
-    }
-
-    VkQueue VulkanRenderer::GetGraphicsQueue() const noexcept
-    {
-        return pm_RenderData.GraphicsQueue;
-    }
-
-    VkSemaphore VulkanRenderer::GetCurrentFrameAvailableSemaphore() const noexcept
-    {
-        return pm_RenderData.AvailableSemaphores[pm_RenderData.CurrentFrameNumber];
-    }
-
-    vkb::Swapchain*
-        VulkanRenderer::GetSwapChain()
-        noexcept
-    {
-        return &(pm_Init.SwapChain);
     }
 }
