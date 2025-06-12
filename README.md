@@ -24,7 +24,7 @@ Features:
 
 🍑 Built from the ground up for Vulkan
 
-🍑Support for making games with C++ but idk why you'd want that lmfao
+🍑 Support for making games with C++ but idk why you'd want that lmfao
 
 🍑 Planned support for visual scripting and a ShaderGraph
 

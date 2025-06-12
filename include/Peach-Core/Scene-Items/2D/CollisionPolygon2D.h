@@ -1,12 +1,12 @@
 ﻿/*******************************************************************
- *                                             Peach-E v0.0.1
- *                           Created by Ranyodh Mandur - 🍑 2024
+ *                        Peach-E v0.0.1
+ *              Created by Ranyodh Mandur - 🍑 2024
  *
- *                         Licensed under the MIT License (MIT).
- *                  For more details, see the LICENSE file or visit:
- *                        https://opensource.org/licenses/MIT
+ *              Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:         
+ *               https://opensource.org/licenses/MIT
  *
- *                         Peach-E is an open-source game engine
+ *           Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
@@ -22,6 +22,7 @@
 #include <list>
 #include <stdexcept>
 #include <box2d/box2d.h>
+#include <glm/glm.hpp>
 
 namespace PeachCore {
 
@@ -145,8 +146,8 @@ namespace PeachCore {
         {
             b2ShapeDef f_ShapeDefinition = b2DefaultShapeDef();
             f_ShapeDefinition.density = fp_Density; //KABOOOOOOOOOOOOOOOOM
-            f_ShapeDefinition.friction = fp_Friction; //default friction value
-            f_ShapeDefinition.restitution = fp_Bounciness; // bouncy
+            // f_ShapeDefinition.friction = fp_Friction; //default friction value
+            // f_ShapeDefinition.restitution = fp_Bounciness; // bouncy
             return f_ShapeDefinition;
         }
 

@@ -203,17 +203,37 @@ if(WIN32)
     #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
     # )
 
+    ############ Windowing and Input
+
     STATIC_IMPORT(SDL3 
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/win64/SDL3-static.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/win64/SDL3-static.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
+    ############ 2D physics
+
+    STATIC_IMPORT(box2d 
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/include"
+    )
+
+    ############ Lua Stuff
+
     STATIC_IMPORT(Lua_Compiler 
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
     )
+
+    STATIC_IMPORT(Lua_Runtime 
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    )
+
+    ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/libnethost.lib" #juicy static linkage UwU
@@ -325,12 +345,7 @@ if(WIN32)
 
 elseif(APPLE)
 
-    # add_library(GGPO STATIC IMPORTED) #THIS IS NOT SUPPORTED ON MAC ATM RIP
-
-    # set_target_properties(GGPO PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
-    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
-    # )
+    ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/steveARM64/libSDL3.a"
@@ -338,11 +353,29 @@ elseif(APPLE)
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
+    ############ 2D physics
+
+    STATIC_IMPORT(box2d 
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/include"
+    )
+
+    ############ Lua Stuff
+
     STATIC_IMPORT(Lua_Compiler 
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/lua/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/lua/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
     )
+
+    STATIC_IMPORT(Lua_Runtime 
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    )
+
+    ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/dotnet/libnethost.a"
@@ -461,17 +494,37 @@ elseif(UNIX) #XXX: doing these later when i compile on my linux machine, future 
     #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
     # )
 
+    ############ Windowing and Input
+
     STATIC_IMPORT(SDL3 
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/tux64/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/tux64/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
+    ############ 2D physics
+
+    STATIC_IMPORT(box2d 
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/include"
+    )
+
+    ############ Lua Stuff
+
     STATIC_IMPORT(Lua_Compiler 
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
     )
+
+    STATIC_IMPORT(Lua_Runtime 
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+    )
+
+    ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
         "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/dotnet/libnethost.a"
@@ -593,7 +646,6 @@ find_package(PhysFS REQUIRED)
 find_package(clipper2 REQUIRED)
 
 find_package(Jolt REQUIRED)
-find_package(box2d REQUIRED)
 
 find_package(ZLIB REQUIRED)
 
@@ -604,6 +656,8 @@ find_package(assimp REQUIRED)
 
 find_package(libsodium REQUIRED)
 
+find_package(msdfgen REQUIRED)
+
 # Peach Core
 target_link_libraries(peach PUBLIC
     #file system
@@ -612,14 +666,14 @@ target_link_libraries(peach PUBLIC
     clipper2::clipper2
     #physics
     Jolt::Jolt #3D
-    box2d::box2d #2D
+    box2d #2D
     #compression
     ZLIB::ZLIB
     #opengl
     GLEW::GLEW
     #cryptography
     libsodium::libsodium
-    #asset importing
+    #asset importing, this is bundled into peach_core since games may want to import custom models for player made levels n stuff
     assimp::assimp
 
     #Vulkan
@@ -627,9 +681,15 @@ target_link_libraries(peach PUBLIC
     glm::glm
     #SDL
     SDL3
+
+    #font stuff
+    msdfgen::msdgen-all-unofficial
+
+    #lua
+    Lua_Runtime
 )
 
-if(APPLE )
+if(APPLE)
 
     target_link_libraries(peach PRIVATE
         "-framework AVFoundation"
@@ -700,10 +760,6 @@ target_compile_definitions(peach PRIVATE
 
 target_compile_definitions(Peach_Editor PRIVATE
     $<$<CONFIG:Debug>:PEACH_DEBUG>
-)
-
-target_compile_definitions(peach PUBLIC
-    
 )
 
 if(WIN32)

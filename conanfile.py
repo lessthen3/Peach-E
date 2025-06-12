@@ -12,12 +12,11 @@ class PeachEBuilder(ConanFile):
         self.requires("physfs/3.2.0")
 
         # geometry
-        self.requires("clipper2/1.4.0")
+        self.requires("clipper2/1.5.3")
 
         # physics
         self.requires("joltphysics/5.2.0")
-        self.requires("box2d/3.0.0")
-
+        
         # serialization and compression
         self.requires("zlib/1.3.1")
 
@@ -30,6 +29,9 @@ class PeachEBuilder(ConanFile):
 
         #encryption/decryption
         self.requires("libsodium/1.0.20")
+        
+        #font stuff
+        self.requires("msdfgen/1.12")
 
     def generate(self):
         cmake = CMakeDeps(self)

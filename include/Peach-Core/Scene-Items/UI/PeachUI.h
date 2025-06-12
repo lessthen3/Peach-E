@@ -21,8 +21,9 @@
 #include <SDL3/SDL_system.h>
 #include <SDL3/SDL_vulkan.h>
 
-///STB stuff
-#include <stb/stb_truetype.h>
+///font stuff
+#include <msdfgen/msdfgen.h>
+#include <msdfgen/msdfgen-ext.h>
 
 #include <vector>
 #include <memory>
