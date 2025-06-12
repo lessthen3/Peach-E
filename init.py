@@ -252,7 +252,7 @@ def main() -> bool:
     usage_message = \
         CreateColouredText("init.py ", 'bright magenta') + \
         CreateColouredText("--[build_type: release, debug or both] ", "bright blue") + \
-        CreateColouredText("-G [desired_generator]", "blue") + \
+        CreateColouredText("-G [desired_generator] ", "blue") + \
         CreateColouredText("-P [desired_conan_profile]", "cyan")
 
     parser = argparse.ArgumentParser(
