@@ -35,6 +35,66 @@ else()
     message(FATAL_ERROR "Error: conan_toolchain.cmake not found. Run `conan install` first.")
 endif()
 
+####################################### Master snuggle list for platform detection UwU (my chatgpt is bricked af)
+
+# Let's set our own little love variable to make CMake oh-so-comfy
+set(TARGET_PLATFORM "")
+
+if(WIN32)
+    set(TARGET_PLATFORM "windows")
+    message(STATUS "Mmm, Windows detected, kitten! 😏")
+elseif(APPLE)
+    # CMake modern toolchains will set CMAKE_SYSTEM_NAME correctly
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set(TARGET_PLATFORM "ios")
+        message(STATUS "iOS, purrfect for kitten's paws and paws only~ 🍏🐾")
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "tvOS")
+        set(TARGET_PLATFORM "tvos")
+        message(STATUS "tvOS, time to get cozy on the big screen, nya~ 📺")
+    elseif(CMAKE_SYSTEM_NAME STREQUAL "watchOS")
+        set(TARGET_PLATFORM "watchos")
+        message(STATUS "watchOS, smallest but cuddliest! ⌚️💖")
+    else()
+        set(TARGET_PLATFORM "macos")
+        message(STATUS "macOS, premium fur and silky frameworks for daddy's kitten~ 🍎")
+    endif()
+elseif(ANDROID)
+    set(TARGET_PLATFORM "android")
+    message(STATUS "Android detected! Purr in my pocket, take me anywhere~ 🤳🐾")
+elseif(UNIX AND NOT APPLE) #apparently cmake lumps apple into the unix bucket which it is technically but not useful here uwu
+    # Now we dive even deeper for all the extra *special* UNIXes~
+    execute_process(
+        COMMAND uname -s
+        OUTPUT_VARIABLE OS_NAME
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if(OS_NAME STREQUAL "Linux")
+        set(TARGET_PLATFORM "linux")
+        message(STATUS "Nyaa, Linux detected! Flex that Tux, kitten~ 🐧")
+    elseif(OS_NAME STREQUAL "FreeBSD")
+        set(TARGET_PLATFORM "freebsd")
+        message(STATUS "FreeBSD... true BSD-babe detected, ready for that zfs cuddles~ 🦀")
+    elseif(OS_NAME STREQUAL "Haiku")
+        set(TARGET_PLATFORM "haiku")
+        message(STATUS "Haiku OS, lightweight and aesthetic, uwu 💐")
+    elseif(OS_NAME MATCHES "PSVita")
+        set(TARGET_PLATFORM "psvita")
+        message(STATUS "Kitten on the PS Vita, time to go portable, ahh~ 🎮")
+    else()
+        set(TARGET_PLATFORM "unix")
+        message(STATUS "Generic UNIX, so mysterious~ 😽")
+    endif()
+elseif(CMAKE_SYSTEM_NAME STREQUAL "PSVita" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7-vita-eabi")
+    set(TARGET_PLATFORM "psvita")
+    message(STATUS "PS Vita detected via toolchain! Peach-E on the go, nyan~ 🎮🍑")
+else()
+    set(TARGET_PLATFORM "unknown")
+    message(WARNING "Unknown platform... I’m scared, hold me closer! 🥺")
+endif()
+
+# Now daddy will print out where his kitten is running, so you always feel seen and wanted UwU
+message(STATUS "TARGET_PLATFORM is set to: ${TARGET_PLATFORM} ~ nya~")
+
 ####################################### Find All Source Files
 
 # Peach Core
@@ -81,13 +141,13 @@ add_library(peach STATIC
 )
 
 if(WIN32)
-    set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/Cool-People/python_includes/win64")
+    set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/Cool-People/python/win64/include")
 
-elseif(APPLE)
-    set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/Cool-People/python_includes/steveARM64")
+elseif(TARGET_PLATFORM STREQUAL "macos")
+    set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/Cool-People/python/steveARM64/include")
 
 elseif(UNIX)
-    set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/Cool-People/python_includes/tux64")
+    set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/Cool-People/python/tux64/include")
 
 else()
     message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
@@ -100,13 +160,14 @@ target_include_directories(peach PUBLIC
     include/Peach-Core
     "${PROJECT_SOURCE_DIR}/Cool-People/header_only" #header only library includes
     ${PYTHON_INCLUDES}
+    "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/include" #needed since nethost is only linked into Peach_Editor and peach needs the includes
 )
 
 set_target_properties(peach PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach PIC friendly UwU
 
 ####################################### Executable Targets
 
-if(APPLE) #create a bundle instead of a regular exe for macOS
+if(TARGET_PLATFORM STREQUAL "macos") #create a bundle instead of a regular exe for macOS
 
     set(MACOSX_BUNDLE TRUE)
 
@@ -222,23 +283,23 @@ if(WIN32)
     ############ Lua Stuff
 
     STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/release/lua_compiler.lib"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/lua/debug/lua_compiler.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64/release/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64lua/debug/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64/release/lua_runtime.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64/debug/liblua_runtime.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/include"
     )
 
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/libnethost.lib" #juicy static linkage UwU
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/win64/dotnet/nethost.lib" #debug dll
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/dotnet"
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/win64/libnethost.lib" #juicy static linkage UwU
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/win64/nethost.lib" #debug dll
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/include"
     )
 
     ############ Vulkan Specific Imports
@@ -343,7 +404,7 @@ if(WIN32)
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
-elseif(APPLE)
+elseif(TARGET_PLATFORM STREQUAL "macos")
 
     ############ Windowing and Input
 
@@ -364,23 +425,23 @@ elseif(APPLE)
     ############ Lua Stuff
 
     STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/lua/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/lua/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/steveARM64/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/steveARM64/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/lua/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/lua/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/steveARM64/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/steveARM64/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/include"
     )
 
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/dotnet/libnethost.a"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/dotnet/libnethost.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/dotnet"
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/steveARM64/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/steveARM64/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/include"
     )
 
     ############ Vulkan Specific Imports
@@ -513,23 +574,23 @@ elseif(UNIX) #XXX: doing these later when i compile on my linux machine, future 
     ############ Lua Stuff
 
     STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/tux64/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/tux64/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/tux64/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/tux64/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/include"
     )
 
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/dotnet/libnethost.a"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/dotnet/libnethost.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/header_only/dotnet"
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/tux64/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/tux64/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/include"
     )
 
     ############ Vulkan Specific Imports
@@ -689,7 +750,7 @@ target_link_libraries(peach PUBLIC
     Lua_Runtime
 )
 
-if(APPLE)
+if(TARGET_PLATFORM STREQUAL "macos")
 
     target_link_libraries(peach PRIVATE
         "-framework AVFoundation"

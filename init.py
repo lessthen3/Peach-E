@@ -3,6 +3,7 @@ import os
 import argparse
 import platform
 import shutil
+import sys
 
 from shutil import which
 
@@ -66,6 +67,43 @@ def get_conan_compiler(fp_ProfileName: str) -> str:
 
     return compiler
 
+############# Run command for live console feed #############
+
+"""
+    Runs a subprocess command and streams stdout live.
+    Raises CalledProcessError if the command fails,
+    attaching the full output to the exception.
+"""
+
+def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
+
+    f_Process = subprocess.Popen(
+        fp_Command,
+        cwd=fp_WorkingDirectory,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True
+    )
+
+    f_OutputLines = []
+
+    try:
+        for line in f_Process.stdout:
+            sys.stdout.write(line)
+            f_OutputLines.append(line)
+
+        f_Process.wait()
+
+        if f_Process.returncode != 0:
+            raise subprocess.CalledProcessError(
+                f_Process.returncode,
+                fp_Command,
+                output=''.join(f_OutputLines)
+            )
+
+    finally:
+        f_Process.stdout.close()
+
 ############# Main Conan Function #############
 
 def run_conan(fp_BuildType: str, fp_DesiredProfile: str) -> bool:
@@ -83,17 +121,12 @@ def run_conan(fp_BuildType: str, fp_DesiredProfile: str) -> bool:
     try:
         print(CreateColouredText("[INFO]: Running Conan for dependencies setup...", "green"))
 
-        subprocess.run(
-            f_BuildCommand,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        run_command_with_live_output(f_BuildCommand)
 
     except subprocess.CalledProcessError as err:
         print(CreateColouredText(f"[ERROR]: Conan wasn't able to complete getting/building dependencies for build_type={fp_BuildType} using profile={fp_DesiredProfile}, stopping build immediately", "red"))
-        print(CreateColouredText(err.stdout.decode(), "yellow"))
-        print(CreateColouredText(err.stderr.decode(), "yellow"))
+        print(CreateColouredText(err.output, "yellow"))
+
         return False
 
     print(CreateColouredText(f"[SUCCESS]: Conan setup and dependencies installation successfully completed for {fp_BuildType} using profile={fp_DesiredProfile}", "cyan"))
@@ -149,17 +182,11 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
     try:
         print(CreateColouredText(f"[INFO]: Running CMake project generation for {f_GeneratorMap[fp_Generator]}...", "green"))
 
-        subprocess.run(
-            f_CMakeConfigCommand,
-            check=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
+        run_command_with_live_output(f_CMakeConfigCommand)
 
     except subprocess.CalledProcessError as err:
         print(CreateColouredText("[ERROR]: CMake project generation failed!", "red"))
-        print(CreateColouredText(err.stdout.decode(), "yellow"))
-        print(CreateColouredText(err.stderr.decode(), "yellow"))
+        print(CreateColouredText(err.output, "yellow"))
         return False
 
     print(CreateColouredText("[SUCCESS]: CMake project generation completed!", "cyan"))
@@ -170,17 +197,12 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
         try:
             print(CreateColouredText(f"[INFO]: Running CMake single config build for {fp_BuildType}...", "green"))
 
-            subprocess.run(
-                ['cmake', '--build', 'build'],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+            run_command_with_live_output(['cmake', '--build', 'build'])
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText(f"[ERROR]: CMake single config {fp_BuildType} build process failed!", "red"))
-            print(CreateColouredText(err.stdout.decode(), "yellow"))
-            print(CreateColouredText(err.stderr.decode(), "yellow"))
+            print(CreateColouredText(err.output, "yellow"))
+
             return False
 
         print(CreateColouredText(f"[SUCCESS]: {fp_BuildType} build completed!", "cyan"))
@@ -193,17 +215,12 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Debug...", "green"))
 
-            subprocess.run(
-                ['cmake', '--build', 'build', '--config', 'Debug'],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Debug'])
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake debug build process failed!", "red"))
-            print(CreateColouredText(err.stdout.decode(), "yellow"))
-            print(CreateColouredText(err.stderr.decode(), "yellow"))
+            print(CreateColouredText(err.output, "yellow"))
+
             return False
 
         print(CreateColouredText("[SUCCESS]: Debug build completed!", "cyan"))
@@ -214,17 +231,12 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Release...", "green"))
 
-            subprocess.run(
-                ['cmake', '--build', 'build', '--config', 'Release'],
-                check=True,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
-            )
+            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Release'])
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake release build process failed!", "red"))
-            print(CreateColouredText(err.stdout.decode(), "yellow"))
-            print(CreateColouredText(err.stderr.decode(), "yellow"))
+            print(CreateColouredText(err.output, "yellow"))
+
             return False
 
         print(CreateColouredText("[SUCCESS]: Release build completed!", "cyan"))
