@@ -356,8 +356,8 @@ elseif(APPLE)
     ############ 2D physics
 
     STATIC_IMPORT(box2d 
-        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/steveARM64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/steveARM64/libbox2d.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/box2d/include"
     )
 
@@ -370,8 +370,8 @@ elseif(APPLE)
     )
 
     STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/res/script_runtimes/tux64/lua/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/lua/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/res/script_runtimes/steveARM64/lua/liblua_runtime.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/header_only/lua"
     )
 
