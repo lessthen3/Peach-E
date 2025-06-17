@@ -304,7 +304,7 @@ namespace PeachCore {
 
         ShaderUtils::BakedPipelineData f_BakedPipelineData;
 
-        ShaderUtils::BakePipelineData(f_BaseDir + "/res/compiled_shaders/triangle.vert.spv", f_BaseDir + "/res/compiled_shaders/triangle.frag.spv", f_BakedPipelineData, rendering_logger.get());
+        ShaderUtils::BakePipelineData(f_BaseDir + "/tests/first_triangle/triangle.vert.spv", f_BaseDir + "/tests/first_triangle/triangle.frag.spv", f_BakedPipelineData, rendering_logger.get());
 
         pm_VulkanRenderer = make_unique<VulkanRenderer>();
         

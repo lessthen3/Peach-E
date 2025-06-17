@@ -78,8 +78,8 @@ namespace PeachCore
             //DLL's
             f_ListOfPluginsToLoad =
             {
-                fp_RootPath + "/res/plugins/SimplePlugin.dll",
-                fp_RootPath + "/res/plugins/SimplePlugin2.dll"
+                fp_RootPath + "/tests/plugins/SimplePlugin.dll",
+                fp_RootPath + "/tests/plugins/SimplePlugin2.dll"
             };
         #else //Unix systems (osx and linux)
             //SO's or dylib
