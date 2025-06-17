@@ -41,32 +41,6 @@ def ensure_tool_installed(fp_ToolName: str) -> bool:
     else:
         return True
 
-############# Try to Import Conan Python API Functions #############
-
-is_conan_api_available = False
-
-try:
-    from conan.api.conan_api import ProfilesAPI
-    from conan.api.conan_api import ConanAPI
-
-except:
-    print(CreateColouredText("[WARNING]: Failed to locate Conan Python API python packages", "yellow"))
-
-else:
-    is_conan_api_available = True
-
-############# Retrieve Compiler Information for Desired Conan Profile #############
-
-def get_conan_compiler(fp_ProfileName: str) -> str:
-
-    conan_api = ConanAPI()
-    profiles_api = ProfilesAPI(conan_api)
-    profile_data = profiles_api.get_profile(profiles=[fp_ProfileName])
-    
-    compiler = profile_data.settings["compiler"]
-
-    return compiler
-
 ############# Run command for live console feed #############
 
 """
@@ -103,35 +77,6 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
 
     finally:
         f_Process.stdout.close()
-
-############# Main Conan Function #############
-
-def run_conan(fp_BuildType: str, fp_DesiredProfile: str) -> bool:
-
-    f_BuildCommand = [
-        'conan', 'install', '.', 
-        '--output-folder=build', 
-        '--build=missing',
-        f'--settings=build_type={fp_BuildType}'
-    ]
-
-    if fp_DesiredProfile != "default":
-        f_BuildCommand +=  [f'-pr={fp_DesiredProfile}']
-
-    try:
-        print(CreateColouredText("[INFO]: Running Conan for dependencies setup...", "green"))
-
-        run_command_with_live_output(f_BuildCommand)
-
-    except subprocess.CalledProcessError as err:
-        print(CreateColouredText(f"[ERROR]: Conan wasn't able to complete getting/building dependencies for build_type={fp_BuildType} using profile={fp_DesiredProfile}, stopping build immediately", "red"))
-        print(CreateColouredText(err.output, "yellow"))
-
-        return False
-
-    print(CreateColouredText(f"[SUCCESS]: Conan setup and dependencies installation successfully completed for {fp_BuildType} using profile={fp_DesiredProfile}", "cyan"))
-
-    return True
 
 ############# Main CMake Function #############
 
@@ -171,7 +116,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
     f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator], '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
 
     if not f_IsMultiConfig:
-        if fp_BuildType == "both":
+        if fp_BuildType == "Release and Debug":
             print(CreateColouredText("[ERROR]: Invalid build type selected: YOU CANNOT USE BOTH WHEN GENERATING FOR A SINGLE CONFIG GENERATOR", "red"))
             return False
         else:
@@ -205,13 +150,13 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
             return False
 
-        print(CreateColouredText(f"[SUCCESS]: {fp_BuildType} build completed!", "cyan"))
+        print(CreateColouredText(f"\n[SUCCESS]: {fp_BuildType} build completed!", "cyan"))
 
         return True #return immediately since we don't need to go through the --config commands for single config generators
 
     ############# Run Debug Build #############
 
-    if( fp_BuildType == "debug" or fp_BuildType == "both" ):
+    if( fp_BuildType == "Debug" or fp_BuildType == "Release and Debug" ):
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Debug...", "green"))
 
@@ -227,7 +172,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
     ############# Run Release Build #############
 
-    if( fp_BuildType == "release" or fp_BuildType == "both" ):
+    if( fp_BuildType == "Release" or fp_BuildType == "Release and Debug" ):
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Release...", "green"))
 
@@ -243,7 +188,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
     ############# Success! #############
 
-    print(CreateColouredText("[INFO]: Your CMake project should be good to go!", "green"))
+    print(CreateColouredText("\n[INFO]: Your CMake project should be good to go!", "green"))
 
     return True
 
@@ -252,11 +197,8 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 def main() -> bool:
 
     ############# Check for Required Build Tools in PATH #############
-
-    if not ensure_tool_installed("conan"): 
-        return False
     
-    elif not ensure_tool_installed("cmake"): 
+    if not ensure_tool_installed("cmake"): 
         return False
 
     ############# Setup Parser #############
@@ -264,8 +206,7 @@ def main() -> bool:
     usage_message = \
         CreateColouredText("init.py ", 'bright magenta') + \
         CreateColouredText("--[build_type: release, debug or both] ", "bright blue") + \
-        CreateColouredText("-G [desired_generator] ", "blue") + \
-        CreateColouredText("-P [desired_conan_profile]", "cyan")
+        CreateColouredText("-G [desired_generator] ", "blue")
 
     parser = argparse.ArgumentParser(
         description=CreateColouredText('Used for Building Peach-E from Source', 'bright green'), 
@@ -301,13 +242,6 @@ def main() -> bool:
     )
 
     parser.add_argument(
-        '-P', 
-        nargs=1, 
-        metavar="[conan_profile]",
-        help=CreateColouredText('Used to select a conan profile, if none is selected the build will use default', 'bright magenta')
-    )
-
-    parser.add_argument(
         '-G', 
         nargs=1,
         metavar="[generator]",
@@ -333,20 +267,26 @@ def main() -> bool:
     
     ############# Validate Build Config #############
 
-    if(not args.debug and not args.release and not args.both):
+    f_BuildType = "nothing"
+
+    if(args.debug):
+        f_BuildType = "Debug"
+
+    elif(args.release):
+        f_BuildType = "Release"
+
+    elif(args.both):
+        f_BuildType = "Release and Debug"
+
+    else:
         print(CreateColouredText("[ERROR]: No valid build type input detected, use -h or --help if you're unfamiliar", "red"))
         return False
+    
+    ############# Check for Generator #############
         
     if(not args.G):
         print(CreateColouredText("[ERROR]: YOU DIDN'T USE -G FLAG BROTHER", "red"))
         return False
-    
-    ############# Set Conan Profile #############
-
-    f_DesiredConanProfile = "default"
-
-    if(args.P):
-        f_DesiredConanProfile = args.P[0]
 
     f_DesiredGenerator = args.G[0].lower() #convert to all lower case for easier handling
 
@@ -357,54 +297,15 @@ def main() -> bool:
 
     ############# Run Build Fingers Crossed >w< #############
 
-    f_BuildType = "nothing"
-
-    if(args.debug):
-
-        if not run_conan("Debug", f_DesiredConanProfile):
+    if not run_cmake(f_BuildType, f_DesiredGenerator):
             return False
-
-        if not run_cmake("debug", f_DesiredGenerator):
-            return False
-        
-        f_BuildType = "Debug"
-
-    elif(args.release):
-
-        if not run_conan("Release", f_DesiredConanProfile): # >w>
-            return False
-
-        if not run_cmake("release", f_DesiredGenerator):
-            return False
-
-        f_BuildType = "Release"
-
-    elif(args.both):
-
-        if not run_conan("Debug", f_DesiredConanProfile):
-            return False
-
-        if not run_conan("Release", f_DesiredConanProfile):
-            return False
-        
-        if not run_cmake("both", f_DesiredGenerator):
-            return False
-
-        f_BuildType = "Release and Debug"
-
-    print(CreateColouredText("done!\n", "magenta"))
+    
+    ############# Report Build Stats #############
 
     print(CreateColouredText(f"[INFO]: Final Build Summary: \n", "bright green"))
     print(CreateColouredText(f"Generator: {f_DesiredGenerator}", "bright magenta"))
     print(CreateColouredText(f"Build Type: {f_BuildType}", "bright magenta"))
-    print(CreateColouredText(f"Conan Profile: {f_DesiredConanProfile}", "bright magenta"))
-    print(CreateColouredText(f"Platform: {platform.system()}", "bright magenta"))
-
-    #extra \n here so that in CLI it spaces nicely against the next command UwU
-    if is_conan_api_available:
-        print(CreateColouredText(f"Compiler: {get_conan_compiler(f_DesiredConanProfile)}\n", "bright magenta"))
-    else:
-        print(CreateColouredText("[INFO]: Compiler info unavailable since Conan's Python API wasn't found\n", "bright green"))
+    print(CreateColouredText(f"Platform: {platform.system()}\n", "bright magenta"))
 
     return True
 
@@ -416,6 +317,9 @@ if __name__ == "__main__":
         os.system('color') 
 
     if not main():
-        print(CreateColouredText("[ERROR]: execution of full build process was unsuccessful", "red"))
+        print(CreateColouredText("[ERROR]: execution of full build process was unsuccessful\n", "red"))
+    else:
+        print(CreateColouredText("done!\n", "magenta"))
+
 
 #Rawr OwO

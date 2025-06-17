@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef __APPLE__
+
 #include <SDL3/SDL.h>
 
 #include "OpenGLShaderProgram.h"
@@ -463,3 +465,5 @@ namespace PeachCore{
     };
 
 }
+
+#endif

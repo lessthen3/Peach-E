@@ -1,5 +1,7 @@
 #pragma once
 
+#ifndef __APPLE__
+
 ///PeachCore
 #include "../Managers/LogManager.h"
 
@@ -547,6 +549,4 @@ namespace PeachCore {
         }
     };
 }
-
-
-
+#endif

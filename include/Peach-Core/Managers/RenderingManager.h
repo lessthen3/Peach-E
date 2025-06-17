@@ -13,7 +13,10 @@
 ///PeachCore
 #include "ResourceManager.h"
 
+#ifndef __APPLE__
 #include <Rendering/OpenGLRenderer.h>
+#endif
+
 #include <Rendering/VulkanRenderer.h>
 
 #include "../Scene-Items/2D/PeachTexture2D.h"

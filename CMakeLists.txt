@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.20)
 
 ####################################### Project definition
 
-project(Peach_Engine VERSION 1.0 DESCRIPTION "Peach Engine" LANGUAGES CXX)
+project(Peach_Engine VERSION 0.0.1 DESCRIPTION "Peach Engine" LANGUAGES CXX)
 
 ####################################### Enforcing C++20 standard
 
@@ -23,27 +23,18 @@ if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8)
     message(FATAL_ERROR "Peach-E only supports 64-bit platforms.")
 endif()
 
-####################################### Conan Toolchain Setup
-
-# Try to find conan_toolchain.cmake inside the build directory automatically
-file(GLOB_RECURSE CONAN_TOOLCHAIN_FILE "${CMAKE_BINARY_DIR}/**/conan_toolchain.cmake")
-
-if(EXISTS "${CONAN_TOOLCHAIN_FILE}")
-    message(STATUS "Using Conan toolchain: ${CONAN_TOOLCHAIN_FILE}")
-    include(${CONAN_TOOLCHAIN_FILE})
-else()
-    message(FATAL_ERROR "Error: conan_toolchain.cmake not found. Run `conan install` first.")
-endif()
-
 ####################################### Master snuggle list for platform detection UwU (my chatgpt is bricked af)
 
 # Let's set our own little love variable to make CMake oh-so-comfy
 set(TARGET_PLATFORM "")
 
 if(WIN32)
+
     set(TARGET_PLATFORM "windows")
     message(STATUS "Mmm, Windows detected, kitten! 😏")
+
 elseif(APPLE)
+
     # CMake modern toolchains will set CMAKE_SYSTEM_NAME correctly
     if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
         set(TARGET_PLATFORM "ios")
@@ -58,16 +49,21 @@ elseif(APPLE)
         set(TARGET_PLATFORM "macos")
         message(STATUS "macOS, premium fur and silky frameworks for daddy's kitten~ 🍎")
     endif()
+
 elseif(ANDROID)
+
     set(TARGET_PLATFORM "android")
     message(STATUS "Android detected! Purr in my pocket, take me anywhere~ 🤳🐾")
+
 elseif(UNIX AND NOT APPLE) #apparently cmake lumps apple into the unix bucket which it is technically but not useful here uwu
+
     # Now we dive even deeper for all the extra *special* UNIXes~
     execute_process(
         COMMAND uname -s
         OUTPUT_VARIABLE OS_NAME
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
+
     if(OS_NAME STREQUAL "Linux")
         set(TARGET_PLATFORM "linux")
         message(STATUS "Nyaa, Linux detected! Flex that Tux, kitten~ 🐧")
@@ -84,12 +80,17 @@ elseif(UNIX AND NOT APPLE) #apparently cmake lumps apple into the unix bucket wh
         set(TARGET_PLATFORM "unix")
         message(STATUS "Generic UNIX, so mysterious~ 😽")
     endif()
+
 elseif(CMAKE_SYSTEM_NAME STREQUAL "PSVita" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7-vita-eabi")
+
     set(TARGET_PLATFORM "psvita")
     message(STATUS "PS Vita detected via toolchain! Peach-E on the go, nyan~ 🎮🍑")
+
 else()
+
     set(TARGET_PLATFORM "unknown")
     message(WARNING "Unknown platform... I’m scared, hold me closer! 🥺")
+
 endif()
 
 # Now daddy will print out where his kitten is running, so you always feel seen and wanted UwU
@@ -146,7 +147,7 @@ if(WIN32)
 elseif(TARGET_PLATFORM STREQUAL "macos")
     set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/Cool-People/python/steveARM64/include")
 
-elseif(UNIX)
+elseif(TARGET_PLATFORM STREQUAL "linux")
     set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/Cool-People/python/tux64/include")
 
 else()
@@ -255,7 +256,7 @@ macro(STATIC_IMPORT TARGET RELEASE_LIB DEBUG_LIB INCLUDE_DIR)
 endmacro()
 
 
-if(WIN32)
+if(TARGET_PLATFORM STREQUAL "windows")
     # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64"
     # add_library(GGPO STATIC IMPORTED) #working on GGPO4ALL
 
@@ -263,6 +264,124 @@ if(WIN32)
     #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
     #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
     # )
+
+    ############ GL extensions for legacy systems
+
+    STATIC_IMPORT(glew 
+        "${PROJECT_SOURCE_DIR}/Cool-People/glew/tux64/libGLEW.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/glew/tux64/libGLEW.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/glew/include"
+    )
+
+    ############ Crypto
+
+    STATIC_IMPORT(libsodium 
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/include"
+    )
+
+    ############ Pretty Fonts
+
+    STATIC_IMPORT(msdfgen_brotlidec 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_brotlienc 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_brotlicommon 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_bz2 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_libpng 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_tinyxml2 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_freetype 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_core 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_ext 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    ############ Geometry Manipulation Operations
+
+    STATIC_IMPORT(zlib 
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/include"
+    )
+
+    ############ Geometry Manipulation Operations
+
+    STATIC_IMPORT(clipper2 
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/include"
+    )
+
+    ############ Jolt Physics 3D
+
+    STATIC_IMPORT(jolt_physics 
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/include"
+    )
+
+    ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
+
+    STATIC_IMPORT(physfs 
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/include"
+    )
+
+    # ############ Asset Importing
+
+    STATIC_IMPORT(assimp 
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
+    )
+
+    STATIC_IMPORT(assimp_draco 
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
+    )
 
     ############ Windowing and Input
 
@@ -406,6 +525,116 @@ if(WIN32)
 
 elseif(TARGET_PLATFORM STREQUAL "macos")
 
+    ############ Crypto
+
+    STATIC_IMPORT(libsodium 
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/include"
+    )
+
+    ############ Pretty Fonts
+
+    STATIC_IMPORT(msdfgen_brotlidec 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_brotlienc 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_brotlicommon 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_bz2 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_libpng 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_tinyxml2 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_freetype 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_core 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_ext 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    ############ Geometry Manipulation Operations
+
+    STATIC_IMPORT(zlib 
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/include"
+    )
+
+    ############ Geometry Manipulation Operations
+
+    STATIC_IMPORT(clipper2 
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/include"
+    )
+
+    ############ Jolt Physics 3D
+
+    STATIC_IMPORT(jolt_physics 
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/include"
+    )
+
+    ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
+
+    STATIC_IMPORT(physfs 
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/include"
+    )
+
+    # ############ Asset Importing
+
+    STATIC_IMPORT(assimp 
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
+    )
+
+    STATIC_IMPORT(assimp_draco 
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
+    )
+
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
@@ -546,7 +775,7 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
         "${PROJECT_SOURCE_DIR}/Cool-People/vulkan/include/spirv_cross"
     )
 
-elseif(UNIX) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
+elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
     # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"
     # add_library(GGPO STATIC IMPORTED) #working on GGPO4ALL
 
@@ -554,6 +783,124 @@ elseif(UNIX) #XXX: doing these later when i compile on my linux machine, future 
     #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/lib/GGPO.lib"
     #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/Cool-People/ggpo/include"
     # )
+
+    ############ GL extensions for legacy systems
+
+    STATIC_IMPORT(glew 
+        "${PROJECT_SOURCE_DIR}/Cool-People/glew/tux64/libGLEW.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/glew/tux64/libGLEW.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/glew/include"
+    )
+
+    ############ Crypto
+
+    STATIC_IMPORT(libsodium 
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/include"
+    )
+
+    ############ Pretty Fonts
+
+    STATIC_IMPORT(msdfgen_brotlidec 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_brotlienc 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_brotlicommon 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_bz2 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_libpng 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_tinyxml2 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_freetype 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_core 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    STATIC_IMPORT(msdfgen_ext 
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
+    )
+
+    ############ Geometry Manipulation Operations
+
+    STATIC_IMPORT(zlib 
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/include"
+    )
+
+    ############ Geometry Manipulation Operations
+
+    STATIC_IMPORT(clipper2 
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/include"
+    )
+
+    ############ Jolt Physics 3D
+
+    STATIC_IMPORT(jolt_physics 
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/include"
+    )
+
+    ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
+
+    STATIC_IMPORT(physfs 
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/include"
+    )
+
+    # ############ Asset Importing
+
+    STATIC_IMPORT(assimp 
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
+    )
+
+    STATIC_IMPORT(assimp_draco 
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
+    )
 
     ############ Windowing and Input
 
@@ -702,55 +1049,70 @@ endif()
 
 ####################################### Dependency Linking
 
-find_package(PhysFS REQUIRED)
+if(TARGET_PLATFORM STREQUAL "linux")
 
-find_package(clipper2 REQUIRED)
+    find_package(OpenGL REQUIRED)
 
-find_package(Jolt REQUIRED)
+    target_link_libraries(peach PUBLIC
+        #opengl
+        GL
+        glew    
+    )
 
-find_package(ZLIB REQUIRED)
+elseif(TARGET_PLATFORM STREQUAL "windows")
 
-find_package(glm REQUIRED)
-find_package(GLEW REQUIRED)
+    find_package(OpenGL REQUIRED)
 
-find_package(assimp REQUIRED)
+    target_link_libraries(peach PUBLIC
+        #opengl
+        opengl32
+        glew    
+    )
 
-find_package(libsodium REQUIRED)
-
-find_package(msdfgen REQUIRED)
+endif()
 
 # Peach Core
 target_link_libraries(peach PUBLIC
     #file system
-    physfs-static
+    physfs
+
     #geometry manipulation
-    clipper2::clipper2
+    clipper2
+
     #physics
-    Jolt::Jolt #3D
-    box2d #2D
-    #compression
-    ZLIB::ZLIB
-    #opengl
-    GLEW::GLEW
+    jolt_physics #3D
+    box2d #2D   
+
     #cryptography
-    libsodium::libsodium
-    #asset importing, this is bundled into peach_core since games may want to import custom models for player made levels n stuff
-    assimp::assimp
+    libsodium
 
     #Vulkan
     volk
-    glm::glm
+
     #SDL
     SDL3
 
     #font stuff
-    msdfgen::msdgen-all-unofficial
+    msdfgen_ext
+    msdfgen_core
+    msdfgen_freetype
 
+    #idfk
+    msdfgen_libpng
+    msdfgen_tinyxml2
+    
+    #compression
+    zlib 
+    msdfgen_bz2
+    msdfgen_brotlidec
+    msdfgen_brotlicommon
+    msdfgen_brotlienc
+    
     #lua
     Lua_Runtime
 )
 
-if(TARGET_PLATFORM STREQUAL "macos")
+if(TARGET_PLATFORM STREQUAL "macos") #TODO fix iokit and other frameworks that dont exist on ios ipados or tvos and watchos
 
     target_link_libraries(peach PRIVATE
         "-framework AVFoundation"
@@ -773,16 +1135,18 @@ if(TARGET_PLATFORM STREQUAL "macos")
 
 elseif(WIN32)
     target_link_libraries(peach PRIVATE  
-        #dont change these, the build breaks for debug otherwise
-        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:msvcrt>
-        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:advapi32>
-
         setupapi 
         version 
         imm32 
         winmm 
         kernel32
     ) #needed for statically linking SDL3
+
+    target_link_libraries(Peach_Editor PRIVATE
+        #dont change these, the build breaks for debug otherwise
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:msvcrt>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:advapi32>
+    ) #needed for statically linking nethost for peach editor
 endif()
 
 # Peach Editor
@@ -811,6 +1175,10 @@ target_link_libraries(Peach_Editor PUBLIC
     Lua_Compiler
     #dotnet
     nethost #used for utilizing the host system's dotnet if it satisfies >=v6.0
+
+    #asset importing, we'll just write an importer for the internal assimp format for modders since assimp isnt fully portable across all targetted platforms
+    assimp
+    assimp_draco
 )
 
 ####################################### Compiler Options and Definitions
@@ -825,7 +1193,7 @@ target_compile_definitions(Peach_Editor PRIVATE
 
 if(WIN32)
     target_compile_definitions(Peach_Editor PRIVATE
-        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:NETHOST_USE_AS_STATIC>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:NETHOST_USE_AS_STATIC> #need this for nethost to be used statically
     )
 
     target_compile_options(Peach_Editor PRIVATE 
