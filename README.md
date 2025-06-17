@@ -52,7 +52,7 @@ If you want to build Peach-E for yourself:
 >[!TIP]
 >For the complete list of generators and commands run __python init.py [-h | --help]__
 
-> [!INFO]
+> [!NOTE]
 >Build output:
 -Peach_Editor (executable or bundle on MacOS)
 -Peach_Engine (executable or bundle on MacOS)
