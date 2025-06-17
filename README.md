@@ -52,16 +52,12 @@ If you want to build Peach-E for yourself:
 >[!TIP]
 >For the complete list of generators and commands run __python init.py [-h | --help]__
 
-> [!NOTE]
+> [!INFO]
 >Build output:
-
->    -Peach_Editor (executable or bundle on MacOS)
-
->    -Peach_Engine (executable or bundle on MacOS)
-
->    -peach (static core library)
-
->    -peach_api (dynamic lib for API linking w/ C#)
+-Peach_Editor (executable or bundle on MacOS)
+-Peach_Engine (executable or bundle on MacOS)
+-peach (static core library)
+-peach_api (dynamic lib for API linking w/ C#)
 
 ## Why Another Game Engine
 
