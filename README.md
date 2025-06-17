@@ -1,7 +1,7 @@
 # Peach-E
 Peach-E is a modern, cross-platform, open source 2D/3D game engine built with C++20 and licensed under the permissive MIT License. 
 
-Peach-E is—and always will be—100% free. No stupid fucking licensing garbage, no royalties—built, no hidden fees. Built by a game developer, for game developers of any skill level.
+Peach-E is—and always will be—100% free. No stupid fucking licensing garbage, no royalties, no hidden fees. Built by a game developer, for game developers of any skill level.
 
 Currently you can target Windows(x86_64), MacOS(ARM64) and Linux(x86_64). Support for FreeBSD, Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, and PS Vita is in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
 
@@ -55,19 +55,19 @@ If you want to build Peach-E for yourself:
 > [!NOTE]
 >Build output:
 
-    -Peach_Editor (executable or bundle on MacOS)
+>    -Peach_Editor (executable or bundle on MacOS)
 
-    -Peach_Engine (executable or bundle on MacOS)
+>    -Peach_Engine (executable or bundle on MacOS)
 
-    -peach (static core library)
+>    -peach (static core library)
 
-    -peach_api (dynamic lib for API linking w/ C#)
+>    -peach_api (dynamic lib for API linking w/ C#)
 
 ## Why Another Game Engine
 
 Because I wanted to make one... also none of the existing ones hit the sweet spot for me.
 
-Also I'm not a huge fan of whats on the market currently. Unity was alright... but the whole TOS drama really turned me off the engine, and __I really just don't trust Unity as a company anymore.__
+Unity was alright... but the whole TOS drama really turned me off the engine, and __I really just don't trust Unity as a company anymore.__
 
 Unreal Engine feels like a mess to use, and I don't want to touch Blueprints. I like visual scripting, but the Unreal Engine implementation leaves a lot to be desired in my opinion. Also the lack of official scripting language support is a massive L. I like C++ and that's why I'm using it to build Peach-E—but using it to write an entire game? Way overkill and unnecessary for most use cases. Scripting languages offer better development velocity and experience(ily lua).
 
