@@ -4,6 +4,7 @@ import argparse
 import platform
 import shutil
 import sys
+import zipfile
 
 from shutil import which
 
@@ -56,7 +57,9 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
         cwd=fp_WorkingDirectory,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
-        universal_newlines=True
+        universal_newlines=True,
+        encoding="utf-8", 
+        errors="replace"  
     )
 
     f_OutputLines = []
@@ -295,6 +298,47 @@ def main() -> bool:
     if args.clean:
         shutil.rmtree('build', ignore_errors=True)
 
+    ############# Detect Platform #############
+
+    f_CurrentPlatform = platform.system()
+
+    ############# Get Current Working Directory #############
+
+    f_BaseDir = os.getcwd()
+
+    ############# Decompress archives with large libs #############
+
+    if(f_CurrentPlatform == "Windows"): #only needed for windows so far since the lib sizes are ridiculous
+
+        os.chdir(f_BaseDir + "/Cool-People/assimp/win64")
+
+        if not os.path.isdir(f_BaseDir + "/Cool-People/assimp/win64/release"): #only decompress if it doesnt exist
+
+            print(CreateColouredText(f"[INFO]: Unzipping assimp release libs", "bright green"))
+
+            with zipfile.ZipFile("release.zip", "r") as zip_ref:
+                zip_ref.extractall("./")  # unzips release libs for assimp
+
+        if not os.path.isdir(f_BaseDir + "/Cool-People/assimp/win64/debug"):
+                        
+            print(CreateColouredText(f"[INFO]: Unzipping assimp debug libs", "bright green"))
+
+            with zipfile.ZipFile("debug.zip", "r") as zip_ref:
+                zip_ref.extractall("./")  # unzips debug libs for assimp
+
+        os.chdir(f_BaseDir + "/Cool-People/vulkan/win64")
+        
+        if not os.path.isdir(f_BaseDir + "/Cool-People/vulkan/win64/debug"):
+
+            print(CreateColouredText(f"[INFO]: Unzipping vulkan debug libs", "bright green"))
+            
+            with zipfile.ZipFile("debug.zip", "r") as zip_ref:
+                zip_ref.extractall("./")  # unzips debug libs for vulkan
+        
+        os.chdir(f_BaseDir) #return back to base peach e directory
+
+
+
     ############# Run Build Fingers Crossed >w< #############
 
     if not run_cmake(f_BuildType, f_DesiredGenerator):
@@ -305,7 +349,7 @@ def main() -> bool:
     print(CreateColouredText(f"[INFO]: Final Build Summary: \n", "bright green"))
     print(CreateColouredText(f"Generator: {f_DesiredGenerator}", "bright magenta"))
     print(CreateColouredText(f"Build Type: {f_BuildType}", "bright magenta"))
-    print(CreateColouredText(f"Platform: {platform.system()}\n", "bright magenta"))
+    print(CreateColouredText(f"Platform: {f_CurrentPlatform}\n", "bright magenta"))
 
     return True
 

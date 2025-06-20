@@ -268,134 +268,104 @@ if(TARGET_PLATFORM STREQUAL "windows")
     ############ GL extensions for legacy systems
 
     STATIC_IMPORT(glew 
-        "${PROJECT_SOURCE_DIR}/Cool-People/glew/tux64/libGLEW.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/glew/tux64/libGLEW.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/glew/win64/release/libglew32.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/glew/win64/debug/libglew32d.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/glew/include"
     )
 
     ############ Crypto
 
     STATIC_IMPORT(libsodium 
-        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/win64/release/libsodium.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/win64/debug/libsodium.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/include"
     )
 
     ############ Pretty Fonts
 
-    STATIC_IMPORT(msdfgen_brotlidec 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_brotlienc 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_brotlicommon 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_bz2 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
     STATIC_IMPORT(msdfgen_libpng 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_tinyxml2 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/win64/release/libpng16_static.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/win64/debug/libpng16_staticd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_freetype 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/win64/release/freetype.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/win64/debug/freetyped.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_core 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/win64/release/msdfgen-core.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/win64/debug/msdfgen-core.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_ext 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/win64/release/msdfgen-ext.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/win64/debug/msdfgen-ext.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(zlib 
-        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/include"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/win64/release/zlibstatic.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/win64/debug/zlibstaticd.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/win64/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(clipper2 
-        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/win64/release/Clipper2.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/win64/debug/Clipper2.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/include"
     )
 
     ############ Jolt Physics 3D
 
     STATIC_IMPORT(jolt_physics 
-        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/win64/release/Jolt.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/win64/debug/Jolt.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/include"
     )
 
     ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
 
     STATIC_IMPORT(physfs 
-        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/win64/release/physfs-static.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/win64/debug/physfs-static.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/physfs/include"
     )
 
     # ############ Asset Importing
 
     STATIC_IMPORT(assimp 
-        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/win64/release/assimp-vc143-mt.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/win64/debug/assimp-vc143-mtd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
     )
 
     STATIC_IMPORT(assimp_draco 
-        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/win64/release/draco.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/win64/debug/dracod.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
     )
 
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/win64/SDL3-static.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/win64/SDL3-static.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/win64/release/SDL3-static.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/win64/debug/SDL3-static.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/SDL3/include"
     )
 
     ############ 2D physics
 
     STATIC_IMPORT(box2d 
-        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/win64/release/box2d.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/box2d/win64/debug/box2dd.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/box2d/include"
     )
 
@@ -403,21 +373,21 @@ if(TARGET_PLATFORM STREQUAL "windows")
 
     STATIC_IMPORT(Lua_Compiler 
         "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64/release/lua_compiler.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64lua/debug/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64/debug/lua_compiler.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
         "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64/release/lua_runtime.lib"
-        "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64/debug/liblua_runtime.lib"
+        "${PROJECT_SOURCE_DIR}/Cool-People/lua/win64/debug/lua_runtime.lib"
         "${PROJECT_SOURCE_DIR}/Cool-People/lua/include"
     )
 
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
-        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/win64/libnethost.lib" #juicy static linkage UwU
-        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/win64/nethost.lib" #debug dll
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/win64/release/libnethost.lib" #juicy static linkage UwU
+        "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/win64/debug/nethost.lib" #debug dll
         "${PROJECT_SOURCE_DIR}/Cool-People/dotnet/include"
     )
 
@@ -528,46 +498,16 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
     ############ Crypto
 
     STATIC_IMPORT(libsodium 
-        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/steveARM64/libsodium.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/include"
     )
 
     ############ Pretty Fonts
 
-    STATIC_IMPORT(msdfgen_brotlidec 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_brotlienc 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_brotlicommon 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_bz2 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
     STATIC_IMPORT(msdfgen_libpng 
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_tinyxml2 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
@@ -802,39 +742,9 @@ elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile 
 
     ############ Pretty Fonts
 
-    STATIC_IMPORT(msdfgen_brotlidec 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlidec.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_brotlienc 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlienc.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_brotlicommon 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbrotlicommon.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_bz2 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libbz2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
     STATIC_IMPORT(msdfgen_libpng 
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
-    )
-
-    STATIC_IMPORT(msdfgen_tinyxml2 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libtinyxml2.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
@@ -861,7 +771,7 @@ elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile 
     STATIC_IMPORT(zlib 
         "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/include"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/include"
     )
 
     ############ Geometry Manipulation Operations
@@ -1096,17 +1006,10 @@ target_link_libraries(peach PUBLIC
     msdfgen_ext
     msdfgen_core
     msdfgen_freetype
-
-    #idfk
     msdfgen_libpng
-    msdfgen_tinyxml2
-    
+
     #compression
     zlib 
-    msdfgen_bz2
-    msdfgen_brotlidec
-    msdfgen_brotlicommon
-    msdfgen_brotlienc
     
     #lua
     Lua_Runtime
@@ -1140,6 +1043,8 @@ elseif(WIN32)
         imm32 
         winmm 
         kernel32
+
+        $<$<CONFIG:Debug>:msvcrtd> #needed for MTd builds using box2d, physfs and SDL
     ) #needed for statically linking SDL3
 
     target_link_libraries(Peach_Editor PRIVATE
@@ -1195,26 +1100,29 @@ if(WIN32)
     target_compile_definitions(Peach_Editor PRIVATE
         $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:NETHOST_USE_AS_STATIC> #need this for nethost to be used statically
     )
-
-    target_compile_options(Peach_Editor PRIVATE 
-        $<$<CONFIG:Debug>:/MDd> 
-        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+    target_compile_definitions(peach PUBLIC
+        SODIUM_STATIC #needed for statically linking libsodium
+        GLEW_STATIC #needed for statically linking glew
     )
 
-    target_compile_options(${PROJECT_NAME} PRIVATE 
-        $<$<CONFIG:Debug>:/MDd> 
-        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
-    )
-
-    target_compile_options(peach PRIVATE 
-        $<$<CONFIG:Debug>:/MDd> 
-        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
-    )
-
-    target_compile_options(peach_api PRIVATE 
-        $<$<CONFIG:Debug>:/MDd> 
-        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
-    )
+    if(MSVC)
+        target_compile_options(peach PRIVATE
+            $<$<CONFIG:Debug>:/MTd>
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+        ) 
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:Debug>:/MTd>
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+        ) 
+        target_compile_options(Peach_Editor PRIVATE
+            $<$<CONFIG:Debug>:/MTd>
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+        ) 
+        target_compile_options(peach_api PRIVATE
+            $<$<CONFIG:Debug>:/MTd>
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+        ) 
+    endif()
 
 endif()
 
@@ -1239,7 +1147,7 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Peach_Editor)
     message(STATUS "Setting Peach_Editor as the default startup project for VS2022")
     
-    set(NETHOST_DLL_PATH "$<SHELL_PATH:${CMAKE_SOURCE_DIR}/res/script_runtimes/win64/dotnet>")
+    set(NETHOST_DLL_PATH "$<SHELL_PATH:${CMAKE_SOURCE_DIR}/Cool-People/dotnet/win64/debug>")
 
     set_property(TARGET Peach_Editor PROPERTY VS_DEBUGGER_ENVIRONMENT 
         "$<$<CONFIG:Debug>:PATH=${NETHOST_DLL_PATH};%PATH%>"

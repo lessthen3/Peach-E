@@ -13,6 +13,26 @@
 
 #include <csignal>
 
+#include <msdfgen/msdfgen.h>
+#include <msdfgen/msdfgen-ext.h>
+
+#include <zlib.h>
+
+#include <Jolt/Jolt.h>
+#include <Jolt/Core/Factory.h>
+#include <Jolt/RegisterTypes.h>
+
+#include "clipper2/clipper.h"
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+#include <sodium.h>
+
+
+using namespace Clipper2Lib;
+
 static void 
     SegFaultHandler(int fp_Signal) //primitive segfault handler
 {
@@ -31,6 +51,36 @@ static inline constexpr void
             (*fp_String)[i] = fp_NewChar;
         }
     }
+}
+
+inline Path64 MakeStar(const Point64& center, int radius, int points)
+{
+    if (!(points % 2)) --points;
+    if (points < 5) points = 5;
+    Path64 tmp = Ellipse<int64_t>(center, radius, radius, points);
+    Path64 result;
+    result.reserve(points);
+    result.push_back(tmp[0]);
+    for (int i = points - 1, j = i / 2; j;)
+    {
+        result.push_back(tmp[j--]);
+        result.push_back(tmp[i--]);
+    }
+    return result;
+}
+
+void DoSimpleTest(bool show_solution_coords)
+{
+    Paths64 tmp, solution;
+    FillRule fr = FillRule::NonZero;
+
+    Paths64 subject, clip;
+    subject.push_back(MakeStar(Point64(225, 225), 220, 9));
+    clip.push_back(Ellipse<int64_t>(Point64(225, 225), 150, 150));
+
+    //Intersect both shapes and then 'inflate' result -10 (ie deflate)
+    solution = Intersect(subject, clip, fr);
+    solution = InflatePaths(solution, -10, JoinType::Round, EndType::Polygon);
 }
 
 //////////////////////////////////////////////
@@ -65,7 +115,44 @@ int
 
     //itll just leave the string unaffected for good OS' like linux or linux im not gonna say mac beacuse that shit fucking sucks
     ReplaceChar(&mf_PeachERootPath, '\\', '/'); //XXX: used to relace stupid windows shit
-    
+
+    //////////////// TESTING
+
+    printf("************* Testing libsodium ***************\n");
+
+    msdfgen::FreetypeHandle* ft = msdfgen::initializeFreetype();
+    if (ft) {
+        std::cout << "Test" << std::endl; // This should be printed
+    }
+
+    printf("ZLIB VERSION: %s\n", zlibVersion());
+
+    JPH::RegisterDefaultAllocator();
+    auto factory = JPH::Factory();
+    JPH::UnregisterTypes();
+       
+
+    DoSimpleTest(false);
+
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(mf_PeachERootPath + "/res/models/cube.obj",
+        aiProcess_CalcTangentSpace |
+        aiProcess_Triangulate |
+        aiProcess_JoinIdenticalVertices |
+        aiProcess_SortByPType);
+
+    if (!scene) {
+        return 1;
+    }
+
+    if (sodium_init() == -1) {
+        printf("\tFAIL\n");
+        return 1;
+    }
+    printf("\tOK\n");
+
+    printf("***********************************************\n");
+
     ////////////////////////////////////////////////
     // Setup Environment
     ////////////////////////////////////////////////
