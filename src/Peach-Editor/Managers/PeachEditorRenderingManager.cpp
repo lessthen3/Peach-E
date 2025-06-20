@@ -252,10 +252,10 @@ namespace PeachEditor {
             }
             if (pm_GameInstanceWindow and f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
             {
-                if (f_Event.window.windowID == SDL_GetWindowID(pm_GameInstanceWindow))
-                {
-                    DestroyCurrentScene();
-                }
+                // if (f_Event.window.windowID == SDL_GetWindowID(pm_GameInstanceWindow))
+                // {
+                //     DestroyCurrentScene();
+                // }
             }
         }
     }
@@ -690,121 +690,129 @@ namespace PeachEditor {
         //nk_end(pm_NuklearCtx);
     }
 
-    void 
-        PeachEditorRenderingManager::RunCurrentScene()
-    {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glClearColor(0.10f, 0.18f, 0.24f, 1.0f);
-
-        auto engine_renderer = &PeachCore::RenderingManager::get_single();
-
-        glm::mat4 mf_Transform = glm::mat4(1.0f);
-
-        int t_CurrentWindowWidth, t_CurrentWindowHeight;
-
-        SDL_GetWindowSizeInPixels(pm_GameInstanceWindow, &t_CurrentWindowWidth, &t_CurrentWindowHeight);
-        glViewport(0, 0, t_CurrentWindowWidth, t_CurrentWindowHeight);
-
-        //nk_colorf f_Temp = pm_BackgroundColour;
-        //glm::vec4 f_Colour = { f_Temp.r, f_Temp.g, f_Temp.b, f_Temp.a };
-
-        mf_Transform = glm::rotate(mf_Transform, static_cast<float>(static_cast<int>(SDL_GetTicks()) % 10000) * 0.00001f, glm::vec3(0.0, 0.0, 1.0));
-
-        glUseProgram(pm_CatShader.GetProgramID());
-
-        //pm_CatShader.SetUniform("colourUniform", f_Colour);
-        pm_CatShader.SetUniform("transform", mf_Transform);
-
-        glUseProgram(0);
-
-        engine_renderer->GetOpenGLRenderer()->DrawTexture(pm_CatShader, pm_TestVAO, pm_TestTexture);
-
-        SDL_GL_SwapWindow(pm_GameInstanceWindow);
-    }
-
-    void
-        PeachEditorRenderingManager::CreateCurrentScene()
-    {
-        // Run the game in a new window
-        auto engine_renderer = &PeachCore::RenderingManager::get_single();
-
-        if (m_IsSceneCurrentlyRunning)
+    #ifndef __APPLE__
+        void 
+            PeachEditorRenderingManager::RunCurrentScene()
         {
-            return;
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glClearColor(0.10f, 0.18f, 0.24f, 1.0f);
+
+            auto engine_renderer = &PeachCore::RenderingManager::get_single();
+
+            glm::mat4 mf_Transform = glm::mat4(1.0f);
+
+            int t_CurrentWindowWidth, t_CurrentWindowHeight;
+
+            SDL_GetWindowSizeInPixels(pm_GameInstanceWindow, &t_CurrentWindowWidth, &t_CurrentWindowHeight);
+            glViewport(0, 0, t_CurrentWindowWidth, t_CurrentWindowHeight);
+
+            //nk_colorf f_Temp = pm_BackgroundColour;
+            //glm::vec4 f_Colour = { f_Temp.r, f_Temp.g, f_Temp.b, f_Temp.a };
+
+            mf_Transform = glm::rotate(mf_Transform, static_cast<float>(static_cast<int>(SDL_GetTicks()) % 10000) * 0.00001f, glm::vec3(0.0, 0.0, 1.0));
+
+            glUseProgram(pm_CatShader.GetProgramID());
+
+            //pm_CatShader.SetUniform("colourUniform", f_Colour);
+            pm_CatShader.SetUniform("transform", mf_Transform);
+
+            glUseProgram(0);
+
+            engine_renderer->GetOpenGLRenderer()->DrawTexture(pm_CatShader, pm_TestVAO, pm_TestTexture);
+
+            SDL_GL_SwapWindow(pm_GameInstanceWindow);
         }
 
-        if (not engine_renderer->CreateSDLWindow(&pm_GameInstanceWindow, PeachCore::RendererType::OpenGL, "Peach Game", 800, 600))
+        void
+            PeachEditorRenderingManager::CreateCurrentScene()
         {
-            //idk do smth idc rn
+            // Run the game in a new window
+            auto engine_renderer = &PeachCore::RenderingManager::get_single();
+
+            if (m_IsSceneCurrentlyRunning)
+            {
+                return;
+            }
+
+            if (not engine_renderer->CreateSDLWindow(&pm_GameInstanceWindow, PeachCore::RendererType::OpenGL, "Peach Game", 800, 600))
+            {
+                //idk do smth idc rn
+            }
+
+            //pm_GameInstanceRenderer = make_unique<PeachCore::PeachRenderer>(pm_GameInstanceWindow, engine_renderer->rendering_logger);
+
+            ////////////////////////////////////////////////
+            // Generate Buffers
+            ////////////////////////////////////////////////
+
+            vector<float> vertices =
+            {
+                // positions             // texture coords
+                0.5f,  0.5f, 0.0f,   1.0f, 1.0f,   // top right
+                0.5f, -0.5f, 0.0f,   1.0f, 0.0f,   // bottom right
+                -0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
+                -0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
+            };
+
+            vector<unsigned int> indices =
+            {  // note that we start from 0!
+                0, 1, 3,   // first triangle
+                1, 2, 3    // second triangle
+            };
+
+            pm_TestVAO = engine_renderer->GetOpenGLRenderer()->Generate2DBuffers(vertices, indices);
+
+            ////////////////////////////////////////////////
+            // Shaders
+            ////////////////////////////////////////////////
+
+            //XXX: NEED TO NUKE THIS NOT THREAD SAFE ONLY USED HERE FOR NOW SINCE EVERYTHING RUNS ON A SINGLE THREAD ATM
+            string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
+
+            pm_CatShader =  //what a dumb fucking language, "oh yeah bro use RAII but also we create 2 copies of a value so the destructor fucks ur RAII up srry its in the standard >w<"
+            
+                PeachCore::OpenGLShaderProgram
+                (
+                    "Cat_Shader",
+                    f_BaseDir + "/shaders/vert.vs",
+                    f_BaseDir + "/shaders/frag.fs",
+                    engine_renderer->rendering_logger.get()
+                )
+            ;
+
+            ////////////////////////////////////////////////
+            // Loading and Registering Texture
+            ////////////////////////////////////////////////
+
+            string f_TexturePath = f_BaseDir + "/First Texture.png";
+            stbi_set_flip_vertically_on_load(true);
+
+            int width, height, nrChannels;
+            unsigned char* data = stbi_load(f_TexturePath.c_str(), &width, &height, &nrChannels, 0);
+
+            pm_TestTexture = engine_renderer->GetOpenGLRenderer()->RegisterTexture("Texture", data, width, height, nrChannels);
+
+            m_IsSceneCurrentlyRunning = true;
         }
 
-        //pm_GameInstanceRenderer = make_unique<PeachCore::PeachRenderer>(pm_GameInstanceWindow, engine_renderer->rendering_logger);
-
-        ////////////////////////////////////////////////
-        // Generate Buffers
-        ////////////////////////////////////////////////
-
-        vector<float> vertices =
+        void
+            PeachEditorRenderingManager::DestroyCurrentScene()
         {
-            // positions             // texture coords
-            0.5f,  0.5f, 0.0f,   1.0f, 1.0f,   // top right
-            0.5f, -0.5f, 0.0f,   1.0f, 0.0f,   // bottom right
-            -0.5f, -0.5f, 0.0f,   0.0f, 0.0f,   // bottom left
-            -0.5f,  0.5f, 0.0f,   0.0f, 1.0f    // top left 
-        };
+            auto engine_renderer = &PeachCore::RenderingManager::get_single();
+            //this used to create a bug but doesnt anymore for some reason lmfao
+            //engine_renderer->DestroyPeachRenderer(); //IMPORTANT THIS BREAKS THE PROGRAM ITS A THREADING BUG
+            //WE BEED TO SYNCHRONIZE THREADS, CLEANUP RESOURCES IN APPROPRIATE ORDER THEN EXIT MAIN FUNCTION OWO
+            SDL_DestroyWindow(pm_GameInstanceWindow);
+            SetGameInstanceWindow(nullptr);
+            m_IsSceneCurrentlyRunning = false;
+        }
 
-        vector<unsigned int> indices =
-        {  // note that we start from 0!
-            0, 1, 3,   // first triangle
-            1, 2, 3    // second triangle
-        };
-
-        pm_TestVAO = engine_renderer->GetOpenGLRenderer()->Generate2DBuffers(vertices, indices);
-
-        ////////////////////////////////////////////////
-        // Shaders
-        ////////////////////////////////////////////////
-
-        //XXX: NEED TO NUKE THIS NOT THREAD SAFE ONLY USED HERE FOR NOW SINCE EVERYTHING RUNS ON A SINGLE THREAD ATM
-        string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
-
-        pm_CatShader =  //what a dumb fucking language, "oh yeah bro use RAII but also we create 2 copies of a value so the destructor fucks ur RAII up srry its in the standard >w<"
-        
-            PeachCore::OpenGLShaderProgram
-            (
-                "Cat_Shader",
-                f_BaseDir + "/shaders/vert.vs",
-                f_BaseDir + "/shaders/frag.fs",
-                engine_renderer->rendering_logger.get()
-            )
-        ;
-
-        ////////////////////////////////////////////////
-        // Loading and Registering Texture
-        ////////////////////////////////////////////////
-
-        string f_TexturePath = f_BaseDir + "/First Texture.png";
-        stbi_set_flip_vertically_on_load(true);
-
-        int width, height, nrChannels;
-        unsigned char* data = stbi_load(f_TexturePath.c_str(), &width, &height, &nrChannels, 0);
-
-        pm_TestTexture = engine_renderer->GetOpenGLRenderer()->RegisterTexture("Texture", data, width, height, nrChannels);
-
-        m_IsSceneCurrentlyRunning = true;
-    }
-
-    void
-        PeachEditorRenderingManager::DestroyCurrentScene()
-    {
-        auto engine_renderer = &PeachCore::RenderingManager::get_single();
-        //this used to create a bug but doesnt anymore for some reason lmfao
-        //engine_renderer->DestroyPeachRenderer(); //IMPORTANT THIS BREAKS THE PROGRAM ITS A THREADING BUG
-        //WE BEED TO SYNCHRONIZE THREADS, CLEANUP RESOURCES IN APPROPRIATE ORDER THEN EXIT MAIN FUNCTION OWO
-        SDL_DestroyWindow(pm_GameInstanceWindow);
-        SetGameInstanceWindow(nullptr);
-        m_IsSceneCurrentlyRunning = false;
-    }
+        PeachCore::Viewport*
+            PeachEditorRenderingManager::GetViewport()
+        {
+            return &pm_Viewport;
+        }
+    #endif
 
     void 
         PeachEditorRenderingManager::CreateSceneTreeViewPanel()
@@ -824,12 +832,6 @@ namespace PeachEditor {
         PeachEditorRenderingManager::GetMainWindow()
     {
         return pm_MainWindow;
-    }
-
-    PeachCore::Viewport*
-        PeachEditorRenderingManager::GetViewport()
-    {
-        return &pm_Viewport;
     }
 
     bool 

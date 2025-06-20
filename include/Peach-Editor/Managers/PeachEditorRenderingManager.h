@@ -69,15 +69,17 @@ namespace PeachEditor {
         SDL_Window* pm_MainWindow = nullptr;
 
         shared_ptr<PeachCore::LogManager> rendering_logger = nullptr;
-
-        PeachCore::Viewport pm_Viewport;
-
         SDL_Window* pm_GameInstanceWindow = nullptr;
-        //unique_ptr<PeachCore::PeachRenderer> pm_GameInstanceRenderer = nullptr;
 
-        GLuint pm_TestTexture = 69;
-        GLuint pm_TestVAO = 69;
-        PeachCore::OpenGLShaderProgram pm_CatShader; //>w<
+        #ifndef __APPLE__
+            PeachCore::Viewport pm_Viewport;
+
+            //unique_ptr<PeachCore::PeachRenderer> pm_GameInstanceRenderer = nullptr;
+
+            GLuint pm_TestTexture = 69;
+            GLuint pm_TestVAO = 69;
+            PeachCore::OpenGLShaderProgram pm_CatShader; //>w<
+        #endif
 
         const glm::vec4 pm_ClearColour = { 0.10f, 0.18f, 0.24f, 1.0f };
 
@@ -143,8 +145,11 @@ namespace PeachEditor {
         SDL_Window*&
             GetMainWindow();
 
-        PeachCore::Viewport*
-            GetViewport();
+        #ifndef __APPLE__
+
+            PeachCore::Viewport*
+                GetViewport();
+        #endif
 
         //WIP NOT SURE IF I SHOULD HAVE THIS BUT WHATEVER I NEED IT FOR TESTING W THE CURRENT THREAD SETUP UWU
         //shared_ptr<PC::LogManager>

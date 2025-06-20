@@ -1,12 +1,12 @@
 /*******************************************************************
- *                                             Peach-E v0.0.1
- *                           Created by Ranyodh Mandur - 🍑 2024
+ *                        Peach-E v0.0.1
+ *              Created by Ranyodh Mandur - 🍑 2024
  *
- *                         Licensed under the MIT License (MIT).
- *                  For more details, see the LICENSE file or visit:
- *                        https://opensource.org/licenses/MIT
+ *              Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:         
+ *               https://opensource.org/licenses/MIT
  *
- *                     Peach-E is a free open source game engine
+ *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "../../include/Peach-Core/Managers/RenderingManager.h"
 /*
@@ -20,22 +20,26 @@ namespace PeachCore {
 
     RenderingManager::~RenderingManager() 
     {
-        if (pm_OpenGLRenderer)
-        {
-            pm_OpenGLRenderer.reset(nullptr);
-        }
+        #ifndef __APPLE__
+            if (pm_OpenGLRenderer)
+            {
+                pm_OpenGLRenderer.reset(nullptr);
+            }
+        #endif
     }
 
     void 
         RenderingManager::Shutdown()
     {
-        if (pm_OpenGLRenderer)
-        {
-            //SDL_DestroyWindow(pm_MainWindow);
+        #ifndef __APPLE__
+            if (pm_OpenGLRenderer)
+            {
+                //SDL_DestroyWindow(pm_MainWindow);
 
-            ////delete pm_MainWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
-            //pm_MainWindow = nullptr;
-        }
+                ////delete pm_MainWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
+                //pm_MainWindow = nullptr;
+            }
+        #endif
     }
 
     bool 
@@ -72,7 +76,16 @@ namespace PeachCore {
 
         //////////////////// Initialize Rendering Backend ////////////////////
 
-        if(fp_DesiredRenderer == RendererType::OpenGL)
+        if (fp_DesiredRenderer == RendererType::Vulkan)
+        {
+            if (not InitializeVulkan())
+            {
+                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                exit(FAILED_TO_INITIALIZE_VULKAN);
+            }
+        }
+        #ifndef __APPLE__
+        else if(fp_DesiredRenderer == RendererType::OpenGL)
         {
             if (not InitializeOpenGL())
             {
@@ -80,13 +93,10 @@ namespace PeachCore {
                 exit(FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
             }
         }
-        else if (fp_DesiredRenderer == RendererType::Vulkan)
+        #endif
+        else
         {
-            if (not InitializeVulkan())
-            {
-                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
-                exit(FAILED_TO_INITIALIZE_VULKAN);
-            }
+            rendering_logger->PEACH_LOG("Invalid rendering backend was selected, RenderingManager was not able to initialize properly", "RenderingManager", LogManager::LogLevel::Fatal);
         }
 
         pm_IsInitialized = true;
@@ -142,33 +152,6 @@ namespace PeachCore {
         }
 
         return true;
-    }
-
-    bool
-        RenderingManager::CreateOpenGLRenderer
-        (
-            SDL_Window* fp_Window
-        )
-    {
-        if (not fp_Window)
-        {
-            rendering_logger->PEACH_LOG("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager", LogManager::LogLevel::Warning);
-            return false;
-        }
-
-        if (pm_OpenGLRenderer.get())
-        {
-            pm_OpenGLRenderer.reset(nullptr);
-        }
-
-        pm_OpenGLRenderer = make_unique<OpenGLRenderer>(fp_Window, rendering_logger);
-        return true;
-    }
-
-    void
-        RenderingManager::DestroyOpenGLRenderer()
-    {
-        pm_OpenGLRenderer.reset(nullptr);
     }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
@@ -227,38 +210,73 @@ namespace PeachCore {
         return pm_DrawCommandQueue;
     }
 
-    bool
-        RenderingManager::InitializeOpenGL()
-    {
-        if (pm_IsInitialized)
+    #ifndef __APPLE__
+        bool
+            RenderingManager::CreateOpenGLRenderer
+            (
+                SDL_Window* fp_Window
+            )
         {
-            rendering_logger->PEACH_LOG("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager", LogManager::LogLevel::Warning);
-            return false;
+            if (not fp_Window)
+            {
+                rendering_logger->PEACH_LOG("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager", LogManager::LogLevel::Warning);
+                return false;
+            }
+
+            if (pm_OpenGLRenderer.get())
+            {
+                pm_OpenGLRenderer.reset(nullptr);
+            }
+
+            pm_OpenGLRenderer = make_unique<OpenGLRenderer>(fp_Window, rendering_logger);
+            return true;
         }
 
-        if (not CreateSDLWindow(&pm_MainWindow, RendererType::OpenGL, "Peach Window", 800, 600))
+        void
+            RenderingManager::DestroyOpenGLRenderer()
         {
-            rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
-            exit(FAILED_TO_CREATE_MAIN_WINDOW);
+            pm_OpenGLRenderer.reset(nullptr);
         }
 
-        rendering_logger->PEACH_LOG("main SDL window successfully created", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
-
-        pm_OpenGLRenderer = make_unique<OpenGLRenderer>(pm_MainWindow, rendering_logger, true);
-
-        if (glewInit() != GLEW_OK)
+        bool
+            RenderingManager::InitializeOpenGL()
         {
-            rendering_logger->PEACH_LOG("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager", LogManager::LogLevel::Fatal);
-            SDL_DestroyWindow(pm_OpenGLRenderer->GetMainWindow());
-            return false;
+            if (pm_IsInitialized)
+            {
+                rendering_logger->PEACH_LOG("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager", LogManager::LogLevel::Warning);
+                return false;
+            }
+
+            if (not CreateSDLWindow(&pm_MainWindow, RendererType::OpenGL, "Peach Window", 800, 600))
+            {
+                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+                exit(FAILED_TO_CREATE_MAIN_WINDOW);
+            }
+
+            rendering_logger->PEACH_LOG("main SDL window successfully created", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
+
+            pm_OpenGLRenderer = make_unique<OpenGLRenderer>(pm_MainWindow, rendering_logger, true);
+
+            if (glewInit() != GLEW_OK)
+            {
+                rendering_logger->PEACH_LOG("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager", LogManager::LogLevel::Fatal);
+                SDL_DestroyWindow(pm_OpenGLRenderer->GetMainWindow());
+                return false;
+            }
+
+            rendering_logger->PEACH_LOG("GLEW initialized properly", "RenderingManager", LogManager::LogLevel::Debug);
+
+            rendering_logger->PEACH_LOG("Peach Editor successfully initialized OpenGL", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
+
+            return true;
         }
 
-        rendering_logger->PEACH_LOG("GLEW initialized properly", "RenderingManager", LogManager::LogLevel::Debug);
-
-        rendering_logger->PEACH_LOG("Peach Editor successfully initialized OpenGL", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
-
-        return true;
-    }
+        [[nodiscard]] OpenGLRenderer*
+            RenderingManager::GetOpenGLRenderer()
+        {
+            return pm_OpenGLRenderer.get();
+        }
+    #endif
 
     bool
         RenderingManager::InitializeVulkan()
@@ -327,12 +345,12 @@ namespace PeachCore {
             rendering_logger->PEACH_LOG("Please initialize RenderingManager before trying to render anything!", "RenderingManager", LogManager::LogLevel::Warning);
             return;
         }
-
-        if (not pm_OpenGLRenderer->GetMainWindow())
-        {
-            rendering_logger->PEACH_LOG("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager", LogManager::LogLevel::Warning);
-            return;
-        }
+        //WARNING ARTIFACT FROM WHEN OPENGL WAS THE ONLY SUPPORTED RENDERER
+        // if (not pm_OpenGLRenderer->GetMainWindow())
+        // {
+        //     rendering_logger->PEACH_LOG("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager", LogManager::LogLevel::Warning);
+        //     return;
+        // }
 
         //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
@@ -462,12 +480,6 @@ namespace PeachCore {
         RenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
     {
         pm_FrameRateLimit = fp_Limit;
-    }
-
-    [[nodiscard]] OpenGLRenderer*
-        RenderingManager::GetOpenGLRenderer()
-    {
-        return pm_OpenGLRenderer.get();
     }
 
     [[nodiscard]] VulkanRenderer*

@@ -1,5 +1,7 @@
 #include "../../../include/Peach-Core/Rendering/OpenGLRenderer.h"
 
+#ifndef __APPLE__
+
 namespace PeachCore {
 
     void
@@ -236,3 +238,5 @@ namespace PeachCore {
         return true;
     }
 }
+
+#endif

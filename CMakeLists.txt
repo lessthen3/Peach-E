@@ -499,79 +499,79 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
 
     STATIC_IMPORT(libsodium 
         "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/steveARM64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/steveARM64/libsodium.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/libsodium/include"
     )
 
     ############ Pretty Fonts
 
     STATIC_IMPORT(msdfgen_libpng 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/steveARM64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/steveARM64/libpng16.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_freetype 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/steveARM64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/steveARM64/libfreetype.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_core 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/steveARM64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/steveARM64/libmsdfgen-core.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_ext 
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/steveARM64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/steveARM64/libmsdfgen-ext.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/msdfgen/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(zlib 
-        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/tux64/libz.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/include"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/steveARM64/libz.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/steveARM64/libz.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/zlib/steveARM64/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(clipper2 
-        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/steveARM64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/steveARM64/libClipper2.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/clipper2/include"
     )
 
     ############ Jolt Physics 3D
 
     STATIC_IMPORT(jolt_physics 
-        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/steveARM64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/steveARM64/libJolt.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/jolt_physics/include"
     )
 
     ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
 
     STATIC_IMPORT(physfs 
-        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/steveARM64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/physfs/steveARM64/libphysfs.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/physfs/include"
     )
 
     # ############ Asset Importing
 
     STATIC_IMPORT(assimp 
-        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/steveARM64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/steveARM64/libassimp.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
     )
 
     STATIC_IMPORT(assimp_draco 
-        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
-        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/steveARM64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/Cool-People/assimp/steveARM64/libdraco.a"
         "${PROJECT_SOURCE_DIR}/Cool-People/assimp/include"
     )
 

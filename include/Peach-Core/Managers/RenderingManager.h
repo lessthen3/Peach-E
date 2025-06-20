@@ -46,7 +46,8 @@ namespace PeachCore {
         TextureData DrawableResourceData; //actual data for graphic //used for parsing raw byte information, mainly for audio at the moment
             //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
         Drawable GraphicsType; 
-        OpenGLShaderProgram Shaders; //Contains multiple shaders relevant to drawing the object
+        //WARNING THIS NEEDS TO BE SWITCHED OFF FOR APPLE BUILDS SINCE TIM APPLE DECIDED NOT TO SUPPORT OPENGL ANYMORE UWU
+        // OpenGLShaderProgram Shaders; //Contains multiple shaders relevant to drawing the object
     };
 
     //////////////////////////////////////////////
@@ -92,7 +93,10 @@ namespace PeachCore {
     //////////////////////////////////////////////
     private:
         unique_ptr<VulkanRenderer> pm_VulkanRenderer = nullptr;
-        unique_ptr<OpenGLRenderer> pm_OpenGLRenderer = nullptr;
+
+        #ifndef __APPLE__ //OpenGL not supported on mac anymore fuck you tim apple
+            unique_ptr<OpenGLRenderer> pm_OpenGLRenderer = nullptr;
+        #endif
 
         unsigned int pm_FrameRateLimit = 60;
         unsigned long int pm_CurrentFrame = 0;
@@ -150,15 +154,20 @@ namespace PeachCore {
                 const unsigned int fp_WindowHeight
             )
             const;
+        
+        #ifndef __APPLE__ //OpenGL stuff again fuck u tim apple dumb ahh mfer
+            bool
+                CreateOpenGLRenderer
+                (
+                    SDL_Window* fp_Window
+                );
 
-        bool
-            CreateOpenGLRenderer
-            (
-                SDL_Window* fp_Window
-            );
+            void
+                DestroyOpenGLRenderer();
 
-        void
-            DestroyOpenGLRenderer();
+            [[nodiscard]] OpenGLRenderer*
+                GetOpenGLRenderer();
+        #endif
 
         void 
             ResizeWindow();
@@ -171,9 +180,6 @@ namespace PeachCore {
 
         void 
             GetCurrentViewPort();
-
-        [[nodiscard]] OpenGLRenderer*
-            GetOpenGLRenderer();
 
         [[nodiscard]] VulkanRenderer*
             GetVulkanRenderer();
