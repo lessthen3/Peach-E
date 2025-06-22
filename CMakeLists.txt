@@ -202,7 +202,7 @@ if(TARGET_PLATFORM STREQUAL "macos") #create a bundle instead of a regular exe f
         COMMAND ${CMAKE_COMMAND} -E copy_if_different "${VALIDATION_LAYER}" "${FRAMEWORKS_DIR}/libVkLayer_khronos_validation.dylib"
 
         COMMAND ${CMAKE_COMMAND} -E make_directory "${RESOURCES_DIR}"
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "${JSON_CONFIGS}" "${RESOURCES_DIR}/vulkan"
+        # COMMAND ${CMAKE_COMMAND} -E copy_directory "${JSON_CONFIGS}" "${RESOURCES_DIR}/vulkan"
     )
 
 else()
