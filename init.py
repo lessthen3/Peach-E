@@ -119,9 +119,12 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
     f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator], '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
 
     if not f_IsMultiConfig:
-        if fp_BuildType == "Release and Debug":
+
+        if fp_BuildType == "Release and Debug": #Don't allow "both" configs for single config generators uwu
+            
             print(CreateColouredText("[ERROR]: Invalid build type selected: YOU CANNOT USE BOTH WHEN GENERATING FOR A SINGLE CONFIG GENERATOR", "red"))
             return False
+        
         else:
             f_CMakeConfigCommand += ['-DCMAKE_BUILD_TYPE=' + fp_BuildType.capitalize()]
 
