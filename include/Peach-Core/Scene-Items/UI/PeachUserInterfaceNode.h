@@ -31,7 +31,6 @@
 #include <unordered_map>
 
 namespace PeachCore{
-
 namespace PUI{
 
 struct TextStyle 
@@ -57,29 +56,7 @@ enum class NodeType
     Slider
 };
 
-struct Rectangle //(x, y) dictates top left corner, width and height dictate how far the bottom right vert is extended
-{
-    float PosX  = 0.0f;
-    float PosY = 0.0f;
-    float Width = 0.0f; 
-    float Height = 0.0f;
-
-    inline bool
-        IsWithinRectangle(const float fp_X, const float fp_Y)
-        const noexcept
-    {
-        return
-            (
-                (abs(fp_X) > abs(PosX) and abs(fp_X) < (abs(PosX) + abs(Width)))
-                and
-                (abs(fp_Y) > abs(PosY) and abs(fp_Y) < (abs(PosY) + abs(Height)))
-            );
-    }
-};
-
-
-
-struct ShaderAssets
+struct VulkanShaderAssets
 {
     VkPipeline Pipeline;
     VkPipelineLayout Layout;
@@ -90,19 +67,23 @@ struct ShaderAssets
     string Name; // For debugging/user selection
 };
 
+struct OpenGLShaderAssets
+{
+
+};
+
 
 class PeachUserInterfaceNode 
 {
 public:
     NodeType m_Type = NodeType::None;
 
-    Rectangle m_Rectangle;
 
     vector<unique_ptr<PeachUserInterfaceNode>> m_Children;
 
     PeachUserInterfaceNode* m_Parent = nullptr; //not a unique ptr since parents should not be owned by their children just like irl lmfao
 
-    bool m_Dirty = true; // needs redraw/layout
+    bool m_Dirty = true; // needs redraw/layout dirty little kitten >w<
 
     // Optional: text, image id, callbacks, etc.
     string text;
@@ -116,10 +97,7 @@ public:
 
     virtual ~PeachUserInterfaceNode() = default;
 
-    //virtual void 
-    //    DrawNode() = 0;
-
-    PeachUserInterfaceNode*
+    virtual PeachUserInterfaceNode*
         AddChild(unique_ptr<PeachUserInterfaceNode> fp_Child)
     {
         fp_Child->m_Parent = this;
@@ -128,47 +106,10 @@ public:
         return m_Children.back().get();
     }
 
-    void
+    virtual void
         RemoveChild()
     {
 
-    }
-};
-
-// -- Peach UI System --
-class PeachUIManager
-{
-public:
-    unique_ptr<PeachUserInterfaceNode> root;
-    shared_ptr<LogManager> pui_logger = nullptr;
-
-    PeachUIManager() 
-    {
-        root = make_unique<PeachUserInterfaceNode>(NodeType::Root);
-        root->m_Rectangle = {0, 0, 1920, 1080}; // Example
-    }
-
-    // Walk tree, collect visible nodes, output draw data for batching
-    // void collectDrawCommands(vector<YourDrawCommand>& outCmds) 
-    // {
-    //     collectDrawCommandsRecursive(root.get(), outCmds);
-    // }
-
-    // // Recursive collection (do layout/visibility/etc)
-    // void collectDrawCommandsRecursive(PeachUINode* node, vector<YourDrawCommand>& outCmds)
-    //  {
-    //     // Build YourDrawCommand from node (rect, style, text, image, etc)
-    //     // For each child:
-    //     for (auto& child : node->children) {
-    //         collectDrawCommandsRecursive(child.get(), outCmds);
-    //     }
-    // }
-
-    // Hit-testing for input
-    PeachUserInterfaceNode* HitTest(float x, float y)
-    {
-        // Walk tree, return node under point (for mouse events)
-        return nullptr;
     }
 };
 
