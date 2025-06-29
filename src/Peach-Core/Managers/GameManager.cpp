@@ -312,9 +312,9 @@ namespace PeachCore
         GameManager::InitializePlugins()
         const
     {
-        for (auto& lp_PluginInfo : pm_PluginInstances)
+        for (auto& lv_PluginInfo : pm_PluginInstances)
         {
-            lp_PluginInfo.Pwugin->Initialize();
+            lv_PluginInfo.Pwugin->Initialize();
         }
     }
 
@@ -322,9 +322,9 @@ namespace PeachCore
         GameManager::UpdatePlugins(float fp_TimeSinceLastFrame)
         const
     {
-        for (auto& lp_PluginInfo : pm_PluginInstances)
+        for (auto& lv_PluginInfo : pm_PluginInstances)
         {
-            lp_PluginInfo.Pwugin->Update(fp_TimeSinceLastFrame);
+            lv_PluginInfo.Pwugin->Update(fp_TimeSinceLastFrame);
         }
     }
 
@@ -332,25 +332,25 @@ namespace PeachCore
         GameManager::ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
         const
     {
-        for (auto& lp_PluginInfo : pm_PluginInstances)
+        for (auto& lv_PluginInfo : pm_PluginInstances)
         {
-            lp_PluginInfo.Pwugin->ConstantUpdate(fp_TimeSinceLastFrame);
+            lv_PluginInfo.Pwugin->ConstantUpdate(fp_TimeSinceLastFrame);
         }
     }
 
     void 
         GameManager::ShutdownPlugins()
     {
-        for (auto& lp_PluginInfo : pm_PluginInstances)
+        for (auto& lv_PluginInfo : pm_PluginInstances)
         {
-            lp_PluginInfo.Pwugin->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
+            lv_PluginInfo.Pwugin->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
 
-            if (lp_PluginInfo.Handle != nullptr)
+            if (lv_PluginInfo.Handle != nullptr)
             {
-                DYNLIB_UNLOAD(lp_PluginInfo.Handle);
+                DYNLIB_UNLOAD(lv_PluginInfo.Handle);
             }
 
-            lp_PluginInfo.Pwugin.reset(); //clear plugin and let it delete but should change this to be explicit and not inside the plugin itself shutdown is sufficient tbh
+            lv_PluginInfo.Pwugin.reset(); //clear plugin and let it delete but should change this to be explicit and not inside the plugin itself shutdown is sufficient tbh
         }
 
         pm_PluginInstances.clear(); //wait why am i clearing plugin handles before unloading them LMFAO, XXX: fixed it uwu ><

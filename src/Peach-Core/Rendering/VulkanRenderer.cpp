@@ -1,12 +1,12 @@
 /*******************************************************************
- *                                             Peach-E v0.0.1
- *                           Created by Ranyodh Mandur - 🍑 2024
+ *                        Peach-E v0.0.1
+ *              Created by Ranyodh Mandur - 🍑 2024
  *
- *                         Licensed under the MIT License (MIT).
- *                  For more details, see the LICENSE file or visit:
- *                        https://opensource.org/licenses/MIT
+ *              Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *               https://opensource.org/licenses/MIT
  *
- *                     Peach-E is a free open source game engine
+ *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "../../../include/Peach-Core/Rendering/VulkanRenderer.h"
 
@@ -391,6 +391,7 @@ namespace PeachCore {
         VkShaderModule f_ShaderModule;
         if (pm_Init.Dispatch.createShaderModule(&f_CreateInfo, nullptr, &f_ShaderModule) != VK_SUCCESS)
         {
+            rendering_logger->PEACH_LOG("Failed to create shader module ywy", "VulkanRenderer", LogManager::LogLevel::Error);
             return VK_NULL_HANDLE; // failed to create shader module
         }
 

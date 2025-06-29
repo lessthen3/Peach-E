@@ -11,10 +11,17 @@
 #pragma once
 
 #include <vector>
+#include <glm/glm.hpp>
 
 
 namespace PeachCore{
 namespace PUI{
+
+    static constexpr glm::vec2 QUAD_VERTS[4] =
+    {
+        {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f}
+    };
+
 
     struct Rectangle //(x, y) dictates top left corner, width and height dictate how far the bottom right vert is extended
     {

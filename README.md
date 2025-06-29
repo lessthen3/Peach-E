@@ -3,11 +3,11 @@ Peach-E is a modern, cross-platform, open source 2D/3D game engine built with C+
 
 Peach-E is—and always will be—100% free. No stupid fucking licensing garbage, no royalties, no hidden fees. Built by a game developer, for game developers of any skill level.
 
-Currently you can target Windows(x86_64), MacOS(ARM64) and Linux(x86_64). Support for FreeBSD, Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, and PS Vita is in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
+Currently you can target Windows(x86_64), MacOS(ARM64) and Linux(x86_64). Native support for FreeBSD, Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, and PS Vita is in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
 
 >[!WARNING]
 >Peach-E is still in early alpha!
->Features are being added constantly, and the API can (and will) break as we sprint toward a complete 1.0 release.
+>Features are being added constantly, and the API can (and will) break as I work towards a complete 1.0 release.
 
 ## Documentation
 
@@ -29,7 +29,7 @@ Features:
 
 🍑 __Plugin support__—C++ works; scripted plugins are coming
 
-🍑 __Built-in rollback networking__ _(WIP)_
+🍑 __Built-in rollback and/or delay based UDP/TCP networking__ _(WIP)_
 
 🍑 __Audio playback + capture__ _(WIP)_
 
@@ -87,7 +87,7 @@ That's it. Plain and simple.
 os=Windows
 arch=x86_64
 compiler=msvc
-compiler.runtime=dynamic
+compiler.runtime=static
 compiler.version=193
 ```
 
