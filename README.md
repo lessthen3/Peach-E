@@ -95,7 +95,7 @@ compiler.version=193
 os=Macos
 arch=armv8
 compiler=apple-clang
-compiler.version=16
+compiler.version=16-17
 ```
 
 ```ini
