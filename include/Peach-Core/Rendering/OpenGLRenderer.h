@@ -31,6 +31,13 @@ namespace PeachCore {
         MipMapLinearLinear
     };
 
+
+    struct OpenGLShaderAsset
+    {
+
+    };
+
+
     class OpenGLRenderer
     {
     private:

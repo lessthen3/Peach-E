@@ -13,14 +13,6 @@
 ///PeachCore
 #include "../../Managers/LogManager.h"
 
-///Vulkan
-#include <volk.h>
-
-///SDL
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_system.h>
-#include <SDL3/SDL_vulkan.h>
-
 ///font stuff
 #include <msdfgen/msdfgen.h>
 #include <msdfgen/msdfgen-ext.h>
@@ -35,9 +27,9 @@ namespace PUI{
 
 struct TextStyle 
 {
-    float Size = 0.0f;
-    float Radius = 0.0f;
-    // Add more as needed: font, textColor, shadow, etc.
+    float CurrentFontSize = 0.0f;
+    string TypefaceName;
+    bool IsMonoSpaced = true;
 };
 
 enum class NodeType
@@ -56,44 +48,20 @@ enum class NodeType
     Slider
 };
 
-struct VulkanShaderAssets
+struct PeachUserInterfaceNode 
 {
-    VkPipeline Pipeline;
-    VkPipelineLayout Layout;
-    VkShaderModule VertShader;
-    VkShaderModule FragShader;
+    NodeType m_Type = NodeType::None; //default to no type, i like default constructors, they're cool
 
-    // Optionally: descriptorSetLayout, pipelineCache, etc.
-    string Name; // For debugging/user selection
-};
-
-struct OpenGLShaderAssets
-{
-
-};
-
-
-class PeachUserInterfaceNode 
-{
-public:
-    NodeType m_Type = NodeType::None;
-
-
-    vector<unique_ptr<PeachUserInterfaceNode>> m_Children;
+    vector<unique_ptr<PeachUserInterfaceNode>> m_Children; //have to use pointers since C++ slices and dices my types >w<
 
     PeachUserInterfaceNode* m_Parent = nullptr; //not a unique ptr since parents should not be owned by their children just like irl lmfao
 
     bool m_Dirty = true; // needs redraw/layout dirty little kitten >w<
 
-    // Optional: text, image id, callbacks, etc.
-    string text;
-    int textureId = -1;
+    string m_PeachID; //used to identify node uniquely, is a string so that users can just type: "node.remove("myNodeName")"
 
     // -- Creation --
-    PeachUserInterfaceNode(NodeType fp_Type)
-    {
-        m_Type = fp_Type;
-    }
+    PeachUserInterfaceNode() = default;
 
     virtual ~PeachUserInterfaceNode() = default;
 
@@ -107,9 +75,9 @@ public:
     }
 
     virtual void
-        RemoveChild()
+        RemoveChild(string fp_DesiredNode)
     {
-
+        //Do a DFS search here to find the node to remove
     }
 };
 

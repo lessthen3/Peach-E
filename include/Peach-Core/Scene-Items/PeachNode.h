@@ -10,14 +10,13 @@
 ********************************************************************/
 #pragma once
 
-
 #include <string>
 #include <vector>
 #include <memory>
 
-using namespace std;
-
 namespace PeachCore {
+
+	using namespace std; //this should be here so i dont affect anybody who links against peach
 
 	class PeachNode
 	{
@@ -55,7 +54,7 @@ namespace PeachCore {
 			HasPeachNode();
 
 		void 
-			GetViewPort();
+			GetViewPort(); //?????????? why does godot have this lmfao
 
 		string
 			GetPathInTree();

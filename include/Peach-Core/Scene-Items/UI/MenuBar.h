@@ -16,17 +16,15 @@
 namespace PeachCore {
 namespace PUI {
 
-    struct Button : public PeachUserInterfaceNode
+    struct MenuBar : public PeachUserInterfaceNode
     {
         Rectangle m_Shape;
 
-        Button(string fp_DesiredID)
+        MenuBar(string fp_DesiredID)
         {
-            m_Type = NodeType::Button;
+            m_Type = NodeType::MenuBar;
             m_PeachID = fp_DesiredID;
-            
         }
-
     };
 
 
