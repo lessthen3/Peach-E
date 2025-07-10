@@ -198,6 +198,41 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
     return True
 
+############# Zip Dependency Function #############
+
+def unpack_versioned_dep(fp_WorkingDirectory: str, fp_ArchivePatternName: str) -> bool:
+        
+        f_OriginalDir = os.getcwd() #get starting point so we can return back to it to avoid mutation inside this function
+        
+        os.chdir(fp_WorkingDirectory)
+
+        # Step 1: Find the zip
+        zipped_dep_file = [f for f in os.listdir(fp_WorkingDirectory) if f.startswith(fp_ArchivePatternName) and f.endswith(".zip")]
+
+        if not zipped_dep_file:
+            print(CreateColouredText(f"No {fp_ArchivePatternName} found!, Cannot continue with building Peach Engine ;w;", "bright yellow"))
+            return False
+        
+        # Assume only one versioned zip exists at a time
+        latest_zip = zipped_dep_file[0]
+        expected_folder = latest_zip.replace(".zip", "")  # e.g., "debug_v144"
+
+        # Step 2: Remove any folder that doesn't match the zip version
+        for item in os.listdir(fp_WorkingDirectory):
+            if item.startswith(fp_ArchivePatternName) and os.path.isdir(item) and item != expected_folder:
+                print(CreateColouredText(f"[INFO]: Removing stale folder: {item}", "bright yellow"))
+                shutil.rmtree(os.path.join(fp_WorkingDirectory, item))
+
+        # Step 3: Extract the zip if and only if the extracted dep doesn't already exist
+        if not os.path.isdir(expected_folder): 
+            print(CreateColouredText(f"[INFO]: Unzipping {latest_zip}", "bright green"))
+            with zipfile.ZipFile(latest_zip, "r") as zip_ref:
+                zip_ref.extractall("./") 
+        
+        os.chdir(f_OriginalDir) #return to the starting dir to reset state
+
+        return True
+
 ############# Main Function #############
 
 def main() -> bool:
@@ -313,34 +348,19 @@ def main() -> bool:
 
     if(f_CurrentPlatform == "Windows"): #only needed for windows so far since the lib sizes are ridiculous
 
-        os.chdir(f_BaseDir + "/Cool-People/assimp/win64")
+        assimp_dir = f_BaseDir + "/third_party/Peach-Editor/assimp/win64"
 
-        if not os.path.isdir(f_BaseDir + "/Cool-People/assimp/win64/release"): #only decompress if it doesnt exist
-
-            print(CreateColouredText(f"[INFO]: Unzipping assimp release libs", "bright green"))
-
-            with zipfile.ZipFile("release.zip", "r") as zip_ref:
-                zip_ref.extractall("./")  # unzips release libs for assimp
-
-        if not os.path.isdir(f_BaseDir + "/Cool-People/assimp/win64/debug"):
-                        
-            print(CreateColouredText(f"[INFO]: Unzipping assimp debug libs", "bright green"))
-
-            with zipfile.ZipFile("debug.zip", "r") as zip_ref:
-                zip_ref.extractall("./")  # unzips debug libs for assimp
-
-        os.chdir(f_BaseDir + "/Cool-People/vulkan/win64")
+        if not unpack_versioned_dep(assimp_dir, "debug_v"): #the compressed deps are always named using debug_v* or release_v*
+            return False
+        if not unpack_versioned_dep(assimp_dir, "release_v"):
+            return False
         
-        if not os.path.isdir(f_BaseDir + "/Cool-People/vulkan/win64/debug"):
+        ############# Change dir for vulkan lib deps
 
-            print(CreateColouredText(f"[INFO]: Unzipping vulkan debug libs", "bright green"))
-            
-            with zipfile.ZipFile("debug.zip", "r") as zip_ref:
-                zip_ref.extractall("./")  # unzips debug libs for vulkan
+        vulkan_dir = f_BaseDir + "/third_party/Peach-Editor/vulkan/win64"
         
-        os.chdir(f_BaseDir) #return back to base peach e directory
-
-
+        if not unpack_versioned_dep(vulkan_dir, "debug_v"):
+            return False
 
     ############# Run Build Fingers Crossed >w< #############
 

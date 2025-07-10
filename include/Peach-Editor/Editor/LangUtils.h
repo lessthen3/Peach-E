@@ -16,6 +16,8 @@
 
 namespace PeachEditor{
 
+    using namespace std;
+
     struct RuntimeConfig //this looks kinda stupid but whatever thats how Serializer.h works uwu
     {
         struct RuntimeOptions

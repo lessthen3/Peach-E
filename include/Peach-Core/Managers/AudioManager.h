@@ -115,5 +115,5 @@ namespace PeachCore {
 
         void ProcessLoadedResourcePackages();
 
-	};
+    };
 }

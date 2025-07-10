@@ -14,8 +14,8 @@
 
 namespace PeachCore {
 
-	struct ParallaxLayer
-	{
-	};
+    struct ParallaxLayer
+    {
+    };
 }
 

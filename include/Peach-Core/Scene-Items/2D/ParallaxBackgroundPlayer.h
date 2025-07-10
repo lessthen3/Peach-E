@@ -14,7 +14,7 @@
 
 namespace PeachCore {
 
-	struct ParallaxBackgroundPlayer
-	{
-	};
+    struct ParallaxBackgroundPlayer
+    {
+    };
 }

@@ -44,7 +44,7 @@
 
 #Compressed deps
 
-Cool-People/assimp/win64/release
-Cool-People/assimp/win64/debug
-Cool-People/vulkan/win64/debug
+third_party/Peach-Editor/assimp/win64/release_v*/
+third_party/Peach-Editor/assimp/win64/debug_v*/
+third_party/Peach-Editor/vulkan/win64/debug_v*/
 

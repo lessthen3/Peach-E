@@ -29,7 +29,7 @@ namespace PeachEditor::DotnetUtils
     bool
         GetDotnetVersion
         (
-            string* fp_DotNetVersionString,
+            string* fp_DotnetVersionString,
             PeachCore::LogManager* logger
         )
     {
@@ -40,7 +40,7 @@ namespace PeachEditor::DotnetUtils
             PeachCore::PrintError("Tried passing a nullptr ref to logger inside GetDotnetVersion() from DotnetUtils.h");
             return false;
         }
-        else if (not fp_DotNetVersionString)
+        else if (not fp_DotnetVersionString)
         {
             logger->PEACH_LOG("Tried passing a nullptr ref to string inside GetDotnetVersion(), nothing was done.", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
@@ -60,7 +60,7 @@ namespace PeachEditor::DotnetUtils
 
             while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
             {
-                *fp_DotNetVersionString += buffer;
+                *fp_DotnetVersionString += buffer;
             }
 
             _pclose(pipe);
@@ -79,7 +79,7 @@ namespace PeachEditor::DotnetUtils
 
             while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
             {
-                *fp_DotNetVersionString += buffer;
+                *fp_DotnetVersionString += buffer;
             }
 
             pclose(pipe);
@@ -87,21 +87,21 @@ namespace PeachEditor::DotnetUtils
         #endif
 
         // Trim whitespace / newline
-        fp_DotNetVersionString->erase(remove_if(fp_DotNetVersionString->begin(), fp_DotNetVersionString->end(), ::isspace), fp_DotNetVersionString->end());
+            fp_DotnetVersionString->erase(remove_if(fp_DotnetVersionString->begin(), fp_DotnetVersionString->end(), ::isspace), fp_DotnetVersionString->end());
 
         // Validate version string (e.g., "6.9.0")
-        if (fp_DotNetVersionString->empty())
+        if (fp_DotnetVersionString->empty())
         {
             logger->PEACH_LOG("Empty .NET SDK version string — is dotnet installed?", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
-        else if (fp_DotNetVersionString->find('.') == string::npos)
+        else if (fp_DotnetVersionString->find('.') == string::npos)
         {
             logger->PEACH_LOG("Invalid .NET SDK version string — is dotnet installed?", "DotnetUtils", PeachCore::LogManager::LogLevel::Error);
             return false;
         }
 
-        logger->PEACH_LOG("Detected .NET SDK version: " + *fp_DotNetVersionString, "DotnetUtils", PeachCore::LogManager::LogLevel::Info);
+        logger->PEACH_LOG("Detected .NET SDK version: " + *fp_DotnetVersionString, "DotnetUtils", PeachCore::LogManager::LogLevel::Info);
 
         return true;
     }

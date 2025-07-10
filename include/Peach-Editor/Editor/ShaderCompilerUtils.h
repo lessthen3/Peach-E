@@ -16,6 +16,9 @@
 
 namespace PeachEditor
 {
+
+    using namespace std;
+
     class ShaderCompilerUtils
     {
     public:

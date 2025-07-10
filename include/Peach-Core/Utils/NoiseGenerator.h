@@ -5,7 +5,7 @@
 
 namespace PeachCore {
 
-	struct NoiseGenerator
-	{
-	};
+    struct NoiseGenerator
+    {
+    };
 }

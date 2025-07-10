@@ -10,7 +10,14 @@
 ********************************************************************/
 #pragma once
 
+///PeachCore
+#include "../../Managers/LogManager.h"
+
+///STL
 #include <vector>
+#include <cstdint>
+
+///GLM
 #include <glm/glm.hpp>
 
 /*
@@ -66,97 +73,172 @@ namespace PUI{
 
     //All data types here are designed to be default constructed for easier use as members
 
-    static constexpr glm::vec2 QUAD_VERTS[4] = //the same verts are used for all shapes for rendering purposes, uv's are dynamically remapped
+    //the same verts are used for all shapes for rendering purposes, uv's are dynamically remapped
+    static constexpr float QUAD_VERTS[8] =
     {
-        {0.f, 0.f}, {1.f, 0.f}, {1.f, 1.f}, {0.f, 1.f}
+        0.f, 0.f,
+        1.f, 0.f,
+        1.f, 1.f,
+        0.f, 1.f
     };
 
 
-    struct Rectangle //UwU
+    enum class ShapeType : uint8_t
     {
-        glm::vec2 m_Position; //(x, y) dictates top left corner, width and height dictate how far the bottom right vert is extended
-        float Width = 0.0f; 
-        float Height = 0.0f;
+        Rectangle = 1 << 0,
+        Circle = 1 << 1,
+        Ellipse = 1 << 2,
+        Capsule = 1 << 3,
+        Triangle = 1 << 4,
+        Polygon = 1 << 5
+    };
 
-        inline bool
-            IsWithinRectangle(glm::vec2 fp_TestPoint)
-            const noexcept
+    struct Shape
+    {
+        virtual ~Shape() = default;
+
+        //scale rotation and transform with respect to the GPU, so the transform is primarily for the shader to tell the GPU how to render the shape in terms of screen pixel coords
+        //This transform operates on the QUAD_VERTS attribute and not the engine's interpretation of the Shape
+        glm::mat4 m_Transform = glm::mat4(1.0f); //glm doesn't default construct the matrix, so we wanna always construct it as an identity matrix
+        //Position of the shape for use by Peach Engine so that a game dev/me can call a simple method like PUINode.move(new_vector) for the CPU side of things
+        //The position is what the CPU uses for hit detection completely separate from whats drawn, but should very closely reflect the rendered position on screen
+        glm::vec2 m_Position; //vec2 does have a default constructor apparently so idfk this is fine ig we'll see
+
+        virtual inline bool 
+            IsWithin(const glm::vec2& fp_TestPoint) const = 0;
+
+        //virtual bool Resize() = 0;
+
+        virtual inline void
+            UpdatePosition(const glm::vec2& fp_StartPosition)
+            noexcept
+        {            
+            m_Position = fp_StartPosition;
+        }
+
+        virtual inline void
+            MovePosition(const glm::vec2& fp_DeltaPosition)
+            noexcept
         {
-            return
-                (
-                    (abs(fp_TestPoint.x) >= abs(m_Position.x) and abs(fp_TestPoint.x) <= (abs(m_Position.x) + abs(Width)))
-                    and
-                    (abs(fp_TestPoint.y) >= abs(m_Position.y) and abs(fp_TestPoint.y) <= (abs(m_Position.y) + abs(Height)))
-                );
+            m_Position += fp_DeltaPosition;
         }
     };
 
-    struct Circle //regular circle, whenever resized the proportions stay constant
+    struct Rectangle final : public Shape//UwU
     {
-        glm::mat4 m_Transform;
-        float m_Radius = 0.0f;
+        //(x, y) dictates top left corner, width and height dictate how far the bottom right vert is extended
+        float pm_Width = 0.0f; 
+        float pm_Height = 0.0f;
 
-        glm::vec2 m_CenterPosition;
+        [[nodiscard]] inline bool
+            IsWithin(const glm::vec2& fp_TestPoint)
+            const noexcept override
+        {
+            return
+            (
+                (fp_TestPoint.x >= m_Position.x and fp_TestPoint.x <= m_Position.x + pm_Width)
+                and
+                (fp_TestPoint.y <= m_Position.y and fp_TestPoint.y >= m_Position.y - pm_Height) //minus because the m_Position is the top left corner always, so we check below m_Position.y
+            );
+        }
 
         inline bool
-            IsWithinCircle(glm::vec2 fp_TestPoint) //test whether the point we're trying to test is within the radius of the circle shape
-            const
-            {
-                return glm::distance(m_CenterPosition, fp_TestPoint) <= m_Radius;
-            }
-
-        inline void
-            ResizeRadius(float fp_NewRadiusSize)
+            Resize(float fp_Width, float fp_Height, LogManager* logger)
             noexcept
+        {
+            if (fp_Width < 0.0f)
+            {
+                logger->PEACH_LOG("Tried to pass a negative value for width to a Rectangle shape primitive", "ShapePrimitive", LogManager::LogLevel::Error);
+                return false;
+            }
+            else if (fp_Height < 0.0f)
+            {
+                logger->PEACH_LOG("Tried to pass a negative value for height to a Rectangle shape primitive", "ShapePrimitive", LogManager::LogLevel::Error);
+                return false;
+            }
+            else
+            {
+                pm_Width = fp_Width;
+                pm_Height = fp_Height;
+
+                return true;
+            }
+        }
+    };
+
+    struct Circle final : public Shape //regular circle, whenever resized the proportions stay constant
+    {
+        //(x, y) dictates the center position of the circle
+        float m_Radius = 0.0f;
+
+        [[nodiscard]] inline bool
+            IsWithin(const glm::vec2& fp_TestPoint) //test whether the point we're trying to test is within the radius of the circle shape
+            const noexcept override
+        {
+            return glm::distance(m_Position, fp_TestPoint) <= m_Radius;
+        }
+
+        inline bool
+            ResizeRadius(float fp_NewRadiusSize, LogManager* logger)
+            noexcept
+        {
+            if (fp_NewRadiusSize < 0.0f)
+            {
+                logger->PEACH_LOG("Tried to pass a negative value for radius to a Circle shape primitive", "ShapePrimitive", LogManager::LogLevel::Error);
+                return false;
+            }
+            else
             {
                 m_Radius = fp_NewRadiusSize;
+                return true;
             }
+        }
 
     };
 
-    struct Ellipse //oval, can be squashed or stretched vertically or horizontally
+    struct Ellipse final : public Shape //oval, can be squashed or stretched vertically or horizontally
     {
-        glm::mat4 m_Transform;
+        //(x, y) dictates the center position of the ellipse
 
-        glm::vec2 m_Center;
+        //we need two points to define the major and minor axis of an ellipse so it can be resized appropriately, the m_Position variable just dictates the transform of the ellipse as a whole
         glm::vec2 m_MajorAxis;
         glm::vec2 m_MinorAxis;
 
-        inline bool
-            IsWithinEllipse(glm::vec2 fp_TestPoint)
-            {
-                return true;
-            }
+        [[nodiscard]] inline bool
+            IsWithin(const glm::vec2& fp_TestPoint)
+            const override
+        {
+            return true;
+        }
 
     };
 
-    struct Capsule //2D capsule shape, when scaled proportions are held constant
+    struct Capsule final : public Shape //2D capsule shape, when scaled proportions are held constant
     {
-        glm::mat4 m_Transform;
+        //(x, y) dictates the center position of the rectangle of the capsule idk this is up for debate
 
-        inline bool
-            IsWithinCapsule(glm::vec2 fp_TestPoint)
-            {
-                return true;
-            }
-
+        [[nodiscard]] inline bool
+            IsWithin(const glm::vec2& fp_TestPoint)
+            const noexcept override
+        {
+            return true;
+        }
     };
 
-    struct Triangle //twiangle rawr >O<, can be squashed or stretched as much as needed  
+    struct Triangle final : public Shape //twiangle rawr >O<, can be squashed or stretched as much as needed  
     {
-        glm::mat4 m_Transform;
+        //(x, y) dictates the centroid position of the triangle
 
         glm::vec2 m_BaseLength;
         glm::vec2 m_HeightLength;
 
-        inline bool
-            IsWithinTriangle(glm::vec2 fp_TestPoint)
-            {
-                return true;
-            }
+        [[nodiscard]] inline bool
+            IsWithin(const glm::vec2& fp_TestPoint)
+            const noexcept override
+        {
+            return true;
+        }
     };
-
-
     
 }// namespace PUI
 }// namespace PeachCore

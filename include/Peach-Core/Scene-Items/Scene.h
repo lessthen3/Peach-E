@@ -18,7 +18,7 @@
 
 namespace PeachCore {
 
-	class Scene 
+    class Scene 
     {
     public:
         Scene() = default;
@@ -68,5 +68,5 @@ namespace PeachCore {
         bool pm_IsPaused = false; //stops all PeachNodes that are pausable
         vector<shared_ptr<PeachNode>> pm_PeachNodes; //use raw pointers for local function bound operations on PeachNodes via SceneTreeManager
 
-	};
+    };
 }

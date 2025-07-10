@@ -9,11 +9,11 @@
 
 #include <SDL3/SDL.h>
 
-using namespace std;
-
 constexpr uint32_t MAX_TEXT_SIZE = 128;
 
 namespace PeachCore {
+
+    using namespace std;
 
     enum class InputType
     {

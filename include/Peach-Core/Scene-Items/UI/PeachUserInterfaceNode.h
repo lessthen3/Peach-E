@@ -75,7 +75,7 @@ struct PeachUserInterfaceNode
     }
 
     virtual void
-        RemoveChild(string fp_DesiredNode)
+        RemoveChild(const string& fp_DesiredNode)
     {
         //Do a DFS search here to find the node to remove
     }

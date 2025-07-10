@@ -125,14 +125,14 @@ template <typename T> class Result {
         return *this;
     }
     // clang-format off
-	const T* operator-> () const noexcept { assert (m_init); return &m_value; }
-	T*       operator-> ()       noexcept { assert (m_init); return &m_value; }
-	const T& operator* () const& noexcept { assert (m_init);	return m_value; }
-	T&       operator* () &      noexcept { assert (m_init); return m_value; }
-	T        operator* () &&	 noexcept { assert (m_init); return std::move (m_value); }
-	const T&  value () const&    noexcept { assert (m_init); return m_value; }
-	T&        value () &         noexcept { assert (m_init); return m_value; }
-	T         value () &&        noexcept { assert (m_init); return std::move (m_value); }
+    const T* operator-> () const noexcept { assert (m_init); return &m_value; }
+    T*       operator-> ()       noexcept { assert (m_init); return &m_value; }
+    const T& operator* () const& noexcept { assert (m_init);	return m_value; }
+    T&       operator* () &      noexcept { assert (m_init); return m_value; }
+    T        operator* () &&	 noexcept { assert (m_init); return std::move (m_value); }
+    const T&  value () const&    noexcept { assert (m_init); return m_value; }
+    T&        value () &         noexcept { assert (m_init); return m_value; }
+    T         value () &&        noexcept { assert (m_init); return std::move (m_value); }
 
     // std::error_code associated with the error
     std::error_code error() const { assert (!m_init); return m_error.type; }

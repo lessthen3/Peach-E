@@ -10,6 +10,19 @@
 ********************************************************************/
 #pragma once
 
+#ifdef PEACH_DEBUG
+    #define PEACH_LOG LogAndPrint
+#else
+    #define PEACH_LOG Log
+#endif
+
+#if defined(_WIN32) || defined(_WIN64)
+    #define NOMINMAX
+    #define WIN32_LEAN_AND_MEAN
+
+    #include <windows.h>
+#endif
+
 #include <string>
 #include <iostream>
 #include <filesystem>
@@ -30,35 +43,6 @@
 //#define $
 //#endif
 
-using namespace std;
-
-#if defined(_WIN32) || defined(_WIN64)
-
-    #define NOMINMAX
-    #define WIN32_LEAN_AND_MEAN
-
-    #include <windows.h>
-
-    static bool
-        EnableColors()
-    {
-        DWORD f_ConsoleMode;
-        HANDLE f_OutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-
-        if (GetConsoleMode(f_OutputHandle, &f_ConsoleMode))
-        {
-            SetConsoleMode(f_OutputHandle, f_ConsoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-            return true;
-        }
-        else
-        {
-            cout << ("Was not able to set console mode to allow windows to display ANSI escape codes") << "\n";
-            return false;
-        }
-    }
-
-#endif
-
 constexpr uint32_t MAX_NUMBER_OF_LOGS = 1024;
 
 constexpr const int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
@@ -67,13 +51,31 @@ constexpr const int FAILED_TO_INITIALIZE_VULKAN = -1002;
 
 constexpr const int FATAL_SEGMENTATION_FAULT = -6969;
 
-#ifdef PEACH_DEBUG
-    #define PEACH_LOG LogAndPrint
-#else
-    #define PEACH_LOG Log
-#endif
-
 namespace PeachCore {
+
+    using namespace std;
+
+    #if defined(_WIN32) || defined(_WIN64)
+
+        static bool
+            EnableColors()
+        {
+            DWORD f_ConsoleMode;
+            HANDLE f_OutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+            if (GetConsoleMode(f_OutputHandle, &f_ConsoleMode))
+            {
+                SetConsoleMode(f_OutputHandle, f_ConsoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+                return true;
+            }
+            else
+            {
+                cout << ("Was not able to set console mode to allow windows to display ANSI escape codes") << "\n";
+                return false;
+            }
+        }
+
+    #endif
 
     enum class Colours : int
     {

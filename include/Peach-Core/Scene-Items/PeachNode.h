@@ -16,54 +16,54 @@
 
 namespace PeachCore {
 
-	using namespace std; //this should be here so i dont affect anybody who links against peach
+    using namespace std; //this should be here so i dont affect anybody who links against peach
 
-	class PeachNode
-	{
-	public:
-		virtual ~PeachNode();
+    class PeachNode
+    {
+    public:
+        virtual ~PeachNode();
 
         PeachNode(const string& fp_Name) 
         {
             m_Name = fp_Name;
         }
 
-		PeachNode() {} //??????????????????
+        PeachNode() {} //??????????????????
 
-		bool IsPausable = true;
-		bool IsVisible = true;
-		bool IsActive = true;
+        bool IsPausable = true;
+        bool IsVisible = true;
+        bool IsActive = true;
 
         string m_Name; //this is the name set by the user inside the scene tree, so that a user script can call smth like GetNode("MyNamedNode") and find the appropriate thing
 
-		unsigned int m_DrawingLayer = 0;
+        unsigned int m_DrawingLayer = 0;
 
-		vector<unique_ptr<PeachNode>> m_Children;
+        vector<unique_ptr<PeachNode>> m_Children;
 
-		PeachNode* GetPeachNode(); //returns a reference to the desired PeachNode
+        PeachNode* GetPeachNode(); //returns a reference to the desired PeachNode
 
-		bool ReparentPeachNode(); //returns true if operation was successful, returns false otherwise
+        bool ReparentPeachNode(); //returns true if operation was successful, returns false otherwise
 
-		void
-			PrintTree();
+        void
+            PrintTree();
 
-		bool 
-			IsInsideTree();
+        bool 
+            IsInsideTree();
 
-		bool 
-			HasPeachNode();
+        bool 
+            HasPeachNode();
 
-		void 
-			GetViewPort(); //?????????? why does godot have this lmfao
+        void 
+            GetViewPort(); //?????????? why does godot have this lmfao
 
-		string
-			GetPathInTree();
+        string
+            GetPathInTree();
 
-		PeachNode*
-			FindChild(string fp_DesiredPeachNode); //returns first instance of child found matching the name
+        PeachNode*
+            FindChild(string fp_DesiredPeachNode); //returns first instance of child found matching the name
 
-		PeachNode 
-			Replicate();
-	};
+        PeachNode 
+            Duplicate();
+    };
 
 }

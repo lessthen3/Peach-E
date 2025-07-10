@@ -1,27 +1,37 @@
+﻿/*******************************************************************
+ *                        Peach-E v0.0.1
+ *              Created by Ranyodh Mandur - 🍑 2024
+ *
+ *              Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *               https://opensource.org/licenses/MIT
+ *
+ *           Peach-E is a free open source game engine
+********************************************************************/
 #pragma once
 
 namespace PeachCore{
 
-	class Sensor2D 
-	{
+    class Sensor2D 
+    {
 
-	public:
-		Sensor2D()
-		{
+    public:
+        Sensor2D()
+        {
 
-		}
+        }
 
-		~Sensor2D()
-		{
+        ~Sensor2D()
+        {
 
-		}
-
-
-	private:
+        }
 
 
+    private:
 
 
-	};
+
+
+    };
 
 }

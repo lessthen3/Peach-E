@@ -1,3 +1,13 @@
+﻿/*******************************************************************
+ *                        Peach-E v0.0.1
+ *              Created by Ranyodh Mandur - 🍑 2024
+ *
+ *              Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *               https://opensource.org/licenses/MIT
+ *
+ *           Peach-E is a free open source game engine
+********************************************************************/
 #include "../../include/Peach-Core/Scene-Items/2D/PeachTexture2D.h"
 
 namespace PeachCore {
@@ -16,32 +26,27 @@ namespace PeachCore {
         pm_IsValid = true;
     }
 
-    void //nlohmann::json 
-        PeachTexture2D::SerializePeachNodeToJSON()
-    {
 
-        //return nlohmann::json();
-    }
     void
-        PeachTexture2D::Initialize()
+        PeachTexture2D::OnEnter()
     {
 
     }
 
     void
-        PeachTexture2D::Update(float fp_TimeSinceLastFrame)
+        PeachTexture2D::OnUpdate(float fp_TimeSinceLastFrame)
     {
 
     }
 
     void
-        PeachTexture2D::ConstantUpdate(float fp_TimeSinceLastFrame)
+        PeachTexture2D::OnConstantUpdate(float fp_TimeSinceLastFrame)
     {
 
     }
 
     void
-        PeachTexture2D::OnSceneTreeExit()
+        PeachTexture2D::OnExit()
     {
 
     }

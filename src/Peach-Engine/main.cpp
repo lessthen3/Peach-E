@@ -1,12 +1,12 @@
 /*******************************************************************
- *                                             Peach-E v0.0.1
- *                           Created by Ranyodh Mandur - 🍑 2024
+ *                        Peach-E v0.0.1
+ *              Created by Ranyodh Mandur - 🍑 2024
  *
- *                         Licensed under the MIT License (MIT).
- *                  For more details, see the LICENSE file or visit:
- *                        https://opensource.org/licenses/MIT
+ *              Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *               https://opensource.org/licenses/MIT
  *
- *                     Peach-E is a free open source game engine
+ *           Peach-E is a free open source game engine
 ********************************************************************/
 
 #include "Managers/GameManager.h"
@@ -16,7 +16,7 @@
 static void
     SegFaultHandler(int fp_Signal)
 {
-    PeachCore::PrintError(format("[!] Crash signal received: {}", fp_Signal));
+    PeachCore::PrintError(std::format("[!] Crash signal received: {}", fp_Signal));
     // possibly notify watchdog or dump stack trace
     exit(EXIT_FAILURE);
 }
@@ -24,7 +24,7 @@ static void
 int 
     main(int fp_ArgCount, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao
 {
-    cout << "Hello World!\n";
+    std::cout << "Hello World!\n";
 
     signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
 
@@ -39,9 +39,9 @@ int
         return EXIT_SUCCESS;
     }
 
-    catch (const exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
+    catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
     {
-        PeachCore::PrintError(format("Unhandled exception: {}", Exception.what()));
+        PeachCore::PrintError(std::format("Unhandled exception: {}", Exception.what()));
 
         return EXIT_FAILURE;
     }

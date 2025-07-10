@@ -16,9 +16,9 @@
 
 namespace PeachCore {
 
-	class CharacterController2D 
-	{
-		CharacterController2D();
+    class CharacterController2D 
+    {
+        CharacterController2D();
         ~CharacterController2D();
 
 
@@ -36,6 +36,6 @@ namespace PeachCore {
 
     private:
         b2BodyId pm_CharacterBody2D = b2_nullBodyId;
-	};
+    };
 
 }

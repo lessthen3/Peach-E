@@ -1,12 +1,12 @@
 ﻿/*******************************************************************
- *                                             Peach-E v0.0.1
- *                           Created by Ranyodh Mandur - 🍑 2024
+ *                        Peach-E v0.0.1
+ *              Created by Ranyodh Mandur - 🍑 2024
  *
- *                         Licensed under the MIT License (MIT).
- *                  For more details, see the LICENSE file or visit:
- *                        https://opensource.org/licenses/MIT
+ *              Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *               https://opensource.org/licenses/MIT
  *
- *                     Peach-E is a free open source game engine
+ *           Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
@@ -86,17 +86,15 @@ namespace PeachCore {
             DefineTileSize(const int tileWidth, const int tileHeight);
         void 
             CalculateTileUVs();
-        
-        void //nlohmann::json NEEDS TO BE REWRITTED USING CEREAL
-            SerializePeachNodeToJSON();
+
         void
-            Initialize();
+            OnEnter();
         void
-            Update(float fp_TimeSinceLastFrame);
+            OnUpdate(float fp_TimeSinceLastFrame);
         void
-            ConstantUpdate(float fp_TimeSinceLastFrame);
+            OnConstantUpdate(float fp_TimeSinceLastFrame);
         void
-            OnSceneTreeExit();
+            OnExit();
         void
             QueueRemoval();
         void

@@ -17,6 +17,8 @@
 
 namespace PeachEditor {
 
+    using namespace std;
+
     constexpr float MAIN_MENU_BAR_SCALE = 0.03f;
     constexpr unsigned int NUMBER_OF_HORIZONTAL_MAIN_MENU_BAR_ELEMENTS = 7;
 

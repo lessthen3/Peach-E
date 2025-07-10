@@ -1,12 +1,12 @@
 ﻿/*******************************************************************
- *                                             Peach-E v0.0.1
- *                           Created by Ranyodh Mandur - 🍑 2024
+ *                        Peach-E v0.0.1
+ *              Created by Ranyodh Mandur - 🍑 2024
  *
- *                         Licensed under the MIT License (MIT).
- *                  For more details, see the LICENSE file or visit:
- *                        https://opensource.org/licenses/MIT
+ *              Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *               https://opensource.org/licenses/MIT
  *
- *                     Peach-E is a free open source game engine
+ *           Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
@@ -14,21 +14,25 @@
 
 #include <memory>
 
-//Imagine if windows was posix compliant, what a world that'd be >O<
-#if defined(_WIN32) || defined(_WIN64)
-//XXX: we do this to avoid weird stuff w unicode and ansi strings, LoadLibrary is just a macro and since its a preprocessor thing it can cause runtime trouble
-    // UTF8 -> wide string helper for LoadLibraryW
-    inline HINSTANCE 
-        LoadLibraryUTF8(const char* fp_Path) 
-    {
-        int f_SizeNeeded = MultiByteToWideChar(CP_UTF8, 0, fp_Path, -1, NULL, 0);
-        wstring f_WidePath(f_SizeNeeded, 0);
-        MultiByteToWideChar(CP_UTF8, 0, fp_Path, -1, &f_WidePath[0], f_SizeNeeded);
-        return LoadLibraryW(f_WidePath.c_str()); // or LoadLibrary(f_WidePath.c_str()) — same since it's just a macro
-    }
+namespace PeachCore {
+    //Imagine if windows was posix compliant, what a world that'd be >O<
+    #if defined(_WIN32) || defined(_WIN64)
+        //XXX: we do this to avoid weird stuff w unicode and ansi strings, LoadLibrary is just a macro and since its a preprocessor thing it can cause runtime trouble
+        // UTF8 -> wide string helper for LoadLibraryW
+        inline HINSTANCE
+            LoadLibraryUTF8(const char* fp_Path)
+        {
+            int f_SizeNeeded = MultiByteToWideChar(CP_UTF8, 0, fp_Path, -1, NULL, 0);
+            wstring f_WidePath(f_SizeNeeded, 0);
+            MultiByteToWideChar(CP_UTF8, 0, fp_Path, -1, &f_WidePath[0], f_SizeNeeded);
+            return LoadLibraryW(f_WidePath.c_str()); // or LoadLibrary(f_WidePath.c_str()) — same since it's just a macro
+        }
+    #endif
+}
 
+#if defined(_WIN32) || defined(_WIN64)
     #define DYNLIB_HANDLE HINSTANCE //XXX: pretty much just a typedef -> void* but windows is a special boy >:(
-    #define DYNLIB_LOAD(__path) LoadLibraryUTF8(__path)
+    #define DYNLIB_LOAD(__path) PeachCore::LoadLibraryUTF8(__path)
     #define DYNLIB_GETSYM GetProcAddress
     #define DYNLIB_UNLOAD FreeLibrary
 #else

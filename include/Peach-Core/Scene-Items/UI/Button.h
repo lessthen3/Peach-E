@@ -16,15 +16,36 @@
 namespace PeachCore {
 namespace PUI {
 
-    struct Button : public PeachUserInterfaceNode
+    struct Button final : public PeachUserInterfaceNode
     {
-        Rectangle m_Shape;
+        unique_ptr<Shape> m_Shape = nullptr;
 
-        Button(string fp_DesiredID)
+        Button(const string& fp_DesiredID, const ShapeType fp_ButtonShape)
         {
             m_Type = NodeType::Button;
             m_PeachID = fp_DesiredID;
-            
+
+            switch(fp_ButtonShape)
+            {
+                case ShapeType::Rectangle:
+                    m_Shape = make_unique<Rectangle>();
+                    break;
+                case ShapeType::Circle:
+                    m_Shape = make_unique<Circle>();
+                    break;
+                case ShapeType::Ellipse:
+                    m_Shape = make_unique<Ellipse>();
+                    break;
+                case ShapeType::Capsule:
+                    m_Shape = make_unique<Capsule>();
+                    break;
+                case ShapeType::Triangle:
+                    m_Shape = make_unique<Triangle>();
+                    break;
+                default:
+                    //handle error here later idfk
+                    break;
+            }
         }
 
     };

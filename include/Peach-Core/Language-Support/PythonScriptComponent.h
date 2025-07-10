@@ -12,7 +12,7 @@
 
 namespace PeachCore {
 
-	struct PythonScriptComponent
-	{
-	};
+    struct PythonScriptComponent
+    {
+    };
 }

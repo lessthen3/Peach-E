@@ -14,8 +14,8 @@
 
 namespace PeachCore {
 
-	struct Path2D
-	{
+    struct Path2D
+    {
 
-	};
+    };
 }

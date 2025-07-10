@@ -14,8 +14,8 @@
 
 namespace PeachCore {
 
-	class NetworkManager
-	{
+    class NetworkManager
+    {
     //////////////////////////////////////////////
     // Private Destructor
     //////////////////////////////////////////////
@@ -56,5 +56,5 @@ namespace PeachCore {
                 shared_ptr<Console> fp_Console
             );
 
-	};
+    };
 }
