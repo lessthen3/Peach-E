@@ -124,7 +124,7 @@ namespace PeachCore {
             f_ShapeDefinition.density = fp_Density; //KABOOOOOOOOOOOOOOOOM
             // f_ShapeDefinition.friction = fp_Friction; //default friction value
             // f_ShapeDefinition.restitution = fp_Bounciness; // bouncy
-            return f_ShapeDefinition;
+            return f_ShapeDefinition; //THIS COULD BE BAD IM PRETTY SURE I JUST WANTA  COPY BUT IM NOT SURE IF ITS ADDED AUTOMATICALLY INTO THE B2WORLD
         }
 
         private:

@@ -374,13 +374,13 @@ if(TARGET_PLATFORM STREQUAL "windows")
     STATIC_IMPORT(Lua_Compiler 
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/win64/release/lua_compiler.lib"
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/win64/debug/lua_compiler.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/include"
+        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/win64/release/lua_runtime.lib"
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/win64/debug/lua_runtime.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/include"
+        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     ############ dotnet stuff
@@ -596,13 +596,13 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
     STATIC_IMPORT(Lua_Compiler 
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/steveARM64/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/steveARM64/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/include"
+        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/steveARM64/liblua_runtime.a"
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/steveARM64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/include"
+        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     ############ dotnet stuff
@@ -833,13 +833,13 @@ elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile 
     STATIC_IMPORT(Lua_Compiler 
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/tux64/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/tux64/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/include"
+        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/tux64/liblua_runtime.a"
         "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/tux64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/include"
+        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     ############ dotnet stuff

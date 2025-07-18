@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                        Peach-E v0.0.1
  *              Created by Ranyodh Mandur - 🍑 2024
  *
@@ -15,7 +15,7 @@
 
 ///SDL3
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_gamepad.h >
+#include <SDL3/SDL_gamepad.h>
 
 ///GLM
 #include <glm/glm.hpp>
