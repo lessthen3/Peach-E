@@ -19,6 +19,7 @@
 #include "Managers/ResourceManager.h"
 #include "Managers/PhysicsManager2D.h"
 #include "Managers/NetworkManager.h"
+#include "Managers/InputManager.h"
 
 //////////////////////////////////////////////
 // Graphics2D
@@ -71,7 +72,6 @@
 //////////////////////////////////////////////
 
 #include "Utils/PeachConsole.h"
-#include "Utils/InputHandler.h"
 #include "Utils/EventBoard.h"
 #include "Utils/Serializer.h"
 #include "Utils/NoiseGenerator.h"

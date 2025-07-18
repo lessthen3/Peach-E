@@ -30,10 +30,11 @@ namespace PeachCore {
     class GameManager 
     {
     //////////////////////////////////////////////
-    // Private Destructor
+    // Private Destructor and Constructor
     //////////////////////////////////////////////
     private:
         ~GameManager() = default;
+        GameManager() = default;
 
     //////////////////////////////////////////////
     // Singleton Instance
@@ -49,12 +50,6 @@ namespace PeachCore {
         GameManager& operator=(const GameManager&) = delete;
         GameManager(GameManager&&) = delete;
         GameManager& operator=(GameManager&&) = delete;
-
-    //////////////////////////////////////////////
-    // Private Constructor
-    //////////////////////////////////////////////
-    private:
-        GameManager() = default;
 
     //////////////////////////////////////////////
     // Private Members
