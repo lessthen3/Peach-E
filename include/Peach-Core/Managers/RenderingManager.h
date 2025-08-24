@@ -113,6 +113,8 @@ namespace PeachCore {
 
         SDL_Window* pm_MainWindow = nullptr;
 
+        unordered_map<SDL_WindowID, SDL_Window*> pm_CurrentlyActiveWindows;
+
     public: //DOING THIS FOR NOW TO TEST RUNNING GAME INSTANCE FROM EDITOR NEEDS TO BE PRIVATE IN MY OPINION
         shared_ptr<LogManager> rendering_logger = nullptr;
 
@@ -143,7 +145,7 @@ namespace PeachCore {
         void 
             ProcessLoadedResourcePackages();
 
-        inline bool
+        [[nodiscard]] bool
             CreateSDLWindow
             (
                 SDL_Window** fp_SDLWindow,
@@ -151,8 +153,7 @@ namespace PeachCore {
                 const string& fp_WindowTitle,
                 const unsigned int fp_WindowWidth,
                 const unsigned int fp_WindowHeight
-            )
-            const;
+            );
         
         #ifndef __APPLE__ //OpenGL stuff again fuck u tim apple dumb ahh mfer
             bool
@@ -172,7 +173,7 @@ namespace PeachCore {
             ResizeWindow();
 
         void 
-            RenderFrame(bool fp_IsStressTest = false);
+            RenderFrame();
 
         void 
             Shutdown();
@@ -212,14 +213,14 @@ namespace PeachCore {
         */
         inline const float 
             Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
-            const
+            const noexcept
         {
 
         }
 
         inline const glm::vec2
             Lerp(const glm::vec2& fp_Start, const glm::vec2& fp_End, const glm::vec2& fp_Rate)
-            const
+            const noexcept
         {
 
         }

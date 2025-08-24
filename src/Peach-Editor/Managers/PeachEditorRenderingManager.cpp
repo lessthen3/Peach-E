@@ -190,10 +190,6 @@ namespace PeachEditor {
 
         //f_CurrentWindowHeight -= f_MainMenuBarHeight; //subtract menu bar since we want the available 
 
-        //////////////////// Get Input ////////////////////
-
-        PollWindowInput(fp_IsProgramRuntimeOver);
-
         //////////////////// Draw Menu Bar ////////////////////
 
         //RenderMenuBar(f_CurrentWindowWidth, f_CurrentWindowHeight, f_MainMenuBarHeight, fp_IsProgramRuntimeOver);
@@ -232,32 +228,6 @@ namespace PeachEditor {
 
         renderer->EndFrame();
         
-    }
-
-    ////////////////////////////////////////////////
-    // Input Handling
-    ////////////////////////////////////////////////
-    void
-        PeachEditorRenderingManager::PollWindowInput(bool* fp_IsProgramRuntimeOver)
-    {
-        SDL_Event f_Event;
-        //window id doesnt work for some reaso and im too lazy to figure out y rn MAC VULKAN LES GOOOO AHHHHHHHHH, 
-        //future me: it was a initialization order thing, i was grabbing the window handle before initializing RenderingManager
-        
-        while (SDL_PollEvent(&f_Event))
-        {
-            if (f_Event.window.windowID == SDL_GetWindowID(pm_MainWindow) and f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-            {
-                *fp_IsProgramRuntimeOver = false;
-            }
-            if (pm_GameInstanceWindow and f_Event.window.type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
-            {
-                // if (f_Event.window.windowID == SDL_GetWindowID(pm_GameInstanceWindow))
-                // {
-                //     DestroyCurrentScene();
-                // }
-            }
-        }
     }
 
     ////////////////////////////////////////////////

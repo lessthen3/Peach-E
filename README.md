@@ -1,9 +1,11 @@
 # Peach-E
 Peach-E is a modern, cross-platform, open source 2D/3D game engine built with C++20 and licensed under the permissive MIT License. 
 
-Peach-E is—and always will be—100% free. No stupid fucking licensing garbage, no royalties, no hidden fees. Built by a game developer, for game developers of any skill level.
+Peach-E is and __will always be 100% free__. No stupid fucking licensing garbage, no royalties, no hidden fees. Built by a game developer, for game developers of any skill level.
 
-Currently you can target Windows(x86_64), MacOS(ARM64) and Linux(x86_64). Native support for FreeBSD, Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, and PS Vita is in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
+Currently you can target Windows(x86_64), MacOS(ARM64) and Linux(x86_64). Native support for FreeBSD, Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, and PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
+
+Peach-E can be used headless or as a framework via the peach_api static lib, the api uses a C calling convention so linking against C, C++ or rust is supported.
 
 >[!WARNING]
 >Peach-E is still in early alpha!
@@ -11,7 +13,7 @@ Currently you can target Windows(x86_64), MacOS(ARM64) and Linux(x86_64). Native
 
 ## Documentation
 
-Docs are coming! You’ll find them here by release 1.0
+Docs are coming! You’ll find them [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ) fully complete by release 1.0
 
 ## Overall Design and Features
 
@@ -19,7 +21,7 @@ Peach-E uses a component-based, node-driven approach, heavily inspired by Godot�
 
 Features:
 
-🍑 __Scripting support for C#, Python, Lua as well as C++ if that's really how you roll__ _(WIP)_
+🍑 __Scripting support for C#, Python, Lua__ _(WIP)_
 
 🍑 __Bundled editor__ so you can hit the ground running _(WIP)_
 
@@ -27,7 +29,7 @@ Features:
 
 🍑 __Visual scripting + shader graph__ _(WIP)_
 
-🍑 __Plugin support__—C++ works; scripted plugins are coming
+🍑 __Plugin support__ C++ works; scripted plugins are coming
 
 🍑 __Built-in rollback and/or delay based UDP/TCP networking__ _(WIP)_
 
@@ -43,7 +45,7 @@ Features:
 
 If you want to build Peach-E for yourself:
 
-0. This project is built using __C++20__, and you will need __CMake 3.20+__ (scroll down to the resources section for links if you are unfamiliar)
+0. This project is built using __C++20__, and you will need __CMake 3.20+__ 
 
 1. Clone the repo
 
@@ -61,21 +63,29 @@ If you want to build Peach-E for yourself:
 
 ## Why Another Game Engine
 
-Because I wanted to make one... also none of the existing ones hit the sweet spot for me.
+Because I wanted to make one... also I don't like any of the current options:
 
-Unity was alright... but the whole TOS drama really turned me off the engine, and __I really just don't trust Unity as a company anymore.__
+Fuck Unity.
 
-Unreal Engine feels like a mess to use, and I don't want to touch Blueprints. I like visual scripting, but the Unreal Engine implementation leaves a lot to be desired in my opinion. Also the lack of official scripting language support is a massive L. I like C++ and that's why I'm using it to build Peach-E—but using it to write an entire game? Way overkill and unnecessary for most use cases. Scripting languages offer better development velocity and experience(ily lua).
+Unreal Engine is powerful but feels like shit to use and only supporting C++ is stupid.
 
-Godot feels good to use, has great plugin support, and amazing documentation to boot. In spite of that, Godot feels unfinished. Feature development is slow, and the ones that do get added often feel inconsequential or sometimes just make the engine more awkward to use. Development doesn't seem focused on pressing issues, driven by whatever contributors feel like doing. As a result, Godot still has weird jank in core systems, and they just keep releasing new versions without a single definitive design for the engine.
+Godot feels good to use, although it's pretty buggy ngl.
 
-Bitching aside—yeah, all three inspired Peach-E, but Godot’s “almost there” feeling finally made me snap. 
+LWJGL is nice, but who tf wants to program a game in Java. I'd rather have a .45 for breakfast than work on embedding a scripting language or using JNI.
 
-__*I just want...*__
+wtf is O3DE.
 
-🍑🍑🍑 An engine that doesn’t feel awful to use 🍑🍑🍑
+Bevy isn't a game engine, idc what you say. 0 editor 0 bitches.
 
-💥💥💥 Doesn’t explode when you breathe on it wrong 💥💥💥
+Fuck 2D only engines, and fuck you if you only use them.
+
+Bitching aside—yeah, all of my experiences with game engines and frameworks inspired Peach-E, but Godot made me snap. 
+
+__*I just want an engine...*__
+
+🍑🍑🍑 that doesn’t feel awful to use 🍑🍑🍑
+
+💥💥💥 that doesn’t explode 💥💥💥
 
 That's it. Plain and simple.
 
@@ -104,7 +114,3 @@ arch=x86_64
 compiler=clang
 compiler.version=19
 ```
-
-## Resources:
-
-[Latest CMake Download](https://cmake.org/download/)

@@ -38,7 +38,7 @@ namespace PeachCore {
 
         SDL_GetWindowSize(pm_Init.MainWindow, &pm_RenderData.CurrentWindowWidth, &pm_RenderData.CurrentWindowHeight); //grab window size so render loop can start properly and not be thwarted at beginframe()
 
-        if (not InitializeDevice())
+        if (not InitializeDevice("Game"))
         {
             rendering_logger->PEACH_LOG("Failed to create Vulkan device, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
             return false;
@@ -104,7 +104,6 @@ namespace PeachCore {
         //cout << "Features: " << endl;
         //cout << "  Geometry Shader: " << deviceFeatures.geometryShader << endl;
         //cout << "  Tessellation Shader: " << deviceFeatures.tessellationShader << endl;
-        // Add more features as needed
     }
 
     bool
@@ -399,14 +398,14 @@ namespace PeachCore {
     }
 
     bool
-        VulkanRenderer::InitializeDevice()
+        VulkanRenderer::InitializeDevice(const string& fp_AppName)
     {
         //////////////////// Build Instance ////////////////////
 
         vkb::InstanceBuilder builder;
 
         auto inst_ret = builder
-            .set_app_name("Game")
+            .set_app_name(fp_AppName.c_str())
             .set_engine_name("Peach-E")
             .request_validation_layers(true)
             .require_api_version(1, 2, 0)

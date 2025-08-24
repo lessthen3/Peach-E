@@ -22,6 +22,17 @@
 
 namespace PeachCore {
 
+    constexpr float JOYSTICK_MAX_STICK_VALUE = SDL_JOYSTICK_AXIS_MAX;
+
+    struct ThreadsafeVec2
+    {
+        atomic<float> x;
+        atomic<float> y;
+
+        ThreadsafeVec2() : x(0.0f), y(0.0f) {}
+    };
+
+
     struct InputState
     {
         bool IsActive = false;
@@ -70,9 +81,17 @@ namespace PeachCore {
         bool IsCursorInWindow = true;
     };
 
+    struct JoystickInput
+    {
+        glm::vec2 StickPosition = glm::vec2(0);
+    };
+
     struct GamepadInput
     {
         glm::vec2 StickPosition = glm::vec2(0);
+
+        //ThreadsafeVec2() : x(0.0f), y(0.0f) {}
+
         //idk how to handle various button layouts
     };
 
@@ -106,6 +125,8 @@ namespace PeachCore {
     struct Joystick
     {
         SDL_JoystickID JoystickID = -1;
+        SDL_Joystick* ID = nullptr;
+        JoystickInput Input;
     };
 
     struct InputSnapshot //used for per frame tracking of inputs recorded
@@ -117,7 +138,7 @@ namespace PeachCore {
         TouchInput TouchEvent;
 
         void
-            Clear()
+            Clear(LogManager* logger)
         {
             MouseEvent = {};
             GamepadEvent = {};
@@ -131,7 +152,7 @@ namespace PeachCore {
             }
             catch (exception fp_Exception)
             {
-                //idk
+                logger->PEACH_LOG("failed to fill array with fresh values for keyboard events", "InputManager::InputSnapshot::Clear", LogManager::LogLevel::Error);
             }
 
         }
@@ -165,8 +186,21 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
-        map<const char*, vector<InputBinding>> pm_InputMap; //action name : corresponding input
+        //enum class ConnectedDevice : uint8_t
+        //{
+        //    None = 0,
+        //    Keyboard = 1 << 0,
+        //    Mouse = 1 << 1,
+        //    Stylus = 1 << 2,
+        //    Joystick = 1 << 3,
+        //    Gamepad = 1 << 4,
+        //    Touch = 1 << 5
+        //};
+
+    private:
         unique_ptr<LogManager> input_logger = nullptr;
+
+        unordered_map<string, vector<InputBinding>> pm_InputMap; //action name : corresponding input
 
         InputSnapshot pm_LastFrameInput;
         InputSnapshot pm_CurrentFrameInput;
@@ -179,9 +213,9 @@ namespace PeachCore {
         bool pm_IsGamepadConnected = false;
         bool pm_IsTouchControlsActive = false;
 
-        unordered_map<string, SDL_Window*> pm_ActiveWindows; //name : window handle
-
         unordered_map<SDL_JoystickID, Gamepad> pm_ConnectedGamepads;
+        unordered_map<SDL_JoystickID, Joystick> pm_ConnectedJoysticks;
+
         unordered_map<SDL_PenID, Stylus> pm_ConnectedStyluses;
 
         vector<SDL_WindowID> pm_WindowCloseRequests;
@@ -197,11 +231,12 @@ namespace PeachCore {
     // Public Methods
     //////////////////////////////////////////////
     public:
-
         [[nodiscard]] bool
             Initialize
             (
-
+                const string& fp_LogOutputDirectory,
+                const LogManager::LogLevel fp_LogFilter,
+                shared_ptr<Console> fp_Console
             );
 
         void
@@ -211,45 +246,34 @@ namespace PeachCore {
             MapInput
             (
                 const string& fp_ActionName, 
-                SDL_Scancode fp_KeyboardEvent
+                InputBinding& fp_InputBinding
             );
 
-        //void
-        //    MapInput
-        //    (
-        //        const string& fp_ActionName, 
-        //        MouseEvent fp_MouseEvent
-        //    );
-
-        //void
-        //    MapInput
-        //    (
-        //        const string& fp_ActionName,
-        //        GamepadEvent fp_GamepadEvent
-        //    );
-
-        //void
-        //    MapInput
-        //    (
-        //        const string& fp_ActionName, 
-        //        StylusEvent fp_StylusEvent
-        //    );
-
         [[nodiscard]] bool 
-            WasPressed(const char* fp_ActionName)
+            WasPressed(const string& fp_ActionName)
             const noexcept;
 
         [[nodiscard]] bool
-            WasReleased(const char* fp_ActionName)
+            WasReleased(const string& fp_ActionName)
             const noexcept;
 
         [[nodiscard]] inline glm::vec2
             GetCurrentMousePosition()
-            const noexcept;
+            const noexcept
+        {
+            return pm_CurrentFrameInput.MouseEvent.Position;
+        }
 
         inline void
             GetWindowCloseRequests(vector<SDL_WindowID>& fp_WindowCustomer)
-            noexcept;
+            noexcept
+        {
+            if (pm_WindowCloseRequests.size() > 0)
+            {
+                swap(pm_WindowCloseRequests, fp_WindowCustomer);
+                pm_WindowCloseRequests.clear();
+            }
+        }
 
     //////////////////////////////////////////////
     // Private Methods

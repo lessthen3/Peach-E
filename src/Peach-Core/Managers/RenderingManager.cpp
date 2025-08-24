@@ -10,8 +10,8 @@
 ********************************************************************/
 #include "../../include/Peach-Core/Managers/RenderingManager.h"
 /*
-	This class is used to manage the render thread, and queue/unqueue objects safely
-	Copyright(c) 2024-present Ranyodh Singh Mandur.
+    This class is used to manage the render thread, and queue/unqueue objects safely
+    Copyright(c) 2024-present Ranyodh Singh Mandur.
 
 */
 
@@ -85,14 +85,14 @@ namespace PeachCore {
             }
         }
         #ifndef __APPLE__
-        else if(fp_DesiredRenderer == RendererType::OpenGL)
-        {
-            if (not InitializeOpenGL())
+            else if(fp_DesiredRenderer == RendererType::OpenGL)
             {
-                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
-                exit(FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
+                if (not InitializeOpenGL())
+                {
+                    rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                    exit(FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
+                }
             }
-        }
         #endif
         else
         {
@@ -104,7 +104,7 @@ namespace PeachCore {
         return true;
     }
 
-    bool
+    [[nodiscard]] bool
         RenderingManager::CreateSDLWindow
         (
             SDL_Window** fp_SDLWindow,
@@ -113,7 +113,6 @@ namespace PeachCore {
             const unsigned int fp_WindowWidth,
             const unsigned int fp_WindowHeight
         )
-        const
     {
         if (*fp_SDLWindow)
         {
@@ -150,6 +149,9 @@ namespace PeachCore {
             rendering_logger->PEACH_LOG("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager", LogManager::LogLevel::Fatal);
             return false;
         }
+
+        SDL_WindowID f_WindowID = SDL_GetWindowID(*fp_SDLWindow);
+        pm_CurrentlyActiveWindows[f_WindowID] = *fp_SDLWindow;
 
         return true;
     }
@@ -338,7 +340,7 @@ namespace PeachCore {
     }
 
     void 
-        RenderingManager::RenderFrame(bool fp_IsStressTest)
+        RenderingManager::RenderFrame()
     {
         if (not pm_IsInitialized)
         {
@@ -378,14 +380,15 @@ namespace PeachCore {
                 }
             }
 
-            //if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
-            //{
-            //    pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
-            //    break;
-            //}
-        }
+            #ifdef PEACH_RENDER_STRESS_TEST
+                if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
+                {
+                    pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
+                    break;
+                }
+            #endif
 
-        Shutdown(); //cleanup everything here
+        }
     }
 
     void

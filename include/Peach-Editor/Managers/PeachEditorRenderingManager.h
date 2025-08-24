@@ -12,7 +12,6 @@
 
 #include "../../include/Peach-Core/Managers/RenderingManager.h"
 
-#include <atomic> //should be used for communicating whether the scene execution thread is currently running or not
 #include <unordered_set>
 
 namespace PeachEditor {
@@ -38,7 +37,7 @@ namespace PeachEditor {
     // Singleton Instance
     //////////////////////////////////////////////
     public:
-        static PeachEditorRenderingManager& PeachEditorRenderer()
+        static PeachEditorRenderingManager& get_single()
         {
             static PeachEditorRenderingManager peach_editor_renderer;
             return peach_editor_renderer;

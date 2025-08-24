@@ -193,10 +193,17 @@ namespace PeachCore
 
             return false;
         }
+
         PhysicsManager2D::get_single().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger(), 0.0f, -9.8f);
         AudioManager::get_single().Initialize(f_LogDir, peach_engine_console.GetConsoleLogger());
         RenderingManager::get_single().Initialize(fp_RenderingBackend, f_LogDir, peach_engine_console.GetConsoleLogger());
         NetworkManager::get_single().InitializeNetworking(f_LogDir, peach_engine_console.GetConsoleLogger()); //stole get_single from godot style uwu
+
+        if (not InputManager::get_single().Initialize(f_LogDir, LogManager::LogLevel::All, peach_engine_console.GetConsoleLogger()))
+        {
+
+            return false;
+        }
 
         cout << "Hello World!\n"; //>w<
         main_logger->PEACH_LOG("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E", LogManager::LogLevel::Warning);

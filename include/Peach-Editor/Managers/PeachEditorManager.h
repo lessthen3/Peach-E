@@ -76,14 +76,33 @@ namespace PeachEditor{
             const
         {
             auto peach_engine = &PeachCore::GameManager::get_single();
-            auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
+            auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::get_single();
 
-            bool mf_IsEditorOpen = true;
+            bool f_IsEditorOpen = true;
 
-            while (mf_IsEditorOpen)
+            vector<SDL_WindowID> f_CloseWindowRequests;
+
+            while (f_IsEditorOpen)
             {
                 this_thread::sleep_for(chrono::milliseconds(200)); //60 fps oh i just realized the fps flickers by 1 because the floating point conversion isnt exact
-                editor_renderer->RenderFrame(&mf_IsEditorOpen);
+                PeachCore::InputManager::get_single().PollEvents();
+                editor_renderer->RenderFrame(&f_IsEditorOpen);
+
+                PeachCore::InputManager::get_single().GetWindowCloseRequests(f_CloseWindowRequests);
+
+                if (f_CloseWindowRequests.size() > 0)
+                {
+                    for(const auto& lv_Window : f_CloseWindowRequests)
+                    {
+                        SDL_DestroyWindow(SDL_GetWindowFromID(lv_Window));
+                    }
+
+                    break; //assuming main window is closed, WARNING: THIS IS ONLY FOR TESTING DOESNT WORK FOR MULTI WINDOW SETUPS
+                }
+                glm::vec2 f_MousePos = PeachCore::InputManager::get_single().GetCurrentMousePosition();
+
+                PeachCore::Print(format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), PeachCore::Colours::Green);
+
             }
 
             editor_renderer->Shutdown();
@@ -96,7 +115,7 @@ namespace PeachEditor{
             SetupInternalManagers(const string& fp_LogDir)
         {
             
-            if(not PeachEditorRenderingManager::PeachEditorRenderer().Initialize(fp_LogDir, pm_PeachEditorConsole))
+            if(not PeachEditorRenderingManager::get_single().Initialize(fp_LogDir, pm_PeachEditorConsole))
             {
                 main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
                 return false;
@@ -237,7 +256,7 @@ namespace PeachEditor{
             InitializeQueues()
 
         {
-            auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::PeachEditorRenderer();
+            auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::get_single();
 
             //used for pushing update commands to the Render Thread
             //Initialize methods, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously

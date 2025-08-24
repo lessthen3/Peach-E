@@ -157,7 +157,7 @@ namespace PeachCore{
             CleanUp();
 
         bool
-            InitializeDevice();
+            InitializeDevice(const string& fp_AppName);
 
         bool
             CreateSwapChain();

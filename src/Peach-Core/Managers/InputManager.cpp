@@ -13,10 +13,26 @@
 namespace PeachCore {
 
     [[nodiscard]] bool
-        InputManager::Initialize()
+        InputManager::Initialize
+        (
+            const string& fp_LogOutputDirectory,
+            const LogManager::LogLevel fp_LogFilter,
+            shared_ptr<Console> fp_Console
+        )
     {
+        //////////////////// Nullptr check for PeachConsole ref ////////////////////
+
+        if (not fp_Console)
+        {
+            PrintError("Tried to initialize RenderingManager with a nullptr reference to the Console");
+            return false;
+        }
+
+        //////////////////// Initialize Logger ////////////////////
+
         input_logger = make_unique<LogManager>();
-        //input_logger->Initialize()
+        input_logger->Initialize(ThreadName::MainThread, fp_LogOutputDirectory, "InputManager", fp_Console, fp_LogFilter);
+        input_logger->PEACH_LOG("InputLogger successfully initialized", "RenderingManager", LogManager::LogLevel::Debug);
 
         return true;
     }
@@ -25,14 +41,14 @@ namespace PeachCore {
         InputManager::MapInput
         (
             const string& fp_Action, 
-            SDL_Scancode fp_KeyCode
+            InputBinding& fp_InputBinding
         )
     {
-        pm_InputMap[fp_Action.c_str()].push_back({DeviceType::Keyboard, fp_KeyCode});
+        pm_InputMap[fp_Action.c_str()].push_back(fp_InputBinding);
     }
 
     [[nodiscard]] bool
-        InputManager::WasPressed(const char* fp_ActionName)
+        InputManager::WasPressed(const string& fp_ActionName)
         const noexcept
     {
         auto f_FindActionResult = pm_InputMap.find(fp_ActionName);
@@ -49,21 +65,39 @@ namespace PeachCore {
             return false;
         }
 
-        bool f_WasPressed = false;
-
         for (const auto& lv_Binding : f_FindActionResult->second)
         {
-            if (pm_CurrentFrameInput.KeyboardEvent.WasKeyPressed[lv_Binding.u.Key].IsActive)
+            switch(lv_Binding.Device)
             {
-                f_WasPressed = true;
+            case DeviceType::Keyboard:
+                if (pm_CurrentFrameInput.KeyboardEvent.WasKeyPressed[lv_Binding.u.Key].IsActive)
+                {
+                    return true;
+                }
+                break;
+            case DeviceType::Mouse:
+                if (pm_CurrentFrameInput.MouseEvent.MouseButtonsDown[lv_Binding.u.MouseButton].IsActive)
+                {
+                    return true;
+                }
+                break;
+            case DeviceType::Gamepad:
+                //placeholder
+                break;
+            case DeviceType::Joystick:
+                //placeholder
+                break;
+            case DeviceType::Stylus:
+                //placeholder
+                break;
             }
         }
 
-        return f_WasPressed;
+        return false;
     }
 
     [[nodiscard]] bool
-        InputManager::WasReleased(const char* fp_ActionName)
+        InputManager::WasReleased(const string& fp_ActionName)
         const noexcept
     {
         auto f_FindActionResult = pm_InputMap.find(fp_ActionName);
@@ -80,42 +114,51 @@ namespace PeachCore {
             return false;
         }
 
-        bool f_WasReleased = false;
-
         for (const auto& lv_Binding : f_FindActionResult->second)
         {
-            if (pm_CurrentFrameInput.KeyboardEvent.WasKeyReleased[lv_Binding.u.Key].IsActive)
+            switch (lv_Binding.Device)
             {
-                f_WasReleased = true;
+            case DeviceType::Keyboard:
+                if (pm_CurrentFrameInput.KeyboardEvent.WasKeyReleased[lv_Binding.u.Key].IsActive)
+                {
+                    return true;
+                }
+                break;
+            case DeviceType::Mouse:
+                if (pm_CurrentFrameInput.KeyboardEvent.WasKeyReleased[lv_Binding.u.Key].IsActive)
+                {
+                    return true;
+                }
+                break;
+            case DeviceType::Gamepad:
+                if (pm_CurrentFrameInput.KeyboardEvent.WasKeyReleased[lv_Binding.u.Key].IsActive)
+                {
+                    return true;
+                }
+                break;
+            case DeviceType::Joystick:
+                if (pm_CurrentFrameInput.KeyboardEvent.WasKeyReleased[lv_Binding.u.Key].IsActive)
+                {
+                    return true;
+                }
+                break;
+            case DeviceType::Stylus:
+                if (pm_CurrentFrameInput.KeyboardEvent.WasKeyReleased[lv_Binding.u.Key].IsActive)
+                {
+                    return true;
+                }
+                break;
             }
         }
 
-        return f_WasReleased;
-    }
-
-    [[nodiscard]] inline glm::vec2
-        InputManager::GetCurrentMousePosition()
-        const noexcept
-    {
-        return pm_CurrentFrameInput.MouseEvent.Position;
-    }
-
-    inline void
-        InputManager::GetWindowCloseRequests(vector<SDL_WindowID>& fp_WindowCustomer)
-        noexcept
-    {
-        if(pm_WindowCloseRequests.size() > 0)
-        {
-            swap(pm_WindowCloseRequests, fp_WindowCustomer);
-            pm_WindowCloseRequests.clear();
-        }
+        return false;
     }
 
     void 
         InputManager::PollEvents()
     {
         swap(pm_LastFrameInput, pm_CurrentFrameInput);
-        pm_CurrentFrameInput.Clear(); // set everything false or zero
+        pm_CurrentFrameInput.Clear(input_logger.get()); // set everything false or zero
 
         SDL_Event e;
 
@@ -271,7 +314,8 @@ namespace PeachCore {
                     pm_ConnectedGamepads[f_JoystickID] = Gamepad
                     {
                         .JoystickID = f_JoystickID,
-                        .ID = f_GamepadHandle
+                        .ID = f_GamepadHandle,
+                        .Input = {}
                     };
 
                     pm_IsGamepadConnected = true;
@@ -316,8 +360,8 @@ namespace PeachCore {
 
                 if (it != pm_ConnectedGamepads.end())
                 {
-                    float x = SDL_GetGamepadAxis(it->second.ID, SDL_GAMEPAD_AXIS_LEFTX) / 32768.0f;
-                    float y = SDL_GetGamepadAxis(it->second.ID, SDL_GAMEPAD_AXIS_LEFTY) / 32768.0f;
+                    float x = SDL_GetGamepadAxis(it->second.ID, SDL_GAMEPAD_AXIS_LEFTX) / JOYSTICK_MAX_STICK_VALUE;
+                    float y = SDL_GetGamepadAxis(it->second.ID, SDL_GAMEPAD_AXIS_LEFTY) / JOYSTICK_MAX_STICK_VALUE;
 
                     it->second.Input.StickPosition = { x, y };
                 }
@@ -333,10 +377,67 @@ namespace PeachCore {
             //////////////////// Joystick OwO ////////////////////
 
             case SDL_EVENT_JOYSTICK_ADDED:
-                break;
-            case SDL_EVENT_JOYSTICK_AXIS_MOTION:
-                break;
+            {
+                SDL_JoystickID f_JoystickID = e.gdevice.which;
+                SDL_Joystick* f_JoystickHandle = SDL_OpenJoystick(f_JoystickID);
 
+                if (f_JoystickHandle)
+                {
+                    pm_ConnectedJoysticks[f_JoystickID] = Joystick
+                    {
+                        .JoystickID = f_JoystickID,
+                        .ID = f_JoystickHandle,
+                        .Input = {}
+                    };
+
+                    pm_IsJoystickConnected = true;
+
+                    input_logger->PEACH_LOG
+                    (
+                        format("Joystick connected with ID: {}", f_JoystickID),
+                        "InputManager::PollEvents",
+                        LogManager::LogLevel::Info
+                    );
+                }
+
+                break;
+            }        
+            case SDL_EVENT_JOYSTICK_REMOVED:
+            {
+                SDL_JoystickID f_JoystickID = e.gdevice.which;
+
+                if (pm_ConnectedJoysticks.contains(f_JoystickID))
+                {
+                    SDL_CloseJoystick(pm_ConnectedJoysticks[f_JoystickID].ID);
+
+                    pm_ConnectedJoysticks.erase(f_JoystickID);
+
+                    input_logger->PEACH_LOG
+                    (
+                        format("Gamepad disconnected with ID: {}", f_JoystickID),
+                        "InputManager::PollEvents",
+                        LogManager::LogLevel::Info
+                    );
+
+                    pm_IsJoystickConnected = not pm_ConnectedJoysticks.empty();
+                }
+
+                break;
+            }
+            case SDL_EVENT_JOYSTICK_AXIS_MOTION:
+            {
+                SDL_JoystickID f_JoystickID = e.gaxis.which;
+
+                auto it = pm_ConnectedJoysticks.find(f_JoystickID);
+
+                if (it != pm_ConnectedJoysticks.end())
+                {
+                    it->second.Input.StickPosition.x = SDL_GetJoystickAxis(it->second.ID, SDL_GAMEPAD_AXIS_LEFTX) / JOYSTICK_MAX_STICK_VALUE;
+                    it->second.Input.StickPosition.y = SDL_GetJoystickAxis(it->second.ID, SDL_GAMEPAD_AXIS_LEFTY) / JOYSTICK_MAX_STICK_VALUE;
+                }
+
+                break;
+            }
             //////////////////// Audio Device Stuff ////////////////////
 
             case SDL_EVENT_AUDIO_DEVICE_ADDED:
