@@ -153,9 +153,7 @@ endif()
 
 # Create a static library for peach_core
 add_library(peach STATIC 
-
     ${PEACH_CORE_SOURCES}
-
 )
 
 target_include_directories(peach PUBLIC
@@ -258,12 +256,6 @@ endmacro()
 
 if(TARGET_PLATFORM STREQUAL "windows")
     # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64"
-    # add_library(GGPO STATIC IMPORTED) #working on GGPO4ALL
-
-    # set_target_properties(GGPO PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/third_party/ggpo/lib/GGPO.lib"
-    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/third_party/ggpo/include"
-    # )
 
     ############ GL extensions for legacy systems
 
@@ -717,12 +709,6 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
 
 elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
     # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"
-    # add_library(GGPO STATIC IMPORTED) #working on GGPO4ALL
-
-    # set_target_properties(GGPO PROPERTIES
-    #     IMPORTED_LOCATION "${PROJECT_SOURCE_DIR}/third_party/ggpo/lib/GGPO.lib"
-    #     INTERFACE_INCLUDE_DIRECTORIES "${PROJECT_SOURCE_DIR}/third_party/ggpo/include"
-    # )
 
     ############ GL extensions for legacy systems
 

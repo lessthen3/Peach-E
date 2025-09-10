@@ -1,11 +1,11 @@
 # Peach-E
 Peach-E is a modern, cross-platform, open source 2D/3D game engine built with C++20 and licensed under the permissive MIT License. 
 
-Peach-E is and __will always be 100% free__. No stupid fucking licensing garbage, no royalties, no hidden fees. Built by a game developer, for game developers of any skill level.
+Peach-E is and __will always be 100% free__. No stupid licensing garbage, no royalties, no hidden fees. Built by a game developer, for game developers of any skill level.
 
-Currently you can target Windows(x86_64), MacOS(ARM64) and Linux(x86_64). Native support for FreeBSD, Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, and PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
+Currently you can target Windows(x64), MacOS(ARM64) and Linux(x64). Native support for FreeBSD, Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, Windows ARM and PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
 
-Peach-E can be used headless or as a framework via the peach_api static lib, the api uses a C calling convention so linking against C, C++ or rust is supported.
+Peach-E can be used headless via the peach_api static lib, the api uses a C calling convention so linking against C, C++ or rust is supported.
 
 >[!WARNING]
 >Peach-E is still in early alpha!
@@ -37,7 +37,7 @@ Features:
 
 🍑 __Physics:__ Box2D (v3.1.1) for 2D, Jolt (v5.3.0) for 3D
 
-🍑 __Native support for Windows, MacOS, and Linux__ _(FreeBSD, Haiku, iOS, iPadOS, tvOS, Android, PS Vita, and web are a WIP)_
+🍑 __Native support for Windows(x64), MacOS, and Linux__ _(Windows ARM, FreeBSD, Haiku, iOS, iPadOS, tvOS, Android, PS Vita, and web are a WIP)_
 
 🍑 __Quality of life nodes__ for easily integrating in-game consoles and logging support out of the box
 
@@ -67,19 +67,17 @@ Because I wanted to make one... also I don't like any of the current options:
 
 Fuck Unity.
 
-Unreal Engine is powerful but feels like shit to use and only supporting C++ is stupid.
+Unreal Engine is powerful but feels awful to use and only supporting C++ in my opinion is stupid.
 
-Godot feels good to use, although it's pretty buggy ngl.
+Godot feels good to use, although in my experience pretty buggy.
 
-LWJGL is nice, but who tf wants to program a game in Java. I'd rather have a .45 for breakfast than work on embedding a scripting language or using JNI.
+LWJGL is nice, but who wants to program a game in Java.
 
-wtf is O3DE.
+what is O3DE.
 
-Bevy isn't a game engine, idc what you say. 0 editor 0 bitches.
+Bevy is technically a game engine, but like where's the editor?_?
 
-Fuck 2D only engines, and fuck you if you only use them.
-
-Bitching aside—yeah, all of my experiences with game engines and frameworks inspired Peach-E, but Godot made me snap. 
+Bitching aside—all of my experiences with game engines and frameworks inspired Peach-E.
 
 __*I just want an engine...*__
 
