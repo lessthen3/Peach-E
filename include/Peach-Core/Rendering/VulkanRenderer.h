@@ -44,6 +44,28 @@ namespace PeachCore{
         ~VulkanRenderer() = default; //idrc ab RAII here since VulkanRenderer will live for the entire program runtime, so cleaning it up is an after thought
         //we can just let the OS or driver handle it idrc
 
+        enum StatusCode : uint32_t
+        {
+            OK = 1 << 0U, //ok uwu
+
+            BEGIN_FRAME_CALLED_WHILE_FRAME_IS_ALREADY_STARTED = 1 << 1U,
+            NO_VALID_RENDERING_SURFACE = 1 << 2U,
+            RECREATED_SWAPCHAIN_SUCCESSFULLY = 1 << 3U,
+
+            FAILED_TO_RECREATE_SWAPCHAIN_ERROR = 1 << 4U,
+            DRAW_FRAME_BEFORE_BEGIN_FRAME_ERROR = 1 << 5U,
+            FAILED_TO_ACQUIRE_NEXT_SWAPCHAIN_IMAGE_ERROR = 1 << 6U,
+            FAILED_TO_BEGIN_COMMAND_BUFFER_ERROR = 1 << 7U,
+            FAILED_TO_SUBMIT_DRAW_COMMAND_BUFFER = 1 << 8U,
+
+            NOT_VULKAN_SUCCESS = 1 << 9U,
+            SUBOPTIMAL_VULKAN_KHR = 1 << 10U,
+            OUT_OF_DATE_VULKAN_KHR = 1 << 11U,
+
+            FAILED_TO_END_COMMAND_BUFFER = 1 << 12U,
+            END_FRAME_CALLED_WHEN_FRAME_WASNT_STARTED_ERROR = 1 << 13U
+        };
+
         struct VulkanShaderAsset
         {
             VkPipeline Pipeline;
@@ -122,6 +144,8 @@ namespace PeachCore{
         shared_ptr<LogManager> rendering_logger = nullptr;
 
     public:
+        //////////////////// Initialize Method ////////////////////
+
         bool
             Initialize //used for lazy initialization and for default constructor support without needing to define an explicit move constructor UwU
             (
@@ -130,20 +154,23 @@ namespace PeachCore{
                 shared_ptr<LogManager> fp_RenderingLogger
             );
 
-        ////////////////////////////////////////////////
-        // Setup Nuklear GUI
-        ////////////////////////////////////////////////
+        //////////////////// Setup Peach UI ////////////////////
+
         bool
             InitializePeachUI();
 
-        bool
+        //////////////////// Frame Rendering Functions ////////////////////
+
+        uint32_t
             BeginFrame();
 
-        bool
+        uint32_t
             DrawFrame();
 
-        bool
+        uint32_t
             EndFrame();
+
+        //////////////////// Shader Stuff ////////////////////
 
         VkShaderModule
             CreateShaderModule

@@ -1,23 +1,24 @@
 ﻿/*******************************************************************
- *                                        Peach Editor v0.0.7
- *                           Created by Ranyodh Mandur - 🍑 2024
+ *                     Peach Editor v0.0.7
+ *             Created by Ranyodh Mandur - 🍑 2024
  *
- *                         Licensed under the MIT License (MIT).
- *                  For more details, see the LICENSE file or visit:
- *                        https://opensource.org/licenses/MIT
+ *             Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *             https://opensource.org/licenses/MIT
  *
- *              Peach Editor is a free open source editor for Peach-E
+ *      Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
 #pragma once
 
 #include "Managers/GameManager.h"
-#include "PeachEditorRenderingManager.h"
 #include "../Editor/PeachProject.h"
 
 #include "../Editor/ShaderCompilerUtils.h"
 #include "../Editor/LangUtils.h"
 
 namespace PeachEditor{
+
+    using namespace std;
 
     class PeachEditorManager
     {
@@ -42,12 +43,6 @@ namespace PeachEditor{
     private:
         shared_ptr<PeachCore::Console> pm_PeachEditorConsole = nullptr;
         shared_ptr<PeachCore::LogManager> main_editor_logger = nullptr;
-
-        shared_ptr<PeachCore::CommandQueue> pm_PeachEditorRenderingManagersCommandQueue = nullptr;
-        shared_ptr<PeachCore::LoadingQueue> pm_PeachEditorDrawableResourceLoadingQueue = nullptr;
-
-        shared_ptr<PeachCore::CommandQueue> pm_AudioManagersCommandQueue = nullptr; //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
-        shared_ptr<PeachCore::LoadingQueue> pm_AudioResourceLoadingQueue = nullptr; //used to push load commands that are destined for AudioManager
 
         DotnetConfigs pm_DotnetConfiguration;
 
@@ -76,7 +71,7 @@ namespace PeachEditor{
             const
         {
             auto peach_engine = &PeachCore::GameManager::get_single();
-            auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::get_single();
+            auto engine_renderer = &PeachCore::RenderingManager::get_single();
 
             bool f_IsEditorOpen = true;
 
@@ -86,7 +81,7 @@ namespace PeachEditor{
             {
                 this_thread::sleep_for(chrono::milliseconds(200)); //60 fps oh i just realized the fps flickers by 1 because the floating point conversion isnt exact
                 PeachCore::InputManager::get_single().PollEvents();
-                editor_renderer->RenderFrame(&f_IsEditorOpen);
+                engine_renderer->RenderFrame();
 
                 PeachCore::InputManager::get_single().GetWindowCloseRequests(f_CloseWindowRequests);
 
@@ -105,23 +100,10 @@ namespace PeachEditor{
 
             }
 
-            editor_renderer->Shutdown();
+            engine_renderer->Shutdown();
             peach_engine->ShutdownPeachEngine();
 
             main_editor_logger->LogAndPrint("Exit Success!", "Peach-E", PeachCore::LogManager::LogLevel::Debug);
-        }
-
-        bool
-            SetupInternalManagers(const string& fp_LogDir)
-        {
-            
-            if(not PeachEditorRenderingManager::get_single().Initialize(fp_LogDir, pm_PeachEditorConsole))
-            {
-                main_editor_logger->LogAndPrint("Initialization error: PeachEditorRenderer failed to initialize properly, exiting program execution immediately", "PeachEditorManager", PeachCore::LogManager::LogLevel::Fatal);
-                return false;
-            }
-
-            return true;
         }
 
         bool
@@ -145,42 +127,33 @@ namespace PeachEditor{
 
             main_editor_logger->LogAndPrint("Main editor logger successfully initialized", "PeachEditorManager", PeachCore::LogManager::LogLevel::Debug);
 
-            //////////////////// Get Local HostFxr Path and Validate Dotnet Exists ////////////////////
-
-            DotnetUtils::AssertDotnetExists(); //dummy call but should actually make lmfao
+            //////////////////// Get Local HostFxr Path and Validate Dotnet Exists TEST_ONLY ////////////////////
 
             string f_HostFxrPath;
-            DotnetUtils::GetHostFxrLocalPath(&f_HostFxrPath, main_editor_logger.get());
 
-            //////////////////// Main Initialization Calls ////////////////////
+            if(DotnetUtils::AssertDotnetExists()) //dummy call but should actually make lmfao
+            {
+                DotnetUtils::GetHostFxrLocalPath(&f_HostFxrPath, main_editor_logger.get());
+            }
+
+            //DotnetUtils::GenerateDefaultScript("FirstGeneratedScript", "Sprite2D", fp_RootPath + "/local_tests", main_logger.get());
+            //DotnetUtils::GenerateProjectFiles(pm_DotnetConfiguration, "PeachGame", fp_RootPath + "/local_tests", fp_RootPath + "res/script_runtimes/win64/dotnet/PeachScriptCore.dll", "", main_editor_logger.get());
+            //DotnetUtils::BuildDotnetProject(pm_DotnetConfiguration.SolutionPath, main_editor_logger.get());
+
+            //////////////////// Main Initialization Calls //////////////////// 
+            // //NEEDA: figure out a better way to handle dotnet projects, maybe feed a string like "NUHUH" to signal the InitializePeachEngine call that this aint a dotnet game
 
             if (not PeachCore::GameManager::get_single().InitializePeachEngine(fp_RootPath, f_HostFxrPath, PeachCore::RendererType::Vulkan))
             {
 
                 return false;
             }
-            else if (not SetupInternalManagers(f_LogDir))
-            {
-
-                return false;
-            }
-
-            //else if (not InitializeQueues())
-            //{
-
-            //    return false;
-            //}
 
             //////////////////// Dotnet Testing not Real Production Code ////////////////////
 
             //Serializer f_Serializer;
 
             //f_Serializer.ToJSON(pm_DotnetContext.RuntimeConfigs, "PeachGame.runtimeconfig", fp_RootPath + "/local_tests", main_logger.get());
-
-            //DotnetUtils::GenerateDefaultScript("FirstGeneratedScript", "Sprite2D", fp_RootPath + "/local_tests", main_logger.get());
-
-            /*DotnetUtils::GenerateProjectFiles(pm_DotnetConfiguration, "PeachGame", fp_RootPath + "/local_tests", fp_RootPath + "res/script_runtimes/win64/dotnet/PeachScriptCore.dll", "", main_editor_logger.get());
-            DotnetUtils::BuildDotnetProject(pm_DotnetConfiguration.SolutionPath, main_editor_logger.get());*/
 
             //////////////////// Success! ////////////////////
 
@@ -251,25 +224,6 @@ namespace PeachEditor{
         ////////////////////////////////////////////////
         // Setup Communication Queues
         ////////////////////////////////////////////////
-
-        bool
-            InitializeQueues()
-
-        {
-            auto editor_renderer = &PeachEditor::PeachEditorRenderingManager::get_single();
-
-            //used for pushing update commands to the Render Thread
-            //Initialize methods, so RenderingManager issues one and only one copy of the commandqueue sharedptr for the main thread to use judiciously
-            pm_PeachEditorRenderingManagersCommandQueue = editor_renderer->InitializeQueues(); //lifetime is tied to renderingmanager so fuck u main thread, if renderingmanager says commandqueue is out, command queue is out
-            //pm_PeachEditorDrawableResourceLoadingQueue = PeachEditor::PeachEditorResourceLoadingManager::PeachEditorResourceLoader().GetDrawableResourceLoadingQueue(); //used to push load commands that are destined for RenderingManager
-
-            // ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
-            //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
-            //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
-            // Function to compare two fs states, returns true if file_system_1 == file_system_2, returns false otherwise
-
-            return true;
-        }
 
         ////////////////////////////////////////////////
         // Directory Detection Functions

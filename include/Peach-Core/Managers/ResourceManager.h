@@ -24,6 +24,7 @@
 #include <physfs.h>
 #include <stb/stb_image.h>
 #include <miniaudio/miniaudio.h>
+#include <moody_camel/readerwriterqueue.h>
 
 typedef Plugin* (*CreatePluginFunc)();
 typedef void (*DestroyPluginFunc)(Plugin*);

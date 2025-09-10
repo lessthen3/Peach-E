@@ -66,15 +66,17 @@ namespace PeachCore {
         // Shaders
         ////////////////////////////////////////////////
 
-        string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
+        //TO REALLY FUCKING DO: move all shader loading stuff to the resourcemanager, this is bad practice
+        // 
+        //string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
 
-        pm_ViewportShader = new OpenGLShaderProgram
-        (
-            "Viewport Shader",
-            f_BaseDir + "/shaders/viewport.vs",
-            f_BaseDir + "/shaders/viewport.fs",
-            editor_rendering_logger.get()
-        );
+        //pm_ViewportShader = new OpenGLShaderProgram
+        //(
+        //    "Viewport Shader",
+        //    f_BaseDir + "/shaders/viewport.vs",
+        //    f_BaseDir + "/shaders/viewport.fs",
+        //    editor_rendering_logger.get()
+        //);
 
         Print("The program ID for the Viewport Shader is: " + to_string(pm_ViewportShader->GetProgramID()), Colours::Magenta);
 

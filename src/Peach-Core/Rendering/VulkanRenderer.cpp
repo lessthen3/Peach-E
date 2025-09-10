@@ -101,9 +101,9 @@ namespace PeachCore {
         cout << "Device Name: " << deviceProperties.deviceName << endl;
         cout << "Device Type: " << deviceProperties.deviceType << endl;
         cout << "Vulkan API Version: " << deviceProperties.apiVersion << endl;
-        //cout << "Features: " << endl;
-        //cout << "  Geometry Shader: " << deviceFeatures.geometryShader << endl;
-        //cout << "  Tessellation Shader: " << deviceFeatures.tessellationShader << endl;
+        cout << "Features: " << endl;
+        cout << "  Geometry Shader: " << deviceFeatures.geometryShader << endl;
+        cout << "  Tessellation Shader: " << deviceFeatures.tessellationShader << endl;
     }
 
     bool
@@ -114,17 +114,27 @@ namespace PeachCore {
         return true;
     }
 
-    bool
+    uint32_t
         VulkanRenderer::BeginFrame()
     {
-        if (SDL_GetWindowFlags(pm_Init.MainWindow) & SDL_WINDOW_MINIMIZED) //Check if window is minimized
+        //////////////////// Get Current Window Size Before Starting Render Frame ////////////////////
+        SDL_GetWindowSize(pm_Init.MainWindow, &pm_RenderData.CurrentWindowWidth, &pm_RenderData.CurrentWindowHeight);
+
+        //Check if window is minimized
+        if ((SDL_GetWindowFlags(pm_Init.MainWindow) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN | SDL_WINDOW_OCCLUDED))) 
         {
-            return false;
+            //maybe print smth idk gotta log it once not a million times ever uwu 
+            return VulkanRenderer::StatusCode::NO_VALID_RENDERING_SURFACE;
+        }
+        else if (pm_RenderData.CurrentWindowWidth == 0 or pm_RenderData.CurrentWindowHeight == 0) //this executes first, then when the window is resized properly to be visible, it will trigger the regular swapchain recreation >O<
+        {
+            rendering_logger->PEACH_LOG("Won't start rendering when window size is 0", "VulkanRenderer", LogManager::LogLevel::Info);
+            return VulkanRenderer::StatusCode::NO_VALID_RENDERING_SURFACE; //>w<
         }
         else if (pm_IsFrameStarted)
         {
             rendering_logger->PEACH_LOG("Frame already began, please only call BeginFrame() once ya done goofed", "VulkanRenderer", LogManager::LogLevel::Warning);
-            return false;
+            return VulkanRenderer::StatusCode::BEGIN_FRAME_CALLED_WHILE_FRAME_IS_ALREADY_STARTED;
         }
 
         // Wait for the current frame to finish
@@ -145,7 +155,7 @@ namespace PeachCore {
         if (result != VK_SUCCESS and result != VK_SUBOPTIMAL_KHR)
         {
             rendering_logger->PEACH_LOG(format("failed to acquire swapchain image. Error: {} ", static_cast<int>(result)), "VulkanRenderer", LogManager::LogLevel::Fatal);
-            return false;
+            return VulkanRenderer::StatusCode::FAILED_TO_ACQUIRE_NEXT_SWAPCHAIN_IMAGE_ERROR;
         }
 
         // Fence ownership tracking
@@ -170,7 +180,7 @@ namespace PeachCore {
         if (pm_Init.Dispatch.beginCommandBuffer(cmd, &begin_info) != VK_SUCCESS)
         {
             rendering_logger->PEACH_LOG("Failed to begin command buffer", "VulkanRenderer", LogManager::LogLevel::Info);
-            return false;
+            return VulkanRenderer::StatusCode::FAILED_TO_BEGIN_COMMAND_BUFFER_ERROR;
         }
 
         // Begin render pass
@@ -186,18 +196,22 @@ namespace PeachCore {
 
         pm_Init.Dispatch.cmdBeginRenderPass(cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
 
-        pm_IsFrameStarted = true;
+        //////////////////// Frame Has Successfully Started ////////////////////
 
-        return true;
+        pm_IsFrameStarted = true;
+        
+        //////////////////// ok ////////////////////
+
+        return VulkanRenderer::StatusCode::OK;
     }
 
-    bool
+    uint32_t
         VulkanRenderer::DrawFrame()
     {
         if (not pm_IsFrameStarted)
         {
             rendering_logger->PEACH_LOG("Tried calling DrawFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer", LogManager::LogLevel::Warning);
-            return false;
+            return VulkanRenderer::StatusCode::DRAW_FRAME_BEFORE_BEGIN_FRAME_ERROR;
         }
 
         VkCommandBuffer cmd = pm_RenderData.CommandBuffers[pm_RenderData.CurrentSwapchainImageIndex];
@@ -236,18 +250,18 @@ namespace PeachCore {
 
         //}
 
-        return true;
+        return VulkanRenderer::StatusCode::OK;
     }
 
-    bool 
-        VulkanRenderer::EndFrame() 
+    uint32_t
+        VulkanRenderer::EndFrame()
     {
         //////////////////// Check if Frame Began Properly ////////////////////
 
         if (not pm_IsFrameStarted)
         {
             rendering_logger->PEACH_LOG("Tried calling EndFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer", LogManager::LogLevel::Warning);
-            return false;
+            return VulkanRenderer::StatusCode::END_FRAME_CALLED_WHEN_FRAME_WASNT_STARTED_ERROR;
         }
 
         //////////////////// Obtain Command Buffer and End it ////////////////////
@@ -259,7 +273,7 @@ namespace PeachCore {
         if (pm_Init.Dispatch.endCommandBuffer(cmd) != VK_SUCCESS)
         {
             rendering_logger->PEACH_LOG("Failed to end command buffer", "VulkanRenderer", LogManager::LogLevel::Fatal);
-            return false;
+            return VulkanRenderer::StatusCode::FAILED_TO_END_COMMAND_BUFFER;
         }
 
         //////////////////// Submit Command Buffer ////////////////////
@@ -283,7 +297,7 @@ namespace PeachCore {
         if (pm_Init.Dispatch.queueSubmit(pm_RenderData.GraphicsQueue, 1, &submit_info, pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameCycle]) != VK_SUCCESS)
         {
             rendering_logger->PEACH_LOG("Failed to submit draw command buffer", "VulkanRenderer", LogManager::LogLevel::Error);
-            return false;
+            return VulkanRenderer::StatusCode::FAILED_TO_SUBMIT_DRAW_COMMAND_BUFFER;
         }
 
         //////////////////// Present Swapchain Image ////////////////////
@@ -306,28 +320,43 @@ namespace PeachCore {
         pm_IsFrameStarted = false;
 
         //////////////////// Check for Window Resize ////////////////////
-
-        SDL_GetWindowSize(pm_Init.MainWindow, &pm_RenderData.CurrentWindowWidth, &pm_RenderData.CurrentWindowHeight);
-
-        if (pm_RenderData.CurrentWindowWidth == 0 or pm_RenderData.CurrentWindowHeight == 0) //this executes first, then when the window is resized properly to be visible, it will trigger the regular swapchain recreation >O<
+        
+        //random dude on forums said only use windowing size uwu idk what ab surface uwu and said recreating swapchains extra times is never a bad thing uwu only perf hit
+        if (pm_RenderData.CurrentWindowWidth != pm_Init.SwapChain.extent.width or pm_RenderData.CurrentWindowHeight != pm_Init.SwapChain.extent.height) 
         {
-            return false; //>w<
+            rendering_logger->PEACH_LOG("Attempting to recreate swapchain due to window resize", "VulkanRenderer", LogManager::LogLevel::Info);
+
+            if(RecreateSwapChain())
+            {
+                pm_RenderData.CurrentFrameCycle = 0; //reset image to 0th index since the recreated swapchain starts on 0th, NOTE: should be done if swapchain recreation isnt successful uwu
+                return VulkanRenderer::RECREATED_SWAPCHAIN_SUCCESSFULLY & VulkanRenderer::OK;
+            }
+            else
+            {
+                rendering_logger->PEACH_LOG("Failed to recreate swapchain after window resize event", "VulkanRenderer", LogManager::LogLevel::Error);
+                return VulkanRenderer::StatusCode::FAILED_TO_RECREATE_SWAPCHAIN_ERROR; //WARNING: this approach always assumes the swapchain can successfully be recreated, gotta handle if it fails somehow but idk lemme read the docs some more
+            }
         }
-        else if (result == VK_ERROR_OUT_OF_DATE_KHR or result == VK_SUBOPTIMAL_KHR or pm_RenderData.CurrentWindowWidth != pm_Init.SwapChain.extent.width or pm_RenderData.CurrentWindowHeight != pm_Init.SwapChain.extent.height)
+        //idfk
+        else if(result == VK_ERROR_OUT_OF_DATE_KHR)
         {
-            rendering_logger->PEACH_LOG("Attempting to recreate swapchain", "VulkanRenderer", LogManager::LogLevel::Info);
-            pm_RenderData.CurrentFrameCycle = 0;
-            return RecreateSwapChain(); //WARNING: this approach always assumes the swapchain can successfully be recreated, gotta handle if it fails somehow but idk lemme read the docs some more
+            rendering_logger->PEACH_LOG("VK_ERROR_OUT_OF_DATE_KHR happened idk y", "VulkanRenderer", LogManager::LogLevel::Error);
+            return VulkanRenderer::StatusCode::OUT_OF_DATE_VULKAN_KHR;
+        }
+        else if (result == VK_SUBOPTIMAL_KHR)
+        {
+            rendering_logger->PEACH_LOG("VK_SUBOPTIMAL_KHR happened idk y", "VulkanRenderer", LogManager::LogLevel::Warning);
+            return VulkanRenderer::StatusCode::SUBOPTIMAL_VULKAN_KHR;
         }
         else if (result != VK_SUCCESS)
         {
             rendering_logger->PEACH_LOG("Failed to present swapchain image", "VulkanRenderer", LogManager::LogLevel::Error);
-            return false;
+            return VulkanRenderer::StatusCode::NOT_VULKAN_SUCCESS;
         }
         else
         {
             pm_RenderData.CurrentFrameCycle = (pm_RenderData.CurrentFrameCycle + 1) % pm_Init.SwapChain.image_count;
-            return true;
+            return VulkanRenderer::StatusCode::OK;
         }
     }
 

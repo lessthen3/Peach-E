@@ -1,12 +1,12 @@
 ﻿/*******************************************************************
- *                                        Peach Editor v0.0.7
- *                           Created by Ranyodh Mandur - 🍑 2024
+ *                     Peach Editor v0.0.7
+ *             Created by Ranyodh Mandur - 🍑 2024
  *
- *                         Licensed under the MIT License (MIT).
- *                  For more details, see the LICENSE file or visit:
- *                        https://opensource.org/licenses/MIT
+ *             Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *             https://opensource.org/licenses/MIT
  *
- *              Peach Editor is a free open source editor for Peach-E
+ *      Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
 #pragma once
 
@@ -30,8 +30,8 @@ namespace PeachEditor {
         SERIALIZABLE_FIELDS(ListOfAllProjects, EditorSettings)
     };
 
-	struct ProjectManager
-	{
+    struct ProjectManager
+    {
     public:
         ProjectManager() = default; //created once and destroyed later on possibly creatde again but idk if i want the editor to have that option since its just a waste of space
         ~ProjectManager() = default;
@@ -60,7 +60,7 @@ namespace PeachEditor {
         bool
             StartPeachEditor();
 
-	private:
+    private:
         /*XXX : used for keeping track of every project currently identified on the system, this is where default OS paths are handled
         * and we store persistent data relevant to the installed instance of the Peach Editor and Project Manager stuff. so we can keep track of
         * all currently created projects on the system,
@@ -123,6 +123,6 @@ namespace PeachEditor {
             }
         }
 
-	};
+    };
 
 }

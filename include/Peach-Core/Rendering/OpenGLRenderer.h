@@ -17,8 +17,6 @@
 #include "OpenGLShaderProgram.h"
 #include "../Scene-Items/2D/PeachCamera2D.h"
 
-#include <physfs.h> //THIS IS AN ARTIFACE FROM THE REFACTOR PLEASE REMOVE THIS FUTURE RYAN
-
 namespace PeachCore {
 
     enum class TextureFiltering

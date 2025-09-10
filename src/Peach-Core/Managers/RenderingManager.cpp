@@ -68,7 +68,7 @@ namespace PeachCore {
 
         if (not InitializeLoadingQueue())
         {
-            rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
             return false;
         }
 
@@ -80,7 +80,7 @@ namespace PeachCore {
         {
             if (not InitializeVulkan())
             {
-                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
                 exit(FAILED_TO_INITIALIZE_VULKAN);
             }
         }
@@ -89,7 +89,7 @@ namespace PeachCore {
             {
                 if (not InitializeOpenGL())
                 {
-                    rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                    rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
                     exit(FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
                 }
             }
@@ -255,7 +255,7 @@ namespace PeachCore {
                 exit(FAILED_TO_CREATE_MAIN_WINDOW);
             }
 
-            rendering_logger->PEACH_LOG("main SDL window successfully created", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
+            rendering_logger->PEACH_LOG("main SDL window successfully created", "RenderingManager", LogManager::LogLevel::Debug);
 
             pm_OpenGLRenderer = make_unique<OpenGLRenderer>(pm_MainWindow, rendering_logger, true);
 
@@ -268,7 +268,7 @@ namespace PeachCore {
 
             rendering_logger->PEACH_LOG("GLEW initialized properly", "RenderingManager", LogManager::LogLevel::Debug);
 
-            rendering_logger->PEACH_LOG("Peach Editor successfully initialized OpenGL", "RenderingManager", PeachCore::LogManager::LogLevel::Debug);
+            rendering_logger->PEACH_LOG("Peach Editor successfully initialized OpenGL", "RenderingManager", LogManager::LogLevel::Debug);
 
             return true;
         }
@@ -290,7 +290,7 @@ namespace PeachCore {
 
             if (not f_VulkanDylib) 
             {
-                rendering_logger->PEACH_LOG(format("Couldn't load libvulkan.1.dylib with Error: {}", dlerror()), "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                rendering_logger->PEACH_LOG(format("Couldn't load libvulkan.1.dylib with Error: {}", dlerror()), "RenderingManager", LogManager::LogLevel::Fatal);
                 return false;
             }
 
@@ -298,7 +298,7 @@ namespace PeachCore {
             
             if (not f_GetProcAddress)
             {
-                rendering_logger->PEACH_LOG(format("Couldn't find symbol: 'vkGetInstanceProcAddr' with Error: {}", dlerror()), "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                rendering_logger->PEACH_LOG(format("Couldn't find symbol: 'vkGetInstanceProcAddr' with Error: {}", dlerror()), "RenderingManager", LogManager::LogLevel::Fatal);
                 return false;
             }
             
@@ -308,7 +308,7 @@ namespace PeachCore {
 
             if (volkInitialize() != VK_SUCCESS)
             {
-                rendering_logger->PEACH_LOG("Volk failed to initialize! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+                rendering_logger->PEACH_LOG("Volk failed to initialize! ending program execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
                 return false;
             }
         
@@ -330,11 +330,11 @@ namespace PeachCore {
         
         if (not pm_VulkanRenderer->Initialize(pm_MainWindow, f_BakedPipelineData, rendering_logger))
         {
-            rendering_logger->PEACH_LOG("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager", PeachCore::LogManager::LogLevel::Fatal);
+            rendering_logger->PEACH_LOG("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
             return false;
         }
 
-        rendering_logger->PEACH_LOG("Success! VulkanRenderer initialized properly, full rendering capabilities should be ready UwU", "RenderingManager", PeachCore::LogManager::LogLevel::Info);
+        rendering_logger->PEACH_LOG("Success! VulkanRenderer initialized properly, full rendering capabilities should be ready UwU", "RenderingManager", LogManager::LogLevel::Info);
 
         return true; // >w<
     }
@@ -342,53 +342,47 @@ namespace PeachCore {
     void 
         RenderingManager::RenderFrame()
     {
-        if (not pm_IsInitialized)
-        {
-            rendering_logger->PEACH_LOG("Please initialize RenderingManager before trying to render anything!", "RenderingManager", LogManager::LogLevel::Warning);
-            return;
-        }
-        //WARNING ARTIFACT FROM WHEN OPENGL WAS THE ONLY SUPPORTED RENDERER
-        // if (not pm_OpenGLRenderer->GetMainWindow())
-        // {
-        //     rendering_logger->PEACH_LOG("Please assign a valid SDL window to pm_MainWindow before trying to render!", "RenderingManager", LogManager::LogLevel::Warning);
-        //     return;
-        // }
+        #ifdef PEACH_DEBUG
+            if (not pm_IsInitialized)
+            {
+                rendering_logger->PEACH_LOG("Please initialize RenderingManager before trying to render anything!", "RenderingManager", LogManager::LogLevel::Warning);
+                return;
+            }
+        #endif
 
         //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
         //ProcessCommands(); //process all updates
 
-        bool f_IsGameRuntimeOver = false;
+        //////////////////// Submit Draw Calls ////////////////////
 
-        // Main loop that continues until the window is closed
-        while (not f_IsGameRuntimeOver)
+        uint32_t f_StatusCode = pm_VulkanRenderer->BeginFrame();
+        if (f_StatusCode & ~VulkanRenderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
         {
-            if (pm_IsShutDown) //used to stop rendering loop if possible when ForceQuit() is called
-            {
-                //glClear(GL_COLOR_BUFFER_BIT);
-                pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
-                break;
-            }
-            SDL_Event event;
+            PrintError(format("Premature BeginFrame() exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            return;
+        }
 
-            while (SDL_PollEvent(&event))
-            {
-                //ImGui_ImplSDL2_ProcessEvent(&event);
+        f_StatusCode = pm_VulkanRenderer->DrawFrame();
+        if (f_StatusCode & ~VulkanRenderer::StatusCode::OK)
+        {
+            PrintError(format("Premature DrawFrame() exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            return;
+        }
 
-                if (event.type == SDL_EVENT_QUIT)
-                {
-                    f_IsGameRuntimeOver = true;
-                }
-            }
+        f_StatusCode = pm_VulkanRenderer->EndFrame();
+        if (f_StatusCode & ~VulkanRenderer::StatusCode::OK)
+        {
+            PrintError(format("Premature EndFrame() exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            return;
+        }
 
-            #ifdef PEACH_RENDER_STRESS_TEST
+        #ifdef PEACH_RENDER_STRESS_TEST
                 if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
                 {
                     pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
                     break;
                 }
-            #endif
-
-        }
+        #endif
     }
 
     void

@@ -32,7 +32,9 @@ namespace PeachCore {
         {
 
         }
-
+        // ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
+//map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
+//map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
         void AddNode(shared_ptr<PeachNode> fp_PeachGameObject)
         {
             //make unique here and push that back

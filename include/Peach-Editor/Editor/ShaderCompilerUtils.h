@@ -1,3 +1,13 @@
+﻿/*******************************************************************
+ *                     Peach Editor v0.0.7
+ *             Created by Ranyodh Mandur - 🍑 2024
+ *
+ *             Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *             https://opensource.org/licenses/MIT
+ *
+ *      Peach Editor is a free open source editor for Peach-E
+********************************************************************/
 #pragma once
 
 ///Vulkan
@@ -16,7 +26,6 @@
 
 namespace PeachEditor
 {
-
     using namespace std;
 
     class ShaderCompilerUtils
@@ -189,12 +198,12 @@ namespace PeachEditor
             }
             else if (not fp_BindingInfo)
             {
-                logger->LogAndPrint("Nullptr vector reference passed to ReflectDescriptorBindings(), nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG("Nullptr vector reference passed to ReflectDescriptorBindings(), nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
             else if (not fp_BindingInfo->empty()) //check if vector is not empty after validating it isn't a nullptr ref
             {
-                logger->LogAndPrint("Tried passing non empty vector to ReflectDescriptorBindings(), nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG("Tried passing non empty vector to ReflectDescriptorBindings(), nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -244,12 +253,12 @@ namespace PeachEditor
             }
             else if (not fp_PushConstants)
             {
-                logger->LogAndPrint("Nullptr vector reference passed to ReflectPushConstants(), nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG("Nullptr vector reference passed to ReflectPushConstants(), nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
             else if (not fp_PushConstants->empty())
             {
-                logger->LogAndPrint("Tried passing non empty vector to ReflectPushConstants(), nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG("Tried passing non empty vector to ReflectPushConstants(), nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -257,7 +266,7 @@ namespace PeachEditor
 
             if (compiler->get_shader_resources().push_constant_buffers.empty())
             {
-                logger->LogAndPrint("Tried to get push constants from a SPIRV shader that doesn't contain any push constants, nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG("Tried to get push constants from a SPIRV shader that doesn't contain any push constants, nothing was done.", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
             
@@ -309,12 +318,12 @@ namespace PeachEditor
             // Ensure directory exists
             else if (not filesystem::exists(fp_DesiredOutputDirectory))
             {
-                logger->LogAndPrint(format("ShaderCompilerUtils Error: Tried to pass invalid write directory: '{}' to WriteSPIRVToFile()", fp_DesiredOutputDirectory), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG(format("ShaderCompilerUtils Error: Tried to pass invalid write directory: '{}' to WriteSPIRVToFile()", fp_DesiredOutputDirectory), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
             else if (fp_SpirvBytecode.empty()) //check if the byte vector is empty uwu
             {
-                logger->LogAndPrint(format("ShaderCompilerUtils Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG(format("ShaderCompilerUtils Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -324,7 +333,7 @@ namespace PeachEditor
 
             if (not file.is_open())
             {
-                logger->LogAndPrint(format("ShaderCompilerUtils Error: Failed to open file: '{}' for writing.", f_FileName), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG(format("ShaderCompilerUtils Error: Failed to open file: '{}' for writing.", f_FileName), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -351,13 +360,13 @@ namespace PeachEditor
             //more nullptr checking
             else if (not fp_SourceCode)
             {
-                logger->LogAndPrint("ShaderCompilerUtils Error: Nullptr string reference passed to LoadRawShaderSource()", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG("ShaderCompilerUtils Error: Nullptr string reference passed to LoadRawShaderSource()", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
             // Ensure directory exists
             else if (not filesystem::exists(fp_ShaderSourcePath))
             {
-                logger->LogAndPrint("ShaderCompilerUtils Error: Tried to pass invalid filepath to LoadRawShaderSource()", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG("ShaderCompilerUtils Error: Tried to pass invalid filepath to LoadRawShaderSource()", "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -366,7 +375,7 @@ namespace PeachEditor
 
             if (lastDotIndex == string::npos)
             {
-                logger->LogAndPrint(format("ShaderCompilerUtils Error: No file extension found at filepath: '{}'", fp_ShaderSourcePath), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG(format("ShaderCompilerUtils Error: No file extension found at filepath: '{}'", fp_ShaderSourcePath), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -380,7 +389,7 @@ namespace PeachEditor
                 f_FileExtension != ".frag"
                )
             {
-                logger->LogAndPrint(format("Found file extension: '{}', when GLSL Shader was expected at specified filepath: '{}'", f_FileExtension, fp_ShaderSourcePath), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG(format("Found file extension: '{}', when GLSL Shader was expected at specified filepath: '{}'", f_FileExtension, fp_ShaderSourcePath), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 
@@ -388,7 +397,7 @@ namespace PeachEditor
 
             if (not f_ShaderFile.is_open())
             {
-                logger->LogAndPrint(format("ShaderCompilerUtils Error: Failed to open shader at filepath: '{}', for reading.", fp_ShaderSourcePath), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
+                logger->PEACH_LOG(format("ShaderCompilerUtils Error: Failed to open shader at filepath: '{}', for reading.", fp_ShaderSourcePath), "ShaderCompilerUtils", PeachCore::LogManager::LogLevel::Error);
                 return false;
             }
 
