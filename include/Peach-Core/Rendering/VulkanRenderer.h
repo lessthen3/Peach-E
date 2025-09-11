@@ -89,6 +89,12 @@ namespace PeachCore{
             vkb::Swapchain SwapChain;
         };
 
+        struct GraphicsPipe
+        {
+            //unordered_map<string, VkPipelineLayout> PipelineLayouts;
+            //unordered_map<string, VkPipeline> GraphicsPipelines;
+        };
+
         struct RenderData
         {
             VkQueue GraphicsQueue = {};

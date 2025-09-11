@@ -234,21 +234,22 @@ namespace PeachCore {
         pm_Init.Dispatch.cmdSetViewport(cmd, 0, 1, &viewport);
         pm_Init.Dispatch.cmdSetScissor(cmd, 0, 1, &scissor);
 
-        // Bind pipeline and issue draw
-        VkPipeline pipeline = pm_RenderData.GraphicsPipelines.at("name");
-        VkPipelineLayout layout = pm_RenderData.PipelineLayouts.at("name");
+        auto it_GraphicsPipeline = pm_RenderData.GraphicsPipelines.begin();
+        auto end_GraphicsPipeline = pm_RenderData.GraphicsPipelines.end();
 
-        pm_Init.Dispatch.cmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        while (it_GraphicsPipeline != end_GraphicsPipeline) //hopefully the two lists stay the same maybe i should struct that
+        {
+            // Bind pipeline and issue draw
+            VkPipeline pipeline = it_GraphicsPipeline->second;
+            VkPipelineLayout layout = pm_RenderData.PipelineLayouts.at(it_GraphicsPipeline->first);
 
-        // 🔥 🔥 🔥 this is where you dynamically bind descriptor sets / push constants / vertex buffers etc
+            pm_Init.Dispatch.cmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-        pm_Init.Dispatch.cmdDraw(cmd, 3, 1, 0, 0);
+            // 🔥 🔥 🔥 this is where you dynamically bind descriptor sets / push constants / vertex buffers etc
 
-        //for (const auto& [lv_Key, lv_Val] : )
-        //{
-
-
-        //}
+            pm_Init.Dispatch.cmdDraw(cmd, 3, 1, 0, 0);
+            ++it_GraphicsPipeline;
+        }
 
         return VulkanRenderer::StatusCode::OK;
     }
@@ -649,7 +650,7 @@ namespace PeachCore {
             return false; // failed to create pipeline layout
         }
 
-        pm_RenderData.PipelineLayouts.emplace("name", f_TempLayout);
+        pm_RenderData.PipelineLayouts.emplace(fp_BakedPipeline.PipelineName, f_TempLayout);
 
         fp_BakedPipeline.PipelineInfo.pStages = shader_stages;
         fp_BakedPipeline.PipelineInfo.pViewportState = &viewport_state;
@@ -663,7 +664,7 @@ namespace PeachCore {
             rendering_logger->PEACH_LOG("failed to create pipline, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
             return false; // failed to create graphics pipeline
         }
-        pm_RenderData.GraphicsPipelines.emplace("name", f_TempGraphicsPipeline);
+        pm_RenderData.GraphicsPipelines.emplace(fp_BakedPipeline.PipelineName, f_TempGraphicsPipeline);
 
         pm_Init.Dispatch.destroyShaderModule(frag_module, nullptr);
         pm_Init.Dispatch.destroyShaderModule(vert_module, nullptr);

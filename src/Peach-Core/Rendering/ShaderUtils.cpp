@@ -86,6 +86,7 @@ namespace ShaderUtils {
     bool
         BakePipelineData
         (
+            const string& fp_Name,
             const string& fp_VertexShaderPath,
             const string& fp_FragShaderPath,
             BakedPipelineData& fp_CreateInfo,
@@ -97,6 +98,8 @@ namespace ShaderUtils {
 
             return false;
         }
+
+        fp_CreateInfo.PipelineName = fp_Name;
 
         if (not LoadSPIRVFromFile(fp_VertexShaderPath, fp_CreateInfo.VertexSPV, logger))
         {

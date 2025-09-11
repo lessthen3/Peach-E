@@ -68,6 +68,7 @@ namespace ShaderUtils { //namespacing this because it doesnt need to be a class,
     bool
         BakePipelineData
         (
+            const string& fp_Name,
             const string& fp_VertexShaderPath,
             const string& fp_FragShaderPath,
             BakedPipelineData& fp_CreateInfo,
