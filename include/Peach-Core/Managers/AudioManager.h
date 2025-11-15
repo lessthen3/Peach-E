@@ -15,9 +15,20 @@
 
 ///STL
 #include <thread>
-#include <shared_mutex>
 
 namespace PeachCore {
+
+    //////////////////////////////////////////////
+    // AudioManager word size
+    //////////////////////////////////////////////
+
+    struct AudioCommand
+    {
+        uint32_t node_id;       // 4 bytes
+        uint16_t opcode;        // 2 bytes
+        uint16_t reserved;      // 2 bytes (alignment or flags)
+        uint64_t operand;       // 8 bytes
+    };
 
     class AudioManager 
     {
@@ -33,8 +44,8 @@ namespace PeachCore {
     public:
         static AudioManager& get_single()
         {
-            static AudioManager audio_player;
-            return audio_player;
+            static AudioManager audio_manager;
+            return audio_manager;
         }
 
     //////////////////////////////////////////////
@@ -47,20 +58,23 @@ namespace PeachCore {
         AudioManager(const AudioManager&) = delete;
         AudioManager& operator=(const AudioManager&) = delete;
 
+        AudioManager(AudioManager&&) = delete;
+        AudioManager& operator=(AudioManager&&) = delete;
+
     //////////////////////////////////////////////
     // Private Members
     //////////////////////////////////////////////
     private:
-        shared_ptr<LoadingQueue> pm_LoadedAudioResourceQueue = nullptr;
-        shared_ptr<CommandQueue> pm_AudioCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_LoadedAudioResourceQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
 
         bool pm_IsInitialized = false;
 
-        mutable shared_mutex mutex_;
+        //mutable shared_mutex mutex_;
         string pm_CurrentTrack;
         //vector<ALuint> pm_Sources;
 
-        unique_ptr<LogManager> audio_logger = nullptr;
+        unique_ptr<Logger> audio_logger = nullptr;
 
     //////////////////////////////////////////////
     // Public Members
@@ -74,8 +88,7 @@ namespace PeachCore {
         bool 
             Initialize
         (
-            const string& fp_LogOutputDirectory,
-            shared_ptr<Console> fp_Console
+            const string& fp_LogOutputDirectory
         );
 
         bool
@@ -87,7 +100,7 @@ namespace PeachCore {
         bool
             InitializeAudioCommandQueue();
 
-        [[nodiscard]] shared_ptr<CommandQueue>
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>>
             GetAudioCommandQueue();
 
         void PlaySoundOnce(const string& soundFile); //SUSUSUSUSUSUSUSUSSSYYYY FUNCTION (is PlaySound a predefined funciton in openal?)

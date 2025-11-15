@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "../../Managers/LogManager.h"
+#include "../../Utils/Logger.h"
 #include "PeachNode2D.h"
 
 ///STL

@@ -20,7 +20,7 @@ namespace PeachCore {
             const unsigned int fp_Width,
             const unsigned int fp_Height,
             OpenGLRenderer* fp_Renderer,
-            shared_ptr<LogManager> fp_EditorRenderingLogger
+            shared_ptr<Logger> fp_EditorRenderingLogger
         )
     {
         pm_CurrentViewportWidth = fp_Width;
@@ -234,7 +234,7 @@ namespace PeachCore {
         // Check if framebuffer is complete
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
         {
-            editor_rendering_logger->LogAndPrint("Error: Framebuffer is not complete!", "Viewport", PeachCore::LogManager::LogLevel::Error);
+            editor_rendering_logger->Error("Error: Framebuffer is not complete!", "Viewport");
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             return false;
         }
@@ -245,7 +245,7 @@ namespace PeachCore {
         // Unbind Buffers and Reset GL state
         ////////////////////////////////////////////////
 
-        editor_rendering_logger->LogAndPrint("Render Texture successfully setup UwU", "Viewport", PeachCore::LogManager::LogLevel::Debug);
+        editor_rendering_logger->Debug("Render Texture successfully setup UwU", "Viewport");
 
         return true;
     }

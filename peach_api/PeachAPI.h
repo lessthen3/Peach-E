@@ -8,23 +8,35 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#pragma once
+#ifndef PEACH_ENGINE_API_C_H_
+#define PEACH_ENGINE_API_C_H_
 
-#include "Managers/GameManager.h"
+#include <stdint.h>
 
-//XXX: need to have C calling convention since this'll be called by external runtimes which probably just use a C calling convention esp C#
-#if defined(_WIN32) || defined(_WIN64)
-    #define PEACH_API extern "C" __declspec(dllexport)
-#else
-    #define PEACH_API extern "C"
-#endif
+#ifdef __cplusplus
 
-namespace PeachCore{
+    //XXX: need to have C calling convention since this'll be called by external runtimes which probably just use a C calling convention esp C#
+#if (defined(_WIN32) || defined(_WIN64)) && defined(PEACH_API_BUILD_DYNAMIC)
+        #define PEACH_API extern "C" __declspec(dllexport)
+    #else
+        #define PEACH_API extern "C"
+    #endif
 
-    PEACH_API void Peach_Log(const char* msg);
+#else //being used from C
 
-    PEACH_API void Peach_ChangeScene(const char* fp_NewSceneName);
+    #define PEACH_API //leave empty when included in C file
 
-    PEACH_API void Peach_QueueRemoval(size_t fp_PeachNodeID); //queues for removal from scene tree at end of frame or whenever is convenient idk
+#endif //C++ detection
 
-}
+
+PEACH_API void 
+    Peach_Log(const char* fp_Message);
+
+PEACH_API int64_t
+    Peach_ChangeScene(const char* fp_NewSceneName);
+
+PEACH_API void 
+    Peach_QueueRemoval(size_t fp_PeachNodeID); //queues for removal from scene tree at end of frame or whenever is convenient idk
+
+
+#endif //header guard

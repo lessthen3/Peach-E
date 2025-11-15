@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "../../Managers/LogManager.h"
+#include "../../Utils/Logger.h"
 
 ///STL
 #include <vector>
@@ -143,17 +143,17 @@ namespace PUI{
         }
 
         inline bool
-            Resize(float fp_Width, float fp_Height, LogManager* logger)
+            Resize(float fp_Width, float fp_Height, Logger* logger)
             noexcept
         {
             if (fp_Width < 0.0f)
             {
-                logger->PEACH_LOG("Tried to pass a negative value for width to a Rectangle shape primitive", "ShapePrimitive", LogManager::LogLevel::Error);
+                logger->Error("Tried to pass a negative value for width to a Rectangle shape primitive", "ShapePrimitive");
                 return false;
             }
             else if (fp_Height < 0.0f)
             {
-                logger->PEACH_LOG("Tried to pass a negative value for height to a Rectangle shape primitive", "ShapePrimitive", LogManager::LogLevel::Error);
+                logger->Error("Tried to pass a negative value for height to a Rectangle shape primitive", "ShapePrimitive");
                 return false;
             }
             else
@@ -179,12 +179,12 @@ namespace PUI{
         }
 
         inline bool
-            ResizeRadius(float fp_NewRadiusSize, LogManager* logger)
+            ResizeRadius(float fp_NewRadiusSize, Logger* logger)
             noexcept
         {
             if (fp_NewRadiusSize < 0.0f)
             {
-                logger->PEACH_LOG("Tried to pass a negative value for radius to a Circle shape primitive", "ShapePrimitive", LogManager::LogLevel::Error);
+                logger->Error("Tried to pass a negative value for radius to a Circle shape primitive", "ShapePrimitive");
                 return false;
             }
             else

@@ -65,7 +65,7 @@ namespace DotnetUtils{
         GetDotnetVersion
         (
             string* fp_DotNetVersionString,
-            PeachCore::LogManager* logger
+            PeachCore::Logger* logger
         );
 
     bool
@@ -76,7 +76,7 @@ namespace DotnetUtils{
             const string& fp_ProjectPath,
             const string& fp_PeachBridgePath,
             const string& fp_RelativeBuildOutputPath,
-            PeachCore::LogManager* logger
+            PeachCore::Logger* logger
         );
 
     bool
@@ -85,18 +85,18 @@ namespace DotnetUtils{
             const string& fp_ScriptName,
             const string& fp_NodeType,
             const string& fp_ScriptFilePath,
-            PeachCore::LogManager* logger
+            PeachCore::Logger* logger
         );
 
     bool
         BuildDotnetProject
         (
             const string& fp_SolutionPath,
-            PeachCore::LogManager* logger
+            PeachCore::Logger* logger
         );
 
     bool
-        GetHostFxrLocalPath(string* fp_HostFxrString, PeachCore::LogManager* logger);
+        GetHostFxrLocalPath(string* fp_HostFxrString, PeachCore::Logger* logger);
 
 }// namespace LangUtils
 }//namespace PeachEditor

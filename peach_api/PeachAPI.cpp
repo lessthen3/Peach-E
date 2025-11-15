@@ -10,24 +10,23 @@
 ********************************************************************/
 #include "PeachAPI.h"
 
-namespace PeachCore{
+#include "Managers/GameManager.h"
 
-    PEACH_API void
-        Peach_Log(const char* msg)
-    {
-        GameManager::get_single().m_UserLogger->PEACH_LOG(msg, "PeachAPI", LogManager::LogLevel::Info);
-    }
+PEACH_API void
+    Peach_Log(const char* msg)
+{
+    //GameManager::get_single().m_UserLogger->Info(msg, "PeachAPI");
+}
 
-    PEACH_API void 
-        Peach_ChangeScene(const char* fp_NewSceneName)
-    {
-
-    }
-
-    PEACH_API void
-        Peach_QueueRemoval(size_t fp_PeachNodeID)
-    {
-        
-    }
+PEACH_API int64_t 
+    Peach_ChangeScene(const char* fp_NewSceneName)
+{
 
 }
+
+PEACH_API void
+    Peach_QueueRemoval(size_t fp_PeachNodeID)
+{
+        
+}
+

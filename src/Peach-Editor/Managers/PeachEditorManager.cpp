@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                     Peach Editor v0.0.7
  *             Created by Ranyodh Mandur - 🍑 2024
  *
@@ -8,4 +8,4 @@
  *
  *      Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
-#include "../../../include/Peach-Editor/Managers/ProjectManager.h"
+#include "../../../include/Peach-Editor/Managers/PeachEditorManager.h"

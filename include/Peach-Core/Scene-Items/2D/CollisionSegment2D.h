@@ -10,9 +10,8 @@
 ********************************************************************/
 #pragma once
 
-#include "../../Managers/LogManager.h"
+#include "../../Utils/Logger.h"
 #include <box2d/box2d.h>
-
 
 #include <vector>
 #include <string>
@@ -50,12 +49,12 @@ namespace PeachCore {
         void 
             OptimizeLineSegment
             (
-                LogManager* fp_Logger //idk if i need the physics logger for any other part of this class
+                Logger* fp_Logger //idk if i need the physics logger for any other part of this class
             )
         {
             if(pm_ListOfPoints.size() == 0)
             {
-                fp_Logger->LogAndPrint("Tried to optimize line segment when line segment has 0 points to optimize out at segment ID: " + pm_SegmentID, "CollisionSegment2D", LogManager::LogLevel::Warning);
+                fp_Logger->Warning("Tried to optimize line segment when line segment has 0 points to optimize out at segment ID: " + pm_SegmentID, "CollisionSegment2D");
                 return;
             }
 

@@ -10,16 +10,6 @@
 ********************************************************************/
 #include "../../include/Peach-Editor/Managers/PeachEditorManager.h"
 
-#include <csignal>
-
-static void 
-    SegFaultHandler(int fp_Signal) //primitive segfault handler
-{
-    PeachCore::PrintError(std::format("[!] Crash signal received: {}, FATAL_SEGMENTATION_FAULT", fp_Signal));
-    // possibly notify watchdog or dump stack trace
-    exit(FATAL_SEGMENTATION_FAULT); //clean exit so everything calls their destructors
-}
-
 static inline constexpr void 
     ReplaceChar(std::string* fp_String, char fp_OldChar, char fp_NewChar)
 {
@@ -38,8 +28,6 @@ static inline constexpr void
 int 
     main(int fp_ArgCount, const char* fp_ArgVector[])
 {
-    signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
-
     std::cout << fp_ArgVector[0] << "\n"; //COOL AF
 
     //WARNING: WE ONLY USE THIS FOR DEVELOPMENT, FOR DEPLOYMENT WE NEED THIS DIRECTORY TO BE THE BASE DIR OF THE EXECUTABLE

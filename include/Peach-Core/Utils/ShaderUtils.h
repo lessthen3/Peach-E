@@ -13,7 +13,7 @@
 #include <volk.h>
 #include <Rendering/vk-bootstrap/VkBootstrap.h>
 
-#include "../Managers/LogManager.h"
+#include "Logger.h"
 
 #include <unordered_map>
 #include <memory>
@@ -62,7 +62,7 @@ namespace ShaderUtils { //namespacing this because it doesnt need to be a class,
         (
             const string& fp_ShaderFilePath,
             vector<uint32_t>& fp_Bytecode,
-            LogManager* logger
+            Logger* logger
         );
 
     bool
@@ -72,7 +72,7 @@ namespace ShaderUtils { //namespacing this because it doesnt need to be a class,
             const string& fp_VertexShaderPath,
             const string& fp_FragShaderPath,
             BakedPipelineData& fp_CreateInfo,
-            LogManager* logger
+            Logger* logger
         );
 } //namespace ShaderUtils
 } //namespace PeachCore

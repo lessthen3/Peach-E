@@ -10,9 +10,23 @@
 ********************************************************************/
 #pragma once
 
-#include "LogManager.h"
+#include "../Utils/Logger.h"
+
+#include <moody_camel/readerwriterqueue.h>
 
 namespace PeachCore {
+
+    //////////////////////////////////////////////
+    // ResourceManager word size
+    //////////////////////////////////////////////
+
+    struct NetworkCommand
+    {
+        uint32_t node_id;       // 4 bytes
+        uint16_t opcode;        // 2 bytes
+        uint16_t reserved;      // 2 bytes (alignment or flags)
+        uint64_t operand;       // 8 bytes
+    };
 
     class NetworkManager
     {
@@ -39,11 +53,14 @@ namespace PeachCore {
         NetworkManager(const NetworkManager&) = delete;
         NetworkManager& operator=(const NetworkManager&) = delete;
 
+        NetworkManager(NetworkManager&&) = delete;
+        NetworkManager& operator=(NetworkManager&&) = delete;
+
     //////////////////////////////////////////////
     // Private Members
     //////////////////////////////////////////////
     private:
-        unique_ptr<LogManager> network_logger = nullptr;
+        unique_ptr<Logger> network_logger = nullptr;
 
     //////////////////////////////////////////////
     // Public Methods
@@ -52,9 +69,14 @@ namespace PeachCore {
         bool
             InitializeNetworking
             (
-                const string& fp_LogOutputDirectory,
-                shared_ptr<Console> fp_Console
+                const string& fp_LogOutputDirectory
             );
+        //NOT SURE AT ALL HOW NETWORK MANAGER INTEGRATES INTO THE ENGINE SYSTEM UWU OWOWOWOWWO
+        //bool
+        //    InitializeNetworkCommandQueue();
+
+        //[[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, 10>>
+        //    GetNetworkCommandQueue();
 
     };
 }

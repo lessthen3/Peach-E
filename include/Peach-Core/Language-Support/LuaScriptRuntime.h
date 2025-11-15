@@ -11,7 +11,7 @@
 #pragma once
 
 #include <sol/sol.hpp>
-#include "../Managers/LogManager.h"
+#include "../Utils/Logger.h"
 
 namespace PeachCore {
 

@@ -17,7 +17,7 @@ namespace PeachCore {
         (
             SDL_Window* fp_MainWindow,
             ShaderUtils::BakedPipelineData& fp_BakedPipeline,
-            shared_ptr<LogManager> fp_RenderingLogger
+            shared_ptr<Logger> fp_RenderingLogger
         )
     {
         if (not fp_RenderingLogger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
@@ -30,7 +30,7 @@ namespace PeachCore {
 
         if (not fp_MainWindow)
         {
-            rendering_logger->PEACH_LOG("Tried to initialize VulkanRenderer with a nullptr for the SDL Window doofus, Ending program execution immediately since no valid SDL Window was found", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Tried to initialize VulkanRenderer with a nullptr for the SDL Window doofus, Ending program execution immediately since no valid SDL Window was found", "VulkanRenderer");
             return false;
         }
 
@@ -40,7 +40,7 @@ namespace PeachCore {
 
         if (not InitializeDevice("Game"))
         {
-            rendering_logger->PEACH_LOG("Failed to create Vulkan device, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Failed to create Vulkan device, exiting program execution immediately", "VulkanRenderer");
             return false;
         }
         else if (not CreateSwapChain())
@@ -128,12 +128,12 @@ namespace PeachCore {
         }
         else if (pm_RenderData.CurrentWindowWidth == 0 or pm_RenderData.CurrentWindowHeight == 0) //this executes first, then when the window is resized properly to be visible, it will trigger the regular swapchain recreation >O<
         {
-            rendering_logger->PEACH_LOG("Won't start rendering when window size is 0", "VulkanRenderer", LogManager::LogLevel::Info);
+            rendering_logger->Info("Won't start rendering when window size is 0", "VulkanRenderer");
             return VulkanRenderer::StatusCode::NO_VALID_RENDERING_SURFACE; //>w<
         }
         else if (pm_IsFrameStarted)
         {
-            rendering_logger->PEACH_LOG("Frame already began, please only call BeginFrame() once ya done goofed", "VulkanRenderer", LogManager::LogLevel::Warning);
+            rendering_logger->Warning("Frame already began, please only call BeginFrame() once ya done goofed", "VulkanRenderer");
             return VulkanRenderer::StatusCode::BEGIN_FRAME_CALLED_WHILE_FRAME_IS_ALREADY_STARTED;
         }
 
@@ -154,7 +154,7 @@ namespace PeachCore {
 
         if (result != VK_SUCCESS and result != VK_SUBOPTIMAL_KHR)
         {
-            rendering_logger->PEACH_LOG(format("failed to acquire swapchain image. Error: {} ", static_cast<int>(result)), "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Error(format("failed to acquire swapchain image. Error: {} ", static_cast<int>(result)), "VulkanRenderer");
             return VulkanRenderer::StatusCode::FAILED_TO_ACQUIRE_NEXT_SWAPCHAIN_IMAGE_ERROR;
         }
 
@@ -179,7 +179,7 @@ namespace PeachCore {
 
         if (pm_Init.Dispatch.beginCommandBuffer(cmd, &begin_info) != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("Failed to begin command buffer", "VulkanRenderer", LogManager::LogLevel::Info);
+            rendering_logger->Info("Failed to begin command buffer", "VulkanRenderer");
             return VulkanRenderer::StatusCode::FAILED_TO_BEGIN_COMMAND_BUFFER_ERROR;
         }
 
@@ -210,7 +210,7 @@ namespace PeachCore {
     {
         if (not pm_IsFrameStarted)
         {
-            rendering_logger->PEACH_LOG("Tried calling DrawFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer", LogManager::LogLevel::Warning);
+            rendering_logger->Warning("Tried calling DrawFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer");
             return VulkanRenderer::StatusCode::DRAW_FRAME_BEFORE_BEGIN_FRAME_ERROR;
         }
 
@@ -261,7 +261,7 @@ namespace PeachCore {
 
         if (not pm_IsFrameStarted)
         {
-            rendering_logger->PEACH_LOG("Tried calling EndFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer", LogManager::LogLevel::Warning);
+            rendering_logger->Warning("Tried calling EndFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer");
             return VulkanRenderer::StatusCode::END_FRAME_CALLED_WHEN_FRAME_WASNT_STARTED_ERROR;
         }
 
@@ -273,7 +273,7 @@ namespace PeachCore {
 
         if (pm_Init.Dispatch.endCommandBuffer(cmd) != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("Failed to end command buffer", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Failed to end command buffer", "VulkanRenderer");
             return VulkanRenderer::StatusCode::FAILED_TO_END_COMMAND_BUFFER;
         }
 
@@ -297,7 +297,7 @@ namespace PeachCore {
 
         if (pm_Init.Dispatch.queueSubmit(pm_RenderData.GraphicsQueue, 1, &submit_info, pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameCycle]) != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("Failed to submit draw command buffer", "VulkanRenderer", LogManager::LogLevel::Error);
+            rendering_logger->Error("Failed to submit draw command buffer", "VulkanRenderer");
             return VulkanRenderer::StatusCode::FAILED_TO_SUBMIT_DRAW_COMMAND_BUFFER;
         }
 
@@ -325,7 +325,7 @@ namespace PeachCore {
         //random dude on forums said only use windowing size uwu idk what ab surface uwu and said recreating swapchains extra times is never a bad thing uwu only perf hit
         if (pm_RenderData.CurrentWindowWidth != pm_Init.SwapChain.extent.width or pm_RenderData.CurrentWindowHeight != pm_Init.SwapChain.extent.height) 
         {
-            rendering_logger->PEACH_LOG("Attempting to recreate swapchain due to window resize", "VulkanRenderer", LogManager::LogLevel::Info);
+            rendering_logger->Info("Attempting to recreate swapchain due to window resize", "VulkanRenderer");
 
             if(RecreateSwapChain())
             {
@@ -334,24 +334,24 @@ namespace PeachCore {
             }
             else
             {
-                rendering_logger->PEACH_LOG("Failed to recreate swapchain after window resize event", "VulkanRenderer", LogManager::LogLevel::Error);
+                rendering_logger->Error("Failed to recreate swapchain after window resize event", "VulkanRenderer");
                 return VulkanRenderer::StatusCode::FAILED_TO_RECREATE_SWAPCHAIN_ERROR; //WARNING: this approach always assumes the swapchain can successfully be recreated, gotta handle if it fails somehow but idk lemme read the docs some more
             }
         }
         //idfk
         else if(result == VK_ERROR_OUT_OF_DATE_KHR)
         {
-            rendering_logger->PEACH_LOG("VK_ERROR_OUT_OF_DATE_KHR happened idk y", "VulkanRenderer", LogManager::LogLevel::Error);
+            rendering_logger->Error("VK_ERROR_OUT_OF_DATE_KHR happened idk y", "VulkanRenderer");
             return VulkanRenderer::StatusCode::OUT_OF_DATE_VULKAN_KHR;
         }
         else if (result == VK_SUBOPTIMAL_KHR)
         {
-            rendering_logger->PEACH_LOG("VK_SUBOPTIMAL_KHR happened idk y", "VulkanRenderer", LogManager::LogLevel::Warning);
+            rendering_logger->Warning("VK_SUBOPTIMAL_KHR happened idk y", "VulkanRenderer");
             return VulkanRenderer::StatusCode::SUBOPTIMAL_VULKAN_KHR;
         }
         else if (result != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("Failed to present swapchain image", "VulkanRenderer", LogManager::LogLevel::Error);
+            rendering_logger->Error("Failed to present swapchain image", "VulkanRenderer");
             return VulkanRenderer::StatusCode::NOT_VULKAN_SUCCESS;
         }
         else
@@ -420,7 +420,7 @@ namespace PeachCore {
         VkShaderModule f_ShaderModule;
         if (pm_Init.Dispatch.createShaderModule(&f_CreateInfo, nullptr, &f_ShaderModule) != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("Failed to create shader module ywy", "VulkanRenderer", LogManager::LogLevel::Error);
+            rendering_logger->Error("Failed to create shader module ywy", "VulkanRenderer");
             return VK_NULL_HANDLE; // failed to create shader module
         }
 
@@ -444,7 +444,7 @@ namespace PeachCore {
 
         if (not inst_ret)
         {
-            rendering_logger->PEACH_LOG("Failed to create Vulkan instance. Error: " + inst_ret.error().message(), "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Failed to create Vulkan instance. Error: " + inst_ret.error().message(), "VulkanRenderer");
             return false;
         }
 
@@ -464,7 +464,7 @@ namespace PeachCore {
 
         if (not SDL_Vulkan_CreateSurface(pm_Init.MainWindow, pm_Init.Instance.instance, nullptr, &pm_Init.Surface))
         {
-            rendering_logger->PEACH_LOG("Failed to create SDL Vulkan Surface: " + inst_ret.error().message(), "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Failed to create SDL Vulkan Surface: " + inst_ret.error().message(), "VulkanRenderer");
             return false;
         }
 
@@ -482,7 +482,7 @@ namespace PeachCore {
 
         if (not phys_device_ret)
         {
-            rendering_logger->PEACH_LOG("Failed to select Vulkan Physical Device. Error: " + phys_device_ret.error().message(), "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Failed to select Vulkan Physical Device. Error: " + phys_device_ret.error().message(), "VulkanRenderer");
             return false;
         }
 
@@ -491,7 +491,7 @@ namespace PeachCore {
 
         if (not device_ret)
         {
-            rendering_logger->PEACH_LOG("Failed to create Vulkan device. Error: " + device_ret.error().message(), "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Failed to create Vulkan device. Error: " + device_ret.error().message(), "VulkanRenderer");
             return false;
         }
 
@@ -499,7 +499,7 @@ namespace PeachCore {
 
         if (pm_Init.Device.physical_device.physical_device == VK_NULL_HANDLE)
         {
-            rendering_logger->PEACH_LOG("Physical device is null before Nuklear init", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Physical device is null before Nuklear init", "VulkanRenderer");
             return false;
         }
 
@@ -522,7 +522,7 @@ namespace PeachCore {
 
         if (not swap_ret)
         {
-            rendering_logger->PEACH_LOG(format("SwapChain builder error: {}, with result: {}", swap_ret.error().message(), static_cast<int>(swap_ret.vk_result())), "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal(format("SwapChain builder error: {}, with result: {}", swap_ret.error().message(), static_cast<int>(swap_ret.vk_result())), "VulkanRenderer");
             return false;
         }
 
@@ -539,7 +539,7 @@ namespace PeachCore {
 
         if (not graphics_queue.has_value())
         {
-            rendering_logger->PEACH_LOG(format("failed to get graphics queue: {}", graphics_queue.error().message()), "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal(format("failed to get graphics queue: {}", graphics_queue.error().message()), "VulkanRenderer");
             return false;
         }
 
@@ -549,7 +549,7 @@ namespace PeachCore {
 
         if (not present_queue.has_value())
         {
-            rendering_logger->PEACH_LOG(format("failed to get present queue: {}", present_queue.error().message()), "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal(format("failed to get present queue: {}", present_queue.error().message()), "VulkanRenderer");
             return false;
         }
 
@@ -599,7 +599,7 @@ namespace PeachCore {
 
         if (pm_Init.Dispatch.createRenderPass(&f_RenderPassInfo, nullptr, &pm_RenderData.RenderPass) != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("Failed to create render pass, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Failed to create render pass, exiting program execution immediately", "VulkanRenderer");
             return false;
         }
 
@@ -614,7 +614,7 @@ namespace PeachCore {
 
         if (vert_module == VK_NULL_HANDLE or frag_module == VK_NULL_HANDLE)
         {
-            rendering_logger->PEACH_LOG("failed to create shader module, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("failed to create shader module, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to create shader modules
         }
 
@@ -646,7 +646,7 @@ namespace PeachCore {
 
         if (pm_Init.Dispatch.createPipelineLayout(&fp_BakedPipeline.PipelineLayoutInfo, nullptr, &f_TempLayout) != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("failed to create pipeline layout, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("failed to create pipeline layout, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to create pipeline layout
         }
 
@@ -661,7 +661,7 @@ namespace PeachCore {
 
         if (pm_Init.Dispatch.createGraphicsPipelines(VK_NULL_HANDLE, 1, &fp_BakedPipeline.PipelineInfo, nullptr, &f_TempGraphicsPipeline) != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("failed to create pipline, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("failed to create pipline, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to create graphics pipeline
         }
         pm_RenderData.GraphicsPipelines.emplace(fp_BakedPipeline.PipelineName, f_TempGraphicsPipeline);
@@ -695,7 +695,7 @@ namespace PeachCore {
 
             if (pm_Init.Dispatch.createFramebuffer(&framebuffer_info, nullptr, &pm_RenderData.FrameBuffers[i]) != VK_SUCCESS)
             {
-                rendering_logger->PEACH_LOG("failed to create default framebuffers, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
+                rendering_logger->Fatal("failed to create default framebuffers, exiting program execution immediately", "VulkanRenderer");
                 return false; // failed to create framebuffer
             }
         }
@@ -713,7 +713,7 @@ namespace PeachCore {
 
         if (pm_Init.Dispatch.createCommandPool(&pool_info, nullptr, &pm_RenderData.CommandPool) != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("failed to create command pool, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("failed to create command pool, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to create command pool
         }
 
@@ -733,7 +733,7 @@ namespace PeachCore {
 
         if (pm_Init.Dispatch.allocateCommandBuffers(&allocInfo, pm_RenderData.CommandBuffers.data()) != VK_SUCCESS)
         {
-            rendering_logger->PEACH_LOG("failed to allocate command buffers, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("failed to allocate command buffers, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to allocate command buffers;
         }
 
@@ -763,7 +763,7 @@ namespace PeachCore {
                 pm_Init.Dispatch.createFence(&fence_info, nullptr, &pm_RenderData.InFlightFences[i]) != VK_SUCCESS
                 )
             {
-                rendering_logger->PEACH_LOG("failed to create sync objects, exiting program execution immediately", "VulkanRenderer", LogManager::LogLevel::Fatal);
+                rendering_logger->Fatal("failed to create sync objects, exiting program execution immediately", "VulkanRenderer");
                 return false; // failed to create synchronization objects for a frame
             }
         }

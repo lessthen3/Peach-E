@@ -16,25 +16,22 @@ namespace PeachCore {
         InputManager::Initialize
         (
             const string& fp_LogOutputDirectory,
-            const LogManager::LogLevel fp_LogFilter,
-            shared_ptr<Console> fp_Console
+            const Logger::LogLevel fp_LogFilter
         )
     {
-        //////////////////// Nullptr check for PeachConsole ref ////////////////////
-
-        if (not fp_Console)
-        {
-            PrintError("Tried to initialize RenderingManager with a nullptr reference to the Console");
-            return false;
-        }
-
         //////////////////// Initialize Logger ////////////////////
 
-        input_logger = make_unique<LogManager>();
-        input_logger->Initialize(ThreadName::MainThread, fp_LogOutputDirectory, "InputManager", fp_Console, fp_LogFilter);
-        input_logger->PEACH_LOG("InputLogger successfully initialized", "RenderingManager", LogManager::LogLevel::Debug);
+        input_logger = make_unique<Logger>();
+        input_logger->Initialize(ThreadName::RenderThread, fp_LogOutputDirectory, "InputManager", fp_LogFilter);
+        input_logger->Debug("InputLogger successfully initialized", "RenderingManager");
 
         return true;
+    }
+
+    void
+        InputManager::UpdateThreadOwner()
+    {
+        input_logger->UpdateThreadOwner();
     }
 
     void 
@@ -55,11 +52,10 @@ namespace PeachCore {
 
         if (f_FindActionResult == pm_InputMap.end())
         {
-            input_logger->PEACH_LOG
+            input_logger->Error
             (
                 format("Action named : '{}' was not found in the Input Map, did you misspell or forget to add '{}' to the Input Map?", fp_ActionName, fp_ActionName),
-                "InputManager::WasPressed",
-                LogManager::LogLevel::Error
+                "InputManager::WasPressed"
             );
 
             return false;
@@ -104,11 +100,10 @@ namespace PeachCore {
 
         if (f_FindActionResult == pm_InputMap.end())
         {
-            input_logger->PEACH_LOG
+            input_logger->Error
             (
                 format("Action named : '{}' was not found in the Input Map, did you misspell or forget to add '{}' to the Input Map?", fp_ActionName, fp_ActionName),
-                "InputManager::WasPressed",
-                LogManager::LogLevel::Error
+                "InputManager::WasPressed"
             );
 
             return false;
@@ -213,11 +208,10 @@ namespace PeachCore {
                         .Input = {}
                     };
 
-                    input_logger->PEACH_LOG
+                    input_logger->Info
                     (
                         format("Stylus with ID: '{}' entered proximity", f_PenID),
-                        "InputManager::PollEvents",
-                        LogManager::LogLevel::Info
+                        "InputManager::PollEvents"
                     );
                 }
 
@@ -291,11 +285,10 @@ namespace PeachCore {
                 {
                     pm_ConnectedStyluses.erase(f_PenID);
 
-                    input_logger->PEACH_LOG
+                    input_logger->Info
                     (
                         format("Stylus with ID: '{}' left proximity", f_PenID),
-                        "InputManager::PollEvents",
-                        LogManager::LogLevel::Info
+                        "InputManager::PollEvents"
                     );
                 }
 
@@ -320,11 +313,10 @@ namespace PeachCore {
 
                     pm_IsGamepadConnected = true;
 
-                    input_logger->PEACH_LOG
+                    input_logger->Info
                     (
                         format("Gamepad connected with ID: {}", f_JoystickID),
-                        "InputManager::PollEvents",
-                        LogManager::LogLevel::Info
+                        "InputManager::PollEvents"
                     );
                 }
 
@@ -340,11 +332,10 @@ namespace PeachCore {
 
                     pm_ConnectedGamepads.erase(f_JoystickID);
 
-                    input_logger->PEACH_LOG
+                    input_logger->Info
                     (
                         format("Gamepad disconnected with ID: {}", f_JoystickID),
-                        "InputManager::PollEvents",
-                        LogManager::LogLevel::Info
+                        "InputManager::PollEvents"
                     );
 
                     pm_IsGamepadConnected = not pm_ConnectedGamepads.empty();
@@ -392,11 +383,10 @@ namespace PeachCore {
 
                     pm_IsJoystickConnected = true;
 
-                    input_logger->PEACH_LOG
+                    input_logger->Info
                     (
                         format("Joystick connected with ID: {}", f_JoystickID),
-                        "InputManager::PollEvents",
-                        LogManager::LogLevel::Info
+                        "InputManager::PollEvents"
                     );
                 }
 
@@ -412,11 +402,10 @@ namespace PeachCore {
 
                     pm_ConnectedJoysticks.erase(f_JoystickID);
 
-                    input_logger->PEACH_LOG
+                    input_logger->Info
                     (
                         format("Gamepad disconnected with ID: {}", f_JoystickID),
-                        "InputManager::PollEvents",
-                        LogManager::LogLevel::Info
+                        "InputManager::PollEvents"
                     );
 
                     pm_IsJoystickConnected = not pm_ConnectedJoysticks.empty();

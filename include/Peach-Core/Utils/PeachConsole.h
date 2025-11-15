@@ -14,16 +14,44 @@
 #include <memory>
 
 ///PeachCore
-#include "../Managers/LogManager.h"
-
+#include "Logger.h"
 
 namespace PeachCore {
+
+
+    //////////////////////////////////////////////
+    // Console Struct
+    //////////////////////////////////////////////
+
 
     struct PeachConsole 
     {
     public:
         PeachConsole();
         ~PeachConsole();
+
+        //WIP NEED TO LOCK THE THREAD SO THAT WE CAN SAFELY QUERY THE LOG BUFFERS SINCE THEY CAN BE WRITTEN TOO WHILE
+        //bool
+        //    QueryLogBufferByLevel
+        //    (
+        //        const ThreadName fp_NameOfLogBuffer,
+        //        const uint8_t fp_DesiredLogLevelQuery
+        //    )
+        //{
+        //    //switch (fp_NameOfLogBuffer)
+        //    //{
+        //    //    case ThreadName::MainThread: pm_MainThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
+        //    //    case ThreadName::RenderThread: pm_RenderThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
+        //    //    case ThreadName::AudioThread: pm_AudioThreadLogSnapshotBuffer.emplace_back(fp_Message, fp_Sender); break;
+        //    //    case ThreadName::ResourceThread: pm_ResourceThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+        //    //    case ThreadName::PhysicsThread: pm_PhysicsThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+        //    //    case ThreadName::NetworkThread: pm_NetworkThreadLogBuffer.emplace_back(fp_Message, fp_Sender); break;
+        //    //    default:
+        //    //        PrintError("Attempted to Log to an invalid thread log buffer: Did you check for any typos when calling the Log() function?\n\tSender: " + fp_Sender + "\n\tMessage: " + fp_Message);
+        //    //}
+
+        //    return true;
+        //}
 
         void 
             ClearConsole
@@ -44,14 +72,7 @@ namespace PeachCore {
             pm_IsScrollToBottom = true;
         }
 
-        shared_ptr<Console>
-            GetConsoleLogger()
-        {
-            return pm_PeachLogConsole;
-        }
-
     private:
         bool pm_IsScrollToBottom = false;
-        shared_ptr<Console> pm_PeachLogConsole = nullptr;
     };
 }

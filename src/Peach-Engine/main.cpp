@@ -8,25 +8,12 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-
 #include "Managers/GameManager.h"
-
-#include <csignal>
-
-static void
-    SegFaultHandler(int fp_Signal)
-{
-    PeachCore::PrintError(std::format("[!] Crash signal received: {}", fp_Signal));
-    // possibly notify watchdog or dump stack trace
-    exit(EXIT_FAILURE);
-}
 
 int 
     main(int fp_ArgCount, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao
 {
-    std::cout << "Hello World!\n";
-
-    signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
+    std::cout << "Hello World!\n"; //Used this to test the projects first start up uwu
 
     try
     {

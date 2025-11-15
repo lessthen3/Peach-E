@@ -16,52 +16,61 @@ namespace PeachCore {
         ResourceManager::Initialize
         (
             const string& fp_LogOutputDirectory,
-            const string& fp_RootPhysfsDirectory,
-            shared_ptr<Console> fp_Console
+            const string& fp_RootPhysfsDirectory
         )
     {
         //////////////////// Resource Logger Initialization ////////////////////
 
-        if (not fp_Console)
-        {
-            PrintError("Tried to initialize ResourceManager with a nullptr reference to the Console");
-            return false;
-        }
-
-        resource_logger = make_unique<LogManager>();
-        resource_logger->Initialize(ThreadName::ResourceThread, fp_LogOutputDirectory, "ResourceThreadLogger", fp_Console, LogManager::LogLevel::All);
-        resource_logger->LogAndPrint("ResourceThreadLogger successfully initialized", "ResourceManager", LogManager::LogLevel::Debug);
+        resource_logger = make_unique<Logger>();
+        resource_logger->Initialize(ThreadName::ResourceThread, fp_LogOutputDirectory, "ResourceThreadLogger", Logger::LogLevel::ALL_LOGS);
+        resource_logger->Debug("ResourceThreadLogger successfully initialized", "ResourceManager");
 
         //////////////////// Initialize Queues ////////////////////
 
-        pm_AudioResourceLoadingQueue = make_shared<LoadingQueue>();
-        pm_DrawableResourceLoadingQueue = make_shared<LoadingQueue>();
-        pm_MainThreadLoadingQueue = make_shared<LoadingQueue>();
+        pm_AudioResourceLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>();
+        pm_DrawableResourceLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>();
+        pm_MainThreadLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>();
 
-        pm_LoadCommandQueue = make_shared<CommandQueue>();
+        pm_LoadCommandQueue = make_shared<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>>();
 
         //////////////////// Set Executable Root Directory ////////////////////
 
         pm_RootDirectory = fp_RootPhysfsDirectory;
 
-        resource_logger->LogAndPrint("ResourceManager successfully initialized the all queues", "ResourceManager", LogManager::LogLevel::Info);
+        resource_logger->Info("ResourceManager successfully initialized the all queues", "ResourceManager");
 
-        pm_IsInitialized = true;
+        m_IsInitialized = true;
 
         return true;
     }
+
+    void
+        ResourceManager::ProcessCommands()
+    {
+        LoadCommand f_Command;
+        while (pm_LoadCommandQueue->try_dequeue(f_Command))
+        {
+            switch (f_Command.opcode)
+            {
+            case 1:
+                break;
+            default:
+                PrintError("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!", Colours::BrightRed);
+            }
+        }
+    }
  
-    [[nodiscard]] shared_ptr<CommandQueue>
+    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>>
         ResourceManager::GetLoadCommandQueue()
     {
-        if (not pm_IsInitialized)
+        if (not m_IsInitialized)
         {
-            resource_logger->LogAndPrint("Attempted to get a reference to ResourceManager's LoadCommandQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Attempted to get a reference to ResourceManager's LoadCommandQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
             return nullptr;
         }
         else if (pm_LoadCommandQueue.use_count() >= 2)
         {
-            resource_logger->LogAndPrint("Attempted to get more than one reference to ResourceManager's LoadCommandQueue >O<", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Attempted to get more than one reference to ResourceManager's LoadCommandQueue >O<", "ResourceManager");
             return nullptr;
         }
 
@@ -70,34 +79,34 @@ namespace PeachCore {
 
     //THESE METHODS ONLY ALLOW A MAXIMUM OF ONE REFERENCE PASSED OUT, TO ANYONE ASKING THIS IS MEANT FOR THE AUDIO/RENDER THREAD
 
-    [[nodiscard]] shared_ptr<LoadingQueue>
+    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
         ResourceManager::GetAudioResourceLoadingQueue() //This method should be one of the first methods called on startup
     {
-        if (not pm_IsInitialized)
+        if (not m_IsInitialized)
         {
-            resource_logger->LogAndPrint("Attempted to get a reference to ResourceManager's AudioResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Attempted to get a reference to ResourceManager's AudioResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
             return nullptr;
         }
         else if (pm_AudioResourceLoadingQueue.use_count() >= 2)
         {
-            resource_logger->LogAndPrint("Attempted to get more than one reference to ResourceManager's AudioResourceLoadingQueue >O<", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Attempted to get more than one reference to ResourceManager's AudioResourceLoadingQueue >O<", "ResourceManager");
             return nullptr;
         }
 
         return pm_AudioResourceLoadingQueue;
     }
 
-    [[nodiscard]] shared_ptr<LoadingQueue>
+    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
         ResourceManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
     {
-        if (not pm_IsInitialized)
+        if (not m_IsInitialized)
         {
-            resource_logger->LogAndPrint("Attempted to get a reference to ResourceManager's DrawableResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Attempted to get a reference to ResourceManager's DrawableResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
             return nullptr;
         }
         else if (pm_DrawableResourceLoadingQueue.use_count() >= 2)
         {
-            resource_logger->LogAndPrint("Attempted to get more than one reference to ResourceManager's DrawableResourceLoadingQueue >O<", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Attempted to get more than one reference to ResourceManager's DrawableResourceLoadingQueue >O<", "ResourceManager");
             return nullptr;
         }
 
@@ -124,7 +133,7 @@ namespace PeachCore {
 
         if (not f_HostExr)
         {
-            resource_logger->PEACH_LOG(format("Failed to load hostexr at path: '{}'", fp_HostFxrPath), "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error(format("Failed to load hostexr at path: '{}'", fp_HostFxrPath), "ResourceManager");
             return false;
         }
 
@@ -143,7 +152,7 @@ namespace PeachCore {
 
         if (not fp_DotnetContext.RuntimeInit)
         {
-            resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_initialize_for_runtime_config'", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Failed to find symbol: 'hostfxr_initialize_for_runtime_config'", "ResourceManager");
             return false;
         }
 
@@ -158,7 +167,7 @@ namespace PeachCore {
 
         if (not fp_DotnetContext.GetDelegate)
         {
-            resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_get_runtime_delegate'", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Failed to find symbol: 'hostfxr_get_runtime_delegate'", "ResourceManager");
             return false;
         }
 
@@ -173,7 +182,7 @@ namespace PeachCore {
         //
         // if (not fp_DotnetContext.LoadAssembly)
         // {
-        //     resource_logger->LogAndPrint("Failed to find symbol: 'load_assembly_and_get_function_pointer_fn'", "ResourceManager", LogManager::LogLevel::Error);
+        //     resource_logger->LogAndPrint("Failed to find symbol: 'load_assembly_and_get_function_pointer_fn'", "ResourceManager");
         //     return false;
         // }
 
@@ -188,13 +197,13 @@ namespace PeachCore {
 
         if (not fp_DotnetContext.Close)
         {
-            resource_logger->LogAndPrint("Failed to find symbol: 'hostfxr_close'", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Failed to find symbol: 'hostfxr_close'", "ResourceManager");
             return false;
         }
 
         //////////////////// Log Success and Return ////////////////////
 
-        resource_logger->LogAndPrint("Located hostfxr symbols required for running dotnet successfully!", "ResourceManager", LogManager::LogLevel::Info);
+        resource_logger->Info("Located hostfxr symbols required for running dotnet successfully!", "ResourceManager");
 
         return true;
     }
@@ -217,7 +226,7 @@ namespace PeachCore {
         // Ensure directory exists
         if (not filesystem::exists(fp_TextureFilePath))
         {
-            resource_logger->LogAndPrint("Tried to pass invalid directory to LoadTextureFromFile(), Failed to load texture!", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Tried to pass invalid directory to LoadTextureFromFile(), Failed to load texture!", "ResourceManager");
             return false;
         }
 
@@ -231,25 +240,25 @@ namespace PeachCore {
         }
         catch (const exception& ex)
         {
-            resource_logger->LogAndPrint(format("Failed to load texture image!, error: '{}'", ex.what()), "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error(format("Failed to load texture image!, error: '{}'", ex.what()), "ResourceManager");
             return false;
         }
 
         if (not f_RawTextureDataPtr)
         {
-            resource_logger->LogAndPrint("Failed to load texture image!", "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Failed to load texture image!", "ResourceManager");
             return false;
         }
 
-        unique_ptr<TextureData> f_TextureData = make_unique<TextureData>
-        (
-            f_RawTextureDataPtr,
-            static_cast<uint32_t>(width),
-            static_cast<uint32_t>(height),
-            static_cast<uint32_t>(nrChannels)
-        );
+        //unique_ptr<TextureData> f_TextureData = make_unique<TextureData>
+        //(
+        //    f_RawTextureDataPtr,
+        //    static_cast<uint32_t>(width),
+        //    static_cast<uint32_t>(height),
+        //    static_cast<uint32_t>(nrChannels)
+        //);
 
-        TryPushingLoadedTexture("someObjectID", move(f_TextureData));
+        //TryPushingLoadedTexture("someObjectID", move(f_TextureData));
 
         return true; //texture loaded successfully!
     }
@@ -349,23 +358,23 @@ namespace PeachCore {
     THAT WOULD BE GOOD FOR LOADING SCENES, WE DONT WANT TO PUSH ANY RESOURCES EARLIER THAN NEEDED UNTIL THE ENTIRE SCENE IS LOADED
     I'm kinda tired of working on the loading manager and i wanna do physics now so gl future ryan i hope things go well >w< 
     */
-    bool 
-        ResourceManager::TryPushingLoadedTexture
-        (
-            const string& fp_ObjectID,
-            unique_ptr<TextureData> fp_TextureDataPtr
-        )
-    {
-        pm_WaitingLoadedGraphicsAssets.emplace_back(fp_ObjectID, move(fp_TextureDataPtr)); //construct package in vector
+    //bool 
+    //    ResourceManager::TryPushingLoadedTexture
+    //    (
+    //        const string& fp_ObjectID,
+    //        unique_ptr<TextureData> fp_TextureDataPtr
+    //    )
+    //{
+    //    pm_WaitingLoadedGraphicsAssets.emplace_back(fp_ObjectID, move(fp_TextureDataPtr)); //construct package in vector
 
-        if (not pm_DrawableResourceLoadingQueue->PushLoadedResourcePackages(pm_WaitingLoadedGraphicsAssets))
-        {
-            resource_logger->LogAndPrint("Load put off until later", "ResourceManager", LogManager::LogLevel::Trace);
-            return false;
-        }
+    //    if (not pm_DrawableResourceLoadingQueue->PushLoadedResourcePackages(pm_WaitingLoadedGraphicsAssets))
+    //    {
+    //        resource_logger->Trace("Load put off until later", "ResourceManager");
+    //        return false;
+    //    }
 
-        return true;
-    }
+    //    return true;
+    //}
 
     bool
         ResourceManager::LoadPlugin
@@ -379,35 +388,158 @@ namespace PeachCore {
 
         if (not (filesystem::exists(fp_PluginFilePath) and filesystem::is_regular_file(fp_PluginFilePath)))
         {
-            resource_logger->LogAndPrint("Failed to locate DLL at: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Failed to locate DLL at: " + fp_PluginFilePath, "ResourceManager");
             return false;
         }
 
         f_Handle = DYNLIB_LOAD(fp_PluginFilePath.c_str());
-        resource_logger->LogAndPrint("Successfully located DLL at: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Debug);
+        resource_logger->Debug("Successfully located DLL at: " + fp_PluginFilePath, "ResourceManager");
 
         if (not f_Handle)
         {
-            resource_logger->LogAndPrint("Failed to load plugin at path: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Failed to load plugin at path: " + fp_PluginFilePath, "ResourceManager");
             return false;
         }
 
-        resource_logger->LogAndPrint("Successfully loaded plugin at: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Debug);
+        resource_logger->Debug("Successfully loaded plugin at: " + fp_PluginFilePath, "ResourceManager");
 
         auto f_CreateFunc = (CreatePluginFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
         auto f_DestroyFunc = (DestroyPluginFunc)DYNLIB_GETSYM(f_Handle, "destroyPlugin");
 
         if (not f_CreateFunc or not f_DestroyFunc)
         {
-            resource_logger->LogAndPrint("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Error);
+            resource_logger->Error("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager");
             DYNLIB_UNLOAD(f_Handle);
             return false;
         }
 
-        resource_logger->LogAndPrint("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager", LogManager::LogLevel::Debug);
+        resource_logger->Debug("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager");
 
         fp_Plugin.Pwugin = unique_ptr<Plugin, DestroyPluginFunc>(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;
         fp_Plugin.Handle = f_Handle;
+
+        return true;
+    }
+
+    ////////////////////////////////////////////////
+// Directory Detection Functions
+////////////////////////////////////////////////
+
+    void
+        ResourceManager::CheckForDirectoryChanges()
+    {
+        static map<string, PHYSFS_sint64> lastModifiedTimes;
+
+        char** rc = PHYSFS_enumerateFiles("/");
+
+        for (char** i = rc; *i != NULL; i++)
+        {
+            string fullPath = string("/") + *i;
+            PHYSFS_Stat stat;
+
+            if (PHYSFS_stat(fullPath.c_str(), &stat))
+            {
+                if (lastModifiedTimes.find(fullPath) == lastModifiedTimes.end() or lastModifiedTimes[fullPath] != stat.modtime)
+                {
+                    // File has changed or is new
+                    //processFileChange(fullPath);
+                    // Update the last modified time
+                    lastModifiedTimes[fullPath] = stat.modtime;
+                }
+            }
+        }
+
+        PHYSFS_freeList(rc);
+    }
+
+    // Function to list all files recursively
+    unordered_map<string, filesystem::file_time_type>
+        ResourceManager::GetCurrentDirectoryState
+        (
+            const filesystem::path& fp_Directory
+        )
+    {
+        unordered_map<string, filesystem::file_time_type> f_Files;
+
+        try
+        {
+            for (const auto& _entry : filesystem::recursive_directory_iterator(fp_Directory))
+            {
+                if (filesystem::is_regular_file(_entry.status()) or filesystem::is_directory(_entry.status()))
+                {
+                    f_Files[_entry.path().string()] = filesystem::last_write_time(_entry);
+                }
+            }
+        }
+        catch (const filesystem::filesystem_error& e)
+        {
+            resource_logger->Error("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "main");
+        }
+
+        return f_Files;
+    }
+
+    bool
+        ResourceManager::CompareStates
+        (
+            const unordered_map<string, filesystem::file_time_type>& fp_OldState,
+            const unordered_map <string, filesystem::file_time_type>& fp_NewState
+        )
+    {
+        for (const auto& _file : fp_NewState)
+        {
+            auto it = fp_OldState.find(_file.first);
+
+            if (it == fp_OldState.end())
+            {
+                resource_logger->Debug("New file found in working directory: " + _file.first, "main");
+                return false;
+            }
+            else if (it->second != _file.second)
+            {
+                resource_logger->Trace("Modified file found in working directory: " + _file.first, "main");
+                return false;
+            }
+        }
+
+        for (const auto& _file : fp_OldState)
+        {
+            if (fp_NewState.find(_file.first) == fp_NewState.end())
+            {
+                resource_logger->Debug("Deleted file from working directory: " + _file.first, "main");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    void
+        ResourceManager::CheckAndUpdateFileSystem() //XXX: this function seems kinda sus idk if it works as i want it too lmfao
+    {
+        auto f_CurrentPath = filesystem::current_path(); //idfk
+        auto f_InitialPathState = GetCurrentDirectoryState(f_CurrentPath);
+
+        auto f_NewState = GetCurrentDirectoryState(f_CurrentPath);
+
+        if (f_NewState != f_InitialPathState)
+        {
+            CompareStates(f_InitialPathState, f_NewState);
+            f_InitialPathState = move(f_NewState);
+        }
+    }
+
+    bool
+        ResourceManager::ResourceLoop()
+    {
+        resource_logger->UpdateThreadOwner();
+        m_IsActive = true;
+
+        while (m_IsActive)
+        {
+            ProcessCommands();
+            this_thread::sleep_for(chrono::milliseconds(PEACH_ENGINE_TESTING_FRAME_RATE));
+        }
 
         return true;
     }

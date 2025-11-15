@@ -147,7 +147,7 @@ namespace PeachCore{
 
         bool pm_IsFrameStarted = false;
 
-        shared_ptr<LogManager> rendering_logger = nullptr;
+        shared_ptr<Logger> rendering_logger = nullptr;
 
     public:
         //////////////////// Initialize Method ////////////////////
@@ -157,7 +157,7 @@ namespace PeachCore{
             (
                 SDL_Window* fp_MainWindow,
                 ShaderUtils::BakedPipelineData& fp_BakedPipeline,
-                shared_ptr<LogManager> fp_RenderingLogger
+                shared_ptr<Logger> fp_RenderingLogger
             );
 
         //////////////////// Setup Peach UI ////////////////////
@@ -228,7 +228,7 @@ class PeachUIManager
 {
     // public:
     //     unique_ptr<PeachUserInterfaceNode> root;
-    //     shared_ptr<LogManager> pui_logger = nullptr;
+    //     shared_ptr<Logger> pui_logger = nullptr;
 
     //     PeachUIManager() 
     //     {

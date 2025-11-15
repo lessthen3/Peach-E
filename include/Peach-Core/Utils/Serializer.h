@@ -17,7 +17,7 @@
 #include <variant>
 
 ///Peach-E
-#include "../Managers/LogManager.h"
+#include "Logger.h"
 
 ///External
 #include <zlib.h>
@@ -51,7 +51,7 @@ namespace PeachCore {
             (
                 T& fp_DesiredObject,
                 const string& fp_FilePath,
-                LogManager* logger
+                Logger* logger
             )
         {
             string f_JsonString;
@@ -61,22 +61,22 @@ namespace PeachCore {
 
             if (not ReadJSONIntoString(fp_FilePath, &f_JsonString, logger)) //get JSON into a string
             {
-                logger->LogAndPrint("Failed to Read JSON", "FromJSON", LogManager::LogLevel::Error);
+                logger->Error("Failed to Read JSON", "FromJSON");
                 return false;
             }
             else if (not Tokenize(f_TokenizedJson, f_JsonString, logger)) //convert JSON string into a vector of tokens
             {
-                logger->LogAndPrint("Failed to Lex JSON", "FromJSON", LogManager::LogLevel::Error);
+                logger->Error("Failed to Lex JSON", "FromJSON");
                 return false;
             }
             else if (not ParseJSON(f_TokenizedJson, f_TempJSON, logger)) //parse the tokens into a valid JSONValue object
             {
-                logger->LogAndPrint("Failed to Parse JSON", "FromJSON", LogManager::LogLevel::Error);
+                logger->Error("Failed to Parse JSON", "FromJSON");
                 return false;
             }
             else if (not FromJSON(f_TempJSON, fp_DesiredObject)) //retrieve values and insert into fp_DesiredObject
             {
-                logger->LogAndPrint(format("Failed to retrieve data values from desired JSON file: {}", fp_FilePath), "FromJSON", LogManager::LogLevel::Error);
+                logger->Error(format("Failed to retrieve data values from desired JSON file: {}", fp_FilePath), "FromJSON");
                 return false;
             }
 
@@ -90,14 +90,14 @@ namespace PeachCore {
                 T& fp_DesiredObject,
                 const string& fp_DesiredFileName,
                 const string& fp_DesiredOutputDirectory,
-                LogManager* logger
+                Logger* logger
             )
         {
             JSONValue f_TempJSON = ToJSON(fp_DesiredObject);
 
             if (not WriteToJSON(fp_DesiredOutputDirectory, fp_DesiredFileName, f_TempJSON, logger))
             {
-                logger->LogAndPrint(format("Failed writing to JSON file: {}, nothing was done", fp_DesiredFileName), "ToJSON", LogManager::LogLevel::Error);
+                logger->Error(format("Failed writing to JSON file: {}, nothing was done", fp_DesiredFileName), "ToJSON");
                 return false;
             }
 
@@ -185,7 +185,7 @@ namespace PeachCore {
             (
                 vector<Token>& fp_Tokens,
                 string& fp_SourceCode,
-                LogManager* logger
+                Logger* logger
             )
         {
             size_t f_CurrentLineNumber = 1;
@@ -234,7 +234,7 @@ namespace PeachCore {
 
                         if (not isdigit(f_CurrentChar))
                         {
-                            logger->LogAndPrint(format("Unexpected symbol following character: '-', looks like you've input a non-numeric symbol: '{}' while defining a negative number at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer", LogManager::LogLevel::Error);
+                            logger->Error(format("Unexpected symbol following character: '-', looks like you've input a non-numeric symbol: '{}' while defining a negative number at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
                             fp_SourceCode.clear(); //dump the source code vector, so that the compiler will stop processing the source code
                             return false;
                         }
@@ -253,7 +253,7 @@ namespace PeachCore {
 
                         if (not isdigit(f_CurrentChar))
                         {
-                            logger->LogAndPrint(format("Unexpected symbol following a '.' brother!, looks like you've input a non-numeric symbol: '{}' while defining a decimal number at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer", LogManager::LogLevel::Error);
+                            logger->Error(format("Unexpected symbol following a '.' brother!, looks like you've input a non-numeric symbol: '{}' while defining a decimal number at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
                             fp_SourceCode.clear(); //dump the source code vector, so that the compiler will stop processing the source code
                             return false;
                         }
@@ -294,7 +294,7 @@ namespace PeachCore {
                     }
                     else
                     {
-                        logger->LogAndPrint(format("Lexing Error: Invalid JSON identifier: '{}', found at line number: {}", f_Identifier, f_CurrentLineNumber), "Lexer", LogManager::LogLevel::Error);
+                        logger->Error(format("Lexing Error: Invalid JSON identifier: '{}', found at line number: {}", f_Identifier, f_CurrentLineNumber), "Lexer");
                         fp_SourceCode.clear();
                         return false;
                     }
@@ -332,7 +332,7 @@ namespace PeachCore {
 
                     if (not isdigit(f_CurrentChar))
                     {
-                        logger->LogAndPrint(format("Lexing Error: Invalid JSON identifier: '{}', found at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer", LogManager::LogLevel::Error);
+                        logger->Error(format("Lexing Error: Invalid JSON identifier: '{}', found at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
                         fp_SourceCode.clear();
                         return false;
                     }
@@ -403,14 +403,14 @@ namespace PeachCore {
                     }
                     else // Handle error: Unterminated string literal, and exit program execution
                     {
-                        logger->LogAndPrint("Unterminated string literal, brother! Error occured at line number: " + to_string(f_CurrentLineNumber), "Lexer", LogManager::LogLevel::Error);
+                        logger->Error("Unterminated string literal, brother! Error occured at line number: " + to_string(f_CurrentLineNumber), "Lexer");
                         fp_SourceCode.clear();
                         return false;
                     }
                 }
                 break;
                 default:
-                    logger->LogAndPrint(format("Lexing Error: Unrecognized character found: [{}], found at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer", LogManager::LogLevel::Error);
+                    logger->Error(format("Lexing Error: Unrecognized character found: [{}], found at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
                     fp_SourceCode.clear(); //dump the source code vector, so that the compiler will stop processing the source code
                     return false;
                 }
@@ -1011,7 +1011,7 @@ namespace PeachCore {
             (
                 vector<Token>&fp_Tokens,
                 JSONObject& fp_JSONObject, //current list containing the entire parsed JSON up to this point
-                LogManager* logger
+                Logger* logger
             )
         {
             string f_CurrentKey;
@@ -1022,7 +1022,7 @@ namespace PeachCore {
             {
                 if (f_CurrentToken.m_Type != TokenType::StringLiteral)
                 {
-                    logger->LogAndPrint(format("Parsing Error: found '{}', when string literal was expected as JSON key inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject", LogManager::LogLevel::Error);
+                    logger->Error(format("Parsing Error: found '{}', when string literal was expected as JSON key inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                     return false;
                 }
 
@@ -1031,7 +1031,7 @@ namespace PeachCore {
 
                 if (f_CurrentToken.m_Type != TokenType::DoubleDot)
                 {
-                    logger->LogAndPrint(format("Parsing Error: found '{}', when ':' was expected after JSON key inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject", LogManager::LogLevel::Error);
+                    logger->Error(format("Parsing Error: found '{}', when ':' was expected after JSON key inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                     return false;
                 }
 
@@ -1039,7 +1039,7 @@ namespace PeachCore {
 
                 if (not ParseValue(f_CurrentToken, fp_JSONObject, f_CurrentKey, fp_Tokens, logger))
                 {
-                    logger->LogAndPrint(format("Parsing Error: Invalid JSON object: '{}', at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject", LogManager::LogLevel::Error);
+                    logger->Error(format("Parsing Error: Invalid JSON object: '{}', at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                     return false;
                 }
 
@@ -1052,7 +1052,7 @@ namespace PeachCore {
 
                 if (f_CurrentToken.m_Type != TokenType::Comma)
                 {
-                    logger->LogAndPrint(format("Parsing Error: found '{}', when ',' was expected after JSON value inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject", LogManager::LogLevel::Error);
+                    logger->Error(format("Parsing Error: found '{}', when ',' was expected after JSON value inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                     return false;
                 }
 
@@ -1061,7 +1061,7 @@ namespace PeachCore {
 
             if (f_CurrentToken.m_Type != TokenType::CloseBracket)
             {
-                logger->LogAndPrint(format("Parsing Error: Unexpected token: [{}], found inside array definition at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject", LogManager::LogLevel::Error);
+                logger->Error(format("Parsing Error: Unexpected token: [{}], found inside array definition at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                 return false;
             }
 
@@ -1073,7 +1073,7 @@ namespace PeachCore {
             (
                 vector<Token>&fp_Tokens,
                 JSONArray& fp_JSONArray, //current list containing the entire parsed JSON up to this point
-                LogManager* logger
+                Logger* logger
             )
         {
             Token f_CurrentToken = ShiftForward(fp_Tokens); //assuming the most recent token was '[' called from ParseJSON
@@ -1082,7 +1082,7 @@ namespace PeachCore {
             {
                 if (not ParseValue(f_CurrentToken, fp_JSONArray, fp_Tokens, logger))
                 {
-                    logger->LogAndPrint("Parsing Error: invalid value found while parsing an Array", "ParseArray", LogManager::LogLevel::Error);
+                    logger->Error("Parsing Error: invalid value found while parsing an Array", "ParseArray");
                     return false;
                 }
 
@@ -1095,7 +1095,7 @@ namespace PeachCore {
 
                 if (f_CurrentToken.m_Type != TokenType::Comma) //throw error if a separating comma is not found between array elements
                 {
-                    logger->LogAndPrint(format("Parsing Error: expected ',' after value inside JSON array but found '{}' instead at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseArray", LogManager::LogLevel::Error);
+                    logger->Error(format("Parsing Error: expected ',' after value inside JSON array but found '{}' instead at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseArray");
                     return false;
                 }
 
@@ -1104,7 +1104,7 @@ namespace PeachCore {
 
             if (f_CurrentToken.m_Type != TokenType::CloseSquareBracket)
             {
-                logger->LogAndPrint(format("Parsing Error: Expected ']' but found '{}' instead, found inside array definition at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseArray", LogManager::LogLevel::Error);
+                logger->Error(format("Parsing Error: Expected ']' but found '{}' instead, found inside array definition at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseArray");
                 return false;
             }
 
@@ -1117,7 +1117,7 @@ namespace PeachCore {
                 Token fp_CurrentToken,
                 JSONArray& fp_Array,
                 vector<Token>& fp_Tokens,
-                LogManager* logger
+                Logger* logger
             )
         {
             switch (fp_CurrentToken.m_Type)
@@ -1160,7 +1160,7 @@ namespace PeachCore {
                 }
                 break;
                 default:
-                    logger->LogAndPrint(format("Parsing Error: found '{}' inside array, when integral type was expected at line number: {}", fp_CurrentToken.m_Value, fp_CurrentToken.m_SourceCodeLineNumber), "ParseValue", LogManager::LogLevel::Error);
+                    logger->Error(format("Parsing Error: found '{}' inside array, when integral type was expected at line number: {}", fp_CurrentToken.m_Value, fp_CurrentToken.m_SourceCodeLineNumber), "ParseValue");
                     return false;
             }
 
@@ -1174,7 +1174,7 @@ namespace PeachCore {
                 JSONObject& fp_JSONObject,
                 string& fp_ValueKey,
                 vector<Token>& fp_Tokens,
-                LogManager* logger
+                Logger* logger
             )
         {
             switch (fp_CurrentToken.m_Type)
@@ -1217,7 +1217,7 @@ namespace PeachCore {
                 }
                 break;
                 default:
-                    logger->LogAndPrint(format("Parsing Error: found '{}' inside object, when integral type was expected at line number: {}", fp_CurrentToken.m_Value, fp_CurrentToken.m_SourceCodeLineNumber), "ParseValue", LogManager::LogLevel::Error);
+                    logger->Error(format("Parsing Error: found '{}' inside object, when integral type was expected at line number: {}", fp_CurrentToken.m_Value, fp_CurrentToken.m_SourceCodeLineNumber), "ParseValue");
                     return false;
             }
 
@@ -1229,7 +1229,7 @@ namespace PeachCore {
             (
                 vector<Token>& fp_Tokens,
                 JSONValue& fp_JSON,
-                LogManager* logger
+                Logger* logger
             )
         {
             Token f_CurrentToken = ShiftForward(fp_Tokens); //get first val
@@ -1251,7 +1251,7 @@ namespace PeachCore {
                 }
                 break;
                 default:
-                    logger->LogAndPrint("Parsing Error: ill-formed JSON found, parsing failed", "ParseJSON", LogManager::LogLevel::Error);
+                    logger->Error("Parsing Error: ill-formed JSON found, parsing failed", "ParseJSON");
                     return false;
             }
 
@@ -1259,7 +1259,7 @@ namespace PeachCore {
 
             if (f_CurrentToken.m_Type != TokenType::ENDF)
             {
-                logger->LogAndPrint("Parsing Error: parser failed to find end of file, something bad happened and I have 0 clue why lmfao. JSONValue isn't properly formed", "ParseJSON", LogManager::LogLevel::Error);
+                logger->Error("Parsing Error: parser failed to find end of file, something bad happened and I have 0 clue why lmfao. JSONValue isn't properly formed", "ParseJSON");
                 fp_JSON = JSONValue();
                 return false;
             }
@@ -1277,7 +1277,7 @@ namespace PeachCore {
                 const string& fp_DesiredOutputDirectory,
                 const string& fp_DesiredName,
                 const JSONValue& fp_JSON,
-                LogManager* logger
+                Logger* logger
             )
             const
         {
@@ -1290,7 +1290,7 @@ namespace PeachCore {
             // Ensure directory exists
             if (not filesystem::exists(fp_DesiredOutputDirectory))
             {
-                logger->LogAndPrint("Serialization Error: Tried to pass invalid write directory to WriteToJSON", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: Tried to pass invalid write directory to WriteToJSON", "Serializer");
                 return false;
             }
 
@@ -1300,7 +1300,7 @@ namespace PeachCore {
 
             if (not file)
             {
-                logger->LogAndPrint(format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
+                logger->Error(format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer");
                 return false;
             }
 
@@ -1308,7 +1308,7 @@ namespace PeachCore {
 
             if (not ToString(&f_JSONString, fp_JSON))
             {
-                logger->LogAndPrint(format("Serialization Error: Failed to stringify JSON -> file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
+                logger->Error(format("Serialization Error: Failed to stringify JSON -> file: '{}' for writing.", f_FileName), "Serializer");
                 file.close(); //close the file since writing failed
                 return false;
             }
@@ -1326,7 +1326,7 @@ namespace PeachCore {
             (
                 const string& fp_ScriptFilePath,
                 string* fp_SourceCode,
-                LogManager* logger
+                Logger* logger
             )
         {
             if (not logger)
@@ -1338,14 +1338,14 @@ namespace PeachCore {
             //check for nullptr
             if (not fp_SourceCode)
             {
-                logger->LogAndPrint("Serialization Error: Nullptr reference passed to ReadJSONIntoString", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: Nullptr reference passed to ReadJSONIntoString", "Serializer");
                 return false;
             }
 
             // Ensure directory exists
             if (not filesystem::exists(fp_ScriptFilePath))
             {
-                logger->LogAndPrint("Serialization Error: Tried to pass invalid filepath to ReadJSONIntoString", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: Tried to pass invalid filepath to ReadJSONIntoString", "Serializer");
                 return false;
             }
 
@@ -1354,7 +1354,7 @@ namespace PeachCore {
 
             if (lastDotIndex == string::npos)
             {
-                logger->LogAndPrint("Serialization Error: No file extension found", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: No file extension found", "Serializer");
                 return false;
             }
 
@@ -1362,7 +1362,7 @@ namespace PeachCore {
 
             if (f_FileExtension != ".json")
             {
-                logger->LogAndPrint("Serialization Error: Attempted to read from a file that isn't a JSON", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: Attempted to read from a file that isn't a JSON", "Serializer");
                 return false;
             }
 
@@ -1370,7 +1370,7 @@ namespace PeachCore {
 
             if (not f_FileStream)
             {
-                logger->LogAndPrint("Serialization Error: Failed to open JSON for reading.", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: Failed to open JSON for reading.", "Serializer");
                 return false;
             }
 
@@ -1391,7 +1391,7 @@ namespace PeachCore {
                 const string& fp_DesiredOutputDirectory,
                 const string& fp_DesiredName,
                 const vector<uint8_t>& fp_Binary,
-                LogManager* logger
+                Logger* logger
             )
         {
             if (not logger)
@@ -1403,13 +1403,13 @@ namespace PeachCore {
             // Ensure directory exists
             if (not filesystem::exists(fp_DesiredOutputDirectory))
             {
-                logger->LogAndPrint(format("Serialization Error: Tried to pass invalid write directory: '{}' to WriteToBinary", fp_DesiredOutputDirectory), "Serializer", LogManager::LogLevel::Error);
+                logger->Error(format("Serialization Error: Tried to pass invalid write directory: '{}' to WriteToBinary", fp_DesiredOutputDirectory), "Serializer");
                 return false;
             }
 
             if (fp_Binary.empty()) //check if the byte vector is empty uwu
             {
-                logger->LogAndPrint(format("Serialization Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "Serializer", LogManager::LogLevel::Error);
+                logger->Error(format("Serialization Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "Serializer");
                 return false;
             }
 
@@ -1419,7 +1419,7 @@ namespace PeachCore {
 
             if (not file)
             {
-                logger->LogAndPrint(format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer", LogManager::LogLevel::Error);
+                logger->Error(format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer");
                 return false;
             }
 
@@ -1436,7 +1436,7 @@ namespace PeachCore {
             (
                 const string& fp_ScriptFilePath,
                 vector<uint8_t>& fp_Binary,
-                LogManager* logger
+                Logger* logger
             )
         {
             if (not logger) //check for nullptr ref passed to ReadBinaryIntoVector
@@ -1448,13 +1448,13 @@ namespace PeachCore {
             // Ensure directory exists
             if (not filesystem::exists(fp_ScriptFilePath))
             {
-                logger->LogAndPrint("Serialization Error: Tried to pass invalid directory to ReadBinaryIntoVector", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: Tried to pass invalid directory to ReadBinaryIntoVector", "Serializer");
                 return false;
             }
 
             if (not fp_Binary.empty()) //check if the byte vector is empty before reading data into it OwO
             {
-                logger->LogAndPrint(format("Serialization Error: Tried passing non-empty byte vector for reading to file name: '{}', nothing was done.", fp_ScriptFilePath), "Serializer", LogManager::LogLevel::Error);
+                logger->Error(format("Serialization Error: Tried passing non-empty byte vector for reading to file name: '{}', nothing was done.", fp_ScriptFilePath), "Serializer");
                 return false;
             }
 
@@ -1463,7 +1463,7 @@ namespace PeachCore {
 
             if (lastDotIndex == string::npos)
             {
-                logger->LogAndPrint("Serialization Error: No file extension found for Peach-E Binary", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: No file extension found for Peach-E Binary", "Serializer");
                 return false;
             }
 
@@ -1471,7 +1471,7 @@ namespace PeachCore {
 
             if (f_FileExtension != ".peachbin") //file extension for peach-e binary encoding, get it? it's like a bin of peaches >w<
             {
-                logger->LogAndPrint("Serialization Error: Attempted to read from a file that isn't a valid Peach-E Binary", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: Attempted to read from a file that isn't a valid Peach-E Binary", "Serializer");
                 return false;
             }
 
@@ -1479,7 +1479,7 @@ namespace PeachCore {
 
             if (not f_BinaryStream) //check if the file opened properly
             {
-                logger->LogAndPrint("Serialization Error: Failed to open Peach-E Binary for reading.", "Serializer", LogManager::LogLevel::Error);
+                logger->Error("Serialization Error: Failed to open Peach-E Binary for reading.", "Serializer");
                 return false;
             }
 

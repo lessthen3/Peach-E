@@ -14,8 +14,6 @@
 #include "../Utils/Plugin.h"
 #include "../Utils/ShaderUtils.h"
 #include "../Utils/Serializer.h"
-#include "../Utils/LoadingQueue.h"
-#include "../Utils/CommandQueue.h"
 #include "../Utils/DynamicLoader.h"
 
 #include "../Language-Support/DotnetRuntime.h"
@@ -51,15 +49,36 @@ namespace PeachCore {
     };
 
     //////////////////////////////////////////////
+    // ResourceManager word size
+    //////////////////////////////////////////////
+
+    struct LoadCommand 
+    {
+        uint64_t node_id;       // 4 bytes
+        uint16_t opcode;        // 2 bytes
+        uint16_t reserved;      // 2 bytes (alignment or flags)
+        uint64_t operand;       // 8 bytes
+    };
+
+    struct ResourceTransfer 
+    {
+        uint64_t NodeID = 0;
+        //ResourceType type; // enum: Texture, Audio, Mesh, etc.
+        //ResourceHandle handle;
+    };
+
+
+    //////////////////////////////////////////////
     // ResourceManager Class
     //////////////////////////////////////////////
     class ResourceManager 
     {
     //////////////////////////////////////////////
-    // Private Destructor
+    // Private Destructor & Constructor
     //////////////////////////////////////////////
     private:
         ~ResourceManager() = default;
+        ResourceManager() = default;
 
     //////////////////////////////////////////////
     // Singleton Instance
@@ -74,12 +93,10 @@ namespace PeachCore {
         ResourceManager(const ResourceManager&) = delete;
         ResourceManager& operator=(const ResourceManager&) = delete;
 
-    //////////////////////////////////////////////
-    // Private Constructor
-    //////////////////////////////////////////////
-    private:
-        ResourceManager() = default;
+        ResourceManager(ResourceManager&&) = delete;
+        ResourceManager& operator=(ResourceManager&&) = delete;
 
+    private:
     //////////////////////////////////////////////
     // Private Members
     //////////////////////////////////////////////
@@ -87,25 +104,26 @@ namespace PeachCore {
         //////////////////// Queue Pointers ////////////////////
 
         //used to push loaded assets that are destined for AudioManager
-        shared_ptr<LoadingQueue> pm_AudioResourceLoadingQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_AudioResourceLoadingQueue = nullptr;
         //used to push loaded assets that are destined for RenderingManager
-        shared_ptr<LoadingQueue> pm_DrawableResourceLoadingQueue = nullptr; 
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_DrawableResourceLoadingQueue = nullptr;
         //used to push loaded scripts and config stuff -> MainThread/GameManager
-        shared_ptr<LoadingQueue> pm_MainThreadLoadingQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_MainThreadLoadingQueue = nullptr;
+
         //used for asking ResourceManager to load something from the main thread
-        shared_ptr<CommandQueue> pm_LoadCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_LoadCommandQueue = nullptr;
 
         //////////////////// Waiting Buffers ////////////////////
 
         // Holds mesh, texture, shader and animation data
-        vector<LoadedResourcePackage> pm_WaitingLoadedGraphicsAssets;
+        vector<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_WaitingLoadedGraphicsAssets;
         //Holds mp3, wav and flac files
-        vector<LoadedResourcePackage> pm_WaitingLoadedAudioAssets;
+        vector<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_WaitingLoadedAudioAssets;
 
         //////////////////// Resource Logger ////////////////////
 
         //Resource Logger owned by ResourceManager only
-        unique_ptr<LogManager> resource_logger = nullptr;
+        unique_ptr<Logger> resource_logger = nullptr;
 
         //////////////////// Utility Structs ////////////////////
 
@@ -120,13 +138,12 @@ namespace PeachCore {
 
         string pm_RootDirectory;
 
-        bool pm_IsInitialized = false;
-
     //////////////////////////////////////////////
     // Public Members
     //////////////////////////////////////////////
     public:
-        mutex resourceMutex;
+        atomic<bool> m_IsInitialized = false;
+        atomic<bool> m_IsActive = false;
 
     //////////////////////////////////////////////
     // Public Methods
@@ -136,17 +153,47 @@ namespace PeachCore {
             Initialize
         (
             const string& fp_LogOutputDirectory,
-            const string& fp_RootPhysfsDirectory,
-            shared_ptr<Console> fp_Console
+            const string& fp_RootPhysfsDirectory
         );
 
-        [[nodiscard]] shared_ptr<LoadingQueue>
+        void
+            CheckForDirectoryChanges();
+
+        // Function to list all files recursively
+        unordered_map<string, filesystem::file_time_type>
+            GetCurrentDirectoryState
+            (
+                const filesystem::path& fp_Directory
+            );
+
+        ////////////////////////////////////////////////
+// Directory Detection Functions
+////////////////////////////////////////////////
+
+        bool
+            CompareStates
+            (
+                const unordered_map<string, filesystem::file_time_type>& fp_OldState,
+                const unordered_map <string, filesystem::file_time_type>& fp_NewState
+            );
+
+        void
+            CheckAndUpdateFileSystem() //XXX: this function seems kinda sus idk if it works as i want it too lmfao
+            ;
+
+        bool
+            ResourceLoop();
+
+        void
+            ProcessCommands();
+
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
             GetAudioResourceLoadingQueue();
 
-        [[nodiscard]] shared_ptr<LoadingQueue>
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
             GetDrawableResourceLoadingQueue();
 
-        [[nodiscard]] shared_ptr<CommandQueue>
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>>
             GetLoadCommandQueue();
 
         bool
@@ -160,7 +207,7 @@ namespace PeachCore {
             );
 
         bool
-            LoadDotNetScript();
+            LoadDotNetScript(const string& fp_ScriptPath);
 
         bool
             LoadPythonRuntime();
@@ -182,15 +229,25 @@ namespace PeachCore {
         bool
             LoadCompiledShader(const string& fp_ShaderFilePath);
 
+        bool
+            LoadScene(const string& fp_ScenePath); //load scene locally from PhysFS
+
+        bool
+            LoadScene
+            (
+                const vector<uint8_t>& fp_SceneData, //current loaded binary
+                uint64_t* fp_Offset
+            ); //unpacked from peachbin file loaded into peach engine rn
+
     //////////////////////////////////////////////
     // Private Methods
     //////////////////////////////////////////////
     private:
-        bool 
-            TryPushingLoadedTexture
-            (
-                const string& fp_ObjectID, 
-                unique_ptr<TextureData> fp_TextureDataPtr
-            );
+        //bool 
+        //    TryPushingLoadedTexture
+        //    (
+        //        const string& fp_ObjectID, 
+        //        unique_ptr<TextureData> fp_TextureDataPtr
+        //    );
     };
 }

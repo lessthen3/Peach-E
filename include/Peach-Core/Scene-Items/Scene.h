@@ -10,35 +10,49 @@
 ********************************************************************/
 #pragma once
 
+///STL
+#include "PeachNode.h"
+#include "../Utils/Serializer.h"
+
+///STL
 #include <string>
 #include <vector>
 #include <memory>
-
-#include "PeachNode.h"
+#include <queue>
 
 namespace PeachCore {
 
+    enum class PeachNodeType : uint32_t
+    {
+        Blank
+    };
+
     class Scene 
     {
+     SERIALIZABLE_FIELDS(pm_Name)
+
     public:
         Scene() = default;
+        ~Scene() = default;
 
-        //Scene(const string& fp_Name)
-        //{
-        //    pm_Name = fp_Name;
-        //}
+    private:
+        string pm_Name = "rawr"; // >w< rawr
+        bool pm_IsPaused = false; //stops all PeachNodes that are pausable
+        // Node Name : Node
+        map<string, unique_ptr<PeachNode>> pm_PeachNodes; //use raw pointers for local function bound operations on PeachNodes via SceneTreeManager
 
-        ~Scene()
-        {
+        queue<unique_ptr<PeachNode>> pm_PeachNodesQueuedForRemoval;
 
-        }
+
         // ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
-//map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
-//map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllPeachNodesQueuedForRemoval;
-        void AddNode(shared_ptr<PeachNode> fp_PeachGameObject)
+        //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
+
+    public:
+        void 
+            AddNode(unique_ptr<PeachNode> fp_PeachGameObject)
         {
             //make unique here and push that back
-            pm_PeachNodes.push_back(fp_PeachGameObject);
+            //pm_PeachNodes.push_back(fp_PeachGameObject);
         }
 
         //void RemoveNode(const string& fp_NodeName) 
@@ -64,11 +78,5 @@ namespace PeachCore {
         void Resume() { pm_IsPaused = false; }
 
         string GetName() const { return pm_Name; }
-
-    private:
-        string pm_Name; // >w< rawr
-        bool pm_IsPaused = false; //stops all PeachNodes that are pausable
-        vector<shared_ptr<PeachNode>> pm_PeachNodes; //use raw pointers for local function bound operations on PeachNodes via SceneTreeManager
-
     };
 }

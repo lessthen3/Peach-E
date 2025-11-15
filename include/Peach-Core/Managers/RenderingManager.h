@@ -22,6 +22,8 @@
 #include "../Scene-Items/2D/PeachTexture2D.h"
 #include "../Scene-Items/PeachNode.h"
 
+#include "InputManager.h"
+
 namespace PeachCore {
 
     //////////////////////////////////////////////
@@ -42,9 +44,11 @@ namespace PeachCore {
         bool IsQueuedForRemoval = false;
         
         //TODO: fix this, need to just hold handles and metadata that maps -> descriptor sets, pipeline info
-        TextureData DrawableResourceData; //actual data for graphic //used for parsing raw byte information, mainly for audio at the moment
+        uint32_t TextureHandle; //actual data for graphic //used for parsing raw byte information, mainly for audio at the moment
+
+        glm::vec2 Offset; //handles texture offset for atlas stuff and maybe others idfk
             //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
-        Drawable GraphicsType; 
+        //Drawable GraphicsType; 
         //WARNING THIS NEEDS TO BE SWITCHED OFF FOR APPLE BUILDS SINCE TIM APPLE DECIDED NOT TO SUPPORT OPENGL ANYMORE UWU
         // OpenGLShaderProgram Shaders; //Contains multiple shaders relevant to drawing the object
     };
@@ -58,6 +62,43 @@ namespace PeachCore {
         OpenGL,
         Vulkan
     };
+
+    //////////////////////////////////////////////
+    // Rendering word size
+    //////////////////////////////////////////////
+
+    struct RenderCommand 
+    {
+        uint32_t node_id;       // 4 bytes
+        uint16_t opcode;        // 2 bytes
+        uint16_t reserved;      // 2 bytes (alignment or flags)
+        uint64_t operand;       // 8 bytes
+    };
+
+    //////////////////////////////////////////////
+    // Rendering OPCODES
+    //////////////////////////////////////////////
+
+/*                            | Name                 | ID |   Operand                | 
+                               | ---------------- - | ---- | ---------------------- | 
+*/
+    constexpr uint8_t RENDER_NO_OP = 0x00;
+    constexpr uint8_t RENDER_CREATE_NODE_OP = 0x01;//| pointer to shape def |
+    constexpr uint8_t RENDER_DESTROY_NODE_OP = 0x02; // | — |
+    constexpr uint8_t RENDER_UPDATE_POSITION_OP = 0x03; // | packed vec2 |
+    constexpr uint8_t RENDER_UPDATE_SCALE_OP = 0x04;// | packed vec2 |
+    constexpr uint8_t RENDER_SET_COLOR_OP = 0x05;// | 32 - bit RGBA |
+    constexpr uint8_t RENDER_DONT_DRAW_OP = 0x06;// | — |
+    constexpr uint8_t RENDER_SET_TEXTURE_OP = 0x07;// | texture handle |
+    constexpr uint8_t RENDER_LERP_POSITION_OP = 0x08;// | pointer to lerp config |
+    constexpr uint8_t RENDER_SET_TRANSFORM_OP = 0x09;// | pointer to mat4 |
+    constexpr uint8_t RENDER_PUSH_STATE_OP = 0x0A;// | — |
+    constexpr uint8_t RENDER_POP_STATE_OP = 0x0B;// | — |
+
+    constexpr uint8_t RENDER_CLOSE_WINDOW = 0x0C; // | Used for closing a window being rendered to by rendering manager
+
+    constexpr uint8_t RENDER_SHUTDOWN_THREAD = 0x0D; //used for shutting down render thread appropriately uwu
+        
 
     //////////////////////////////////////////////
     // Rendering Manager Class
@@ -87,6 +128,9 @@ namespace PeachCore {
         RenderingManager(const RenderingManager&) = delete;
         RenderingManager& operator=(const RenderingManager&) = delete;
 
+        RenderingManager(RenderingManager&&) = delete;
+        RenderingManager& operator=(RenderingManager&&) = delete;
+
     //////////////////////////////////////////////
     // Private Members
     //////////////////////////////////////////////
@@ -101,33 +145,35 @@ namespace PeachCore {
         unsigned long int pm_CurrentFrame = 0;
 
         bool pm_IsVSyncEnabled = false;
-        bool pm_IsShutDown = false;
-
-        bool pm_IsInitialized = false;
 
         // DrawableObject.ObjectID : DrawableObject dict
         map<string, DrawableObject2D> pm_ListOfAllDrawables2D;
 
-        shared_ptr<CommandQueue> pm_DrawCommandQueue = nullptr;
-        shared_ptr<LoadingQueue> pm_LoadedResourceQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_RenderCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_LoadedResourceQueue = nullptr;
 
         SDL_Window* pm_MainWindow = nullptr;
 
         unordered_map<SDL_WindowID, SDL_Window*> pm_CurrentlyActiveWindows;
 
-    public: //DOING THIS FOR NOW TO TEST RUNNING GAME INSTANCE FROM EDITOR NEEDS TO BE PRIVATE IN MY OPINION
-        shared_ptr<LogManager> rendering_logger = nullptr;
+        shared_ptr<Logger> rendering_logger = nullptr;
+
+    public: 
+        atomic<bool> pm_IsShutDown = false; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
+        atomic<bool> pm_IsInitialized = false;
 
     //////////////////////////////////////////////
     // Public Methods
     //////////////////////////////////////////////
     public:
+        void
+            RenderLoop();
+
         bool 
             Initialize
         (
             const RendererType fp_DesiredRenderer,
-            const string& fp_LogOutputDirectory,
-            shared_ptr<Console> fp_Console
+            const string& fp_LogOutputDirectory
         );
 
         bool
@@ -136,11 +182,14 @@ namespace PeachCore {
         bool
             InitializeDrawCommandQueue();
 
-        [[nodiscard]] shared_ptr<CommandQueue>
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>>
             GetDrawCommandQueue();
 
         void 
-            ProcessDrawCommands();
+            ProcessCommands();
+
+        bool
+            PresentFrame();
 
         void 
             ProcessLoadedResourcePackages();
@@ -173,16 +222,32 @@ namespace PeachCore {
             ResizeWindow();
 
         void 
-            RenderFrame();
-
-        void 
             Shutdown();
 
         void 
             GetCurrentViewPort();
 
-        [[nodiscard]] VulkanRenderer*
-            GetVulkanRenderer();
+        vector<SDL_WindowID> pm_CloseWindowRequests;
+
+        void
+            PollUserInputEvents()
+        {
+            InputManager::get_single().PollEvents();
+
+            InputManager::get_single().GetWindowCloseRequests(pm_CloseWindowRequests);
+
+            if (pm_CloseWindowRequests.size() > 0)
+            {
+                for (const auto& lv_Window : pm_CloseWindowRequests)
+                {
+                    SDL_DestroyWindow(SDL_GetWindowFromID(lv_Window)); //WARNING DO NOT CLOSE WINDOW HERE SEND A REQUEST TO THE RENDERING MANAGER FOR THAT
+                }
+            }
+
+            glm::vec2 f_MousePos = InputManager::get_single().GetCurrentMousePosition();
+
+            Print(format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
+        }
 
         unsigned int GetFrameRateLimit() const;
 
@@ -191,7 +256,8 @@ namespace PeachCore {
 
         bool IsVSyncEnabled() const;
 
-        void ForceQuit()
+        void 
+            ForceQuit()
         {
             pm_IsShutDown = true;
         }

@@ -15,19 +15,12 @@ namespace PeachCore {
     bool
         NetworkManager::InitializeNetworking
         (
-            const string& fp_LogOutputDirectory,
-            shared_ptr<Console> fp_Console
+            const string& fp_LogOutputDirectory
         )
     {
-        if (not fp_Console)
-        {
-            PrintError("Tried to initialize NetworkManager with a nullptr reference to the Console");
-            return false;
-        }
-
-        network_logger = make_unique<LogManager>();
-        network_logger->Initialize(ThreadName::NetworkThread, fp_LogOutputDirectory, "NetworkLogger", fp_Console, LogManager::LogLevel::All);
-        network_logger->LogAndPrint("NetworkLogger successfully initialized", "NetworkManager", LogManager::LogLevel::Debug);
+        network_logger = make_unique<Logger>();
+        network_logger->Initialize(ThreadName::NetworkThread, fp_LogOutputDirectory, "NetworkLogger", Logger::LogLevel::ALL_LOGS);
+        network_logger->Debug("NetworkLogger successfully initialized", "NetworkManager");
 
         return true;
     }

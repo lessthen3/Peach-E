@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "LogManager.h"
+#include "../Utils/Logger.h"
 
 ///SDL3
 #include <SDL3/SDL.h>
@@ -138,7 +138,7 @@ namespace PeachCore {
         TouchInput TouchEvent;
 
         void
-            Clear(LogManager* logger)
+            Clear(Logger* logger)
         {
             MouseEvent = {};
             GamepadEvent = {};
@@ -152,7 +152,7 @@ namespace PeachCore {
             }
             catch (exception fp_Exception)
             {
-                logger->PEACH_LOG("failed to fill array with fresh values for keyboard events", "InputManager::InputSnapshot::Clear", LogManager::LogLevel::Error);
+                logger->Error("failed to fill array with fresh values for keyboard events", "InputManager::InputSnapshot::Clear");
             }
 
         }
@@ -198,7 +198,7 @@ namespace PeachCore {
         //};
 
     private:
-        unique_ptr<LogManager> input_logger = nullptr;
+        unique_ptr<Logger> input_logger = nullptr;
 
         unordered_map<string, vector<InputBinding>> pm_InputMap; //action name : corresponding input
 
@@ -235,9 +235,11 @@ namespace PeachCore {
             Initialize
             (
                 const string& fp_LogOutputDirectory,
-                const LogManager::LogLevel fp_LogFilter,
-                shared_ptr<Console> fp_Console
+                const Logger::LogLevel fp_LogFilter
             );
+
+        void
+            UpdateThreadOwner();
 
         void
             PollEvents();

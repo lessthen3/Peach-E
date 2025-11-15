@@ -46,29 +46,20 @@ namespace PeachCore {
         RenderingManager::Initialize
         (
             const RendererType fp_DesiredRenderer,
-            const string& fp_LogOutputDirectory,
-            shared_ptr<Console> fp_Console
+            const string& fp_LogOutputDirectory
         )   
     {
-        //////////////////// Nullptr check for PeachConsole ref ////////////////////
-
-        if (not fp_Console)
-        {
-            PrintError("Tried to initialize RenderingManager with a nullptr reference to the Console");
-            return false;
-        }
-
         //////////////////// Initialize Logger ////////////////////
 
-        rendering_logger = make_shared<LogManager>(); 
-        rendering_logger->Initialize(ThreadName::RenderThread, fp_LogOutputDirectory, "RenderingManager", fp_Console, LogManager::LogLevel::All);
-        rendering_logger->PEACH_LOG("RenderingLogger successfully initialized", "RenderingManager", LogManager::LogLevel::Debug);
+        rendering_logger = make_shared<Logger>(); 
+        rendering_logger->Initialize(ThreadName::RenderThread, fp_LogOutputDirectory, "RenderingThread", Logger::LogLevel::ALL_LOGS);
+        rendering_logger->Debug("RenderingLogger successfully initialized", "RenderingManager");
 
         //////////////////// Initialize Loading and Command Queues ////////////////////
 
         if (not InitializeLoadingQueue())
         {
-            rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager");
             return false;
         }
 
@@ -80,7 +71,7 @@ namespace PeachCore {
         {
             if (not InitializeVulkan())
             {
-                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+                rendering_logger->Fatal("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager");
                 exit(FAILED_TO_INITIALIZE_VULKAN);
             }
         }
@@ -89,17 +80,102 @@ namespace PeachCore {
             {
                 if (not InitializeOpenGL())
                 {
-                    rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+                    rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager");
                     exit(FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
                 }
             }
         #endif
         else
         {
-            rendering_logger->PEACH_LOG("Invalid rendering backend was selected, RenderingManager was not able to initialize properly", "RenderingManager", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Invalid rendering backend was selected, RenderingManager was not able to initialize properly", "RenderingManager");
         }
 
         pm_IsInitialized = true;
+
+        return true;
+    }
+
+    void
+        RenderingManager::RenderLoop()
+    {
+        rendering_logger->UpdateThreadOwner();
+        InputManager::get_single().UpdateThreadOwner();
+
+        while (not pm_IsShutDown)
+        {
+            ProcessCommands();
+            //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
+            this_thread::sleep_for(chrono::milliseconds(PEACH_ENGINE_TESTING_FRAME_RATE));
+            PresentFrame(); // swap buffers etc.
+            PollUserInputEvents();
+        }
+    }
+
+    void
+        RenderingManager::ProcessCommands()
+    {
+        RenderCommand f_Command;
+        while (pm_RenderCommandQueue->try_dequeue(f_Command))
+        {
+            switch (f_Command.opcode)
+            {
+            case RENDER_CREATE_NODE_OP:   /*CreateNode(cmd.node_id, (ShapeDef*)cmd.operand);*/ break;
+            case RENDER_UPDATE_POSITION_OP: /*UpdatePos(cmd.node_id, UnpackVec2(cmd.operand));*/ break;
+            case RENDER_DONT_DRAW_OP: /*DrawNode(cmd.node_id);*/ break;
+            default:
+                PrintError("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!", Colours::BrightRed);
+            }
+        }
+    }
+
+    void
+        RenderingManager::ProcessLoadedResourcePackages()
+    {
+        //LoadedResourcePackage ResourcePackage;
+
+        //while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage)) 
+        //{
+        //    //visit(overloaded
+        //    //    {
+        //    //    [&](unique_ptr<TextureData> fp_RawByteData)
+        //    //    {
+        //    //        // Handle creation logic here
+        //    //    },
+        //    //    [](auto&&)
+        //    //    {
+        //    //        //THIS DOESN'T WORK AND IDK Y LAMBDA SMTH IDK FUCK IT ill come back to it later
+        //    //        // Default handler for any unhandled types
+        //    //        //rendering_logger->PEACH_LOG("Unhandled type in variant for ProcessLoadedResourcePackage", "RenderingManager");
+        //    //    }
+        //    //    }, ResourcePackage.get()->ResourceData);
+        //}
+    }
+
+    bool
+        RenderingManager::PresentFrame() //just assuming vulkan for now but this is where the backend magic happens
+    {
+        //////////////////// Submit Draw Calls ////////////////////
+
+        uint32_t f_StatusCode = pm_VulkanRenderer->BeginFrame();
+        if (f_StatusCode & ~VulkanRenderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
+        {
+            PrintError(format("BeginFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            return false;
+        }
+
+        f_StatusCode = pm_VulkanRenderer->DrawFrame();
+        if (f_StatusCode & ~VulkanRenderer::StatusCode::OK)
+        {
+            PrintError(format("DrawFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            return false;
+        }
+
+        f_StatusCode = pm_VulkanRenderer->EndFrame();
+        if (f_StatusCode & ~VulkanRenderer::StatusCode::OK)
+        {
+            PrintError(format("EndFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            return false;
+        }
 
         return true;
     }
@@ -116,7 +192,7 @@ namespace PeachCore {
     {
         if (*fp_SDLWindow)
         {
-            rendering_logger->PEACH_LOG("Tried passing a valid SDL_Window* handle for window creation, please cleanup original SDL window or dereference pointer before attempting to create a new SDL window", "RenderingManager", LogManager::LogLevel::Error);
+            rendering_logger->Error("Tried passing a valid SDL_Window* handle for window creation, please cleanup original SDL window or dereference pointer before attempting to create a new SDL window", "RenderingManager");
             return false;
         }
 
@@ -132,7 +208,7 @@ namespace PeachCore {
         }
         else
         {
-            rendering_logger->PEACH_LOG("Invalid Renderer Type was passed to CreateSDLWindow(), please pass a valid rendering backend type", "RenderingManager", LogManager::LogLevel::Error);
+            rendering_logger->Error("Invalid Renderer Type was passed to CreateSDLWindow(), please pass a valid rendering backend type", "RenderingManager");
             return false;
         }
 
@@ -146,7 +222,7 @@ namespace PeachCore {
 
         if (not *fp_SDLWindow)
         {
-            rendering_logger->PEACH_LOG("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager");
             return false;
         }
 
@@ -162,7 +238,7 @@ namespace PeachCore {
     {
         if (pm_LoadedResourceQueue)
         {
-            rendering_logger->PEACH_LOG("RenderingManager already retrieved the loaded resource queue from ResourceManager >O<", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->Warning("RenderingManager already retrieved the loaded resource queue from ResourceManager >O<", "RenderingManager");
             return false;
         }
 
@@ -170,11 +246,11 @@ namespace PeachCore {
 
         if (not pm_LoadedResourceQueue)
         {
-            rendering_logger->PEACH_LOG("RenderingManager failed to retrieve LoadingQueue from ResourceManager, nullptr ref was found >O<", "RenderingManager", LogManager::LogLevel::Error);
+            rendering_logger->Error("RenderingManager failed to retrieve LoadingQueue from ResourceManager, nullptr ref was found >O<", "RenderingManager");
             return false;
         }
 
-        rendering_logger->PEACH_LOG("RenderingManager successfully retrieved loaded resource queue from ResourceManager", "RenderingManager", LogManager::LogLevel::Info);
+        rendering_logger->Info("RenderingManager successfully retrieved loaded resource queue from ResourceManager", "RenderingManager");
 
         return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
@@ -182,34 +258,34 @@ namespace PeachCore {
     bool
         RenderingManager::InitializeDrawCommandQueue()
     {
-        if (pm_DrawCommandQueue)
+        if (pm_RenderCommandQueue)
         {
-            rendering_logger->PEACH_LOG("RenderingManager already initialized the draw command queue >O<", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->Warning("RenderingManager already initialized the draw command queue >O<", "RenderingManager");
             return false;
         }
 
-        pm_DrawCommandQueue = make_shared<CommandQueue>();
+        pm_RenderCommandQueue = make_shared<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>>();
 
-        rendering_logger->PEACH_LOG("RenderingManager successfully initialized the draw command queue", "RenderingManager", LogManager::LogLevel::Info);
+        rendering_logger->Info("RenderingManager successfully initialized the draw command queue", "RenderingManager");
 
         return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
-    [[nodiscard]] shared_ptr<CommandQueue>
+    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>>
         RenderingManager::GetDrawCommandQueue()
     {
         if (not pm_IsInitialized)
         {
-            rendering_logger->PEACH_LOG("Attempted to get a reference to RenderingManager's DrawCommandQueue before RenderingManager was initialized, please initialize RenderingManager first UwU", "RenderingManager", LogManager::LogLevel::Error);
+            rendering_logger->Error("Attempted to get a reference to RenderingManager's DrawCommandQueue before RenderingManager was initialized, please initialize RenderingManager first UwU", "RenderingManager");
             return nullptr;
         }
-        else if (pm_DrawCommandQueue.use_count() >= 2)
+        else if (pm_RenderCommandQueue.use_count() >= 2)
         {
-            rendering_logger->PEACH_LOG("RenderingManager has already issued a reference to the draw command queue, fuck off", "RenderingManager", LogManager::LogLevel::Warning);
+            rendering_logger->Warning("RenderingManager has already issued a reference to the draw command queue, fuck off", "RenderingManager");
             return nullptr;
         }
         
-        return pm_DrawCommandQueue;
+        return pm_RenderCommandQueue;
     }
 
     #ifndef __APPLE__
@@ -221,7 +297,7 @@ namespace PeachCore {
         {
             if (not fp_Window)
             {
-                rendering_logger->PEACH_LOG("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager", LogManager::LogLevel::Warning);
+                rendering_logger->Warning("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager");
                 return false;
             }
 
@@ -245,30 +321,30 @@ namespace PeachCore {
         {
             if (pm_IsInitialized)
             {
-                rendering_logger->PEACH_LOG("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager", LogManager::LogLevel::Warning);
+                rendering_logger->Warning("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager");
                 return false;
             }
 
             if (not CreateSDLWindow(&pm_MainWindow, RendererType::OpenGL, "Peach Window", 800, 600))
             {
-                rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+                rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager");
                 exit(FAILED_TO_CREATE_MAIN_WINDOW);
             }
 
-            rendering_logger->PEACH_LOG("main SDL window successfully created", "RenderingManager", LogManager::LogLevel::Debug);
+            rendering_logger->Debug("main SDL window successfully created", "RenderingManager");
 
             pm_OpenGLRenderer = make_unique<OpenGLRenderer>(pm_MainWindow, rendering_logger, true);
 
             if (glewInit() != GLEW_OK)
             {
-                rendering_logger->PEACH_LOG("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager", LogManager::LogLevel::Fatal);
+                rendering_logger->Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager");
                 SDL_DestroyWindow(pm_OpenGLRenderer->GetMainWindow());
                 return false;
             }
 
-            rendering_logger->PEACH_LOG("GLEW initialized properly", "RenderingManager", LogManager::LogLevel::Debug);
+            rendering_logger->Debug("GLEW initialized properly", "RenderingManager");
 
-            rendering_logger->PEACH_LOG("Peach Editor successfully initialized OpenGL", "RenderingManager", LogManager::LogLevel::Debug);
+            rendering_logger->Debug("Peach Editor successfully initialized OpenGL", "RenderingManager");
 
             return true;
         }
@@ -290,7 +366,7 @@ namespace PeachCore {
 
             if (not f_VulkanDylib) 
             {
-                rendering_logger->PEACH_LOG(format("Couldn't load libvulkan.1.dylib with Error: {}", dlerror()), "RenderingManager", LogManager::LogLevel::Fatal);
+                rendering_logger->PEACH_LOG(format("Couldn't load libvulkan.1.dylib with Error: {}", dlerror()), "RenderingManager");
                 return false;
             }
 
@@ -298,7 +374,7 @@ namespace PeachCore {
             
             if (not f_GetProcAddress)
             {
-                rendering_logger->PEACH_LOG(format("Couldn't find symbol: 'vkGetInstanceProcAddr' with Error: {}", dlerror()), "RenderingManager", LogManager::LogLevel::Fatal);
+                rendering_logger->PEACH_LOG(format("Couldn't find symbol: 'vkGetInstanceProcAddr' with Error: {}", dlerror()), "RenderingManager");
                 return false;
             }
             
@@ -308,7 +384,7 @@ namespace PeachCore {
 
             if (volkInitialize() != VK_SUCCESS)
             {
-                rendering_logger->PEACH_LOG("Volk failed to initialize! ending program execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+                rendering_logger->Fatal("Volk failed to initialize! ending program execution immediately", "RenderingManager");
                 return false;
             }
         
@@ -316,7 +392,7 @@ namespace PeachCore {
 
         if (not CreateSDLWindow(&pm_MainWindow, RendererType::Vulkan, "Peach Window", 800, 600))
         {
-            rendering_logger->PEACH_LOG("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager");
             exit(FAILED_TO_CREATE_MAIN_WINDOW); //idk if i wanna exit here but it doesn really matter, i might want the "stack trace" from the false chain created by intialize failing
         }   
 
@@ -330,112 +406,13 @@ namespace PeachCore {
         
         if (not pm_VulkanRenderer->Initialize(pm_MainWindow, f_BakedPipelineData, rendering_logger))
         {
-            rendering_logger->PEACH_LOG("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager", LogManager::LogLevel::Fatal);
+            rendering_logger->Fatal("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager");
             return false;
         }
 
-        rendering_logger->PEACH_LOG("Success! VulkanRenderer initialized properly, full rendering capabilities should be ready UwU", "RenderingManager", LogManager::LogLevel::Info);
+        rendering_logger->Info("Success! VulkanRenderer initialized properly, full rendering capabilities should be ready UwU", "RenderingManager");
 
         return true; // >w<
-    }
-
-    void 
-        RenderingManager::RenderFrame()
-    {
-        #ifdef PEACH_DEBUG
-            if (not pm_IsInitialized)
-            {
-                rendering_logger->PEACH_LOG("Please initialize RenderingManager before trying to render anything!", "RenderingManager", LogManager::LogLevel::Warning);
-                return;
-            }
-        #endif
-
-        //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
-        //ProcessCommands(); //process all updates
-
-        //////////////////// Submit Draw Calls ////////////////////
-
-        uint32_t f_StatusCode = pm_VulkanRenderer->BeginFrame();
-        if (f_StatusCode & ~VulkanRenderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
-        {
-            PrintError(format("Premature BeginFrame() exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
-            return;
-        }
-
-        f_StatusCode = pm_VulkanRenderer->DrawFrame();
-        if (f_StatusCode & ~VulkanRenderer::StatusCode::OK)
-        {
-            PrintError(format("Premature DrawFrame() exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
-            return;
-        }
-
-        f_StatusCode = pm_VulkanRenderer->EndFrame();
-        if (f_StatusCode & ~VulkanRenderer::StatusCode::OK)
-        {
-            PrintError(format("Premature EndFrame() exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
-            return;
-        }
-
-        #ifdef PEACH_RENDER_STRESS_TEST
-                if (fp_IsStressTest) //used to stop rendering loop after one cycle for testing
-                {
-                    pm_IsShutDown = false; //gotta reset it otherwise everytime we run the scene again it just closes immediately lmao
-                    break;
-                }
-        #endif
-    }
-
-    void
-        RenderingManager::ProcessDrawCommands()
-    {
-        DrawCommand f_DrawCommand;
-        while (pm_DrawCommandQueue->PopSendersQueue(f_DrawCommand))
-        {
-            for (auto& drawable_data : f_DrawCommand.DrawableData)
-            {
-                visit(overloaded
-                    {
-                    [&](const vector<CreateDrawableData>& fp_Data)
-                    {
-                        // Handle creation logic here
-                    },
-                    [&](const vector<UpdateActiveDrawableData>& fp_Data)
-                    {
-                        // Handle update logic here
-                        // This could involve updating position based on deltaPosition
-                        // Setting visibility, layer sorting, etc.
-                    },
-                    [&](const vector<DeleteDrawableData>& fp_Data)
-                    {
-                        // Handle deletion logic here
-                        // Ensure resources are properly released and objects are cleaned up
-                    }
-                    }, drawable_data);
-            }
-        }
-    }
-
-    void
-        RenderingManager::ProcessLoadedResourcePackages()
-    {
-        //LoadedResourcePackage ResourcePackage;
-
-        //while (pm_LoadedResourceQueue->PopLoadedResourceQueue(ResourcePackage)) 
-        //{
-        //    //visit(overloaded
-        //    //    {
-        //    //    [&](unique_ptr<TextureData> fp_RawByteData)
-        //    //    {
-        //    //        // Handle creation logic here
-        //    //    },
-        //    //    [](auto&&)
-        //    //    {
-        //    //        //THIS DOESN'T WORK AND IDK Y LAMBDA SMTH IDK FUCK IT ill come back to it later
-        //    //        // Default handler for any unhandled types
-        //    //        //rendering_logger->PEACH_LOG("Unhandled type in variant for ProcessLoadedResourcePackage", "RenderingManager", LogManager::LogLevel::Warning);
-        //    //    }
-        //    //    }, ResourcePackage.get()->ResourceData);
-        //}
     }
 
     void 
@@ -477,11 +454,5 @@ namespace PeachCore {
         RenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
     {
         pm_FrameRateLimit = fp_Limit;
-    }
-
-    [[nodiscard]] VulkanRenderer*
-        RenderingManager::GetVulkanRenderer()
-    {
-        return pm_VulkanRenderer.get();
     }
 }

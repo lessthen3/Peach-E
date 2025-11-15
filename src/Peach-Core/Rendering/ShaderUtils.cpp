@@ -18,7 +18,7 @@ namespace ShaderUtils {
         (
             const string& fp_ShaderFilePath,
             vector<uint32_t>& fp_Bytecode,
-            LogManager* logger
+            Logger* logger
         )
     {
         if (not logger) //check for nullptr ref passed to ReadBinaryIntoVector
@@ -30,13 +30,13 @@ namespace ShaderUtils {
         // Ensure directory exists
         if (not filesystem::exists(fp_ShaderFilePath))
         {
-            logger->LogAndPrint("Tried to pass invalid directory to LoadSPIRVFromFile()", "ShaderUtils", LogManager::LogLevel::Error);
+            logger->Error("Tried to pass invalid directory to LoadSPIRVFromFile()", "ShaderUtils");
             return false;
         }
 
         if (not fp_Bytecode.empty()) //check if the byte vector is empty before reading data into it OwO
         {
-            logger->LogAndPrint(format("Tried passing non-empty byte vector for reading to file name: '{}', nothing was done.", fp_ShaderFilePath), "ShaderUtils", LogManager::LogLevel::Error);
+            logger->Error(format("Tried passing non-empty byte vector for reading to file name: '{}', nothing was done.", fp_ShaderFilePath), "ShaderUtils");
             return false;
         }
 
@@ -45,7 +45,7 @@ namespace ShaderUtils {
 
         if (lastDotIndex == string::npos)
         {
-            logger->LogAndPrint("No file extension found for Peach-E Binary", "ShaderUtils", LogManager::LogLevel::Error);
+            logger->Error("No file extension found for Peach-E Binary", "ShaderUtils");
             return false;
         }
 
@@ -53,7 +53,7 @@ namespace ShaderUtils {
 
         if (f_FileExtension != ".spv") //file extension for peach-e binary encoding, get it? it's like a bin of peaches >w<
         {
-            logger->LogAndPrint("Attempted to read from a file that isn't a valid SPIRV Binary", "ShaderUtils", LogManager::LogLevel::Error);
+            logger->Error("Attempted to read from a file that isn't a valid SPIRV Binary", "ShaderUtils");
             return false;
         }
 
@@ -61,7 +61,7 @@ namespace ShaderUtils {
 
         if (not f_ShaderFileHandle.is_open())
         {
-            logger->LogAndPrint("Failed to open SPIR-V file: " + fp_ShaderFilePath, "ShaderUtils", LogManager::LogLevel::Error);
+            logger->Error("Failed to open SPIR-V file: " + fp_ShaderFilePath, "ShaderUtils");
             return false;
         }
 
@@ -71,7 +71,7 @@ namespace ShaderUtils {
         // Validate size is aligned to 4 bytes
         if (f_ShaderFileSize % sizeof(uint32_t) != 0)
         {
-            logger->LogAndPrint("SPIR-V file size is not aligned to 4 bytes", "ShaderUtils", LogManager::LogLevel::Error);
+            logger->Error("SPIR-V file size is not aligned to 4 bytes", "ShaderUtils");
             return false;
         }
 
@@ -90,7 +90,7 @@ namespace ShaderUtils {
             const string& fp_VertexShaderPath,
             const string& fp_FragShaderPath,
             BakedPipelineData& fp_CreateInfo,
-            LogManager* logger
+            Logger* logger
         )
     {
         if (not logger)

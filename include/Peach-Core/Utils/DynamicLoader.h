@@ -3,15 +3,17 @@
  *              Created by Ranyodh Mandur - 🍑 2024
  *
  *              Licensed under the MIT License (MIT).
- *         For more details, see the LICENSE file or visit:
+ *         For more details, see the LICENSE file or visit:         
  *               https://opensource.org/licenses/MIT
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
-#include "../Managers/LogManager.h"
+///PeachCore
+#include "Logger.h"
 
+///STL
 #include <memory>
 
 namespace PeachCore {
@@ -25,10 +27,10 @@ namespace PeachCore {
             int f_SizeNeeded = MultiByteToWideChar(CP_UTF8, 0, fp_Path, -1, NULL, 0);
             wstring f_WidePath(f_SizeNeeded, 0);
             MultiByteToWideChar(CP_UTF8, 0, fp_Path, -1, &f_WidePath[0], f_SizeNeeded);
-            return LoadLibraryW(f_WidePath.c_str()); // or LoadLibrary(f_WidePath.c_str()) — same since it's just a macro
+            return LoadLibraryW(f_WidePath.c_str()); 
         }
     #endif
-}
+}//namespace PeachCore
 
 #if defined(_WIN32) || defined(_WIN64)
     #define DYNLIB_HANDLE HINSTANCE //XXX: pretty much just a typedef -> void* but windows is a special boy >:(
@@ -38,7 +40,7 @@ namespace PeachCore {
 #else
     #include <dlfcn.h>
     #define DYNLIB_HANDLE void*
-    #define DYNLIB_LOAD(path) dlopen(path, RTLD_LAZY)
+    #define DYNLIB_LOAD(__path) dlopen(__path, RTLD_LAZY)
     #define DYNLIB_GETSYM dlsym
     #define DYNLIB_UNLOAD dlclose
 #endif
@@ -58,12 +60,12 @@ namespace PeachCore {
             LoadDynamicLibrary
             (
                 const string& fp_DylibPath,
-                LogManager* logger
+                Logger* logger
             )
         {
             if (not filesystem::exists(fp_DylibPath))
             {
-                logger->LogAndPrint(format("Library path does not exist: '{}'", fp_DylibPath), "DynamicLoader", LogManager::LogLevel::Error);
+                logger->Error(format("Library path does not exist: '{}'", fp_DylibPath), "DynamicLoader");
                 return nullptr;
             }
 
@@ -71,11 +73,11 @@ namespace PeachCore {
 
             if (not f_LibraryHandle)
             {
-                logger->LogAndPrint(format("Failed to load library: '{}',  Error: '{}'", fp_DylibPath, GetLastErrorAsString()), "DynamicLoader", LogManager::LogLevel::Error);
+                logger->Error(format("Failed to load library: '{}',  Error: '{}'", fp_DylibPath, GetLastErrorAsString()), "DynamicLoader");
                 return nullptr;
             }
 
-            logger->LogAndPrint(("Library loaded successfully: '{}'", fp_DylibPath), "DynamicLoader", LogManager::LogLevel::Info);
+            logger->Info(("Library loaded successfully: '{}'", fp_DylibPath), "DynamicLoader");
 
             return f_LibraryHandle;
         }
@@ -84,22 +86,22 @@ namespace PeachCore {
             UnloadLibrary
             (
                 DYNLIB_HANDLE fp_LibraryHandle,
-                LogManager* logger
+                Logger* logger
             )
         {
             if (not fp_LibraryHandle)
             {
-                logger->LogAndPrint("Tried passing a nullptr reference to a DYNLIB_HANDLE inside GetSymbol()", "DynamicLoader", LogManager::LogLevel::Error);
+                logger->Error("Tried passing a nullptr reference to a DYNLIB_HANDLE inside GetSymbol()", "DynamicLoader");
                 return false;
             }
 
             if (not DYNLIB_UNLOAD(fp_LibraryHandle))
             {
-                logger->LogAndPrint(format("Failed to unload library. Error: '{}'", GetLastErrorAsString()), "DynamicLoader", LogManager::LogLevel::Error);
+                logger->Error(format("Failed to unload library. Error: '{}'", GetLastErrorAsString()), "DynamicLoader");
                 return false;
             }
             
-            logger->LogAndPrint("Library unloaded successfully", "DynamicLoader", LogManager::LogLevel::Info);
+            logger->Info("Library unloaded successfully", "DynamicLoader");
 
             return true; //Unloaded Library Successfully! >W<
         }
@@ -110,14 +112,14 @@ namespace PeachCore {
             (
                 const string& fp_SymbolName, 
                 DYNLIB_HANDLE fp_LibraryHandle,
-                LogManager* logger
+                Logger* logger
             )
         {
             void* symbol = nullptr;
 
             if (not fp_LibraryHandle)
             {
-                logger->LogAndPrint("Tried passing a nullptr reference to a DYNLIB_HANDLE inside GetSymbol()", "DynamicLoader", LogManager::LogLevel::Error);
+                logger->Error("Tried passing a nullptr reference to a DYNLIB_HANDLE inside GetSymbol()", "DynamicLoader");
                 return nullptr;
             }
 
@@ -125,11 +127,11 @@ namespace PeachCore {
 
             if (not symbol)
             {
-                logger->LogAndPrint(format("Failed to locate symbol: '{}', Error: '{}'", fp_SymbolName, GetLastErrorAsString()), "DynamicLoader", LogManager::LogLevel::Error);
+                logger->Error(format("Failed to locate symbol: '{}', Error: '{}'", fp_SymbolName, GetLastErrorAsString()), "DynamicLoader");
                 return nullptr; //its already nullptr but its nice to be explicit here
             }
             
-            logger->LogAndPrint(format("Symbol located: '{}'", fp_SymbolName), "DynamicLoader", LogManager::LogLevel::Debug);
+            logger->Debug(format("Symbol located: '{}'", fp_SymbolName), "DynamicLoader");
 
             return symbol;
         }

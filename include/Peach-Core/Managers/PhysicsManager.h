@@ -58,40 +58,51 @@ namespace PeachCore {
         Layer_25 | Layer_26 | Layer_27 | Layer_28 | Layer_29 | Layer_30 | Layer_31 | Layer_32
     };
 
+    //////////////////////////////////////////////
+    // ResourceManager word size
+    //////////////////////////////////////////////
+
+    struct PhysicsCommand
+    {
+        uint32_t node_id;       // 4 bytes
+        uint16_t opcode;        // 2 bytes
+        uint16_t reserved;      // 2 bytes (alignment or flags)
+        uint64_t operand;       // 8 bytes
+    };
+
     ////////////////////////////////////////////////
-    // PhysicsManager2D Class
+    // PhysicsManager Class
     ////////////////////////////////////////////////
-    class PhysicsManager2D 
+    class PhysicsManager 
     {
 
     ////////////////////////////////////////////////
-    // Destructor
+    // Private Constructor & Destructor
     ////////////////////////////////////////////////
     private:
-        ~PhysicsManager2D()
-        {
-            //in box2D 3.0 destroying the world automatically cleans up all resources linked to the world including: bodies, joints and shapes
-            b2DestroyWorld(pm_World);
-            pm_World = b2_nullWorldId; //what is C
-        }
+        ~PhysicsManager() = default;
+        PhysicsManager() = default;
+        //{
+        //    //in box2D 3.0 destroying the world automatically cleans up all resources linked to the world including: bodies, joints and shapes
+        //    b2DestroyWorld(pm_World);
+        //    pm_World = b2_nullWorldId; //what is C
+        //}
+
+        PhysicsManager(const PhysicsManager&) = delete;
+        PhysicsManager& operator=(const PhysicsManager&) = delete;
+
+        PhysicsManager(PhysicsManager&&) = delete;
+        PhysicsManager& operator=(PhysicsManager&&) = delete;
 
     ////////////////////////////////////////////////
     // Singleton Instance
     ////////////////////////////////////////////////
     public:
-        static PhysicsManager2D& get_single()
+        static PhysicsManager& get_single()
         {
-            static PhysicsManager2D physics_world;
-            return physics_world;
+            static PhysicsManager physics_manager;
+            return physics_manager;
         }
-
-    ////////////////////////////////////////////////
-    // Private Constructor
-    ////////////////////////////////////////////////
-    private:
-        PhysicsManager2D() = default;
-        PhysicsManager2D(const PhysicsManager2D&) = delete;
-        PhysicsManager2D& operator=(const PhysicsManager2D&) = delete;
 
     ////////////////////////////////////////////////
     // Private Members
@@ -108,7 +119,7 @@ namespace PeachCore {
 
         const float PHYSICS_ORIGIN_MAXIMUM_PLAYER_DISTANCE = ConvertMetersToPixels(2000); //should be under 2km, converts 2km to pixels
 
-        unique_ptr<LogManager> physics_logger;
+        unique_ptr<Logger> physics_logger;
 
     ////////////////////////////////////////////////
     // Public Members
@@ -123,18 +134,17 @@ namespace PeachCore {
             Initialize
             (
                 const string& fp_LogOutputDirectory,
-                shared_ptr<Console> fp_Console,
                 const float fp_GravityX = 0.0f, 
                 const float fp_GravityY = -9.8f
             )
         {
-            physics_logger = make_unique<LogManager>();
-            if (not physics_logger->Initialize(ThreadName::PhysicsThread, fp_LogOutputDirectory, "PhysicsManager2D", fp_Console, LogManager::LogLevel::All))
+            physics_logger = make_unique<Logger>();
+            if (not physics_logger->Initialize(ThreadName::PhysicsThread, fp_LogOutputDirectory, "PhysicsManager", Logger::LogLevel::ALL_LOGS))
             {
-                PrintError("PhysicsManager2D failed to initialize the physics_thread logger >w<");
+                PrintError("PhysicsManager failed to initialize the physics_thread logger >w<");
                 return false;
             }
-            physics_logger->LogAndPrint("PhysicsLogger successfully initialized", "PhysicsManager2D", PeachCore::LogManager::LogLevel::Debug);
+            physics_logger->Debug("PhysicsLogger successfully initialized", "PhysicsManager");
 
             b2Vec2 f_Gravity = { fp_GravityX, fp_GravityY };
             b2WorldDef f_WorldDefinition = b2DefaultWorldDef();

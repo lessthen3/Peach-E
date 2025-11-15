@@ -10,7 +10,8 @@
 ********************************************************************/
 #pragma once
 
-#include "Managers/LogManager.h"
+#include <Utils/Logger.h>
+
 #include "../Editor/PeachProject.h"
 
 namespace PeachEditor {

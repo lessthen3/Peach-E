@@ -14,10 +14,9 @@
 //////////////////////////////////////////////
 
 #include "Managers/AudioManager.h"
-#include "Managers/LogManager.h"
 #include "Managers/RenderingManager.h"
 #include "Managers/ResourceManager.h"
-#include "Managers/PhysicsManager2D.h"
+#include "Managers/PhysicsManager.h"
 #include "Managers/NetworkManager.h"
 #include "Managers/InputManager.h"
 
@@ -71,6 +70,7 @@
 // Utils
 //////////////////////////////////////////////
 
+#include "Utils/Logger.h"
 #include "Utils/PeachConsole.h"
 #include "Utils/EventBoard.h"
 #include "Utils/Serializer.h"
