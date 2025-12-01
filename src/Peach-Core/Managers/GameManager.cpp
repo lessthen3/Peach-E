@@ -56,16 +56,16 @@ namespace PeachCore
         m_UserLogger->Initialize(ThreadName::MainThread, fp_RootPath + "/logs", "UserLogger", Logger::LogLevel::ALL_LOGS);
         m_UserLogger->Debug("UserLogger successfully initialized", "PeachEngineManager");
 
-        //////////////////// Thread Methods ////////////////////
+        //////////////////// Initialize Subsystems ////////////////////
 
-        if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop
-        {
-            main_logger->Fatal(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "GameManager");
-            return false;
-        }
-        else if (not InitializePhysFS(fp_RootPath.c_str()))
+        if (not InitializePhysFS(fp_RootPath.c_str()))
         {
             main_logger->Fatal("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "GameManager");
+            return false;
+        }
+        else if (sodium_init() < 0)
+        {
+            main_logger->Fatal("Sodium library couldn't be initialized, it is not safe to use.", "GameManager");
             return false;
         }
         else if (not InitializeThreads(fp_RootPath, ThreadName::RenderThread | ThreadName::ResourceThread, fp_RenderingBackend))
@@ -120,14 +120,17 @@ namespace PeachCore
         //CLEAN-UP AND ANY CLOSING THINGS THAT SHOULD BE LOGGED TO CHECK THE STATE OF THE ENGINE AS IT EXITS
         
         //idk how issued commands will work here when the threads are joined uwu
-        //pm_ResourceThread.join();
-        //pm_RenderThread.join();
+
         //pm_AudioThread.join();
         //pm_NetworkThread.join();
         //pm_PhysicsThread.join();
 
         //ShutdownPlugins();
-        SDL_Quit(); //just makes more sense to have the ShutdownPeachEngine method to do this
+        //RenderingManager::get_single().ForceQuit();
+        ResourceManager::get_single().m_IsActive = false;
+
+        pm_ResourceThread.join();
+        //pm_RenderThread.join();
 
         return true;
     }
@@ -234,33 +237,20 @@ namespace PeachCore
     {
         const string f_LogDir = fp_RootPath + "/logs";
 
-        if (not InputManager::get_single().Initialize(f_LogDir, Logger::LogLevel::ALL_LOGS))
-        {
-
-            return false;
-        }
-
         //IMPORTANT: resource thread needs to be initialized first so queues get created properly
         //Lazy initialization is used for everything since it isnt guaranteed that all threads will be active, only if a node is needed for a corresponding thread then the thread is started
         //otherwise we just leave it be
 
         if (fp_RequiredThreads & ThreadName::ResourceThread)
         {
-            if (not ResourceManager::get_single().Initialize(f_LogDir, fp_RootPath))
-            {
-
-                return false;
-            }
-            pm_ResourceThread = jthread(&ResourceManager::ResourceLoop, &ResourceManager::get_single());
+            pm_ResourceThread = jthread(&ResourceManager::ResourceLoop, &ResourceManager::get_single(), f_LogDir, fp_RootPath);
         }
+
+        ResourceManager::get_single().WaitUntilInitialized();
+
         if (fp_RequiredThreads & ThreadName::RenderThread)
         {
-            if (not RenderingManager::get_single().Initialize(fp_RenderingBackend, f_LogDir))
-            {
-
-                return false;
-            }
-            pm_RenderThread = jthread(&RenderingManager::RenderLoop, &RenderingManager::get_single());
+            pm_RenderThread = jthread(&RenderingManager::RenderLoop, &RenderingManager::get_single(), fp_RenderingBackend, f_LogDir);
         }
 
         //if (fp_RequiredThreads & ThreadName::AudioThread)
@@ -331,7 +321,7 @@ namespace PeachCore
         auto f_CurrentTime = chrono::high_resolution_clock::now();
 
         ///TODO: log whenever frametime is running late in debug
-        while (m_IsRunning)
+        while (m_IsRunning.load(std::memory_order_acquire))
         {
             auto f_NewTime = chrono::high_resolution_clock::now();
             float f_FrameTime = chrono::duration<float>(f_NewTime - f_CurrentTime).count();
@@ -349,34 +339,34 @@ namespace PeachCore
 
             ///WARNING: IF THE ENGINE FALLS FAR ENOUGH BEHIND IT WILL STEP ALL PHYSICS FRAMES FIRST THEN STEP UPDATES WHICH IS UH NOT IDEAL
             // Physics and fixed interval updates
-            while (f_PhysicsAccumulator >= f_PhysicsDeltaTime)
-            {
-                PollUserInputEvents();  // Handle user input
-                ConstantUpdate(f_PhysicsDeltaTime);
-                StepPhysicsWorldState(f_PhysicsDeltaTime);
-                f_PhysicsAccumulator -= f_PhysicsDeltaTime;
-            }
+            //while (f_PhysicsAccumulator >= f_PhysicsDeltaTime)
+            //{
+            //    NotifyPhysicsThread(f_PhysicsDeltaTime);
+            //    f_PhysicsAccumulator -= f_PhysicsDeltaTime;
+            //}
 
             // User-defined game logic updates
-            while (f_GeneralUpdateAccumulator >= f_UserDefinedDeltaTime)
-            {
-                UpdatePlugins(f_UserDefinedDeltaTime); //run loaded plugins alongside player scripts uwu
-                Update(f_UserDefinedDeltaTime);
-                f_GeneralUpdateAccumulator -= f_UserDefinedDeltaTime;
-            }
+            //while (f_GeneralUpdateAccumulator >= f_UserDefinedDeltaTime)
+            //{
+            //    UpdatePlugins(f_UserDefinedDeltaTime); //run loaded plugins alongside player scripts uwu
+            //    Update(f_UserDefinedDeltaTime);
+            //    f_GeneralUpdateAccumulator -= f_UserDefinedDeltaTime;
+            //}
 
             if (f_RenderAccumulator >= f_RenderDeltaTime)
             {
-                RenderFrame();
+                if(RenderingManager::get_single().IsActive())
+                {
+                    RequestRender(); //tells the render thread to do smth w a flag
+                }
+                else
+                {
+                    break;
+                }
+
                 f_RenderAccumulator -= f_RenderDeltaTime;
             }
         }
-    }
-
-    void 
-        GameManager::PollUserInputEvents() //WANRING THIS DOESNT END PROGRAM EXECUTION ATM
-    {
-
     }
 
     //////////////////////////////////////////////
@@ -444,39 +434,30 @@ namespace PeachCore
     }
 
     //////////////////////////////////////////////
-    // Thread Stuff
+    // Core Runner Functions
     //////////////////////////////////////////////
 
     void
-        GameManager::AudioThread()
+        GameManager::RequestRender()
     {
-        while (true)
-        {
-            // Play audio
-            cout << "Playing audio...\n";
-            this_thread::sleep_for(chrono::seconds(2)); // Simulate work
-        }
+        RenderingManager::get_single().pm_ShouldRender = true;
     }
 
     void
-        GameManager::NetworkThread()
+        GameManager::RequestPhysicsWorldStep()
     {
-        while (true)
-        {
-            // Handle network communication
-            cout << "Handling network...\n";
-            this_thread::sleep_for(chrono::seconds(2)); // Simulate work
-        }
+        cout << "Updating Physics frame...\n";
     }
 
     void
-        GameManager::PhysicsThread() //processes all physics, changing structure of engine because main thread should execute scripts instead of physics calculations
+        GameManager::CallUpdate(double fp_MilisecondsSinceLastCall)
     {
-        while (true)
-        {
-            // Handle network communication
-            cout << "Handling network...\n";
-            this_thread::sleep_for(chrono::seconds(2)); // Simulate work
-        }
+        //process shit by calling the python/lua/dotnet runtime on the Update() functions defined inside the scripts
+    }
+
+    void
+        GameManager::CallConstantUpdate(double fp_FixedDeltaTime)
+    {
+        //process shit by calling the python/lua/dotnet runtime on the Update()/ConstantUpdate() functions defined inside the scripts
     }
 }

@@ -93,15 +93,15 @@ namespace PeachCore {
         Scene pm_CurrentScene;
         map<string, Scene> DictionaryOfAllScenesInCurrentProject;
 
+        atomic<bool> m_IsRunning = true;
+
     //////////////////////////////////////////////
     // Public Members
     //////////////////////////////////////////////
     public:
-        atomic<bool> m_IsRunning = true;
-
         const float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
         const float USER_DEFINED_UPDATE_FPS = 60.0f;
-        float        USER_DEFINED_RENDER_FPS = 120.0f; //Needs to be adjustable in-game so no const >w<
+        float        USER_DEFINED_RENDER_FPS = 10.0f; //Needs to be adjustable in-game so no const >w<
 
         shared_ptr<Logger> m_UserLogger;
 
@@ -148,16 +148,6 @@ namespace PeachCore {
 
         //////////////////// Thread Methods ////////////////////
 
-        void
-            AudioThread();
-
-
-
-        void
-            NetworkThread();
-
-        void
-            PhysicsThread();
 
         //////////////////// Engine Initialization Methods ////////////////////
 
@@ -190,37 +180,17 @@ namespace PeachCore {
         // Game Loop Methods
         //////////////////////////////////////////////
 
-        void RenderFrame() 
-        {
-            cout << "Rendering frame...\n";
-            this_thread::sleep_for(chrono::milliseconds(PEACH_ENGINE_TESTING_FRAME_RATE)); // Simulate work
-        }
+        void
+            RequestRender();
 
-        void StepPhysicsWorldState(float fp_FixedDeltaTime)
-        {
+        void
+            RequestPhysicsWorldStep();
 
-        }
+        void
+            CallUpdate(double fp_MilisecondsSinceLastCall);
 
-        void ConstantUpdate(float fp_FixedDeltaTime) 
-        {
-            cout << "Updating Physics frame...\n";
-            this_thread::sleep_for(chrono::milliseconds(PEACH_ENGINE_TESTING_FRAME_RATE)); // Simulate work
-        }
-
-        void Update(float fp_FixedDeltaTime) 
-        {
-            cout << "Updating frame...\n";
-            this_thread::sleep_for(chrono::milliseconds(PEACH_ENGINE_TESTING_FRAME_RATE)); // Simulate work
-        }
-        vector<SDL_WindowID> pm_CloseWindowRequests;
-
-        void 
-            PollUserInputEvents();
-
-        void IssueLoadingCommands(vector<LoadCommand> fp_ListOfLoadCommands)
-        {
-
-        }
+        void
+            CallConstantUpdate(double fp_FixedDeltaTime);
 
         //////////////////// Plugin Stuff ////////////////////
 

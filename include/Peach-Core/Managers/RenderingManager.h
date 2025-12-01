@@ -141,33 +141,47 @@ namespace PeachCore {
             unique_ptr<OpenGLRenderer> pm_OpenGLRenderer = nullptr;
         #endif
 
-        unsigned int pm_FrameRateLimit = 60;
-        unsigned long int pm_CurrentFrame = 0;
+        uint64_t pm_FrameRateLimit = 60;
+        uint64_t pm_CurrentFrame = 0;
 
         bool pm_IsVSyncEnabled = false;
 
         // DrawableObject.ObjectID : DrawableObject dict
         map<string, DrawableObject2D> pm_ListOfAllDrawables2D;
 
+        //////////////////// Command/Resource Queue ////////////////////
+
         shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_RenderCommandQueue = nullptr;
         shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_LoadedResourceQueue = nullptr;
 
-        SDL_Window* pm_MainWindow = nullptr;
+        //////////////////// Window Stuff ////////////////////
 
+        SDL_Window* pm_MainWindow = nullptr;
         unordered_map<SDL_WindowID, SDL_Window*> pm_CurrentlyActiveWindows;
+        vector<SDL_WindowID> pm_CloseWindowRequests;
+
+        //////////////////// Logger ////////////////////
 
         shared_ptr<Logger> rendering_logger = nullptr;
 
     public: 
-        atomic<bool> pm_IsShutDown = false; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
+        atomic<bool> pm_IsRunning = true; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
         atomic<bool> pm_IsInitialized = false;
+
+        condition_variable m_RenderCV;
+
+        atomic<bool>  pm_ShouldRender{ false };
 
     //////////////////////////////////////////////
     // Public Methods
     //////////////////////////////////////////////
     public:
         void
-            RenderLoop();
+            RenderLoop
+            (
+                const RendererType fp_DesiredRenderer,
+                const string& fp_LogOutputDirectory
+            );
 
         bool 
             Initialize
@@ -185,7 +199,7 @@ namespace PeachCore {
         [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>>
             GetDrawCommandQueue();
 
-        void 
+        [[nodiscard]] bool
             ProcessCommands();
 
         bool
@@ -227,7 +241,12 @@ namespace PeachCore {
         void 
             GetCurrentViewPort();
 
-        vector<SDL_WindowID> pm_CloseWindowRequests;
+        [[nodiscard]] bool
+            IsActive()
+            const noexcept
+        {
+            return pm_IsRunning.load(std::memory_order_acquire);
+        }
 
         void
             PollUserInputEvents()
@@ -240,6 +259,12 @@ namespace PeachCore {
             {
                 for (const auto& lv_Window : pm_CloseWindowRequests)
                 {
+                    if (SDL_GetWindowID(pm_MainWindow) == lv_Window)
+                    {
+                        pm_IsRunning.store(false);
+                        //pm_VulkanRenderer->CleanUp();
+                    }
+
                     SDL_DestroyWindow(SDL_GetWindowFromID(lv_Window)); //WARNING DO NOT CLOSE WINDOW HERE SEND A REQUEST TO THE RENDERING MANAGER FOR THAT
                 }
             }
@@ -259,7 +284,7 @@ namespace PeachCore {
         void 
             ForceQuit()
         {
-            pm_IsShutDown = true;
+            pm_IsRunning = false;
         }
 
         SDL_Window*
@@ -276,6 +301,11 @@ namespace PeachCore {
             These LERP functions are used for interpolating sprite positions between physics update frames if the rendering fps is > 60 since physics
             will always update at a constant update interval of 60 times a second, equally spaced apart. This way you'll get "smoother" graphics if u wanna
             crank up the fps uwu
+
+
+
+            The idea is that the most recent position will be used, and if the last used position idfk idk if thisll work since i cant predict the next frame, and if i use the current frame data and last frames, then the visuals will be outta sync
+            with the current real position which is no good for gameplay, and tryna do predictions like that could be a bad route if the render time oversteps its processing tiime.
         */
         inline const float 
             Lerp(const float fp_Start, const float fp_End, const float fp_Rate)

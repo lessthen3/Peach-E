@@ -86,6 +86,7 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
 def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
 
     f_GeneratorMap = {
+        "vs2026": "Visual Studio 18 2026",
         "vs2022": "Visual Studio 17 2022",
         "vs2019": "Visual Studio 16 2019",
         "vs2017": "Visual Studio 15 2017",
@@ -114,7 +115,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
     
     ############# Determine if Generator is Single Config #############
     
-    f_IsMultiConfig = fp_Generator in ["vs2022", "vs2019", "vs2017", "vs2015", "xcode", "ninja-mc"]
+    f_IsMultiConfig = fp_Generator in ["vs2026", "vs2022", "vs2019", "vs2017", "vs2015", "xcode", "ninja-mc"]
 
     f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator], '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
 
@@ -287,7 +288,7 @@ def main() -> bool:
         nargs=1,
         metavar="[generator]",
         help=CreateColouredText('Used to set the project file generator, options are as follows:', 'bright magenta') + "\n" + \
-                "\t" + CreateColouredText('-G vs2015 --> vs2022 ', 'blue') + CreateColouredText('Generates solution for Visual Studio 2015 - 2022', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G vs2015 --> vs2026 ', 'blue') + CreateColouredText('Generates solution for Visual Studio 2015 - 2022', 'cyan') + "\n" + \
                 
                 "\t" + CreateColouredText('-G xcode ', 'blue') + CreateColouredText('Generates project files for Xcode', 'cyan') + "\n" + \
                 

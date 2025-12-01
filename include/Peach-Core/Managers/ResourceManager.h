@@ -10,6 +10,9 @@
 ********************************************************************/
 #pragma once
 
+///STL
+#include <mutex>
+
 ///PeachCore
 #include "../Utils/Plugin.h"
 #include "../Utils/ShaderUtils.h"
@@ -23,6 +26,8 @@
 #include <stb/stb_image.h>
 #include <miniaudio/miniaudio.h>
 #include <moody_camel/readerwriterqueue.h>
+
+#include <sodium.h>
 
 typedef Plugin* (*CreatePluginFunc)();
 typedef void (*DestroyPluginFunc)(Plugin*);
@@ -62,9 +67,9 @@ namespace PeachCore {
 
     struct ResourceTransfer 
     {
-        uint64_t NodeID = 0;
+        uint64_t NodeID = 0; //destination for resource, eg. a prefab node is created, an mp3 and a png needs to be loaded to display the sprite and play its walking sound
         //ResourceType type; // enum: Texture, Audio, Mesh, etc.
-        //ResourceHandle handle;
+        void* RawData;
     };
 
 
@@ -138,12 +143,18 @@ namespace PeachCore {
 
         string pm_RootDirectory;
 
+        mutex pm_InitializationMutex;
+
+        condition_variable pm_InitializationCompleteCondition;
+
+        bool pm_IsInitialized = false;
+
+
     //////////////////////////////////////////////
     // Public Members
     //////////////////////////////////////////////
     public:
-        atomic<bool> m_IsInitialized = false;
-        atomic<bool> m_IsActive = false;
+        atomic<bool> m_IsActive = true;
 
     //////////////////////////////////////////////
     // Public Methods
@@ -182,10 +193,17 @@ namespace PeachCore {
             ;
 
         bool
-            ResourceLoop();
+            ResourceLoop
+            (
+                const string& fp_LogOutputDirectory,
+                const string& fp_RootPhysfsDirectory
+            );
 
         void
             ProcessCommands();
+
+        void
+            WaitUntilInitialized();
 
         [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
             GetAudioResourceLoadingQueue();

@@ -286,7 +286,7 @@ namespace PeachCore {
             f_UckCPlusPlus << this_thread::get_id();
             string f_CallerThreadID = f_UckCPlusPlus.str();
 
-            PrintError(format("Logger name: '{}' from thread number : {}, [Caller Thread ID]: {}", fp_DesiredLoggerName, static_cast<uint8_t>(fp_ThreadName), f_CallerThreadID));
+            //PrintError(format("Logger name: '{}' from thread number : {}, [Caller Thread ID]: {}", fp_DesiredLoggerName, static_cast<uint8_t>(fp_ThreadName), f_CallerThreadID));
 #endif
             if (pm_HasBeenInitialized) //stops accidental reinitialization of logmanager
             {

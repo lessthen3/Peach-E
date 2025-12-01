@@ -39,7 +39,7 @@ namespace PeachCore {
 
         resource_logger->Info("ResourceManager successfully initialized the all queues", "ResourceManager");
 
-        m_IsInitialized = true;
+        pm_IsInitialized = true;
 
         return true;
     }
@@ -47,9 +47,13 @@ namespace PeachCore {
     void
         ResourceManager::ProcessCommands()
     {
+        bool f_ContainsCommands = false;
+
         LoadCommand f_Command;
         while (pm_LoadCommandQueue->try_dequeue(f_Command))
         {
+            f_ContainsCommands = true;
+
             switch (f_Command.opcode)
             {
             case 1:
@@ -63,7 +67,7 @@ namespace PeachCore {
     [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>>
         ResourceManager::GetLoadCommandQueue()
     {
-        if (not m_IsInitialized)
+        if (not pm_IsInitialized)
         {
             resource_logger->Error("Attempted to get a reference to ResourceManager's LoadCommandQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
             return nullptr;
@@ -82,7 +86,7 @@ namespace PeachCore {
     [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
         ResourceManager::GetAudioResourceLoadingQueue() //This method should be one of the first methods called on startup
     {
-        if (not m_IsInitialized)
+        if (not pm_IsInitialized)
         {
             resource_logger->Error("Attempted to get a reference to ResourceManager's AudioResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
             return nullptr;
@@ -99,7 +103,7 @@ namespace PeachCore {
     [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
         ResourceManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
     {
-        if (not m_IsInitialized)
+        if (not pm_IsInitialized)
         {
             resource_logger->Error("Attempted to get a reference to ResourceManager's DrawableResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
             return nullptr;
@@ -530,17 +534,42 @@ namespace PeachCore {
     }
 
     bool
-        ResourceManager::ResourceLoop()
+        ResourceManager::ResourceLoop
+        (
+            const string& fp_LogOutputDirectory,
+            const string& fp_RootPhysfsDirectory
+        )
     {
-        resource_logger->UpdateThreadOwner();
+        if (not Initialize(fp_LogOutputDirectory, fp_RootPhysfsDirectory))
+        {
+
+            return false;
+        }
+
+        pm_InitializationCompleteCondition.notify_one(); //wake any threads waiting on initialization to complete
+
         m_IsActive = true;
 
-        while (m_IsActive)
-        {
+        while (m_IsActive.load(std::memory_order_acquire))
+        {   
             ProcessCommands();
-            this_thread::sleep_for(chrono::milliseconds(PEACH_ENGINE_TESTING_FRAME_RATE));
         }
 
         return true;
+    }
+
+    void
+        ResourceManager::WaitUntilInitialized()
+    {
+        unique_lock<mutex> lock(pm_InitializationMutex);
+
+        pm_InitializationCompleteCondition.wait
+        (
+            lock,
+            [this]()
+            {
+                return pm_IsInitialized;
+            }
+        );
     }
 }

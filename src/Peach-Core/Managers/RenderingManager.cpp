@@ -31,15 +31,18 @@ namespace PeachCore {
     void 
         RenderingManager::Shutdown()
     {
-        #ifndef __APPLE__
-            if (pm_OpenGLRenderer)
-            {
-                //SDL_DestroyWindow(pm_MainWindow);
+#ifndef __APPLE__
+        if (pm_OpenGLRenderer)
+        {
+            //SDL_DestroyWindow(pm_MainWindow);
 
-                ////delete pm_MainWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
-                //pm_MainWindow = nullptr;
-            }
-        #endif
+            ////delete pm_MainWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
+            //pm_MainWindow = nullptr;
+        }
+#endif
+
+
+        SDL_Quit(); //Render thread controls everything SDL related so if the render loop is exiting SDL should quit since no other thread touches or relies on SDL related functionality
     }
 
     bool 
@@ -55,9 +58,22 @@ namespace PeachCore {
         rendering_logger->Initialize(ThreadName::RenderThread, fp_LogOutputDirectory, "RenderingThread", Logger::LogLevel::ALL_LOGS);
         rendering_logger->Debug("RenderingLogger successfully initialized", "RenderingManager");
 
+        //////////////////// Intialize InputManager ////////////////////
+
+        if (not InputManager::get_single().Initialize(fp_LogOutputDirectory, Logger::LogLevel::ALL_LOGS))
+        {
+
+            return false;
+        }
+
         //////////////////// Initialize Loading and Command Queues ////////////////////
 
-        if (not InitializeLoadingQueue())
+        if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop
+        {
+            rendering_logger->Fatal(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "GameManager");
+            return false;
+        }
+        else if (not InitializeLoadingQueue())
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager");
             return false;
@@ -96,27 +112,43 @@ namespace PeachCore {
     }
 
     void
-        RenderingManager::RenderLoop()
+        RenderingManager::RenderLoop
+        (
+            const RendererType fp_DesiredRenderer,
+            const string& fp_LogOutputDirectory
+        )
     {
-        rendering_logger->UpdateThreadOwner();
-        InputManager::get_single().UpdateThreadOwner();
+        Initialize(fp_DesiredRenderer, fp_LogOutputDirectory);
 
-        while (not pm_IsShutDown)
+        while (pm_IsRunning.load(std::memory_order_acquire))
         {
-            ProcessCommands();
-            //ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
-            this_thread::sleep_for(chrono::milliseconds(PEACH_ENGINE_TESTING_FRAME_RATE));
-            PresentFrame(); // swap buffers etc.
-            PollUserInputEvents();
+            if (pm_ShouldRender.exchange(false, std::memory_order_acq_rel)) //XXX: only present frame
+            {
+                ProcessCommands();
+                ProcessLoadedResourcePackages(); //move all loaded objects into memory here if necessary
+                PresentFrame(); // swap buffers etc.
+                PollUserInputEvents();
+            }
+            else
+            {
+                // Let other threads breathe a bit
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
         }
+
+        Shutdown();
     }
 
-    void
+    [[nodiscard]] bool
         RenderingManager::ProcessCommands()
     {
+        bool f_ContainsCommands = false;
+
         RenderCommand f_Command;
         while (pm_RenderCommandQueue->try_dequeue(f_Command))
         {
+            f_ContainsCommands = true;
+
             switch (f_Command.opcode)
             {
             case RENDER_CREATE_NODE_OP:   /*CreateNode(cmd.node_id, (ShapeDef*)cmd.operand);*/ break;
@@ -126,6 +158,8 @@ namespace PeachCore {
                 PrintError("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!", Colours::BrightRed);
             }
         }
+
+        return f_ContainsCommands;
     }
 
     void

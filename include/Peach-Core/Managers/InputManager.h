@@ -239,9 +239,6 @@ namespace PeachCore {
             );
 
         void
-            UpdateThreadOwner();
-
-        void
             PollEvents();
 
         void 

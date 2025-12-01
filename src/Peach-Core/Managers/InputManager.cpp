@@ -28,12 +28,6 @@ namespace PeachCore {
         return true;
     }
 
-    void
-        InputManager::UpdateThreadOwner()
-    {
-        input_logger->UpdateThreadOwner();
-    }
-
     void 
         InputManager::MapInput
         (

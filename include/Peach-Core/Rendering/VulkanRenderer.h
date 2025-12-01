@@ -184,10 +184,11 @@ namespace PeachCore{
                 const vector<uint32_t>& fp_SpirvBytecode
             );
 
-    private:
-        
+        //////////////////// Clean Up Resources ////////////////////
+
         void
             CleanUp();
+    private:
 
         bool
             InitializeDevice(const string& fp_AppName);

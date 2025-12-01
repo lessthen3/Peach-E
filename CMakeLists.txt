@@ -1082,11 +1082,16 @@ target_compile_definitions(Peach_Editor PRIVATE
     $<$<CONFIG:Debug>:PEACH_DEBUG>
 )
 
+target_compile_options(peach_api PRIVATE
+    PEACH_API_BUILD_DYNAMIC
+) 
+
 if(WIN32)
     target_compile_definitions(Peach_Editor PRIVATE
         $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:NETHOST_USE_AS_STATIC> #need this for nethost to be used statically
     )
     target_compile_definitions(peach PUBLIC
+        PHYSFS_STATIC
         SODIUM_STATIC #needed for statically linking libsodium
         GLEW_STATIC #needed for statically linking glew
     )
