@@ -1,3 +1,7 @@
+####################################### Config Options
+
+option(BUILD_PEACH_API_SHARED "Builds peach_api as a shared library" ON) #build peach api shared by default uwu
+
 ####################################### Enforce CMake Version
 
 cmake_minimum_required(VERSION 3.20)
@@ -231,7 +235,13 @@ target_link_libraries(Peach_Editor PRIVATE
 
 ####################################### Dynamic API Library
 
-add_library(peach_api SHARED
+if(BUILD_PEACH_API_SHARED)
+    set(PEACH_API_BUILD_TYPE SHARED)
+else()
+    set(PEACH_API_BUILD_TYPE STATIC)
+endif()
+
+add_library(peach_api ${PEACH_API_BUILD_TYPE}
     ${PEACH_API_SOURCES}
 )
 
@@ -1082,9 +1092,11 @@ target_compile_definitions(Peach_Editor PRIVATE
     $<$<CONFIG:Debug>:PEACH_DEBUG>
 )
 
-target_compile_options(peach_api PRIVATE
-    PEACH_API_BUILD_DYNAMIC
-) 
+if(BUILD_PEACH_API_SHARED)
+    target_compile_definitions(peach_api PRIVATE
+        PEACH_API_BUILD_DYNAMIC
+    ) 
+endif()
 
 if(WIN32)
     target_compile_definitions(Peach_Editor PRIVATE
