@@ -42,7 +42,7 @@ namespace PeachCore
 
         //////////////////// Enable ANSI colour codes for windows console grumble grumble ////////////////////
 
-        #if defined(_WIN32) || defined(_WIN64)
+        #if defined(_WIN32) || defined(_WIN64) && defined(PEACH_USING_OS_TERMINAL)
             EnableColors();
         #endif
 
@@ -127,7 +127,7 @@ namespace PeachCore
 
         //ShutdownPlugins();
         //RenderingManager::get_single().ForceQuit();
-        ResourceManager::get_single().m_IsActive = false;
+        ResourceManager::get_single().ShutdownResourceManager();
 
         pm_ResourceThread.join();
         //pm_RenderThread.join();
@@ -376,10 +376,10 @@ namespace PeachCore
     void
         GameManager::LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad)
     {
-        for (const auto& l_PluginPath : fp_ListOfPluginsToLoad)
+        for (const auto& lv_PluginPath : fp_ListOfPluginsToLoad)
         {
-            PluginInfo f_TempPlugin = {};
-            ResourceManager::get_single().LoadPlugin(l_PluginPath, f_TempPlugin);
+            PluginData f_TempPlugin = {};
+            ResourceManager::get_single().LoadPlugin(lv_PluginPath, f_TempPlugin);
 
             pm_PluginInstances.emplace_back(move(f_TempPlugin.Pwugin), f_TempPlugin.Handle);
         }

@@ -13,16 +13,24 @@
 ///PeachCore
 #include "ResourceManager.h"
 
+//////// Rendering Backends ////////
 #ifndef __APPLE__
 #include <Rendering/OpenGLRenderer.h>
 #endif
-
 #include <Rendering/VulkanRenderer.h>
 
-#include "../Scene-Items/2D/PeachTexture2D.h"
-#include "../Scene-Items/PeachNode.h"
+//////// Rendering Primitives ////////
+#include <Rendering/PeachMaterial.h>
+#include <Rendering/PeachTexture.h>
 
+
+//////// Input ////////
 #include "InputManager.h"
+
+#include "../Scene-Items/PeachNode.h"
+#include "../Scene-Items/SceneTree.h"
+
+#include "../Scene-Items/UI/PeachConsole.h"
 
 namespace PeachCore {
 
@@ -82,7 +90,7 @@ namespace PeachCore {
 /*                            | Name                 | ID |   Operand                | 
                                | ---------------- - | ---- | ---------------------- | 
 */
-    constexpr uint8_t RENDER_NO_OP = 0x00;
+    constexpr uint8_t RENDER_NOP = 0x00;
     constexpr uint8_t RENDER_CREATE_NODE_OP = 0x01;//| pointer to shape def |
     constexpr uint8_t RENDER_DESTROY_NODE_OP = 0x02; // | — |
     constexpr uint8_t RENDER_UPDATE_POSITION_OP = 0x03; // | packed vec2 |
@@ -95,7 +103,7 @@ namespace PeachCore {
     constexpr uint8_t RENDER_PUSH_STATE_OP = 0x0A;// | — |
     constexpr uint8_t RENDER_POP_STATE_OP = 0x0B;// | — |
 
-    constexpr uint8_t RENDER_CLOSE_WINDOW = 0x0C; // | Used for closing a window being rendered to by rendering manager
+    constexpr uint8_t RENDER_OP_FRAME_END = 0x0C; // | Used for render thread to figure out when to sleep
 
     constexpr uint8_t RENDER_SHUTDOWN_THREAD = 0x0D; //used for shutting down render thread appropriately uwu
         
@@ -311,6 +319,7 @@ namespace PeachCore {
             Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
             const noexcept
         {
+            return fp_Start * (1 - fp_Rate) + fp_End * fp_Rate;
 
         }
 
@@ -320,8 +329,6 @@ namespace PeachCore {
         {
 
         }
-
-        PeachNode* CreateNode(); //used for instantiating a rendering related node
 
         //wip? future me: WORKING BITCH
         bool

@@ -11,26 +11,36 @@
 #pragma once
 
 ///PeachCore
-#include "../../Utils/Logger.h"
-#include "PeachNode2D.h"
+#include "../Utils/Logger.h"
 
 ///STL
 #include <tuple>
-#include <future>
+#include <vector>
 
 namespace PeachCore {
 
-    class PeachTexture2D: public PeachNode2D
+    class PeachTexture
     {
     public:
-        PeachTexture2D() : PeachNode2D() {};
-        PeachTexture2D(const string& fp_Name) : PeachNode2D(fp_Name) {};
+        int m_Width = -1;
+        int m_Height = -1;
 
-        PeachTexture2D(const string& fp_Name, const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight);
-        ~PeachTexture2D();
+        string m_Name;
 
-        PeachTexture2D& 
-            operator=(PeachTexture2D&& other) //move operator
+    private:
+        int pm_TileWidth = -1;
+        int pm_TileHeight = -1;
+
+        bool pm_IsValid = false; //used for tracking whether LoadTexture() was successful/ if a texture is currently loaded
+
+        vector<tuple<float, float, float, float>> pm_TileUVs; // UV coordinates for each tile
+
+    public:
+        PeachTexture(const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight);
+        ~PeachTexture();
+
+        PeachTexture& 
+            operator=(PeachTexture&& other) //move operator
             noexcept 
         {
             if (this != &other) 
@@ -63,7 +73,7 @@ namespace PeachCore {
             return *this;
         }
 
-        PeachTexture2D&
+        PeachTexture&
             operator=(nullptr_t fp_NullPtr) //null operator
             noexcept
         {
@@ -85,24 +95,7 @@ namespace PeachCore {
         void 
             DefineTileSize(const int tileWidth, const int tileHeight);
         void 
-            CalculateTileUVs();
-
-        void
-            OnEnter();
-        void
-            OnUpdate(float fp_TimeSinceLastFrame);
-        void
-            OnConstantUpdate(float fp_TimeSinceLastFrame);
-        void
-            OnExit();
-        void
-            QueueRemoval();
-        void
-            Draw();
- 
-        void 
-            DeleteTexture();
-        
+            CalculateTileUVs();        
 
         vector<tuple<float, float, float, float>> 
             GetTileUVs()
@@ -119,20 +112,6 @@ namespace PeachCore {
         bool 
             IsValid() 
             const;
-
-    public:
-        int m_Width = -1;
-        int m_Height = -1;
-
-        string m_Name;
-
-    private:
-        int pm_TileWidth = -1;
-        int pm_TileHeight = -1;
-
-        bool pm_IsValid = false; //used for tracking whether LoadTexture() was successful/ if a texture is currently loaded
-
-        vector<tuple<float, float, float, float>> pm_TileUVs; // UV coordinates for each tile
     };
 }
 //then i Want a TileMap that takes the TileSet, and has lists for holding data about currently placed tiles from the tile map.Im not

@@ -27,13 +27,13 @@ namespace PeachCore {
         Blank
     };
 
-    class Scene 
+    class SceneTree 
     {
      SERIALIZABLE_FIELDS(pm_Name)
 
     public:
-        Scene() = default;
-        ~Scene() = default;
+        SceneTree() = default;
+        ~SceneTree() = default;
 
     private:
         string pm_Name = "rawr"; // >w< rawr

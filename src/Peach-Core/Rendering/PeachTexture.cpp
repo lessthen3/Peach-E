@@ -8,63 +8,25 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#include "../../include/Peach-Core/Scene-Items/2D/PeachTexture2D.h"
+#include "../../../include/Peach-Core/Rendering/PeachTexture.h"
 
 namespace PeachCore {
 
-    PeachTexture2D::~PeachTexture2D()
+    PeachTexture::~PeachTexture()
     {
         //RenderingManager::Renderer().GetOpenGLRenderer()->DeleteTexture(m_ID);
         cout << "Hey! I am out of this joint, let's blow this popsicle stand buckoo" << "\n";
     }
 
-    PeachTexture2D::PeachTexture2D(const string& fp_Name, const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight)
+    PeachTexture::PeachTexture(const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight)
     {
-        m_Name = fp_Name;
         m_Width = fp_TextureWidth; //I AM NOT SURE WHICH ONE IS X AND WHICH ONE IS Y TBH SO IMA ASSUME IT WORKS WITH NORMAL LOGIC LOL
         m_Height = fp_TextureHeight;
         pm_IsValid = true;
     }
 
-
-    void
-        PeachTexture2D::OnEnter()
-    {
-
-    }
-
-    void
-        PeachTexture2D::OnUpdate(float fp_TimeSinceLastFrame)
-    {
-
-    }
-
-    void
-        PeachTexture2D::OnConstantUpdate(float fp_TimeSinceLastFrame)
-    {
-
-    }
-
-    void
-        PeachTexture2D::OnExit()
-    {
-
-    }
-
-    void
-        PeachTexture2D::QueueRemoval()
-    {
-
-    }
-
-    void
-        PeachTexture2D::Draw()
-    {
-
-    }
-
     void 
-        PeachTexture2D::DefineTileSize(const int tileWidth, const int tileHeight)
+        PeachTexture::DefineTileSize(const int tileWidth, const int tileHeight)
     {
         pm_TileWidth = tileWidth;
         pm_TileHeight = tileHeight;
@@ -72,7 +34,7 @@ namespace PeachCore {
     }
 
     void 
-        PeachTexture2D::CalculateTileUVs()
+        PeachTexture::CalculateTileUVs()
     {
         pm_TileUVs.clear(); //reset if UV's needed to be recalculated for whatever reason
 
@@ -93,14 +55,14 @@ namespace PeachCore {
     }
 
     vector<tuple<float, float, float, float>> 
-        PeachTexture2D::GetTileUVs()
+        PeachTexture::GetTileUVs()
         const
     {
         return pm_TileUVs;
     }
 
     tuple<float, float, float, float> 
-        PeachTexture2D::GetTileUV(const int tileIndex) 
+        PeachTexture::GetTileUV(const int tileIndex) 
         const 
     {
         if (tileIndex < 0 || tileIndex >= pm_TileUVs.size())
@@ -111,14 +73,14 @@ namespace PeachCore {
     }
 
     int 
-        PeachTexture2D::GetTileCount() 
+        PeachTexture::GetTileCount() 
         const 
     {
         return pm_TileUVs.size();
     }
 
     bool 
-        PeachTexture2D::IsValid() 
+        PeachTexture::IsValid() 
         const 
     { 
         return pm_IsValid; 

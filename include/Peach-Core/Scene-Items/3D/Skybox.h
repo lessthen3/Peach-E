@@ -9,12 +9,3 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
-
-#include <glm/glm.hpp>
-
-class DirectionalLight3D
-{
-    glm::vec4 pm_Colour;
-    glm::vec3 pm_Direction;
-    float pm_Intensity;
-};

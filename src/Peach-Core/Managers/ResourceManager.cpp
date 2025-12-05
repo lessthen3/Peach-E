@@ -22,7 +22,7 @@ namespace PeachCore {
         //////////////////// Resource Logger Initialization ////////////////////
 
         resource_logger = make_unique<Logger>();
-        resource_logger->Initialize(ThreadName::ResourceThread, fp_LogOutputDirectory, "ResourceThreadLogger", Logger::LogLevel::ALL_LOGS);
+        resource_logger->Initialize(ThreadName::ResourceThread, fp_LogOutputDirectory, "ResourceThread", Logger::LogLevel::ALL_LOGS);
         resource_logger->Debug("ResourceThreadLogger successfully initialized", "ResourceManager");
 
         //////////////////// Initialize Queues ////////////////////
@@ -44,6 +44,46 @@ namespace PeachCore {
         return true;
     }
 
+    bool
+        ResourceManager::ResourceLoop
+        (
+            const string& fp_LogOutputDirectory,
+            const string& fp_RootPhysfsDirectory
+        )
+    {
+        if (not Initialize(fp_LogOutputDirectory, fp_RootPhysfsDirectory))
+        {
+
+            return false;
+        }
+
+        pm_InitializationCompleteCondition.notify_one(); //wake any threads waiting on initialization to complete
+
+        pm_IsActive = true;
+
+        while (pm_IsActive.load(std::memory_order_acquire))
+        {
+            ProcessCommands();
+        }
+
+        return true;
+    }
+
+    void
+        ResourceManager::WaitUntilInitialized()
+    {
+        unique_lock<mutex> lock(pm_InitializationMutex);
+
+        pm_InitializationCompleteCondition.wait
+        (
+            lock,
+            [this]()
+            {
+                return pm_IsInitialized;
+            }
+        );
+    }
+
     void
         ResourceManager::ProcessCommands()
     {
@@ -54,9 +94,14 @@ namespace PeachCore {
         {
             f_ContainsCommands = true;
 
-            switch (f_Command.opcode)
+            switch (f_Command.OP)
             {
-            case 1:
+            case RESOURCE_OP_LOAD_DOTNET_RUNTIME:
+                break;
+            case RESOURCE_OP_LOAD_TEXTURE:
+            {
+                LoadTextureFromFile("idfk", f_Command.NodeID);
+            }
                 break;
             default:
                 PrintError("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!", Colours::BrightRed);
@@ -225,7 +270,7 @@ namespace PeachCore {
     peachnode owner of the texture, where it's used, if its visible, associated shaders/pipeline, texture filtering, initial size
     */
     bool 
-        ResourceManager::LoadTextureFromFile(const string& fp_TextureFilePath)
+        ResourceManager::LoadTextureFromFile(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode)
     {
         // Ensure directory exists
         if (not filesystem::exists(fp_TextureFilePath))
@@ -234,33 +279,39 @@ namespace PeachCore {
             return false;
         }
 
-        int width, height, nrChannels = 0;
+        int f_Width, f_Height, f_Channels = 0;
         unsigned char* f_RawTextureDataPtr = nullptr;
 
         try
         {
             //FIX THIS NEED TO WRAP RAW PTR IN UNIQUE PTR
-            f_RawTextureDataPtr = stbi_load(fp_TextureFilePath.c_str(), &width, &height, &nrChannels, 0);
+            f_RawTextureDataPtr = stbi_load(fp_TextureFilePath.c_str(), &f_Width, &f_Height, &f_Channels, 0);
         }
-        catch (const exception& ex)
+        catch (const exception& fp_Exception)
         {
-            resource_logger->Error(format("Failed to load texture image!, error: '{}'", ex.what()), "ResourceManager");
+            resource_logger->Error(format("Failed to load texture image!, error: '{}'", fp_Exception.what()), "ResourceManager");
             return false;
         }
 
         if (not f_RawTextureDataPtr)
         {
-            resource_logger->Error("Failed to load texture image!", "ResourceManager");
+            resource_logger->Error(format("Failed to load texture! path: {}, reason: {}", fp_TextureFilePath, stbi_failure_reason()), "ResourceManager");
             return false;
         }
 
-        //unique_ptr<TextureData> f_TextureData = make_unique<TextureData>
-        //(
-        //    f_RawTextureDataPtr,
-        //    static_cast<uint32_t>(width),
-        //    static_cast<uint32_t>(height),
-        //    static_cast<uint32_t>(nrChannels)
-        //);
+        unique_ptr<TextureData> f_TextureData = make_unique<TextureData>
+        (
+            f_RawTextureDataPtr,
+            f_Width,
+            f_Height,
+            f_Channels
+        );
+
+        ResourceTransfer f_TextureTransfer;
+
+        f_TextureTransfer.Payload = move(f_TextureData);
+        f_TextureTransfer.NodeID = fp_DestinationNode;
+        f_TextureTransfer.Kind = ResourceKind::Texture;
 
         //TryPushingLoadedTexture("someObjectID", move(f_TextureData));
 
@@ -384,7 +435,7 @@ namespace PeachCore {
         ResourceManager::LoadPlugin
         (
             const string& fp_PluginFilePath,
-            PluginInfo& fp_Plugin
+            PluginData& fp_Plugin
         )
         const
     {
@@ -531,45 +582,5 @@ namespace PeachCore {
             CompareStates(f_InitialPathState, f_NewState);
             f_InitialPathState = move(f_NewState);
         }
-    }
-
-    bool
-        ResourceManager::ResourceLoop
-        (
-            const string& fp_LogOutputDirectory,
-            const string& fp_RootPhysfsDirectory
-        )
-    {
-        if (not Initialize(fp_LogOutputDirectory, fp_RootPhysfsDirectory))
-        {
-
-            return false;
-        }
-
-        pm_InitializationCompleteCondition.notify_one(); //wake any threads waiting on initialization to complete
-
-        m_IsActive = true;
-
-        while (m_IsActive.load(std::memory_order_acquire))
-        {   
-            ProcessCommands();
-        }
-
-        return true;
-    }
-
-    void
-        ResourceManager::WaitUntilInitialized()
-    {
-        unique_lock<mutex> lock(pm_InitializationMutex);
-
-        pm_InitializationCompleteCondition.wait
-        (
-            lock,
-            [this]()
-            {
-                return pm_IsInitialized;
-            }
-        );
     }
 }

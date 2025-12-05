@@ -21,20 +21,20 @@ namespace PeachCore {
     bool 
         TileSet::CreateTilesFromTexture2D()
     {
-        if (not pm_Texture.IsValid())
-        {
-            //TODO: should push this logger warning/error to the rendering manager in the rendering thread
-            //LogManager::MainLogger().LogAndPrint("Attempted to create tiles for tile set when no texture was loaded", m_Name, "warn");
-            return false;
-        }
+        //if (not pm_Texture.IsValid())
+        //{
+        //    //TODO: should push this logger warning/error to the rendering manager in the rendering thread
+        //    //LogManager::MainLogger().LogAndPrint("Attempted to create tiles for tile set when no texture was loaded", m_Name, "warn");
+        //    return false;
+        //}
 
-        m_Tiles.clear(); //clear list in case new tile UV's are generated
-        m_Tiles.resize(pm_Texture.GetTileCount());  // Resize m_Tiles vector to match the number of UVs calculated
+        //m_Tiles.clear(); //clear list in case new tile UV's are generated
+        //m_Tiles.resize(pm_Texture.GetTileCount());  // Resize m_Tiles vector to match the number of UVs calculated
 
-        for (auto& tuple : pm_Texture.GetTileUVs())
-        {
-            m_Tiles.push_back(Tile(tuple));
-        }
+        //for (auto& tuple : pm_Texture.GetTileUVs())
+        //{
+        //    m_Tiles.push_back(Tile(tuple));
+        //}
 
         return true;
     }

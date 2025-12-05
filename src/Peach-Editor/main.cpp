@@ -57,6 +57,10 @@ int
     ////////////////////////////////////////////////
     try
     {
+        PeachEditor::ProjectManager f_ProjectManager;
+
+        f_ProjectManager.StartProjectManager();
+
         auto peach_editor = &PeachEditor::PeachEditorManager::get_single();
 
         peach_editor->InitializePeachEditor

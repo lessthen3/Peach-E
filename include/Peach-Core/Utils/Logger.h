@@ -60,7 +60,7 @@ namespace PeachCore {
 
     using namespace std;
 
-    #if defined(_WIN32) || defined(_WIN64)
+    #if defined(_WIN32) || defined(_WIN64) && defined(PEACH_USING_OS_TERMINAL)
 
         static bool
             EnableColors()

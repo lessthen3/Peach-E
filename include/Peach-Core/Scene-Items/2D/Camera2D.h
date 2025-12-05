@@ -1,20 +1,19 @@
-/*******************************************************************
+﻿/*******************************************************************
  *                        Peach-E v0.0.1
  *              Created by Ranyodh Mandur - 🍑 2024
  *
  *              Licensed under the MIT License (MIT).
- *         For more details, see the LICENSE file or visit:         
+ *         For more details, see the LICENSE file or visit:
  *               https://opensource.org/licenses/MIT
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
-#include <glm/glm.hpp>
+namespace PeachCore {
 
-class DirectionalLight3D
-{
-    glm::vec4 pm_Colour;
-    glm::vec3 pm_Direction;
-    float pm_Intensity;
-};
+    struct Camera2D
+    {
+
+    };
+}

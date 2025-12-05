@@ -12,7 +12,7 @@
 
 #include "../../Utils/Logger.h"
 #include "../PeachNode.h"
-#include "PeachTexture2D.h"
+#include "../../Rendering/PeachTexture.h"
 
 #include <vector>
 #include <tuple>
@@ -86,7 +86,7 @@ namespace PeachCore {
             const;
         
     private:
-        PeachTexture2D pm_Texture;
+        PeachTexture pm_Texture;
         int pm_TileWidth;
         int pm_TileHeight;
     };

@@ -15,7 +15,7 @@
 #include <SDL3/SDL.h>
 
 #include "OpenGLShaderProgram.h"
-#include "../Scene-Items/2D/PeachCamera2D.h"
+//#include "../Scene-Items/2D/PeachCamera2D.h"
 
 namespace PeachCore {
 
@@ -42,7 +42,7 @@ namespace PeachCore {
         SDL_Window* pm_MainWindow = nullptr;
         bool pm_Is3DEnabled = false;
 
-        vector<unique_ptr<PeachCamera2D>> pm_ListOfScenePeachCameras2D; //only the renderer cares about cameras
+        //vector<unique_ptr<PeachCamera2D>> pm_ListOfScenePeachCameras2D; //only the renderer cares about cameras
 
         map<string, OpenGLShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which OpenGLShaderProgram
 
@@ -65,7 +65,7 @@ namespace PeachCore {
                 pm_MainWindow = nullptr;
             }
 
-            pm_ListOfScenePeachCameras2D.clear();
+            //pm_ListOfScenePeachCameras2D.clear();
             pm_ShaderPrograms.clear();
             pm_ListOfRegisteredTextures.clear();
             pm_RenderingLogger.reset();
@@ -100,15 +100,10 @@ namespace PeachCore {
             ////Set Core Profile for OpenGL Context whatever the fuck that means
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-#if defined(_WIN32) || defined(_WIN64) || defined(__linux__) //Using this in place for now since apple and opengl are kinda janky
             //// Set OpenGL version (e.g., OpenGL 3.3 core profile)
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-#elif defined(__APPLE__) // need core profile 3 but even then still kinda doesnt work because apple idk whatever we write metal backend
-            //// Set OpenGL version (e.g., OpenGL 3.3 core profile)
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-#endif
+
             // Create an OpenGL context associated with the window
             pm_OpenGLContext = SDL_GL_CreateContext(pm_MainWindow);
             SDL_GL_MakeCurrent(pm_MainWindow, pm_OpenGLContext);
@@ -426,7 +421,6 @@ namespace PeachCore{
 
     struct Viewport
     {
-
         Viewport() = default;
 
         void

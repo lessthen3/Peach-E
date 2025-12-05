@@ -36,10 +36,24 @@ namespace PeachEditor{
         SERIALIZABLE_FIELDS(FontSize, CurrentFont)
     };
 
+    struct ProjectLocalEditorSettings
+    {
+
+        SERIALIZABLE_FIELDS()
+    };
+
+    struct ExportConfigSettings
+    {
+        string GameName;
+        string ExportDirectory;
+
+        bool IsDebug = false;
+
+        SERIALIZABLE_FIELDS()
+    };
+
     struct PeachProject
     {
-        friend class Serializer;
-
         string ProjectName;
         uint8_t RuntimeType = None;
 
@@ -51,6 +65,17 @@ namespace PeachEditor{
         map<string, string> ShaderPaths;
 
         PeachProjectSettings ProjectSettings;
+        ExportConfigSettings ExportSettings;
+
+        bool
+            Export
+            (
+
+            )
+        {
+
+            return true;
+        }
 
     private:
         SERIALIZABLE_FIELDS(ProjectName, RuntimeType, ScriptPaths, ScenePaths, TexturePaths, AudioPaths, ProjectSettings)

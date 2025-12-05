@@ -9,3 +9,22 @@
  *      Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
 #include "../../../include/Peach-Editor/Managers/ProjectManager.h"
+
+namespace PeachEditor
+{
+
+    bool
+        ProjectManager::StartProjectManager()
+    {
+
+        return true;
+    }
+
+    bool
+        ProjectManager::CloseProjectManager()
+    {
+
+        return true;
+    }
+
+}

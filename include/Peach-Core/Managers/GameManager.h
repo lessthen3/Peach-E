@@ -10,7 +10,15 @@
 ********************************************************************/
 #pragma once
 
-#include "../Peach-Core.hpp"
+//////////////////////////////////////////////
+// Managers
+//////////////////////////////////////////////
+
+#include "AudioManager.h"
+#include "RenderingManager.h"
+#include "ResourceManager.h"
+#include "PhysicsManager.h"
+#include "NetworkManager.h"
 
 #include <csignal>
 
@@ -74,11 +82,13 @@ namespace PeachCore {
 
         //////////////////// Plugin Stuff ////////////////////
 
-        vector<PluginInfo> pm_PluginInstances;
+        vector<PluginData> pm_PluginInstances;
 
-        //////////////////// Script Runtimes ////////////////////
+        //////////////////// Script Runtime Contexts ////////////////////
 
         DotnetContext pm_DotnetContext;
+        LuaRuntimeContext pm_LuaRuntimeContext;
+        PythonRuntimeContext pm_PythonRuntimeContext;
 
         //////////////////// Thread Handles ////////////////////
 
@@ -90,8 +100,8 @@ namespace PeachCore {
 
         //////////////////// Scene Stuff ////////////////////
 
-        Scene pm_CurrentScene;
-        map<string, Scene> DictionaryOfAllScenesInCurrentProject;
+        SceneTree pm_CurrentScene;
+        map<string, SceneTree> DictionaryOfAllScenesInCurrentProject;
 
         atomic<bool> m_IsRunning = true;
 

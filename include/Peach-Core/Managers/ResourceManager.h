@@ -19,7 +19,14 @@
 #include "../Utils/Serializer.h"
 #include "../Utils/DynamicLoader.h"
 
+//////////////////////////////////////////////
+// Language Support
+//////////////////////////////////////////////
+
 #include "../Language-Support/DotnetRuntime.h"
+#include "../Language-Support/LuaScriptRuntime.h"
+#include "../Language-Support/PythonScriptComponent.h"
+#include "../Language-Support/PythonScriptRuntime.h"
 
 ///External
 #include <physfs.h>
@@ -34,14 +41,34 @@ typedef void (*DestroyPluginFunc)(Plugin*);
 
 namespace PeachCore {
 
-    //////////////////////////////////////////////
-    // Plugin Stuff
-    //////////////////////////////////////////////
-    struct PluginInfo
+    constexpr uint16_t RESOURCE_OP_RESOURCE_DESTINATION = 69; // ProcessComannds() expects a node ID after
+
+    constexpr uint16_t RESOURCE_OP_LOAD_MP3 = 1000;
+    constexpr uint16_t RESOURCE_OP_LOAD_FLAC = 1001;
+    constexpr uint16_t RESOURCE_OP_LOAD_WAV = 1002;
+
+    constexpr uint16_t RESOURCE_OP_LOAD_TEXTURE = 2000;
+    constexpr uint16_t RESOURCE_OP_LOAD_MESH = 2001;
+    constexpr uint16_t RESOURCE_OP_LOAD_ANIMATION = 2002;
+
+    constexpr uint16_t RESOURCE_OP_LOAD_OPENGL_SHADER = 2003; //WARNING: not sure if i wanna do a generic shader load not sure how differntiating between the graphics pipeline steps should work here
+    constexpr uint16_t RESOURCE_OP_LOAD_VULKAN_SHADER = 2004; //WARNING: not sure if i wanna do a generic shader load not sure how differntiating between the graphics pipeline steps should work here
+
+    constexpr uint16_t RESOURCE_OP_LOAD_SCRIPT = 3000;
+    constexpr uint16_t RESOURCE_OP_LOAD_BYTECODE = 3001;
+    constexpr uint16_t RESOURCE_OP_LOAD_DOTNET_RUNTIME = 3002;
+
+    constexpr uint16_t RESOURCE_OP_LOAD_PLUGIN = 3003;
+
+    struct LoadCommand
     {
-        unique_ptr<Plugin, DestroyPluginFunc> Pwugin = { nullptr, nullptr }; //>O<
-        DYNLIB_HANDLE Handle = nullptr; //>w<
+        uint64_t NodeID;       // 4 bytes
+        uint16_t OP;        // 2 bytes
     };
+
+    //////////////////////////////////////////////
+    // Runtime Contexts
+    //////////////////////////////////////////////
 
     struct LuaRuntimeContext
     {
@@ -54,22 +81,68 @@ namespace PeachCore {
     };
 
     //////////////////////////////////////////////
-    // ResourceManager word size
+    // Data Containers
     //////////////////////////////////////////////
 
-    struct LoadCommand 
+    struct PluginData
     {
-        uint64_t node_id;       // 4 bytes
-        uint16_t opcode;        // 2 bytes
-        uint16_t reserved;      // 2 bytes (alignment or flags)
-        uint64_t operand;       // 8 bytes
+        unique_ptr<Plugin, DestroyPluginFunc> Pwugin = { nullptr, nullptr }; //>O<
+        DYNLIB_HANDLE Handle = nullptr; //>w<
     };
 
-    struct ResourceTransfer 
+    // ResourcePackage.h
+    struct TextureData
     {
-        uint64_t NodeID = 0; //destination for resource, eg. a prefab node is created, an mp3 and a png needs to be loaded to display the sprite and play its walking sound
-        //ResourceType type; // enum: Texture, Audio, Mesh, etc.
-        void* RawData;
+        int Width, Height, Channels;
+        // owns data via unique_ptr + custom deleter
+        unique_ptr<unsigned char, void(*)(void*)> PixelData{ nullptr, stbi_image_free };
+
+        TextureData(unsigned char* fp_RawData, int fp_Width, int fp_Height, int fp_Channels)
+        {
+            Width = fp_Width;
+            Height = fp_Height;
+            Channels = fp_Channels;
+            PixelData = { fp_RawData, stbi_image_free };
+        }
+    };
+
+    struct AudioData { /* ... */ };
+    struct MeshData { /* ... */ };
+    struct AnimationData { /* ... */ };
+    struct BytecodeData {/* ... */ }; //bytecode used for C# or bongojam script or lua ig
+    struct ScriptData {/* ... */ }; // large string for raw script
+    
+    enum class ResourceKind : uint8_t 
+    {
+        Texture,
+        Audio,
+        Mesh,
+        Animation,
+        Bytecode,
+        Script,
+        Plugin,
+        INVALID
+    };
+
+    using ResourcePayload = variant<
+        unique_ptr<TextureData>,
+        unique_ptr<AudioData>,
+        unique_ptr<MeshData>,
+        unique_ptr<AnimationData> ,
+        unique_ptr<BytecodeData>,
+        unique_ptr<ScriptData>,
+        unique_ptr<PluginData>
+    >;
+
+    struct ResourceTransfer
+    {
+        uint64_t NodeID = 0;   // who this is for
+        ResourceKind Kind = ResourceKind::INVALID;
+
+        ResourcePayload Payload;
+
+        ~ResourceTransfer() = default;
+        ResourceTransfer() = default;
     };
 
 
@@ -106,7 +179,7 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
-        //////////////////// Queue Pointers ////////////////////
+        //////////////////// Resource Transfer Queues ////////////////////
 
         //used to push loaded assets that are destined for AudioManager
         shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_AudioResourceLoadingQueue = nullptr;
@@ -115,82 +188,51 @@ namespace PeachCore {
         //used to push loaded scripts and config stuff -> MainThread/GameManager
         shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_MainThreadLoadingQueue = nullptr;
 
+        //////////////////// Load Command Queue ////////////////////
+
         //used for asking ResourceManager to load something from the main thread
         shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_LoadCommandQueue = nullptr;
 
-        //////////////////// Waiting Buffers ////////////////////
+        //////////////////// Waiting Buffer ////////////////////
 
-        // Holds mesh, texture, shader and animation data
-        vector<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_WaitingLoadedGraphicsAssets;
-        //Holds mp3, wav and flac files
-        vector<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_WaitingLoadedAudioAssets;
+        vector<ResourceTransfer> pm_WaitingResources;
 
         //////////////////// Resource Logger ////////////////////
 
         //Resource Logger owned by ResourceManager only
         unique_ptr<Logger> resource_logger = nullptr;
 
-        //////////////////// Utility Structs ////////////////////
+        //////////////////// Utility Types ////////////////////
 
         //1 byte bois UwU
         Serializer pm_Serializer; 
         DynamicLoader pm_DynamicLoader;
 
-        //////////////////// Script Runtime Contexts ////////////////////
-
-        LuaRuntimeContext pm_LuaRuntimeContext;
-        PythonRuntimeContext pm_PythonRuntimeContext;
-
-        string pm_RootDirectory;
+        //////////////////// Thread Initialization Safeguards ////////////////////
 
         mutex pm_InitializationMutex;
-
         condition_variable pm_InitializationCompleteCondition;
-
         bool pm_IsInitialized = false;
 
+        //////////////////// ETC ////////////////////
 
-    //////////////////////////////////////////////
-    // Public Members
-    //////////////////////////////////////////////
-    public:
-        atomic<bool> m_IsActive = true;
+        string pm_RootDirectory;
+        vector<uint8_t> pm_PeachBinary; //holds the currently loaded peachbin file
+        atomic<bool> pm_IsActive = true;
 
     //////////////////////////////////////////////
     // Public Methods
     //////////////////////////////////////////////
     public:
-        bool 
-            Initialize
-        (
-            const string& fp_LogOutputDirectory,
-            const string& fp_RootPhysfsDirectory
-        );
-
-        void
-            CheckForDirectoryChanges();
-
-        // Function to list all files recursively
-        unordered_map<string, filesystem::file_time_type>
-            GetCurrentDirectoryState
-            (
-                const filesystem::path& fp_Directory
-            );
-
-        ////////////////////////////////////////////////
-// Directory Detection Functions
-////////////////////////////////////////////////
-
         bool
-            CompareStates
+            Initialize
             (
-                const unordered_map<string, filesystem::file_time_type>& fp_OldState,
-                const unordered_map <string, filesystem::file_time_type>& fp_NewState
+                const string& fp_LogOutputDirectory,
+                const string& fp_RootPhysfsDirectory
             );
 
         void
-            CheckAndUpdateFileSystem() //XXX: this function seems kinda sus idk if it works as i want it too lmfao
-            ;
+            WaitUntilInitialized();
 
         bool
             ResourceLoop
@@ -198,12 +240,6 @@ namespace PeachCore {
                 const string& fp_LogOutputDirectory,
                 const string& fp_RootPhysfsDirectory
             );
-
-        void
-            ProcessCommands();
-
-        void
-            WaitUntilInitialized();
 
         [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
             GetAudioResourceLoadingQueue();
@@ -225,21 +261,72 @@ namespace PeachCore {
             );
 
         bool
-            LoadDotNetScript(const string& fp_ScriptPath);
-
-        bool
             LoadPythonRuntime();
 
         bool
             LoadPlugin
             (
                 const string& fp_PluginFilePath,
-                PluginInfo& fp_Plugin
+                PluginData& fp_Plugin
             )
             const;
 
+        void
+            ShutdownResourceManager()
+        {
+            pm_IsActive = false;
+        }
+
+    //////////////////////////////////////////////
+    // Private Methods
+    //////////////////////////////////////////////
+    private:
+        ////////////////////////////////////////////////
+        // Directory Detection Functions
+        ////////////////////////////////////////////////
+        void
+            CheckForDirectoryChanges();
+
+        // Function to list all files recursively
+        unordered_map<string, filesystem::file_time_type>
+            GetCurrentDirectoryState
+            (
+                const filesystem::path& fp_Directory
+            );
+
+        bool
+            CompareStates
+            (
+                const unordered_map<string, filesystem::file_time_type>& fp_OldState,
+                const unordered_map <string, filesystem::file_time_type>& fp_NewState
+            );
+
+        void
+            CheckAndUpdateFileSystem() //XXX: this function seems kinda sus idk if it works as i want it too lmfao
+            ;
+
+        ////////////////////////////////////////////////
+        // Directory Detection Functions
+        ////////////////////////////////////////////////
+
+        void
+            ProcessCommands();
+
+        ////////////////////////////////////////////////
+        // Resource Loading Functions
+        ////////////////////////////////////////////////
+
+        bool
+            LoadDotNetScript(const string& fp_ScriptPath);
+
+        bool
+            LoadLuaScript(const string& fp_ScriptPath);
+
+        bool
+            LoadBongoJamScript(const string& fp_ScriptPath);
+
         bool 
-            LoadTextureFromFile(const string& fp_TextureFilePath);
+            LoadTextureFromFile(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode);
 
         bool
             LoadWavFromFile(const string& fp_WavFilePath);
@@ -253,14 +340,9 @@ namespace PeachCore {
         bool
             LoadScene
             (
-                const vector<uint8_t>& fp_SceneData, //current loaded binary
                 uint64_t* fp_Offset
             ); //unpacked from peachbin file loaded into peach engine rn
 
-    //////////////////////////////////////////////
-    // Private Methods
-    //////////////////////////////////////////////
-    private:
         //bool 
         //    TryPushingLoadedTexture
         //    (

@@ -47,50 +47,51 @@ namespace PeachCore {
 
     struct Frustum
     {
-        Plane planes[6];
+        Plane FrustumPlanes[6];
 
-        void UpdateFrustum(const glm::mat4& fp_ProjViewMatrix)
+        void 
+            UpdateFrustum(const glm::mat4& fp_ProjViewMatrix)
         {
             // Left Plane
-            planes[0].normal.x = fp_ProjViewMatrix[0][3] + fp_ProjViewMatrix[0][0];
-            planes[0].normal.y = fp_ProjViewMatrix[1][3] + fp_ProjViewMatrix[1][0];
-            planes[0].normal.z = fp_ProjViewMatrix[2][3] + fp_ProjViewMatrix[2][0];
-            planes[0].distance = fp_ProjViewMatrix[3][3] + fp_ProjViewMatrix[3][0];
+            FrustumPlanes[0].normal.x = fp_ProjViewMatrix[0][3] + fp_ProjViewMatrix[0][0];
+            FrustumPlanes[0].normal.y = fp_ProjViewMatrix[1][3] + fp_ProjViewMatrix[1][0];
+            FrustumPlanes[0].normal.z = fp_ProjViewMatrix[2][3] + fp_ProjViewMatrix[2][0];
+            FrustumPlanes[0].distance = fp_ProjViewMatrix[3][3] + fp_ProjViewMatrix[3][0];
 
             // Right Plane
-            planes[1].normal.x = fp_ProjViewMatrix[0][3] - fp_ProjViewMatrix[0][0];
-            planes[1].normal.y = fp_ProjViewMatrix[1][3] - fp_ProjViewMatrix[1][0];
-            planes[1].normal.z = fp_ProjViewMatrix[2][3] - fp_ProjViewMatrix[2][0];
-            planes[1].distance = fp_ProjViewMatrix[3][3] - fp_ProjViewMatrix[3][0];
+            FrustumPlanes[1].normal.x = fp_ProjViewMatrix[0][3] - fp_ProjViewMatrix[0][0];
+            FrustumPlanes[1].normal.y = fp_ProjViewMatrix[1][3] - fp_ProjViewMatrix[1][0];
+            FrustumPlanes[1].normal.z = fp_ProjViewMatrix[2][3] - fp_ProjViewMatrix[2][0];
+            FrustumPlanes[1].distance = fp_ProjViewMatrix[3][3] - fp_ProjViewMatrix[3][0];
 
             // Top Plane
-            planes[2].normal.x = fp_ProjViewMatrix[0][3] - fp_ProjViewMatrix[0][1];
-            planes[2].normal.y = fp_ProjViewMatrix[1][3] - fp_ProjViewMatrix[1][1];
-            planes[2].normal.z = fp_ProjViewMatrix[2][3] - fp_ProjViewMatrix[2][1];
-            planes[2].distance = fp_ProjViewMatrix[3][3] - fp_ProjViewMatrix[3][1];
+            FrustumPlanes[2].normal.x = fp_ProjViewMatrix[0][3] - fp_ProjViewMatrix[0][1];
+            FrustumPlanes[2].normal.y = fp_ProjViewMatrix[1][3] - fp_ProjViewMatrix[1][1];
+            FrustumPlanes[2].normal.z = fp_ProjViewMatrix[2][3] - fp_ProjViewMatrix[2][1];
+            FrustumPlanes[2].distance = fp_ProjViewMatrix[3][3] - fp_ProjViewMatrix[3][1];
 
             // Bottom Plane
-            planes[3].normal.x = fp_ProjViewMatrix[0][3] + fp_ProjViewMatrix[0][1];
-            planes[3].normal.y = fp_ProjViewMatrix[1][3] + fp_ProjViewMatrix[1][1];
-            planes[3].normal.z = fp_ProjViewMatrix[2][3] + fp_ProjViewMatrix[2][1];
-            planes[3].distance = fp_ProjViewMatrix[3][3] + fp_ProjViewMatrix[3][1];
+            FrustumPlanes[3].normal.x = fp_ProjViewMatrix[0][3] + fp_ProjViewMatrix[0][1];
+            FrustumPlanes[3].normal.y = fp_ProjViewMatrix[1][3] + fp_ProjViewMatrix[1][1];
+            FrustumPlanes[3].normal.z = fp_ProjViewMatrix[2][3] + fp_ProjViewMatrix[2][1];
+            FrustumPlanes[3].distance = fp_ProjViewMatrix[3][3] + fp_ProjViewMatrix[3][1];
 
             // Near Plane
-            planes[4].normal.x = fp_ProjViewMatrix[0][3] + fp_ProjViewMatrix[0][2];
-            planes[4].normal.y = fp_ProjViewMatrix[1][3] + fp_ProjViewMatrix[1][2];
-            planes[4].normal.z = fp_ProjViewMatrix[2][3] + fp_ProjViewMatrix[2][2];
-            planes[4].distance = fp_ProjViewMatrix[3][3] + fp_ProjViewMatrix[3][2];
+            FrustumPlanes[4].normal.x = fp_ProjViewMatrix[0][3] + fp_ProjViewMatrix[0][2];
+            FrustumPlanes[4].normal.y = fp_ProjViewMatrix[1][3] + fp_ProjViewMatrix[1][2];
+            FrustumPlanes[4].normal.z = fp_ProjViewMatrix[2][3] + fp_ProjViewMatrix[2][2];
+            FrustumPlanes[4].distance = fp_ProjViewMatrix[3][3] + fp_ProjViewMatrix[3][2];
 
             // Far Plane
-            planes[5].normal.x = fp_ProjViewMatrix[0][3] - fp_ProjViewMatrix[0][2];
-            planes[5].normal.y = fp_ProjViewMatrix[1][3] - fp_ProjViewMatrix[1][2];
-            planes[5].normal.z = fp_ProjViewMatrix[2][3] - fp_ProjViewMatrix[2][2];
-            planes[5].distance = fp_ProjViewMatrix[3][3] - fp_ProjViewMatrix[3][2];
+            FrustumPlanes[5].normal.x = fp_ProjViewMatrix[0][3] - fp_ProjViewMatrix[0][2];
+            FrustumPlanes[5].normal.y = fp_ProjViewMatrix[1][3] - fp_ProjViewMatrix[1][2];
+            FrustumPlanes[5].normal.z = fp_ProjViewMatrix[2][3] - fp_ProjViewMatrix[2][2];
+            FrustumPlanes[5].distance = fp_ProjViewMatrix[3][3] - fp_ProjViewMatrix[3][2];
 
-            // Normalize all the planes
+            // Normalize all the FrustumPlanes
             for (int i = 0; i < 6; i++)
             {
-                planes[i].normalize(); //ye
+                FrustumPlanes[i].normalize(); //ye
             }
         }
 
@@ -101,14 +102,17 @@ namespace PeachCore {
         {
             for (int i = 0; i < 6; i++)
             {
-                if (planes[i].distanceToPoint(min) < 0 &&
-                    planes[i].distanceToPoint(glm::vec3(max.x, min.y, min.z)) < 0 &&
-                    planes[i].distanceToPoint(glm::vec3(min.x, max.y, min.z)) < 0 &&
-                    planes[i].distanceToPoint(glm::vec3(max.x, max.y, min.z)) < 0 &&
-                    planes[i].distanceToPoint(glm::vec3(min.x, min.y, max.z)) < 0 &&
-                    planes[i].distanceToPoint(glm::vec3(max.x, min.y, max.z)) < 0 &&
-                    planes[i].distanceToPoint(glm::vec3(min.x, max.y, max.z)) < 0 &&
-                    planes[i].distanceToPoint(max) < 0)
+                if 
+                (
+                    FrustumPlanes[i].distanceToPoint(min) < 0 and
+                    FrustumPlanes[i].distanceToPoint(glm::vec3(max.x, min.y, min.z)) < 0 and
+                    FrustumPlanes[i].distanceToPoint(glm::vec3(min.x, max.y, min.z)) < 0 and
+                    FrustumPlanes[i].distanceToPoint(glm::vec3(max.x, max.y, min.z)) < 0 and
+                    FrustumPlanes[i].distanceToPoint(glm::vec3(min.x, min.y, max.z)) < 0 and
+                    FrustumPlanes[i].distanceToPoint(glm::vec3(max.x, min.y, max.z)) < 0 and
+                    FrustumPlanes[i].distanceToPoint(glm::vec3(min.x, max.y, max.z)) < 0 and
+                    FrustumPlanes[i].distanceToPoint(max) < 0
+                )
                 {
                     return false; // :^)
                 }
@@ -170,7 +174,8 @@ namespace PeachCore {
             UpdateCameraMatrices();
         }
 
-        void UpdateCameraMatrices()
+        void 
+            UpdateCameraMatrices()
         {
             m_ModelViewMatrix = glm::lookAt(m_Position, m_Position + m_Forwards, m_Upwards);
             m_ProjectionMatrix = glm::perspective(glm::radians(m_FOV), m_AspectRatio, m_NearClippingPlane, m_FarClippingPlane);
