@@ -16,6 +16,9 @@
 
 #include <unordered_map>
 
+#include <semaphore>
+#include <latch>
+
 namespace PeachCore {
 
     enum CollisionShapeType
@@ -121,6 +124,13 @@ namespace PeachCore {
 
         unique_ptr<Logger> physics_logger;
 
+        //////////////////// Thread Syncro Stuff ////////////////////
+
+        atomic<bool> pm_IsRunning = true; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
+        atomic<bool> pm_IsInitialized = false;
+
+        binary_semaphore pm_PhysicsSemaphore{ 0 }; // starts locked (zero tickets)
+
     ////////////////////////////////////////////////
     // Public Members
     ////////////////////////////////////////////////
@@ -130,12 +140,27 @@ namespace PeachCore {
     // Public Methods
     ////////////////////////////////////////////////
     public:
-        bool 
-            Initialize
+
+        void
+            PhysicsLoop
             (
                 const string& fp_LogOutputDirectory,
-                const float fp_GravityX = 0.0f, 
-                const float fp_GravityY = -9.8f
+                latch& fp_InitLatch
+            );
+
+        void
+            RequestPhysicsFrame();
+
+        void
+           Stop();
+
+        bool
+            InitializePhysicsEngine
+            (
+                const string& fp_LogOutputDirectory,
+                const float fp_GravityX = 0.0f,
+                const float fp_GravityY = -9.8f,
+                const bool fp_Is3D = false
             )
         {
             physics_logger = make_unique<Logger>();
@@ -199,8 +224,15 @@ namespace PeachCore {
             return fp_Meters * PIXELS_PER_METER;
         }
 
+        void
+            RequestPhysicsWorldStep()
+        {
+            pm_PhysicsSemaphore.release(); // Gives 1 ticket, wakes render thread
+        }
+
         // Step World
-        void Step(const float fp_TimeStep, const int fp_VelocityIterations = 8, const int fp_PositionIterations = 3)
+        void 
+            Step(const float fp_TimeStep, const int fp_VelocityIterations = 8, const int fp_PositionIterations = 3)
         {
             //pm_World->Step(fp_TimeStep, fp_VelocityIterations, fp_PositionIterations);
             b2World_Step(pm_World, fp_TimeStep, fp_VelocityIterations);

@@ -10,31 +10,45 @@
 ********************************************************************/
 #pragma once
 
+///PeachCore
 #include <glm/glm.hpp>
 
-namespace PeachCore
-{
-    struct DirectionalLight3D
+namespace PeachCore {
+
+    struct Fog3D
     {
-        glm::vec4 pm_Colour;
-        glm::vec3 pm_Direction;
-        float pm_Intensity;
+         bool pm_IsActive = true;
+         glm::vec4 pm_Colour;
+         float pm_Density = 1;
 
         ////////////////////////////////////////////// Constructor //////////////////////////////////////////////
 
-        DirectionalLight3D() = default;
-    
-        DirectionalLight3D(const glm::vec4& fp_Colour, const glm::vec3& fp_Direction, const float fp_Intensity)
+         Fog3D() = default;
+
+         Fog3D(const bool fp_IsActive, const glm::vec4& fp_Colour, const float fp_Density)
          {
-            pm_Colour = fp_Colour;
-            pm_Direction = fp_Direction;
-            pm_Intensity = fp_Intensity;
+             pm_IsActive = fp_IsActive;
+             pm_Colour = fp_Colour;
+             pm_Density = fp_Density;
         }
 
         ////////////////////////////////////////////// Setter and Getters //////////////////////////////////////////////
 
-         [[nodiscard]] glm::vec4 
-             GetColour()
+         [[nodiscard]] bool
+             IsActive()
+             const noexcept
+         {
+            return pm_IsActive;
+        }
+
+         void 
+             SetActive(bool fp_IsActive)
+         {
+             pm_IsActive = fp_IsActive;
+        }
+
+         [[nodiscard]] glm::vec4
+             GetColour() 
              const noexcept
          {
             return pm_Colour;
@@ -46,30 +60,19 @@ namespace PeachCore
              pm_Colour = fp_Colour;
         }
 
-         [[nodiscard]] glm::vec3
-             GetDirection() 
+         [[nodiscard]] float 
+             GetDensity() 
              const noexcept
          {
-            return pm_Direction;
+            return pm_Density;
         }
 
          void 
-             SetDirection(const glm::vec3& fp_Direction)
+             SetDensity(const float fp_Density)
          {
-            pm_Direction = fp_Direction;
+             pm_Density = fp_Density;
         }
 
-         [[nodiscard]] float
-             GetIntensity()
-             const noexcept
-         {
-            return pm_Intensity;
-        }
-
-         void 
-             SetIntensity(float intensity) 
-         {
-            intensity = intensity;
-        }
     };
 }
+

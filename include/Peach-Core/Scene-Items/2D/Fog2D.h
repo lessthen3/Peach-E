@@ -10,11 +10,10 @@
 ********************************************************************/
 #pragma once
 
-struct Plugin 
-{
-    virtual ~Plugin() = default;
-    virtual void Initialize() = 0;
-    virtual void Update(double TimeSinceLastFrame) = 0;
-    virtual void ConstantUpdate(double TimeSinceLastFrame) = 0;
-    virtual void Shutdown() = 0;
-};
+namespace PeachCore {
+
+    struct Fog2D
+    {
+    };
+
+}

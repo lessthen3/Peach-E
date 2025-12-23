@@ -90,22 +90,26 @@ namespace PeachCore {
 /*                            | Name                 | ID |   Operand                | 
                                | ---------------- - | ---- | ---------------------- | 
 */
-    constexpr uint8_t RENDER_NOP = 0x00;
-    constexpr uint8_t RENDER_CREATE_NODE_OP = 0x01;//| pointer to shape def |
-    constexpr uint8_t RENDER_DESTROY_NODE_OP = 0x02; // | — |
-    constexpr uint8_t RENDER_UPDATE_POSITION_OP = 0x03; // | packed vec2 |
-    constexpr uint8_t RENDER_UPDATE_SCALE_OP = 0x04;// | packed vec2 |
-    constexpr uint8_t RENDER_SET_COLOR_OP = 0x05;// | 32 - bit RGBA |
-    constexpr uint8_t RENDER_DONT_DRAW_OP = 0x06;// | — |
-    constexpr uint8_t RENDER_SET_TEXTURE_OP = 0x07;// | texture handle |
-    constexpr uint8_t RENDER_LERP_POSITION_OP = 0x08;// | pointer to lerp config |
-    constexpr uint8_t RENDER_SET_TRANSFORM_OP = 0x09;// | pointer to mat4 |
-    constexpr uint8_t RENDER_PUSH_STATE_OP = 0x0A;// | — |
-    constexpr uint8_t RENDER_POP_STATE_OP = 0x0B;// | — |
 
-    constexpr uint8_t RENDER_OP_FRAME_END = 0x0C; // | Used for render thread to figure out when to sleep
+    //constexpr enum RENDER_OP : uint8_t
+    //{
+    //    constexpr uint8_t RENDER_NOP = 0x00;
+    //    constexpr uint8_t RENDER_CREATE_NODE_OP = 0x01;//| pointer to shape def |
+    //    constexpr uint8_t RENDER_DESTROY_NODE_OP = 0x02; // | — |
+    //    constexpr uint8_t RENDER_UPDATE_POSITION_OP = 0x03; // | packed vec2 |
+    //    constexpr uint8_t RENDER_UPDATE_SCALE_OP = 0x04;// | packed vec2 |
+    //    constexpr uint8_t RENDER_SET_COLOR_OP = 0x05;// | 32 - bit RGBA |
+    //    constexpr uint8_t RENDER_DONT_DRAW_OP = 0x06;// | — |
+    //    constexpr uint8_t RENDER_SET_TEXTURE_OP = 0x07;// | texture handle |
+    //    constexpr uint8_t RENDER_LERP_POSITION_OP = 0x08;// | pointer to lerp config |
+    //    constexpr uint8_t RENDER_SET_TRANSFORM_OP = 0x09;// | pointer to mat4 |
+    //    constexpr uint8_t RENDER_PUSH_STATE_OP = 0x0A;// | — |
+    //    constexpr uint8_t RENDER_POP_STATE_OP = 0x0B;// | — |
 
-    constexpr uint8_t RENDER_SHUTDOWN_THREAD = 0x0D; //used for shutting down render thread appropriately uwu
+    //    constexpr uint8_t RENDER_OP_FRAME_END = 0x0C; // | Used for render thread to figure out when to sleep
+
+    //    constexpr uint8_t RENDER_SHUTDOWN_THREAD = 0x0D; //used for shutting down render thread appropriately uwu
+    //};
         
 
     //////////////////////////////////////////////
@@ -143,10 +147,10 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
-        unique_ptr<VulkanRenderer> pm_VulkanRenderer = nullptr;
+        unique_ptr<Vulkan::Renderer> pm_VulkanRenderer = nullptr;
 
         #ifndef __APPLE__ //OpenGL not supported on mac anymore fuck you tim apple
-            unique_ptr<OpenGLRenderer> pm_OpenGLRenderer = nullptr;
+            unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr;
         #endif
 
         uint64_t pm_FrameRateLimit = 60;
@@ -176,9 +180,7 @@ namespace PeachCore {
         atomic<bool> pm_IsRunning = true; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
         atomic<bool> pm_IsInitialized = false;
 
-        condition_variable m_RenderCV;
-
-        atomic<bool>  pm_ShouldRender{ false };
+        binary_semaphore pm_RenderSemaphore{ 0 }; // starts locked (zero tickets)
 
     //////////////////////////////////////////////
     // Public Methods
@@ -188,33 +190,21 @@ namespace PeachCore {
             RenderLoop
             (
                 const RendererType fp_DesiredRenderer,
-                const string& fp_LogOutputDirectory
+                const string& fp_LogOutputDirectory,
+                latch& fp_InitLatch
             );
 
-        bool 
-            Initialize
-        (
-            const RendererType fp_DesiredRenderer,
-            const string& fp_LogOutputDirectory
-        );
+        void
+            RequestRender();
 
-        bool
-            InitializeLoadingQueue();
-
-        bool
-            InitializeDrawCommandQueue();
+        void
+            Stop();
 
         [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>>
-            GetDrawCommandQueue();
-
-        [[nodiscard]] bool
-            ProcessCommands();
-
-        bool
-            PresentFrame();
-
-        void 
-            ProcessLoadedResourcePackages();
+            GetDrawCommandQueue
+            (
+                Logger*const logger
+            ); //this is supposed to be called from the main thread so cant use the rendering_logger here for thread reasons
 
         [[nodiscard]] bool
             CreateSDLWindow
@@ -236,15 +226,12 @@ namespace PeachCore {
             void
                 DestroyOpenGLRenderer();
 
-            [[nodiscard]] OpenGLRenderer*
+            [[nodiscard]] OpenGL::Renderer*
                 GetOpenGLRenderer();
         #endif
 
         void 
             ResizeWindow();
-
-        void 
-            Shutdown();
 
         void 
             GetCurrentViewPort();
@@ -269,7 +256,7 @@ namespace PeachCore {
                 {
                     if (SDL_GetWindowID(pm_MainWindow) == lv_Window)
                     {
-                        pm_IsRunning.store(false);
+                        pm_IsRunning.store(false, std::memory_order_release);
                         //pm_VulkanRenderer->CleanUp();
                     }
 
@@ -284,16 +271,15 @@ namespace PeachCore {
 
         unsigned int GetFrameRateLimit() const;
 
-        void SetFrameRateLimit(unsigned int fp_Limit);
-        void SetVSync(const bool fp_IsEnabled);
-
-        bool IsVSyncEnabled() const;
+        void 
+            SetFrameRateLimit(unsigned int fp_Limit);
 
         void 
-            ForceQuit()
-        {
-            pm_IsRunning = false;
-        }
+            SetVSync(const bool fp_IsEnabled);
+
+        bool 
+            IsVSyncEnabled() 
+            const;
 
         SDL_Window*
             GetMainWindow()
@@ -329,6 +315,28 @@ namespace PeachCore {
         {
 
         }
+
+        bool
+            Initialize
+            (
+                const RendererType fp_DesiredRenderer,
+                const string& fp_LogOutputDirectory
+            );
+
+        bool
+            InitializeLoadingQueue();
+
+        bool
+            InitializeDrawCommandQueue();
+
+        [[nodiscard]] bool
+            ProcessCommands();
+
+        bool
+            PresentFrame();
+
+        void
+            Shutdown();
 
         //wip? future me: WORKING BITCH
         bool

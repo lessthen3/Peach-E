@@ -73,7 +73,7 @@ namespace PUI{
 
     //All data types here are designed to be default constructed for easier use as members
 
-    //the same verts are used for all shapes for rendering purposes, uv's are dynamically remapped
+    //the same verts are used for all shapes for rendering purposes, uv's are dynamically remapped, it also represents the Bounding box for any ui element uwu, useful for alignment and bounds checking
     static constexpr float QUAD_VERTS[8] =
     {
         0.f, 0.f,
@@ -85,6 +85,7 @@ namespace PUI{
 
     enum class ShapeType : uint8_t
     {
+        NO_SHAPE = 0,
         Rectangle = 1 << 0,
         Circle = 1 << 1,
         Ellipse = 1 << 2,
@@ -102,7 +103,11 @@ namespace PUI{
         glm::mat4 m_Transform = glm::mat4(1.0f); //glm doesn't default construct the matrix, so we wanna always construct it as an identity matrix
         //Position of the shape for use by Peach Engine so that a game dev/me can call a simple method like PUINode.move(new_vector) for the CPU side of things
         //The position is what the CPU uses for hit detection completely separate from whats drawn, but should very closely reflect the rendered position on screen
-        glm::vec2 m_Position; //vec2 does have a default constructor apparently so idfk this is fine ig we'll see
+        glm::vec2 m_Position = glm::vec2(); //vec2 does have a default constructor apparently so idfk this is fine ig we'll see
+
+        float pm_Scale = 1;
+
+        ShapeType pm_Shape = ShapeType::NO_SHAPE;
 
         virtual inline bool 
             IsWithin(const glm::vec2& fp_TestPoint) const = 0;
@@ -129,6 +134,10 @@ namespace PUI{
         //(x, y) dictates top left corner, width and height dictate how far the bottom right vert is extended
         float pm_Width = 0.0f; 
         float pm_Height = 0.0f;
+        
+        ShapeType pm_Shape = ShapeType::Rectangle;
+
+        Rectangle() = default;
 
         [[nodiscard]] inline bool
             IsWithin(const glm::vec2& fp_TestPoint)
@@ -171,6 +180,11 @@ namespace PUI{
         //(x, y) dictates the center position of the circle
         float m_Radius = 0.0f;
 
+        Circle()
+        {
+            pm_Shape = ShapeType::Circle;
+        }
+
         [[nodiscard]] inline bool
             IsWithin(const glm::vec2& fp_TestPoint) //test whether the point we're trying to test is within the radius of the circle shape
             const noexcept override
@@ -201,8 +215,13 @@ namespace PUI{
         //(x, y) dictates the center position of the ellipse
 
         //we need two points to define the major and minor axis of an ellipse so it can be resized appropriately, the m_Position variable just dictates the transform of the ellipse as a whole
-        glm::vec2 m_MajorAxis;
-        glm::vec2 m_MinorAxis;
+        glm::vec2 m_MajorAxis = glm::vec2();
+        glm::vec2 m_MinorAxis = glm::vec2();
+
+        Ellipse()
+        {
+            pm_Shape = ShapeType::Ellipse;
+        }
 
         [[nodiscard]] inline bool
             IsWithin(const glm::vec2& fp_TestPoint)
@@ -217,6 +236,11 @@ namespace PUI{
     {
         //(x, y) dictates the center position of the rectangle of the capsule idk this is up for debate
 
+        Capsule()
+        {
+            pm_Shape = ShapeType::Capsule;
+        }
+
         [[nodiscard]] inline bool
             IsWithin(const glm::vec2& fp_TestPoint)
             const noexcept override
@@ -229,8 +253,13 @@ namespace PUI{
     {
         //(x, y) dictates the centroid position of the triangle
 
-        glm::vec2 m_BaseLength;
-        glm::vec2 m_HeightLength;
+        glm::vec2 m_BaseLength = glm::vec2();
+        glm::vec2 m_HeightLength = glm::vec2();
+
+        Triangle()
+        {
+            pm_Shape = ShapeType::Triangle;
+        }
 
         [[nodiscard]] inline bool
             IsWithin(const glm::vec2& fp_TestPoint)
@@ -238,6 +267,26 @@ namespace PUI{
         {
             return true;
         }
+    };
+
+    struct Polygon final : public Shape //twiangle rawr >O<, can be squashed or stretched as much as needed  
+    {
+        //(x, y) dictates the centroid position of the triangle
+
+        vector<glm::vec2> pm_Vertices;
+
+        Polygon()
+        {
+            pm_Shape = ShapeType::Polygon;
+        }
+
+        [[nodiscard]] inline bool
+            IsWithin(const glm::vec2& fp_TestPoint)
+            const noexcept override
+        {
+            return true;
+        }
+
     };
     
 }// namespace PUI

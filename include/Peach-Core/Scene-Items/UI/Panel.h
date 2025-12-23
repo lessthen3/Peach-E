@@ -20,10 +20,10 @@ namespace PUI {
     {
         Rectangle m_Shape;
 
-        Panel(string fp_DesiredID)
+        Panel(uint64_t fp_DesiredID)
         {
             m_Type = NodeType::Panel;
-            m_PeachID = fp_DesiredID;
+            pm_NodeID = fp_DesiredID;
         }
 
     };

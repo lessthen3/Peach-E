@@ -9,3 +9,11 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
+
+namespace PeachCore {
+
+    struct DirectionalLight2D
+    {
+    };
+
+}

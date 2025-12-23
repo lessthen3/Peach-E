@@ -10,6 +10,8 @@
 ********************************************************************/
 #pragma once
 
+#define PEACH_ARRAY_SIZE(x) sizeof(x) / sizeof(x[0]) 
+
 #ifdef PEACH_DEBUG //TEMPORARY JUST HERE FOR NOW TESTING THE IDEA, SINCE DEBUG DOESNT ALWAYS MEAN USING TERMINAL
     #define PEACH_USING_OS_TERMINAL
 #endif

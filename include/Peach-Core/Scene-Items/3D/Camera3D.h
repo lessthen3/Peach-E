@@ -121,15 +121,16 @@ namespace PeachCore {
         }
     };
 
-    class BasicCamera3D
+    struct Camera3D
     {
-    public:
-        glm::vec3 m_Position; //keeps track of current position of the camera
-        glm::vec3 m_Forwards; //always points forwards relative to the camera
-        glm::vec3 m_Upwards; //always point upwards relative to the camera
-        glm::vec3 m_Sideways; //always points perpindicular to forwards and upwards
-        glm::vec3 m_GlobalUp; //contains information about the vector that defines the worldspace's basis up vector
+    private:
+        glm::vec3 pm_Position; //keeps track of current position of the camera
+        glm::vec3 pm_Forwards; //always points forwards relative to the camera
+        glm::vec3 pm_Upwards; //always point upwards relative to the camera
+        glm::vec3 pm_Sideways; //always points perpindicular to forwards and upwards
+        glm::vec3 pm_GlobalUp; //contains information about the vector that defines the worldspace's basis up vector
 
+    public:
         // Euler Angles
         float m_HorizontalRotation; //controls left-right movement
         float m_VerticalRotation; //controls up-down movement
@@ -144,9 +145,9 @@ namespace PeachCore {
         glm::mat4 m_ModelViewMatrix;
         glm::mat4 m_ProjectionMatrix;
 
-        BasicCamera3D(glm::vec3 position, glm::vec3 up, float yaw, float pitch, float fov, float aspect, float nearP, float farP)
-            : m_Forwards(glm::vec3(0.0f, 0.0f, -1.0f)), m_GlobalUp(up), m_HorizontalRotation(yaw), m_VerticalRotation(pitch),
-            m_FOV(fov), m_AspectRatio(aspect), m_NearClippingPlane(nearP), m_FarClippingPlane(farP), m_Position(position)
+        Camera3D(glm::vec3 position, glm::vec3 up, float yaw, float pitch, float fov, float aspect, float nearP, float farP)
+            : pm_Forwards(glm::vec3(0.0f, 0.0f, -1.0f)), pm_GlobalUp(up), m_HorizontalRotation(yaw), m_VerticalRotation(pitch),
+            m_FOV(fov), m_AspectRatio(aspect), m_NearClippingPlane(nearP), m_FarClippingPlane(farP), pm_Position(position)
         {
             UpdateCameraOrientationVectors();
             UpdateCameraMatrices();
@@ -165,11 +166,11 @@ namespace PeachCore {
                 }
             );
 
-            m_Forwards = glm::normalize(f_Front);
+            pm_Forwards = glm::normalize(f_Front);
 
             // Recalculate the right and up vector
-            m_Sideways = glm::normalize(glm::cross(f_Front, m_GlobalUp));
-            m_Upwards = glm::normalize(glm::cross(m_Sideways, f_Front));
+            pm_Sideways = glm::normalize(glm::cross(f_Front, pm_GlobalUp));
+            pm_Upwards = glm::normalize(glm::cross(pm_Sideways, f_Front));
 
             UpdateCameraMatrices();
         }
@@ -177,8 +178,29 @@ namespace PeachCore {
         void 
             UpdateCameraMatrices()
         {
-            m_ModelViewMatrix = glm::lookAt(m_Position, m_Position + m_Forwards, m_Upwards);
+            m_ModelViewMatrix = glm::lookAt(pm_Position, pm_Position + pm_Forwards, pm_Upwards);
             m_ProjectionMatrix = glm::perspective(glm::radians(m_FOV), m_AspectRatio, m_NearClippingPlane, m_FarClippingPlane);
         }
+
+        void
+            Move(const glm::vec3& fp_Delta)
+        {
+            pm_Position += fp_Delta;
+        }
+
+        glm::vec3
+            GetPosition()
+            const noexcept
+        {
+            return pm_Position;
+        }
+
+        glm::vec3
+            GetRotation()
+            const noexcept
+        {
+            return glm::vec3();
+        }
+
     };
 }

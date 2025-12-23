@@ -63,6 +63,12 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
+        //////////////////// FPS Vars ////////////////////
+
+        float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
+        float USER_DEFINED_UPDATE_FPS = 60.0f;
+        float USER_DEFINED_RENDER_FPS = 10.0f; //Needs to be adjustable in-game so no const >w<
+
         //////////////////// Main Logger and Console Buffers ////////////////////
 
         unique_ptr<Logger> main_logger = nullptr;
@@ -71,12 +77,13 @@ namespace PeachCore {
         //////////////////// Loading/Command Queues ////////////////////
 
         shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_ResourceCommandQueue = nullptr;
+
         shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_RenderCommandQueue = nullptr;
 
-        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
 
-        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_NetworkCommandQueue = nullptr;
-        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_PhysicsCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<NetworkCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_NetworkCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<PhysicsCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_PhysicsCommandQueue = nullptr;
 
         //shared_ptr<CommandQueue> m_UserScriptCommandQueue = nullptr; //XXX: used for submitting update commands -> GameManager from script runtimes
 
@@ -88,7 +95,7 @@ namespace PeachCore {
 
         DotnetContext pm_DotnetContext;
         LuaRuntimeContext pm_LuaRuntimeContext;
-        PythonRuntimeContext pm_PythonRuntimeContext;
+        BongoJamRuntimeContext pm_BongoJamRuntimeContext;
 
         //////////////////// Thread Handles ////////////////////
 
@@ -98,50 +105,54 @@ namespace PeachCore {
         jthread pm_AudioThread;
         jthread pm_NetworkThread;
 
+        uint8_t pm_RequiredThreads = 0; //required threads for execution
+
         //////////////////// Scene Stuff ////////////////////
 
         SceneTree pm_CurrentScene;
-        map<string, SceneTree> DictionaryOfAllScenesInCurrentProject;
+        unordered_map<string, uint64_t> pm_DictionaryOfAllScenesInCurrentProject; // Key : Scene name, Val : offset in peach binary
+
+        //////////////////// Thread Syncro Stuff ////////////////////
 
         atomic<bool> m_IsRunning = true;
+        latch pm_ThreadInitializationLatch{ 4 }; //4 because thats the number of thread managers  - 1 because the resourcemanager has its own latch since the order is : resource thread first, then every other thread since those arent order sensitive uwu
+        latch pm_ResourceInitializationLatch{ 1 };
 
     //////////////////////////////////////////////
     // Public Members
     //////////////////////////////////////////////
     public:
-        const float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
-        const float USER_DEFINED_UPDATE_FPS = 60.0f;
-        float        USER_DEFINED_RENDER_FPS = 10.0f; //Needs to be adjustable in-game so no const >w<
-
         shared_ptr<Logger> m_UserLogger;
 
     //////////////////////////////////////////////
     // Public Methods
     //////////////////////////////////////////////
     public:
-        bool //WIP IM NOT SURE IF INITIALIZE OPENGL SHOULD BE HERE OR ANOTHER METHOD WHATEVER
+        bool 
             InitializePeachEngine
             (
                 const string& fp_RootPath,
                 const string& fp_BootConfPath,
                 const RendererType fp_RenderingBackend,
+                const uint8_t fp_RequiredThreads,
                 bool fp_IsSegfaultHandled = false
             );
-
-        bool 
-            LoadScriptRuntime
-            (
-                const string& fp_BootConfPath,
-                const uint8_t fp_RequiredScriptRuntimes
-            ); //WARNING: this is public for testing
 
         void
             StartMainGameLoop();
 
-        //////////////////// Shutdown and Cleanup OwO ////////////////////
+        //////////////////////////////////////// Shutdown and Cleanup OwO ////////////////////////////////////////
 
         bool
             ShutdownPeachEngine();
+
+        //////////////////////////////////////// Peach API Functions ////////////////////////////////////////
+
+        PEACH_STATUS_CODE
+            ChangeScene(const string& fp_DesiredSceneName);
+
+        [[nodiscard]] SceneTree*
+            GetCurrentScene();
 
     //////////////////////////////////////////////
     // Private Methods
@@ -151,21 +162,17 @@ namespace PeachCore {
         static void
             SegFaultHandler(int fp_Signal) //primitive segfault handler
         {
-            PrintError(format("[!] Crash signal received: {}, FATAL_SEGMENTATION_FAULT", fp_Signal));
+            PrintError(format("[!] Crash signal received: {}, __FATAL__SEGMENTATION__FAULT__", fp_Signal));
             // possibly notify watchdog or dump stack trace
             exit(FATAL_SEGMENTATION_FAULT); //clean exit so everything calls their destructors
         }
 
-        //////////////////// Thread Methods ////////////////////
-
-
-        //////////////////// Engine Initialization Methods ////////////////////
+        //////////////////////////////////////// Thread Methods ////////////////////////////////////////
 
         bool
             InitializeThreads
             (
                 const string& fp_RootPath,
-                uint8_t fp_RequiredThreads,
                  RendererType fp_RenderingBackend //ONLY HERE FOR TESTING SHOULD BE DEDUCED FROM PROJECT FILE
             );
 
@@ -175,9 +182,7 @@ namespace PeachCore {
         bool
             InitializePhysFS(const char* fp_RootPath);
 
-       //////////////////////////////////////////////
-       // Peach Engine Startup Config Setup
-       //////////////////////////////////////////////
+        //////////////////////////////////////// Engine Initialization Methods ////////////////////////////////////////
 
         bool 
             LoadGameStartupConfigs() //This method should be able to load configs from JSON or some other binary format that cereal supports
@@ -186,15 +191,16 @@ namespace PeachCore {
             return true;
         }
 
+        bool
+            LoadScriptRuntime
+            (
+                const string& fp_BootConfPath,
+                const uint8_t fp_RequiredScriptRuntimes
+            ); 
+
         //////////////////////////////////////////////
         // Game Loop Methods
         //////////////////////////////////////////////
-
-        void
-            RequestRender();
-
-        void
-            RequestPhysicsWorldStep();
 
         void
             CallUpdate(double fp_MilisecondsSinceLastCall);
@@ -202,7 +208,7 @@ namespace PeachCore {
         void
             CallConstantUpdate(double fp_FixedDeltaTime);
 
-        //////////////////// Plugin Stuff ////////////////////
+        //////////////////////////////////////// Plugin Stuff ////////////////////////////////////////
 
         void
             InitializePlugins()

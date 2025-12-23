@@ -13,13 +13,14 @@
 #ifndef __APPLE__
 
 namespace PeachCore {
+namespace OpenGL{
 
     void
         Viewport::SetupViewport
         (
             const unsigned int fp_Width,
             const unsigned int fp_Height,
-            OpenGLRenderer* fp_Renderer,
+            Renderer* fp_Renderer,
             shared_ptr<Logger> fp_EditorRenderingLogger
         )
     {
@@ -249,6 +250,7 @@ namespace PeachCore {
 
         return true;
     }
-}
+}//namespace OpenGL
+}//namespace PeachCore
 
 #endif

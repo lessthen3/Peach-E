@@ -46,7 +46,7 @@ namespace PeachEditor::DotnetUtils
             return false;
         }
 
-        #if defined(_WIN32) || defined(_WIN64)
+        #if defined(_WIN32) || defined(_WIN64) //ohhhh _popen SO DIFFERENT SO UNIQUE THANK U BILL FUCK U IDGAF THAT U CAN JUMP OVER A FUCKING CHAIR
 
             FILE* pipe = _popen("dotnet --version", "r");
 
@@ -65,7 +65,7 @@ namespace PeachEditor::DotnetUtils
 
             _pclose(pipe);
 
-        #else
+        #else //just assuming posix otherwise idk
 
             FILE* pipe = popen("dotnet --version", "r");
 
@@ -251,6 +251,12 @@ namespace PeachEditor::DotnetUtils
         //////////////////// Log Info ////////////////////
 
         logger->Info(format("C# solution generated with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils");
+
+        //////////////////// Dotnet Testing not Real Production Code ////////////////////
+
+        //Serializer f_Serializer;
+
+        //f_Serializer.ToJSON(pm_DotnetContext.RuntimeConfigs, "PeachGame.runtimeconfig", fp_RootPath + "/local_tests", main_logger.get());
 
         return true;
     }

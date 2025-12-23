@@ -63,10 +63,11 @@ int
 
         auto peach_editor = &PeachEditor::PeachEditorManager::get_single();
 
-        peach_editor->InitializePeachEditor
-        (
-            mf_PeachERootPath
-        );
+        if (not peach_editor->InitializePeachEditor(mf_PeachERootPath))
+        {
+            PeachCore::PrintError("Failed to initialize Peach Editor properly uwu");
+            return EXIT_FAILURE;
+        }
 
         peach_editor->StartPeachEditorMainLoop();
 

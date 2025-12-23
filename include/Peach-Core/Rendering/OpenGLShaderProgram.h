@@ -14,6 +14,8 @@
 
 ///PeachCore
 #include "../Utils/Logger.h"
+#include "../Scene-Items/3D/Fog3D.h"
+#include "PeachMaterial.h"
 
 ///External
 #include <GL/glew.h>
@@ -21,11 +23,20 @@
 #include <glm/gtc/type_ptr.hpp>
 
 namespace PeachCore {
+namespace OpenGL{
 
-    class OpenGLShaderProgram 
+    class ShaderProgram 
     {
+    private:
+        map<string, GLuint> pm_Shaders; //stores references to all shader IDs that have been registered with the OpenGL::ShaderProgram
+        map<string, GLuint> pm_Uniforms; //stores all information relevant to program uniforms
+
+        string pm_ProgramName;
+
+        GLuint pm_ProgramID = 0;
+
     public:
-        ~OpenGLShaderProgram()
+        ~ShaderProgram()
         {
             if (pm_ProgramID != 0) //delete program if it has been set only
             {
@@ -35,12 +46,12 @@ namespace PeachCore {
             cout << "Destroyed program ID: " << pm_ProgramID << " for object " << this << endl;
         }
 
-        OpenGLShaderProgram(const OpenGLShaderProgram&) = delete;
-        OpenGLShaderProgram& operator=(const OpenGLShaderProgram&) = delete;
-        //OpenGLShaderProgram(OpenGLShaderProgram&& other) noexcept = default; // Implement this
+        ShaderProgram(const ShaderProgram&) = delete;
+        ShaderProgram& operator=(const ShaderProgram&) = delete;
+        //ShaderProgram(ShaderProgram&& other) noexcept = default; // Implement this
 
-        OpenGLShaderProgram&
-            operator=(OpenGLShaderProgram&& other) //move operator
+        ShaderProgram&
+            operator=(ShaderProgram&& other) //move operator
             noexcept
         {
             if (this != &other)
@@ -65,7 +76,7 @@ namespace PeachCore {
             return *this;
         }
 
-        OpenGLShaderProgram(OpenGLShaderProgram&& other) 
+        ShaderProgram(ShaderProgram&& other) 
             noexcept
             :   
             pm_Shaders(move(other.pm_Shaders)),
@@ -82,18 +93,10 @@ namespace PeachCore {
         }
 
 
-        OpenGLShaderProgram() = default;
-
-    private:
-        map<string, GLuint> pm_Shaders; //stores references to all shader IDs that have been registered with the OpenGLShaderProgram
-        map<string, GLuint> pm_Uniforms; //stores all information relevant to program uniforms
-
-        string pm_ProgramName;
-
-        GLuint pm_ProgramID = 0;
+        ShaderProgram() = default;
 
     public:
-        OpenGLShaderProgram
+        ShaderProgram
             (
                 const string& fp_ShaderName, 
                 const string& fp_VertexSourceFilePath, 
@@ -111,7 +114,7 @@ namespace PeachCore {
             ///vertex shader
             if (not ReadFileIntoString(fp_VertexSourceFilePath, &f_VertexSourceCode, fp_RenderingLogger))
             {
-                fp_RenderingLogger->Error("Unable to read vertex shader code into a string", "OpenGLShaderProgram: " + pm_ProgramName);
+                fp_RenderingLogger->Error("Unable to read vertex shader code into a string", "OpenGL::ShaderProgram: " + pm_ProgramName);
             }
             else if(CreateVertexShader(f_VertexSourceCode, fp_RenderingLogger))
             {
@@ -120,7 +123,7 @@ namespace PeachCore {
             ///fragment shader
             if (not ReadFileIntoString(fp_FragmentSourceFilePath, &f_FragmentSourceCode, fp_RenderingLogger))
             {
-                fp_RenderingLogger->Error("Unable to read fragment shader code into a string", "OpenGLShaderProgram: " + pm_ProgramName);
+                fp_RenderingLogger->Error("Unable to read fragment shader code into a string", "OpenGL::ShaderProgram: " + pm_ProgramName);
             }
             else if (CreateFragmentShader(f_FragmentSourceCode, fp_RenderingLogger))
             {
@@ -133,7 +136,7 @@ namespace PeachCore {
             }
             else
             {
-                fp_RenderingLogger->Error("Shader failed to link due to invalid shader(s)", "OpenGLShaderProgram: " + pm_ProgramName);
+                fp_RenderingLogger->Error("Shader failed to link due to invalid shader(s)", "OpenGL::ShaderProgram: " + pm_ProgramName);
             }
         }
 
@@ -279,23 +282,35 @@ namespace PeachCore {
         // Fog Uniform Creator Setters
         //////////////////////////////////////////////
 
-        //void SetUniform(string uniformName, Fog fog) {
-        //    SetUniform(uniformName + ".activeFog", fog.isActive() ? 1 : 0);
-        //    SetUniform(uniformName + ".colour", fog.getColour());
-        //    SetUniform(uniformName + ".density", fog.getDensity());
-        //}
+        void 
+            SetUniform
+            (
+                const string& fp_UniformName, 
+                const Fog3D& fp_Fog
+            )
+        {
+            SetUniform(fp_UniformName + ".activeFog", fp_Fog.IsActive() ? 1 : 0);
+            SetUniform(fp_UniformName + ".colour", fp_Fog.GetColour());
+            SetUniform(fp_UniformName + ".density", fp_Fog.GetDensity());
+        }
 
         //////////////////////////////////////////////
         // Material Uniform Setters
         //////////////////////////////////////////////
 
-        //void SetMaterialUniforms(string uniformName, Material material) {
-        //    SetUniform(uniformName + ".ambient", material.getAmbientColour());
-        //    SetUniform(uniformName + ".diffuse", material.getDiffuseColour());
-        //    SetUniform(uniformName + ".specular", material.getSpecularColour());
-        //    SetUniform(uniformName + ".hasTexture", material.isTextured() ? 1 : 0);
-        //    SetUniform(uniformName + ".reflectance", material.getReflectance());
-        //}
+        void 
+            SetMaterialUniforms
+            (
+                const string& fp_UniformName,
+                const PeachMaterial& fp_Material
+            ) 
+        {
+            SetUniform(fp_UniformName + ".ambient", fp_Material.GetAmbientColour());
+            SetUniform(fp_UniformName + ".diffuse", fp_Material.GetDiffuseColour());
+            SetUniform(fp_UniformName + ".specular", fp_Material.GetSpecularColour());
+            SetUniform(fp_UniformName + ".hasTexture", fp_Material.IsTextured() ? 1 : 0);
+            SetUniform(fp_UniformName + ".reflectance", fp_Material.GetReflectance());
+        }
 
         //////////////////////////////////////////////
         // Texture Uniform Setter
@@ -315,10 +330,10 @@ namespace PeachCore {
         void
             PrintShaderProgramUniformList()
         {
-            for (auto& uniform : pm_Uniforms)
+            for (auto& lv_Uniform : pm_Uniforms)
             {
-                cout << "Uniform Name: " << uniform.first << "\n";
-                cout << "Uniform Location: " << uniform.second << "\n";
+                cout << "Uniform Name: " << lv_Uniform.first << "\n";
+                cout << "Uniform Location: " << lv_Uniform.second << "\n";
             }
         }
 
@@ -328,16 +343,16 @@ namespace PeachCore {
             return pm_Uniforms.at(fp_UniformName);
         }
 
-        string
+        [[nodiscard]] string
             GetProgramName()
-            const
+            const noexcept
         {
             return pm_ProgramName;
         }
 
-        int
+        [[nodiscard]] GLuint
             GetProgramID()
-            const
+            const noexcept
         {
             return pm_ProgramID;
         }
@@ -360,7 +375,7 @@ namespace PeachCore {
 
             glLinkProgram(pm_ProgramID);
 
-            fp_RenderingLogger->Debug("Successfully Linked!", "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
+            fp_RenderingLogger->Debug("Successfully Linked!", "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
 
             GLint success;
             GLchar infoLog[512];
@@ -369,7 +384,7 @@ namespace PeachCore {
             if (not success)
             {
                 glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
-                fp_RenderingLogger->Error("ERROR::SHADER::PROGRAM::LINKING_FAILED" + static_cast<string>(infoLog), "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
+                fp_RenderingLogger->Error("ERROR::SHADER::PROGRAM::LINKING_FAILED" + static_cast<string>(infoLog), "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
             }
 
             for (auto& shader : pm_Shaders)
@@ -384,7 +399,7 @@ namespace PeachCore {
             if (not success)
             {
                 glGetProgramInfoLog(pm_ProgramID, 512, NULL, infoLog);
-                fp_RenderingLogger->Error("Shader validation error: " + static_cast<string>(infoLog), "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
+                fp_RenderingLogger->Error("Shader validation error: " + static_cast<string>(infoLog), "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
             }
 
             AutoCaptureActiveUniforms(fp_RenderingLogger);
@@ -417,7 +432,7 @@ namespace PeachCore {
 
                 pm_Uniforms.insert({ f_temp, location });
 
-                fp_RenderingLogger->Debug("Uniform #: " + to_string(i) + ", Type(GLenum): " + to_string(type) + ", Name: " + f_temp + ", Location(GLuint): " + to_string(location), "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
+                fp_RenderingLogger->Debug("Uniform #: " + to_string(i) + ", Type(GLenum): " + to_string(type) + ", Name: " + f_temp + ", Location(GLuint): " + to_string(location), "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
             }
         }
 
@@ -493,7 +508,7 @@ namespace PeachCore {
             if (not success)
             {
                 glGetShaderInfoLog(f_ShaderID, 512, NULL, infoLog);
-                fp_RenderingLogger->Error("Shader compilation error: " + static_cast<string>(infoLog), "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
+                fp_RenderingLogger->Error("Shader compilation error: " + static_cast<string>(infoLog), "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
                 return 0; // Or handle the error appropriately
             }
 
@@ -506,9 +521,9 @@ namespace PeachCore {
 
         void 
             CleanUp()
-            const
         {
             glDeleteProgram(pm_ProgramID);
+            pm_ProgramID = 0; //reset val uwu
         }
 
        //////////////////////////////////////////////
@@ -529,7 +544,7 @@ namespace PeachCore {
 
             if (lastDotIndex == string::npos)
             {
-                fp_RenderingLogger->Error("No file extension found for GLSL Shader at specified filepath: " + fp_ScriptFilePath, "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
+                fp_RenderingLogger->Error("No file extension found for GLSL Shader at specified filepath: " + fp_ScriptFilePath, "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
                 return false;
             }
 
@@ -537,7 +552,7 @@ namespace PeachCore {
 
             if (f_FileExtension != ".fs" and f_FileExtension != ".vs" and f_FileExtension != ".glsl")
             {
-                fp_RenderingLogger->Error("Invalid file extension found when GLSL Shader was expected at specified filepath: " + fp_ScriptFilePath, "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
+                fp_RenderingLogger->Error("Invalid file extension found when GLSL Shader was expected at specified filepath: " + fp_ScriptFilePath, "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
                 return false;
             }
 
@@ -545,7 +560,7 @@ namespace PeachCore {
 
             if (not f_FileStream)
             {
-                fp_RenderingLogger->Error("Shader failed to load at file path: " + fp_ScriptFilePath, "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
+                fp_RenderingLogger->Error("Shader failed to load at file path: " + fp_ScriptFilePath, "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
                 return false;
             }
 
@@ -553,10 +568,11 @@ namespace PeachCore {
             f_Buffer << f_FileStream.rdbuf();
             *fp_SourceCode = f_Buffer.str();
 
-            fp_RenderingLogger->Debug("Shader successfully loaded at file path: " + fp_ScriptFilePath, "OpenGLShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
+            fp_RenderingLogger->Debug("Shader successfully loaded at file path: " + fp_ScriptFilePath, "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
 
             return true;
         }
     };
-}
+}//namespace OpenGL
+}//namespace PeachCore
 #endif

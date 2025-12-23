@@ -35,13 +35,14 @@
 constexpr uint32_t MINIMUM_SWAPCHAIN_SIZE = 2;
 
 namespace PeachCore{
+namespace Vulkan{
 
-    struct VulkanRenderer 
+    struct Renderer 
     {
     public:
-        VulkanRenderer() = default; //default construction, use initialize function so we can avoid unecessary copy semantics
+        Renderer() = default; //default construction, use initialize function so we can avoid unecessary copy semantics
 
-        ~VulkanRenderer() = default; //idrc ab RAII here since VulkanRenderer will live for the entire program runtime, so cleaning it up is an after thought
+        ~Renderer() = default; //idrc ab RAII here since VulkanRenderer will live for the entire program runtime, so cleaning it up is an after thought
         //we can just let the OS or driver handle it idrc
 
         enum StatusCode : uint32_t
@@ -220,44 +221,5 @@ namespace PeachCore{
         bool
             RecreateSwapChain();
     };
-}
-
-namespace PeachCore{
-
-    // -- Peach UI System --
-class PeachUIManager
-{
-    // public:
-    //     unique_ptr<PeachUserInterfaceNode> root;
-    //     shared_ptr<Logger> pui_logger = nullptr;
-
-    //     PeachUIManager() 
-    //     {
-    //         root = make_unique<PeachUserInterfaceNode>(NodeType::Root);
-    //         root->m_Rectangle = {0, 0, 1920, 1080}; // Example
-    //     }
-
-        // Walk tree, collect visible nodes, output draw data for batching
-        // void collectDrawCommands(vector<YourDrawCommand>& outCmds) 
-        // {
-        //     collectDrawCommandsRecursive(root.get(), outCmds);
-        // }
-
-        // // Recursive collection (do layout/visibility/etc)
-        // void collectDrawCommandsRecursive(PeachUINode* node, vector<YourDrawCommand>& outCmds)
-        //  {
-        //     // Build YourDrawCommand from node (rect, style, text, image, etc)
-        //     // For each child:
-        //     for (auto& child : node->children) {
-        //         collectDrawCommandsRecursive(child.get(), outCmds);
-        //     }
-        // }
-
-        // Hit-testing for input
-        // PeachUserInterfaceNode* HitTest(float x, float y)
-        // {
-        //     // Walk tree, return node under point (for mouse events)
-        //     return nullptr;
-        // }
-    };
-}
+}//namespace Vulkan
+}//namespace PeachCore

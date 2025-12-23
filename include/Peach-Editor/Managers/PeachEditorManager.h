@@ -93,33 +93,14 @@ namespace PeachEditor{
 
             main_editor_logger->Debug("Main editor logger successfully initialized", "PeachEditorManager");
 
-            //////////////////// Get Local HostFxr Path and Validate Dotnet Exists TEST_ONLY ////////////////////
-
-            string f_HostFxrPath;
-
-            if(DotnetUtils::AssertDotnetExists()) //dummy call but should actually make lmfao
-            {
-                DotnetUtils::GetHostFxrLocalPath(&f_HostFxrPath, main_editor_logger.get());
-            }
-
-            //DotnetUtils::GenerateDefaultScript("FirstGeneratedScript", "Sprite2D", fp_RootPath + "/local_tests", main_logger.get());
-            //DotnetUtils::GenerateProjectFiles(pm_DotnetConfiguration, "PeachGame", fp_RootPath + "/local_tests", fp_RootPath + "res/script_runtimes/win64/dotnet/PeachScriptCore.dll", "", main_editor_logger.get());
-            //DotnetUtils::BuildDotnetProject(pm_DotnetConfiguration.SolutionPath, main_editor_logger.get());
-
             //////////////////// Main Initialization Calls //////////////////// 
             // //NEEDA: figure out a better way to handle dotnet projects, maybe feed a string like "NUHUH" to signal the InitializePeachEngine call that this aint a dotnet game
 
-            if (not PeachCore::GameManager::get_single().InitializePeachEngine(fp_RootPath, f_HostFxrPath, PeachCore::RendererType::Vulkan))
+            if (not PeachCore::GameManager::get_single().InitializePeachEngine(fp_RootPath, "f_HostFxrPath", PeachCore::RendererType::Vulkan, PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread))
             {
 
                 return false;
             }
-
-            //////////////////// Dotnet Testing not Real Production Code ////////////////////
-
-            //Serializer f_Serializer;
-
-            //f_Serializer.ToJSON(pm_DotnetContext.RuntimeConfigs, "PeachGame.runtimeconfig", fp_RootPath + "/local_tests", main_logger.get());
 
             //////////////////// Success! ////////////////////
 
@@ -155,6 +136,23 @@ namespace PeachEditor{
         {
 
             return true;
+        }
+
+        bool
+            GenerateDotnetProject()
+        {
+            //////////////////// Get Local HostFxr Path and Validate Dotnet Exists TEST_ONLY ////////////////////
+
+            string f_HostFxrPath;
+
+            if (DotnetUtils::AssertDotnetExists()) //dummy call but should actually make lmfao
+            {
+                DotnetUtils::GetHostFxrLocalPath(&f_HostFxrPath, main_editor_logger.get());
+            }
+
+            //DotnetUtils::GenerateDefaultScript("FirstGeneratedScript", "Sprite2D", fp_RootPath + "/local_tests", main_logger.get());
+            //DotnetUtils::GenerateProjectFiles(pm_DotnetConfiguration, "PeachGame", fp_RootPath + "/local_tests", fp_RootPath + "res/script_runtimes/win64/dotnet/PeachScriptCore.dll", "", main_editor_logger.get());
+            //DotnetUtils::BuildDotnetProject(pm_DotnetConfiguration.SolutionPath, main_editor_logger.get());
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -44,44 +44,34 @@ namespace PeachCore {
         return true;
     }
 
-    bool
+    void
         ResourceManager::ResourceLoop
         (
             const string& fp_LogOutputDirectory,
-            const string& fp_RootPhysfsDirectory
+            const string& fp_RootPhysfsDirectory,
+            latch& fp_InitLatch
         )
     {
         if (not Initialize(fp_LogOutputDirectory, fp_RootPhysfsDirectory))
         {
 
-            return false;
+            return;
         }
 
-        pm_InitializationCompleteCondition.notify_one(); //wake any threads waiting on initialization to complete
+        fp_InitLatch.count_down(); //count down latch should be the resource latch inside gamemanager uwu
 
-        pm_IsActive = true;
-
-        while (pm_IsActive.load(std::memory_order_acquire))
+        while (pm_IsRunning.load(std::memory_order_acquire))
         {
+            // Block until main thread wakes us
+            pm_ResourceSemaphore.acquire();
+
+            if (not pm_IsRunning.load(std::memory_order_acquire))
+            {
+                break; // Double check after wake
+            }
+
             ProcessCommands();
         }
-
-        return true;
-    }
-
-    void
-        ResourceManager::WaitUntilInitialized()
-    {
-        unique_lock<mutex> lock(pm_InitializationMutex);
-
-        pm_InitializationCompleteCondition.wait
-        (
-            lock,
-            [this]()
-            {
-                return pm_IsInitialized;
-            }
-        );
     }
 
     void
@@ -96,30 +86,42 @@ namespace PeachCore {
 
             switch (f_Command.OP)
             {
-            case RESOURCE_OP_LOAD_DOTNET_RUNTIME:
+            case RESOURCE_OP::LOAD_DOTNET_RUNTIME:
                 break;
-            case RESOURCE_OP_LOAD_TEXTURE:
+            case RESOURCE_OP::LOAD_TEXTURE:
             {
-                LoadTextureFromFile("idfk", f_Command.NodeID);
+                LoadTexture("idfk", f_Command.NodeID);
             }
                 break;
+            case RESOURCE_OP::LOAD_SCENE:
+            {
+                //LoadScene();
+            }
+            break;
             default:
                 PrintError("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!", Colours::BrightRed);
             }
         }
     }
  
+    //////////////////////////////////////////////
+    // Queue Retrieval
+    //////////////////////////////////////////////
+
     [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>>
-        ResourceManager::GetLoadCommandQueue()
+        ResourceManager::GetLoadCommandQueue
+        (
+            Logger* const logger
+        ) //this is supposed to be called from the main thread so cant use the resource_logger here for thread reasons
     {
         if (not pm_IsInitialized)
         {
-            resource_logger->Error("Attempted to get a reference to ResourceManager's LoadCommandQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
+            logger->Error("Attempted to get a reference to ResourceManager's LoadCommandQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
             return nullptr;
         }
         else if (pm_LoadCommandQueue.use_count() >= 2)
         {
-            resource_logger->Error("Attempted to get more than one reference to ResourceManager's LoadCommandQueue >O<", "ResourceManager");
+            logger->Error("Attempted to get more than one reference to ResourceManager's LoadCommandQueue >O<", "ResourceManager");
             return nullptr;
         }
 
@@ -127,18 +129,22 @@ namespace PeachCore {
     }
 
     //THESE METHODS ONLY ALLOW A MAXIMUM OF ONE REFERENCE PASSED OUT, TO ANYONE ASKING THIS IS MEANT FOR THE AUDIO/RENDER THREAD
+    //This method should be one of the first methods called on startup
 
     [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
-        ResourceManager::GetAudioResourceLoadingQueue() //This method should be one of the first methods called on startup
+        ResourceManager::GetAudioResourceLoadingQueue
+        (
+            Logger* const logger
+        ) //this is supposed to be called from the audio thread so cant use the resource_logger here for thread reasons
     {
         if (not pm_IsInitialized)
         {
-            resource_logger->Error("Attempted to get a reference to ResourceManager's AudioResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
+            logger->Error("Attempted to get a reference to ResourceManager's AudioResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
             return nullptr;
         }
         else if (pm_AudioResourceLoadingQueue.use_count() >= 2)
         {
-            resource_logger->Error("Attempted to get more than one reference to ResourceManager's AudioResourceLoadingQueue >O<", "ResourceManager");
+            logger->Error("Attempted to get more than one reference to ResourceManager's AudioResourceLoadingQueue >O<", "ResourceManager");
             return nullptr;
         }
 
@@ -146,21 +152,28 @@ namespace PeachCore {
     }
 
     [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
-        ResourceManager::GetDrawableResourceLoadingQueue() //This method should be one of the first methods called on startup
+        ResourceManager::GetDrawableResourceLoadingQueue
+        (
+            Logger* const logger
+        ) //this is supposed to be called from the audio thread so cant use the resource_logger here for thread reasons
     {
         if (not pm_IsInitialized)
         {
-            resource_logger->Error("Attempted to get a reference to ResourceManager's DrawableResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
+            logger->Error("Attempted to get a reference to ResourceManager's DrawableResourceLoadingQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
             return nullptr;
         }
         else if (pm_DrawableResourceLoadingQueue.use_count() >= 2)
         {
-            resource_logger->Error("Attempted to get more than one reference to ResourceManager's DrawableResourceLoadingQueue >O<", "ResourceManager");
+            logger->Error("Attempted to get more than one reference to ResourceManager's DrawableResourceLoadingQueue >O<", "ResourceManager");
             return nullptr;
         }
 
         return pm_DrawableResourceLoadingQueue;
     }
+
+    //////////////////////////////////////////////
+    // Runtime Loading
+    //////////////////////////////////////////////
 
     bool
         ResourceManager::LoadLuaRuntime()
@@ -257,12 +270,9 @@ namespace PeachCore {
         return true;
     }
 
-    bool
-        ResourceManager::LoadPythonRuntime()
-    {
-
-        return true;
-    }
+    //////////////////////////////////////////////
+    // Main Loading Functions
+    //////////////////////////////////////////////
 
     /*
     This should probably be used in the Peach Editor since all textures will be loaded from a compact .peachbin file that was created by the serializer
@@ -270,7 +280,7 @@ namespace PeachCore {
     peachnode owner of the texture, where it's used, if its visible, associated shaders/pipeline, texture filtering, initial size
     */
     bool 
-        ResourceManager::LoadTextureFromFile(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode)
+        ResourceManager::LoadTexture(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode)
     {
         // Ensure directory exists
         if (not filesystem::exists(fp_TextureFilePath))
@@ -311,11 +321,20 @@ namespace PeachCore {
 
         f_TextureTransfer.Payload = move(f_TextureData);
         f_TextureTransfer.NodeID = fp_DestinationNode;
-        f_TextureTransfer.Kind = ResourceKind::Texture;
 
-        //TryPushingLoadedTexture("someObjectID", move(f_TextureData));
+        //if (not pm_DrawableResourceLoadingQueue->try_enqueue(move(f_TextureTransfer))) //if cant queue resource, put into waiting queue uwu
+        //{
+        //    pm_WaitingResources.push_back(move(f_TextureTransfer));
+        //}
 
         return true; //texture loaded successfully!
+    }
+
+    bool
+        ResourceManager::LoadTexture(const uint64_t* fp_TextureFilePath, const uint64_t fp_DestinationNode)
+    {
+
+        return true;
     }
 
     bool 
@@ -413,23 +432,22 @@ namespace PeachCore {
     THAT WOULD BE GOOD FOR LOADING SCENES, WE DONT WANT TO PUSH ANY RESOURCES EARLIER THAN NEEDED UNTIL THE ENTIRE SCENE IS LOADED
     I'm kinda tired of working on the loading manager and i wanna do physics now so gl future ryan i hope things go well >w< 
     */
-    //bool 
-    //    ResourceManager::TryPushingLoadedTexture
-    //    (
-    //        const string& fp_ObjectID,
-    //        unique_ptr<TextureData> fp_TextureDataPtr
-    //    )
-    //{
-    //    pm_WaitingLoadedGraphicsAssets.emplace_back(fp_ObjectID, move(fp_TextureDataPtr)); //construct package in vector
+    void 
+        ResourceManager::TryPushingResourceTransfer
+        (
+            ResourceTransfer&& fp_ResourceTransfer
+        )
+    {
+        //pm_WaitingLoadedGraphicsAssets.emplace_back(fp_ObjectID, move(fp_TextureDataPtr)); //construct package in vector
 
-    //    if (not pm_DrawableResourceLoadingQueue->PushLoadedResourcePackages(pm_WaitingLoadedGraphicsAssets))
-    //    {
-    //        resource_logger->Trace("Load put off until later", "ResourceManager");
-    //        return false;
-    //    }
+        //if (not pm_DrawableResourceLoadingQueue->PushLoadedResourcePackages(pm_WaitingLoadedGraphicsAssets))
+        //{
+        //    resource_logger->Trace("Load put off until later", "ResourceManager");
+        //    return false;
+        //}
 
-    //    return true;
-    //}
+        //return true;
+    }
 
     bool
         ResourceManager::LoadPlugin
@@ -477,8 +495,8 @@ namespace PeachCore {
     }
 
     ////////////////////////////////////////////////
-// Directory Detection Functions
-////////////////////////////////////////////////
+    // Directory Detection Functions
+    ////////////////////////////////////////////////
 
     void
         ResourceManager::CheckForDirectoryChanges()

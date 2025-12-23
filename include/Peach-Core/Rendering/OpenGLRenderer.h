@@ -18,7 +18,8 @@
 //#include "../Scene-Items/2D/PeachCamera2D.h"
 
 namespace PeachCore {
-
+namespace OpenGL
+{
     enum class TextureFiltering
     {
         Nearest,
@@ -30,13 +31,22 @@ namespace PeachCore {
     };
 
 
-    struct OpenGLShaderAsset
+    struct ShaderAsset
     {
 
     };
 
+    struct MeshData
+    {
+        GLuint VAO;
+        GLuint VBO_Positions;
+        GLuint VBO_Normals;
+        GLuint EBO;
+        GLsizei IndexCount;
+    };
 
-    class OpenGLRenderer
+
+    class Renderer
     {
     private:
         SDL_Window* pm_MainWindow = nullptr;
@@ -44,18 +54,19 @@ namespace PeachCore {
 
         //vector<unique_ptr<PeachCamera2D>> pm_ListOfScenePeachCameras2D; //only the renderer cares about cameras
 
-        map<string, OpenGLShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which OpenGLShaderProgram
+        map<string, ShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which OpenGLShaderProgram
 
         map<string, GLuint> pm_ListOfRegisteredTextures;
+
+        unordered_map<string, MeshData> pm_ListOfMeshes;
 
         SDL_GLContext pm_OpenGLContext;
 
         shared_ptr<Logger> pm_RenderingLogger = nullptr;
 
-
     public:
 
-        ~OpenGLRenderer()
+        ~Renderer()
         {
             SDL_GL_DestroyContext(pm_OpenGLContext);
 
@@ -72,7 +83,7 @@ namespace PeachCore {
         }
 
         explicit
-            OpenGLRenderer //peach renderer is never supposed to create an sdl window, it only manages closing it
+            Renderer //peach renderer is never supposed to create an sdl window, it only manages closing it
             (
                 SDL_Window* fp_CurrentWindow,
                 shared_ptr<Logger> fp_RenderingLogger,
@@ -121,7 +132,6 @@ namespace PeachCore {
                 glEnable(GL_DEPTH_TEST);
                 glDepthFunc(GL_LESS);
             }
-
         }
 
         void
@@ -217,6 +227,7 @@ namespace PeachCore {
                 glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
                 break;
             }
+
             glBindTexture(GL_TEXTURE_2D, 0);
         }
 
@@ -231,7 +242,6 @@ namespace PeachCore {
                 const unsigned int fp_Channels
             )
         {
-
             GLuint f_Texture;
 
             glGenTextures(1, &f_Texture);
@@ -273,14 +283,16 @@ namespace PeachCore {
         void
             DrawTexture
             (
-                const OpenGLShaderProgram& fp_Shader,
+                const ShaderProgram& fp_Shader,
                 GLuint fp_VAO,
                 GLuint fp_Texture
             )
         {
             glUseProgram(fp_Shader.GetProgramID());
+
             //glEnable(GL_TEXTURE_2D);
             //glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+
             glBindTexture(GL_TEXTURE_2D, fp_Texture);
             glBindVertexArray(fp_VAO);
 
@@ -289,6 +301,7 @@ namespace PeachCore {
             glBindVertexArray(0);
             glUseProgram(0);
             glBindTexture(GL_TEXTURE_2D, 0);
+
             //glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
             //glDisable(GL_TEXTURE_2D);
         }
@@ -296,8 +309,8 @@ namespace PeachCore {
         void
             DrawShapePrimitive
             (
-                const OpenGLShaderProgram& fp_Shader,
-                GLuint fp_VAO
+                const ShaderProgram& fp_Shader,
+                const GLuint fp_VAO
             )
         {
             glBindVertexArray(fp_VAO);
@@ -315,7 +328,7 @@ namespace PeachCore {
         GLuint //returns the vao id
             Generate2DBuffers
             (
-                const vector<float>& fp_Vertices, 
+                const vector<float>& fp_Vertices,
                 const vector<unsigned int>& fp_Indices
             )
             const
@@ -356,7 +369,7 @@ namespace PeachCore {
         GLuint //returns the vao id
             Generate3DBuffers
             (
-                const vector<float>& fp_Vertices, 
+                const vector<float>& fp_Vertices,
                 const vector<unsigned int>& fp_Indices
             )
             const
@@ -379,7 +392,7 @@ namespace PeachCore {
             glBufferData(GL_ARRAY_BUFFER, sizeof(float) * fp_Vertices.size(), fp_Vertices.data(), GL_STATIC_DRAW);
 
             // position coord attribute
-            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // 0th point start stride by 8, eg 0-3, 8-11, 16-19,. . .
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // 0th point start stride by 8, eg 0-3, 8-11, 16-19, . . .
             glEnableVertexAttribArray(0);
 
             // texture coord attribute
@@ -397,7 +410,7 @@ namespace PeachCore {
             return vao;
         }
 
-        OpenGLShaderProgram*
+        ShaderProgram*
             GetShaderProgram(const string& fp_Name)
         {
             return &pm_ShaderPrograms.at(fp_Name);
@@ -409,12 +422,19 @@ namespace PeachCore {
             return pm_MainWindow;
         }
 
+        bool
+            RenderFrame()
+        {
+
+            return true;
+        }
     };
-}
+}//namespace OpenGL
+}//namespace PeachCore
 
 
 namespace PeachCore{
-
+namespace OpenGL{
     //////////////////////////////////////////////
     // Viewport Struct
     //////////////////////////////////////////////
@@ -428,7 +448,7 @@ namespace PeachCore{
             (
                 const unsigned int fp_Width,
                 const unsigned int fp_Height,
-                OpenGLRenderer* fp_Renderer,
+                Renderer* fp_Renderer,
                 shared_ptr<Logger> fp_EditorRenderingLogger
             );
 
@@ -454,14 +474,14 @@ namespace PeachCore{
 
         GLuint pm_VAO = -1;
 
-        OpenGLShaderProgram* pm_ViewportShader = nullptr;
+        ShaderProgram* pm_ViewportShader = nullptr;
 
         unsigned int pm_CurrentViewportHeight = 0;
         unsigned int pm_CurrentViewportWidth = 0;
 
         //vector<SDL_Event> pm_CurrentPolledEvents;
 
-        OpenGLRenderer* pm_Render = nullptr;
+        Renderer* pm_Render = nullptr;
 
         shared_ptr<Logger> editor_rendering_logger = nullptr;
 
@@ -473,6 +493,6 @@ namespace PeachCore{
             );
     };
 
-}
-
+}//namespace OpenGL
+}//namespace PeachCore
 #endif

@@ -12,8 +12,53 @@
 
 namespace PeachCore {
 
+    void
+        AudioManager::AudioLoop
+        (
+            const string& fp_LogOutputDirectory, 
+            const float fp_InitialVolume,
+            latch& fp_InitLatch
+        )
+    {
+        if (not InitializeAudioEngine(fp_LogOutputDirectory))
+        {
+
+            return;
+        }
+
+        fp_InitLatch.count_down();
+
+        while (pm_IsRunning.load(std::memory_order_acquire))
+        {
+            // Block until main thread wakes us
+            pm_AudioSemaphore.acquire();
+
+            if (not pm_IsRunning.load(std::memory_order_acquire))
+            {
+                break; // Double check after wake
+            }
+
+            //ProcessCommands();
+        }
+
+        ShutdownAudioEngine();
+    }
+
+    void
+        AudioManager::RequestAudio()
+    {
+        pm_AudioSemaphore.release();        
+    }
+
+    void
+        AudioManager::Stop()
+    {
+        pm_IsRunning.store(false, std::memory_order_release);
+        pm_AudioSemaphore.release(); // Wake it up to exit        
+    }
+
     bool 
-        AudioManager::Initialize
+        AudioManager::InitializeAudioEngine
         (
             const string& fp_LogOutputDirectory
         )
@@ -49,14 +94,6 @@ namespace PeachCore {
         //if (pm_Device) {alcCloseDevice(pm_Device);}
     }
 
-
-    bool
-        AudioManager::InitializeAudioEngine()
-    {
-
-        return true;
-    }
-
     bool
         AudioManager::InitializeLoadingQueue()
     {
@@ -66,7 +103,7 @@ namespace PeachCore {
             return false;
         }
 
-        pm_LoadedAudioResourceQueue = ResourceManager::get_single().GetAudioResourceLoadingQueue();
+        pm_LoadedAudioResourceQueue = ResourceManager::get_single().GetAudioResourceLoadingQueue(audio_logger.get());
 
         if (not pm_LoadedAudioResourceQueue)
         {
@@ -96,16 +133,16 @@ namespace PeachCore {
     }
 
     [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>>
-        AudioManager::GetAudioCommandQueue()
+        AudioManager::GetAudioCommandQueue(Logger* const logger)
     {
         if (not pm_IsInitialized)
         {
-            audio_logger->Error("Attempted to get a reference to AudioManager's AudioCommandQueue before AudioManager was initialized, please initialize AudioManager first UwU", "AudioManager");
+            logger->Error("Attempted to get a reference to AudioManager's AudioCommandQueue before AudioManager was initialized, please initialize AudioManager first UwU", "AudioManager");
             return nullptr;
         }
         else if (pm_AudioCommandQueue.use_count() >= 2)
         {
-            audio_logger->Warning("AudioManager has already issued a reference to the audio command queue, fuck off", "AudioManager");
+            logger->Warning("AudioManager has already issued a reference to the audio command queue, fuck off", "AudioManager");
             return nullptr;
         }
 

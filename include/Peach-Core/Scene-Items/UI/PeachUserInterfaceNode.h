@@ -52,13 +52,14 @@ struct PeachUserInterfaceNode
 {
     NodeType m_Type = NodeType::None; //default to no type, i like default constructors, they're cool
 
-    vector<unique_ptr<PeachUserInterfaceNode>> m_Children; //have to use pointers since C++ slices and dices my types >w<
-
-    PeachUserInterfaceNode* m_Parent = nullptr; //not a unique ptr since parents should not be owned by their children just like irl lmfao
-
     bool m_Dirty = true; // needs redraw/layout dirty little kitten >w<
 
-    string m_PeachID; //used to identify node uniquely, is a string so that users can just type: "node.remove("myNodeName")"
+    uint64_t pm_NodeID; //used to identify node uniquely, is a string so that users can just type: "node.remove("myNodeName")"
+    string pm_PeachName;
+
+    unordered_map<uint64_t, PeachUserInterfaceNode> pm_Children; //have to use pointers since C++ slices and dices my types >w<
+
+    PeachUserInterfaceNode* m_Parent = nullptr; //not a unique ptr since parents should not be owned by their children
 
     // -- Creation --
     PeachUserInterfaceNode() = default;
@@ -66,12 +67,12 @@ struct PeachUserInterfaceNode
     virtual ~PeachUserInterfaceNode() = default;
 
     virtual PeachUserInterfaceNode*
-        AddChild(unique_ptr<PeachUserInterfaceNode> fp_Child)
+        AddChild(unique_ptr<PeachUserInterfaceNode>&& fp_Child)
     {
         fp_Child->m_Parent = this;
-        m_Children.push_back(move(fp_Child));
-        m_Dirty = true;
-        return m_Children.back().get();
+        //pm_Children.insert(move(fp_Child));
+        //m_Dirty = true;
+        //return m_Children.back().get();
     }
 
     virtual void

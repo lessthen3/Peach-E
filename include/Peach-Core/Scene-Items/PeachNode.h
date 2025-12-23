@@ -14,9 +14,50 @@
 #include <vector>
 #include <memory>
 
+///PeachCore
+#include "../Managers/StatusCodes.h"
+
 namespace PeachCore {
 
     using namespace std; //this should be here so i dont affect anybody who links against peach
+
+    using PeachNodeID = uint64_t; //node id is , high 56 bits is an index and the low 8 bits are the node type uwu
+
+    constexpr uint64_t PEACH_NODE_TYPE_MASK = 0xFFull;        // lower 8 bits
+    constexpr uint64_t PEACH_NODE_INDEX_MASK = ~PEACH_NODE_TYPE_MASK;
+    constexpr uint64_t PEACH_NODE_TYPE_BITS = 8U;
+
+    constexpr uint64_t PEACH_NODE_NULL_ID = 0; //Represents no ID, or invalid ID
+
+    static inline PeachNodeID
+        MakeNodeID(uint64_t fp_Index, uint8_t fp_NodeType)
+        noexcept
+    {
+        // index goes into the upper 56 bits, type in lower 8
+        return (fp_Index << PEACH_NODE_TYPE_BITS) | static_cast<uint64_t>(fp_NodeType);
+    }
+
+    static inline uint8_t
+        GetNodeType(PeachNodeID fp_NodeID)
+        noexcept
+    {
+        return static_cast<uint8_t>(fp_NodeID & PEACH_NODE_TYPE_MASK);
+    }
+
+    static inline uint64_t
+        GetNodeIndex(PeachNodeID fp_NodeID)
+        noexcept
+    {
+        return fp_NodeID >> PEACH_NODE_TYPE_BITS;
+    }
+
+    enum PeachNodeType : uint8_t
+    {
+        Blank,
+        Render,
+        Physics,
+        Audio
+    };
 
     class PeachNode
     {
@@ -36,13 +77,23 @@ namespace PeachCore {
 
         string m_Name; //this is the name set by the user inside the scene tree, so that a user script can call smth like GetNode("MyNamedNode") and find the appropriate thing
 
-        unsigned int m_DrawingLayer = 0;
+        PeachNodeID ID = PEACH_NODE_NULL_ID;
+        PeachNodeID pm_ParentNode = PEACH_NODE_NULL_ID; //this is fine since te parent handle should never be null because the lifetime of the child is strictly tied to its parent
 
-        vector<unique_ptr<PeachNode>> m_Children;
+        vector<PeachNodeID> pm_Children; //don't need to explicitly clean this up since the destructors will clean up everything properly when the owning node exits scope
 
-        PeachNode* GetPeachNode(); //returns a reference to the desired PeachNode
+        void
+            AddChild(PeachNodeID fp_Child)
+        {
+            pm_Children.push_back(fp_Child);
+        }
 
-        bool ReparentPeachNode(); //returns true if operation was successful, returns false otherwise
+
+        PeachNode* 
+            GetPeachNode(); //returns a reference to the desired PeachNode
+
+        bool 
+            ReparentPeachNode(); //returns true if operation was successful, returns false otherwise
 
         void
             PrintTree();
@@ -50,7 +101,7 @@ namespace PeachCore {
         bool 
             IsInsideTree();
 
-        bool 
+        [[nodiscard]] bool 
             HasPeachNode();
 
         void 
@@ -60,7 +111,7 @@ namespace PeachCore {
             GetPathInTree();
 
         PeachNode*
-            FindChild(string fp_DesiredPeachNode); //returns first instance of child found matching the name
+            FindChild(uint64_t fp_DesiredPeachNode); //returns first instance of child found matching the name
 
         PeachNode 
             Duplicate();

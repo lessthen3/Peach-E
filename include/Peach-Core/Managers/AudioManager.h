@@ -14,7 +14,6 @@
 #include "ResourceManager.h"
 
 ///STL
-#include <thread>
 
 namespace PeachCore {
 
@@ -68,13 +67,16 @@ namespace PeachCore {
         shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_LoadedAudioResourceQueue = nullptr;
         shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
 
-        bool pm_IsInitialized = false;
+        atomic<bool> pm_IsRunning = true; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
+        atomic<bool> pm_IsInitialized = false;
 
         //mutable shared_mutex mutex_;
         string pm_CurrentTrack;
         //vector<ALuint> pm_Sources;
 
         unique_ptr<Logger> audio_logger = nullptr;
+
+        binary_semaphore pm_AudioSemaphore{ 0 }; // starts locked (zero tickets)
 
     //////////////////////////////////////////////
     // Public Members
@@ -85,14 +87,20 @@ namespace PeachCore {
     // Public Methods
     //////////////////////////////////////////////
     public:
-        bool 
-            Initialize
-        (
-            const string& fp_LogOutputDirectory
-        );
 
-        bool
-            InitializeAudioEngine();
+        void
+            AudioLoop
+            (
+                const string& fp_LogOutputDirectory, 
+                const float fp_InitialVolume,
+                latch& fp_InitLatch
+            );
+
+        void
+            RequestAudio();
+
+        void
+            Stop();
 
         bool
             InitializeLoadingQueue();
@@ -101,7 +109,7 @@ namespace PeachCore {
             InitializeAudioCommandQueue();
 
         [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>>
-            GetAudioCommandQueue();
+            GetAudioCommandQueue(Logger*const logger);
 
         void PlaySoundOnce(const string& soundFile); //SUSUSUSUSUSUSUSUSSSYYYY FUNCTION (is PlaySound a predefined funciton in openal?)
         string GetCurrentTrack() const;
@@ -123,6 +131,12 @@ namespace PeachCore {
     // Private Methods
     //////////////////////////////////////////////
     private:
+        bool
+            InitializeAudioEngine
+            (
+                const string& fp_LogOutputDirectory
+            );
+
         //this should probably be in resource loading manager along w the plugin stuff lmfao
         //bool LoadWAVFile(const string& filename, ALuint buffer);
 

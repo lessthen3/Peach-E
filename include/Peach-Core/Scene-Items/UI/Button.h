@@ -20,10 +20,10 @@ namespace PUI {
     {
         unique_ptr<Shape> m_Shape = nullptr;
 
-        Button(const string& fp_DesiredID, const ShapeType fp_ButtonShape)
+        Button(uint64_t fp_DesiredID, const ShapeType fp_ButtonShape)
         {
             m_Type = NodeType::Button;
-            m_PeachID = fp_DesiredID;
+            pm_NodeID = fp_DesiredID;
 
             switch(fp_ButtonShape)
             {

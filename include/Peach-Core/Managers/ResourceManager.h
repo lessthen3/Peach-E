@@ -12,6 +12,8 @@
 
 ///STL
 #include <mutex>
+#include <semaphore>
+#include <latch>
 
 ///PeachCore
 #include "../Utils/Plugin.h"
@@ -25,8 +27,6 @@
 
 #include "../Language-Support/DotnetRuntime.h"
 #include "../Language-Support/LuaScriptRuntime.h"
-#include "../Language-Support/PythonScriptComponent.h"
-#include "../Language-Support/PythonScriptRuntime.h"
 
 ///External
 #include <physfs.h>
@@ -41,29 +41,44 @@ typedef void (*DestroyPluginFunc)(Plugin*);
 
 namespace PeachCore {
 
-    constexpr uint16_t RESOURCE_OP_RESOURCE_DESTINATION = 69; // ProcessComannds() expects a node ID after
+    enum class RESOURCE_OP : uint16_t
+    {
+        RESOURCE_DESTINATION = 69,
 
-    constexpr uint16_t RESOURCE_OP_LOAD_MP3 = 1000;
-    constexpr uint16_t RESOURCE_OP_LOAD_FLAC = 1001;
-    constexpr uint16_t RESOURCE_OP_LOAD_WAV = 1002;
+        LOAD_MP3 = 1000,
+        LOAD_FLAC = 1001,
+        LOAD_WAV = 1002,
 
-    constexpr uint16_t RESOURCE_OP_LOAD_TEXTURE = 2000;
-    constexpr uint16_t RESOURCE_OP_LOAD_MESH = 2001;
-    constexpr uint16_t RESOURCE_OP_LOAD_ANIMATION = 2002;
+        LOAD_TEXTURE = 2000,
+        LOAD_MESH = 2001,
+        LOAD_ANIMATION = 2002,
+        LOAD_OPENGL_SHADER = 2003,
+        LOAD_VULKAN_SHADER = 2004,
 
-    constexpr uint16_t RESOURCE_OP_LOAD_OPENGL_SHADER = 2003; //WARNING: not sure if i wanna do a generic shader load not sure how differntiating between the graphics pipeline steps should work here
-    constexpr uint16_t RESOURCE_OP_LOAD_VULKAN_SHADER = 2004; //WARNING: not sure if i wanna do a generic shader load not sure how differntiating between the graphics pipeline steps should work here
+        LOAD_SCRIPT = 3000,
+        LOAD_BYTECODE = 3001,
+        LOAD_DOTNET_RUNTIME = 3002,
+        LOAD_PLUGIN = 3003,
 
-    constexpr uint16_t RESOURCE_OP_LOAD_SCRIPT = 3000;
-    constexpr uint16_t RESOURCE_OP_LOAD_BYTECODE = 3001;
-    constexpr uint16_t RESOURCE_OP_LOAD_DOTNET_RUNTIME = 3002;
+        LOAD_SCENE = 4000,
+        LOAD_PREFAB = 4001,
 
-    constexpr uint16_t RESOURCE_OP_LOAD_PLUGIN = 3003;
+        INVALID_LOAD
+    };
+
+    struct PeachBinaryAsset
+    {
+        uint64_t Offset = 0;
+        uint64_t Size = 0;
+    };
+
+    using ResourceLocation = variant<PeachBinaryAsset, string>;
 
     struct LoadCommand
     {
-        uint64_t NodeID;       // 4 bytes
-        uint16_t OP;        // 2 bytes
+        uint64_t NodeID = 0;       //node destination, nodes are created first in the scenetree, then any resources tied to it are asked to be loaded from GameManager
+        RESOURCE_OP OP = RESOURCE_OP::INVALID_LOAD;        // 2 bytes
+        ResourceLocation Location;
     };
 
     //////////////////////////////////////////////
@@ -75,7 +90,7 @@ namespace PeachCore {
 
     };
 
-    struct PythonRuntimeContext
+    struct BongoJamRuntimeContext
     {
 
     };
@@ -111,17 +126,10 @@ namespace PeachCore {
     struct AnimationData { /* ... */ };
     struct BytecodeData {/* ... */ }; //bytecode used for C# or bongojam script or lua ig
     struct ScriptData {/* ... */ }; // large string for raw script
-    
-    enum class ResourceKind : uint8_t 
+
+    struct SceneData
     {
-        Texture,
-        Audio,
-        Mesh,
-        Animation,
-        Bytecode,
-        Script,
-        Plugin,
-        INVALID
+
     };
 
     using ResourcePayload = variant<
@@ -131,13 +139,13 @@ namespace PeachCore {
         unique_ptr<AnimationData> ,
         unique_ptr<BytecodeData>,
         unique_ptr<ScriptData>,
-        unique_ptr<PluginData>
+        unique_ptr<PluginData>,
+        unique_ptr<SceneData>
     >;
 
-    struct ResourceTransfer
+    struct ResourceTransfer //just gonna use holds_alternative instead of a tagged union
     {
         uint64_t NodeID = 0;   // who this is for
-        ResourceKind Kind = ResourceKind::INVALID;
 
         ResourcePayload Payload;
 
@@ -210,15 +218,22 @@ namespace PeachCore {
 
         //////////////////// Thread Initialization Safeguards ////////////////////
 
-        mutex pm_InitializationMutex;
-        condition_variable pm_InitializationCompleteCondition;
         bool pm_IsInitialized = false;
 
-        //////////////////// ETC ////////////////////
+        //////////////////// Semaphore Control ////////////////////
+
+        binary_semaphore pm_ResourceSemaphore{ 0 }; // starts locked (zero tickets)
+        atomic<bool> pm_IsRunning = true;
+
+        //////////////////// Binary Data ////////////////////
+
+        vector<uint8_t> pm_PeachMetaBinary; //holds the meta file that 
+        vector<uint8_t> pm_PeachBinary;
+
+
+        //////////////////// Directory Information ////////////////////
 
         string pm_RootDirectory;
-        vector<uint8_t> pm_PeachBinary; //holds the currently loaded peachbin file
-        atomic<bool> pm_IsActive = true;
 
     //////////////////////////////////////////////
     // Public Methods
@@ -232,23 +247,30 @@ namespace PeachCore {
             );
 
         void
-            WaitUntilInitialized();
-
-        bool
             ResourceLoop
             (
                 const string& fp_LogOutputDirectory,
-                const string& fp_RootPhysfsDirectory
+                const string& fp_RootPhysfsDirectory,
+               latch& fp_InitLatch
             );
 
         [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
-            GetAudioResourceLoadingQueue();
+            GetAudioResourceLoadingQueue
+            (
+                Logger*const logger
+            ); //this is supposed to be called from the audio thread so cant use the resource_logger here for thread reasons
 
         [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
-            GetDrawableResourceLoadingQueue();
+            GetDrawableResourceLoadingQueue
+            (
+                Logger* const logger
+            ); //this is supposed to be called from the render thread so cant use the resource_logger here for thread reasons
 
         [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>>
-            GetLoadCommandQueue();
+            GetLoadCommandQueue
+            (
+                Logger* const logger
+            ); //this is supposed to be called from the main thread so cant use the resource_logger here for thread reasons
 
         bool
             LoadLuaRuntime();
@@ -261,9 +283,6 @@ namespace PeachCore {
             );
 
         bool
-            LoadPythonRuntime();
-
-        bool
             LoadPlugin
             (
                 const string& fp_PluginFilePath,
@@ -272,9 +291,10 @@ namespace PeachCore {
             const;
 
         void
-            ShutdownResourceManager()
+            Stop()
         {
-            pm_IsActive = false;
+            pm_IsRunning.store(false, std::memory_order_release);
+            pm_ResourceSemaphore.release(); // Wake it up to exit        
         }
 
     //////////////////////////////////////////////
@@ -326,7 +346,10 @@ namespace PeachCore {
             LoadBongoJamScript(const string& fp_ScriptPath);
 
         bool 
-            LoadTextureFromFile(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode);
+            LoadTexture(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode);
+
+        bool
+            LoadTexture(const uint64_t* fp_TextureFilePath, const uint64_t fp_DestinationNode);
 
         bool
             LoadWavFromFile(const string& fp_WavFilePath);
@@ -343,11 +366,10 @@ namespace PeachCore {
                 uint64_t* fp_Offset
             ); //unpacked from peachbin file loaded into peach engine rn
 
-        //bool 
-        //    TryPushingLoadedTexture
-        //    (
-        //        const string& fp_ObjectID, 
-        //        unique_ptr<TextureData> fp_TextureDataPtr
-        //    );
+        void 
+            TryPushingResourceTransfer
+            (
+               ResourceTransfer&& fp_ResourceTransfer
+            );
     };
 }

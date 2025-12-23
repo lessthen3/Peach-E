@@ -31,6 +31,8 @@ namespace PeachCore {
         int pm_TileWidth = -1;
         int pm_TileHeight = -1;
 
+        uint64_t pm_TextureID = 0;
+
         bool pm_IsValid = false; //used for tracking whether LoadTexture() was successful/ if a texture is currently loaded
 
         vector<tuple<float, float, float, float>> pm_TileUVs; // UV coordinates for each tile
@@ -112,6 +114,14 @@ namespace PeachCore {
         bool 
             IsValid() 
             const;
+
+        uint64_t
+            GetTextureID()
+            const noexcept
+        {
+            return pm_TextureID;
+        }
+
     };
 }
 //then i Want a TileMap that takes the TileSet, and has lists for holding data about currently placed tiles from the tile map.Im not

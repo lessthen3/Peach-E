@@ -11,3 +11,8 @@
 #pragma once
 
 #include "../../../include/Peach-Core/Scene-Items/SceneTree.h"
+
+namespace PeachCore {
+
+
+}
