@@ -27,11 +27,11 @@ namespace PeachCore {
 
         //////////////////// Initialize Queues ////////////////////
 
-        pm_AudioResourceLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>();
-        pm_DrawableResourceLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>();
-        pm_MainThreadLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>();
+        pm_AudioResourceLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>();
+        pm_DrawableResourceLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>();
+        pm_MainThreadLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>();
 
-        pm_LoadCommandQueue = make_shared<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>>();
+        pm_LoadCommandQueue = make_shared<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>>();
 
         //////////////////// Set Executable Root Directory ////////////////////
 
@@ -108,7 +108,7 @@ namespace PeachCore {
     // Queue Retrieval
     //////////////////////////////////////////////
 
-    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>>
+    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>>
         ResourceManager::GetLoadCommandQueue
         (
             Logger* const logger
@@ -131,7 +131,7 @@ namespace PeachCore {
     //THESE METHODS ONLY ALLOW A MAXIMUM OF ONE REFERENCE PASSED OUT, TO ANYONE ASKING THIS IS MEANT FOR THE AUDIO/RENDER THREAD
     //This method should be one of the first methods called on startup
 
-    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
+    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>
         ResourceManager::GetAudioResourceLoadingQueue
         (
             Logger* const logger
@@ -151,7 +151,7 @@ namespace PeachCore {
         return pm_AudioResourceLoadingQueue;
     }
 
-    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
+    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>
         ResourceManager::GetDrawableResourceLoadingQueue
         (
             Logger* const logger
@@ -501,7 +501,7 @@ namespace PeachCore {
     void
         ResourceManager::CheckForDirectoryChanges()
     {
-        static map<string, PHYSFS_sint64> lastModifiedTimes;
+        static unordered_map<string, PHYSFS_sint64> lastModifiedTimes;
 
         char** rc = PHYSFS_enumerateFiles("/");
 

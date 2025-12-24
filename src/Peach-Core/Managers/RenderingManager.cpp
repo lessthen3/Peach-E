@@ -294,14 +294,14 @@ namespace PeachCore {
             return false;
         }
 
-        pm_RenderCommandQueue = make_shared<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>>();
+        pm_RenderCommandQueue = make_shared<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>>();
 
         rendering_logger->Info("RenderingManager successfully initialized the draw command queue", "RenderingManager");
 
         return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
-    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>>
+    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>>
         RenderingManager::GetDrawCommandQueue
         (
             Logger* const logger

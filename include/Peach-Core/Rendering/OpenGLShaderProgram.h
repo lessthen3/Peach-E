@@ -28,8 +28,8 @@ namespace OpenGL{
     class ShaderProgram 
     {
     private:
-        map<string, GLuint> pm_Shaders; //stores references to all shader IDs that have been registered with the OpenGL::ShaderProgram
-        map<string, GLuint> pm_Uniforms; //stores all information relevant to program uniforms
+        unordered_map<string, GLuint> pm_Shaders; //stores references to all shader IDs that have been registered with the OpenGL::ShaderProgram
+        unordered_map<string, GLuint> pm_Uniforms; //stores all information relevant to program uniforms
 
         string pm_ProgramName;
 
@@ -550,7 +550,7 @@ namespace OpenGL{
 
             string f_FileExtension = fp_ScriptFilePath.substr(lastDotIndex);
 
-            if (f_FileExtension != ".fs" and f_FileExtension != ".vs" and f_FileExtension != ".glsl")
+            if (f_FileExtension != ".fs" and f_FileExtension != ".vs" and f_FileExtension != ".glsl" and f_FileExtension != ".frag" and f_FileExtension != ".vert")
             {
                 fp_RenderingLogger->Error("Invalid file extension found when GLSL Shader was expected at specified filepath: " + fp_ScriptFilePath, "OpenGL::ShaderProgram: " + to_string(pm_ProgramID) + ":" + pm_ProgramName);
                 return false;
@@ -575,4 +575,5 @@ namespace OpenGL{
     };
 }//namespace OpenGL
 }//namespace PeachCore
+
 #endif

@@ -54,9 +54,9 @@ namespace OpenGL
 
         //vector<unique_ptr<PeachCamera2D>> pm_ListOfScenePeachCameras2D; //only the renderer cares about cameras
 
-        map<string, ShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which OpenGLShaderProgram
+        unordered_map<string, ShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which OpenGLShaderProgram
 
-        map<string, GLuint> pm_ListOfRegisteredTextures;
+        unordered_map<string, GLuint> pm_ListOfRegisteredTextures;
 
         unordered_map<string, MeshData> pm_ListOfMeshes;
 

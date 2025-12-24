@@ -96,7 +96,8 @@ namespace PeachEditor{
             //////////////////// Main Initialization Calls //////////////////// 
             // //NEEDA: figure out a better way to handle dotnet projects, maybe feed a string like "NUHUH" to signal the InitializePeachEngine call that this aint a dotnet game
 
-            if (not PeachCore::GameManager::get_single().InitializePeachEngine(fp_RootPath, "f_HostFxrPath", PeachCore::RendererType::Vulkan, PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread))
+            if (not PeachCore::GameManager::get_single().InitializePeachEngine(fp_RootPath, "f_HostFxrPath", 
+                PeachCore::RendererType::Vulkan, PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread | PeachCore::ThreadName::AudioThread))
             {
 
                 return false;

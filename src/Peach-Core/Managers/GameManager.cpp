@@ -132,17 +132,14 @@ namespace PeachCore
         if (pm_RequiredThreads & ThreadName::RenderThread)
         {
             RenderingManager::get_single().Stop();
-            pm_RenderThread.join();
         }
         if (pm_RequiredThreads & ThreadName::AudioThread)
         {
             AudioManager::get_single().Stop();
-            pm_AudioThread.join();
         }
         if (pm_RequiredThreads & ThreadName::PhysicsThread)
         {
             PhysicsManager::get_single().Stop();
-            pm_PhysicsThread.join();
         }
         if (pm_RequiredThreads & ThreadName::NetworkThread)
         {
@@ -151,7 +148,6 @@ namespace PeachCore
 
         //don't need to check for usage here since ResourceManager is ALWAYS utilized regardless of what threads are desired uwu
         ResourceManager::get_single().Stop();
-        pm_ResourceThread.join();
 
         return true;
     }

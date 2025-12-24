@@ -12,6 +12,7 @@
 
 ///PeachCore
 #include "ResourceManager.h"
+#include <limits>
 
 ///STL
 
@@ -23,10 +24,10 @@ namespace PeachCore {
 
     struct AudioCommand
     {
-        uint32_t node_id;       // 4 bytes
-        uint16_t opcode;        // 2 bytes
-        uint16_t reserved;      // 2 bytes (alignment or flags)
-        uint64_t operand;       // 8 bytes
+        uint32_t node_id = 0;       // 4 bytes
+        uint16_t opcode = 0;        // 2 bytes
+        uint16_t reserved = 0;      // 2 bytes (alignment or flags)
+        uint64_t operand = 0;       // 8 bytes
     };
 
     class AudioManager 
@@ -64,8 +65,8 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_LoadedAudioResourceQueue = nullptr;
-        shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_LoadedAudioResourceQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
 
         atomic<bool> pm_IsRunning = true; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
         atomic<bool> pm_IsInitialized = false;
@@ -76,7 +77,7 @@ namespace PeachCore {
 
         unique_ptr<Logger> audio_logger = nullptr;
 
-        binary_semaphore pm_AudioSemaphore{ 0 }; // starts locked (zero tickets)
+        counting_semaphore<PEACH_MAX_PTR_DIFF> pm_AudioSemaphore{ 0 }; // starts locked (zero tickets)
 
     //////////////////////////////////////////////
     // Public Members
@@ -108,7 +109,7 @@ namespace PeachCore {
         bool
             InitializeAudioCommandQueue();
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, MOODY_CAMEL_QUEUE_SIZE>>
             GetAudioCommandQueue(Logger*const logger);
 
         void PlaySoundOnce(const string& soundFile); //SUSUSUSUSUSUSUSUSSSYYYY FUNCTION (is PlaySound a predefined funciton in openal?)
@@ -140,7 +141,8 @@ namespace PeachCore {
         //this should probably be in resource loading manager along w the plugin stuff lmfao
         //bool LoadWAVFile(const string& filename, ALuint buffer);
 
-        void ProcessLoadedResourcePackages();
+        void
+            ProcessCommand(const AudioCommand& fp_AudioCommand);
 
     };
 }

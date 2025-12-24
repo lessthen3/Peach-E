@@ -159,12 +159,12 @@ namespace PeachCore {
         bool pm_IsVSyncEnabled = false;
 
         // DrawableObject.ObjectID : DrawableObject dict
-        map<string, DrawableObject2D> pm_ListOfAllDrawables2D;
+        unordered_map<string, DrawableObject2D> pm_ListOfAllDrawables2D;
 
         //////////////////// Command/Resource Queue ////////////////////
 
-        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_RenderCommandQueue = nullptr;
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_LoadedResourceQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_RenderCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_LoadedResourceQueue = nullptr;
 
         //////////////////// Window Stuff ////////////////////
 
@@ -200,7 +200,7 @@ namespace PeachCore {
         void
             Stop();
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>>
             GetDrawCommandQueue
             (
                 Logger*const logger

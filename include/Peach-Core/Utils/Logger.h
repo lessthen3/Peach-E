@@ -12,6 +12,8 @@
 
 #define PEACH_ARRAY_SIZE(x) sizeof(x) / sizeof(x[0]) 
 
+#define PEACH_MAX_PTR_DIFF std::numeric_limits<ptrdiff_t>::max()
+
 #ifdef PEACH_DEBUG //TEMPORARY JUST HERE FOR NOW TESTING THE IDEA, SINCE DEBUG DOESNT ALWAYS MEAN USING TERMINAL
     #define PEACH_USING_OS_TERMINAL
 #endif
@@ -32,7 +34,7 @@
 #include <iomanip>
 #include <sstream>
 
-#include <map>
+#include <unordered_map>
 #include <format>
 
 #include <thread>
@@ -51,12 +53,8 @@ constexpr const int FAILED_TO_INITIALIZE_VULKAN = -1002;
 
 constexpr const int FATAL_SEGMENTATION_FAULT = -6969;
 
-/// <summary>
-/// //// TESTINSTIENTISSSETING
-/// </summary>
-constexpr const int TESTING_CAMEL_QUEUE_SIZE = 8;
-
-constexpr const int PEACH_ENGINE_TESTING_FRAME_RATE = 400;
+/// moody camel queue size uwu
+constexpr const unsigned int MOODY_CAMEL_QUEUE_SIZE = 128;
 
 namespace PeachCore {
 
@@ -254,7 +252,7 @@ namespace PeachCore {
     protected:
         bool pm_HasBeenInitialized = false;
 
-        map<string, ofstream> pm_LogFiles;
+        unordered_map<string, ofstream> pm_LogFiles;
 
         unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_LogSnapshotBuffer = nullptr;
 
@@ -325,7 +323,7 @@ namespace PeachCore {
             }
             
             //Create Log files based off of log level flags
-            const map<uint8_t, string> f_LogLevels = 
+            const unordered_map<uint8_t, string> f_LogLevels = 
             {
                 {TRACE_LOG, "trace"},
                 {DEBUG_LOG, "debug"},

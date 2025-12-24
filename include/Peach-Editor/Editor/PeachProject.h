@@ -26,7 +26,7 @@ namespace PeachEditor{
 
     struct PeachProjectSettings //per project settings/configs
     {
-        map<string, string> ProjectSettings; 
+        unordered_map<string, string> ProjectSettings;
 
         uint32_t FontSize;
         string CurrentFont;
@@ -57,12 +57,12 @@ namespace PeachEditor{
         string ProjectName;
         uint8_t RuntimeType = None;
 
-        map<string, string> ScriptPaths;
-        map<string, string> ScenePaths; // Key : ObjectID, Val : path -> resource
-        map<string, string> TexturePaths;
-        map<string, string> AudioPaths;
-        map<string, string> ModelPaths;
-        map<string, string> ShaderPaths;
+        unordered_map<string, string> ScriptPaths;
+        unordered_map<string, string> ScenePaths; // Key : ObjectID, Val : path -> resource
+        unordered_map<string, string> TexturePaths;
+        unordered_map<string, string> AudioPaths;
+        unordered_map<string, string> ModelPaths;
+        unordered_map<string, string> ShaderPaths;
 
         PeachProjectSettings ProjectSettings;
         ExportConfigSettings ExportSettings;

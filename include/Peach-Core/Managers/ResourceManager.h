@@ -190,16 +190,16 @@ namespace PeachCore {
         //////////////////// Resource Transfer Queues ////////////////////
 
         //used to push loaded assets that are destined for AudioManager
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_AudioResourceLoadingQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_AudioResourceLoadingQueue = nullptr;
         //used to push loaded assets that are destined for RenderingManager
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_DrawableResourceLoadingQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_DrawableResourceLoadingQueue = nullptr;
         //used to push loaded scripts and config stuff -> MainThread/GameManager
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>> pm_MainThreadLoadingQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_MainThreadLoadingQueue = nullptr;
 
         //////////////////// Load Command Queue ////////////////////
 
         //used for asking ResourceManager to load something from the main thread
-        shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_LoadCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_LoadCommandQueue = nullptr;
 
         //////////////////// Waiting Buffer ////////////////////
 
@@ -254,19 +254,19 @@ namespace PeachCore {
                latch& fp_InitLatch
             );
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>
             GetAudioResourceLoadingQueue
             (
                 Logger*const logger
             ); //this is supposed to be called from the audio thread so cant use the resource_logger here for thread reasons
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, TESTING_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>
             GetDrawableResourceLoadingQueue
             (
                 Logger* const logger
             ); //this is supposed to be called from the render thread so cant use the resource_logger here for thread reasons
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>>
             GetLoadCommandQueue
             (
                 Logger* const logger

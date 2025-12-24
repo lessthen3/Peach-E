@@ -76,14 +76,14 @@ namespace PeachCore {
 
         //////////////////// Loading/Command Queues ////////////////////
 
-        shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_ResourceCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_ResourceCommandQueue = nullptr;
 
-        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_RenderCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_RenderCommandQueue = nullptr;
 
-        shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
 
-        shared_ptr<moodycamel::ReaderWriterQueue<NetworkCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_NetworkCommandQueue = nullptr;
-        shared_ptr<moodycamel::ReaderWriterQueue<PhysicsCommand, TESTING_CAMEL_QUEUE_SIZE>> pm_PhysicsCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<NetworkCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_NetworkCommandQueue = nullptr;
+        shared_ptr<moodycamel::ReaderWriterQueue<PhysicsCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_PhysicsCommandQueue = nullptr;
 
         //shared_ptr<CommandQueue> m_UserScriptCommandQueue = nullptr; //XXX: used for submitting update commands -> GameManager from script runtimes
 

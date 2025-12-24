@@ -28,6 +28,8 @@ namespace PeachCore {
 
         fp_InitLatch.count_down();
 
+        AudioCommand cmd;
+
         while (pm_IsRunning.load(std::memory_order_acquire))
         {
             // Block until main thread wakes us
@@ -38,7 +40,10 @@ namespace PeachCore {
                 break; // Double check after wake
             }
 
-            //ProcessCommands();
+            while(pm_AudioCommandQueue->try_dequeue(cmd) and pm_AudioSemaphore.try_acquire())
+            {
+                ProcessCommand(cmd);
+            }
         }
 
         ShutdownAudioEngine();
@@ -125,14 +130,14 @@ namespace PeachCore {
             return false;
         }
 
-        pm_AudioCommandQueue = make_shared<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>>();
+        pm_AudioCommandQueue = make_shared<moodycamel::ReaderWriterQueue<AudioCommand, MOODY_CAMEL_QUEUE_SIZE>>();
 
         audio_logger->Info("AudioManager successfully initialized the audio command queue", "AudioManager");
 
         return true; //returns one and only one ptr to whoever initializes AudioManager, this is meant only for the main thread
     }
 
-    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, TESTING_CAMEL_QUEUE_SIZE>>
+    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, MOODY_CAMEL_QUEUE_SIZE>>
         AudioManager::GetAudioCommandQueue(Logger* const logger)
     {
         if (not pm_IsInitialized)
@@ -186,22 +191,8 @@ namespace PeachCore {
     }
     
     void 
-        AudioManager::ProcessLoadedResourcePackages()
+        AudioManager::ProcessCommand(const AudioCommand& fp_AudioCommand)
     {
-        //unique_ptr<LoadedResourcePackage> ResourcePackage;
-        //while (pm_LoadedAudioResourceQueue->PopLoadedResourceQueue(ResourcePackage)) {
-        //    visit(overloaded
-        //        {
-        //        [&](AudioData& fp_RawByteData)
-        //        {
-        //            // Handle creation logic here
-        //        },
-        //        [](auto&&)
-        //        {
-        //            // Default handler for any unhandled types
-        //            //audio_logger->LogAndPrint("Unhandled type in variant for ProcessLoadedResourcePackage", "AudioManager", "warn");
-        //        }
-        //        }, ResourcePackage.get()->ResourceData);
-        //}
+        //ye
     }
 }

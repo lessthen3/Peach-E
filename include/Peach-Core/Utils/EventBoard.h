@@ -93,8 +93,8 @@ namespace PeachCore {
             uint64_t frameQueued;
         };
 
-        map<type_index, queue<TimedEvent>> m_Events;
-        map<type_index, vector<function<void(shared_ptr<Event>)>>> handlers;
+        unordered_map<type_index, queue<TimedEvent>> m_Events;
+        unordered_map<type_index, vector<function<void(shared_ptr<Event>)>>> handlers;
         uint64_t m_CurrentFrame = 0; // Tracks global frame count for 'game' runtime
     };
 

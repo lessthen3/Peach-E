@@ -24,7 +24,7 @@ namespace PeachEditor {
 
     struct GlobalPeachEditorData
     {
-        map<string, string> ListOfAllProjects;
+        unordered_map<string, string> ListOfAllProjects;
 
         PeachEditorSettings EditorSettings; //global settings that persist across projects
 
