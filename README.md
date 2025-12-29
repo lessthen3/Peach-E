@@ -59,7 +59,6 @@ If you want to build Peach-E for yourself:
 > * Peach_Editor (executable or bundle on MacOS)
 > * Peach_Engine (executable or bundle on MacOS)
 > * peach (static core library)
-> * peach_api (dynamic lib for API linking w/ C#)
 
 ## Why Another Game Engine
 
