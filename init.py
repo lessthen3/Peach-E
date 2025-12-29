@@ -349,7 +349,7 @@ def main() -> bool:
 
     if(f_CurrentPlatform == "Windows"): #only needed for windows so far since the lib sizes are ridiculous
 
-        assimp_dir = f_BaseDir + "/third_party/Peach-Editor/assimp/win64"
+        assimp_dir = f_BaseDir + "/third_party/peach_editor/assimp/win64"
 
         if not unpack_versioned_dep(assimp_dir, "debug_v"): #the compressed deps are always named using debug_v* or release_v*
             return False
@@ -358,7 +358,7 @@ def main() -> bool:
         
         ############# Change dir for vulkan lib deps
 
-        vulkan_dir = f_BaseDir + "/third_party/Peach-Editor/vulkan/win64"
+        vulkan_dir = f_BaseDir + "/third_party/peach_editor/vulkan/win64"
         
         if not unpack_versioned_dep(vulkan_dir, "debug_v"):
             return False

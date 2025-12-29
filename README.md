@@ -21,7 +21,7 @@ Peach-E uses a component-based, node-driven approach, heavily inspired by Godot�
 
 Features:
 
-🍑 __Scripting support for C#, Python, Lua__ _(WIP)_
+🍑 __Scripting support for C#, C++, and Lua__ _(WIP)_
 
 🍑 __Bundled editor__ so you can hit the ground running _(WIP)_
 

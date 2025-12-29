@@ -1,0 +1,90 @@
+﻿/*******************************************************************
+ *                        Peach-E v0.0.1
+ *              Created by Ranyodh Mandur - 🍑 2024
+ *
+ *              Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *               https://opensource.org/licenses/MIT
+ *
+ *           Peach-E is a free open source game engine
+********************************************************************/
+#pragma once
+
+///External
+#include <volk.h>
+#include "vk-bootstrap/VkBootstrap.h"
+
+///PeachCore
+#include "../Utils/Logger.h"
+#include "../Utils/Serializer.h"
+
+namespace PeachCore {
+namespace Vulkan { //namespacing this because it doesnt need to be a class, just a file w shader utilization tools
+
+    struct CompiledShader 
+    {
+        string ShaderName;
+
+        vector<uint32_t> Bytecode;
+        VkShaderStageFlagBits Stage;
+
+        SERIALIZABLE_FIELDS(Bytecode, Stage)
+    };
+
+    struct Shaders
+    {
+        CompiledShader Vertex;
+        CompiledShader Fragment;
+        CompiledShader Tessalation;
+        CompiledShader Compute;
+        CompiledShader Geometry;
+
+        SERIALIZABLE_FIELDS(Vertex, Fragment)
+    };
+
+    struct Pipeline
+    {
+        string PipelineName;
+
+        Shaders ShaderData;
+
+        VkPipelineShaderStageCreateInfo VertexStageInfo = {};
+        VkPipelineShaderStageCreateInfo FragStageInfo = {};
+
+        VkPipelineVertexInputStateCreateInfo VertexInputInfo = {};
+
+        VkPipelineInputAssemblyStateCreateInfo InputAssemblyInfo = {};
+        VkPipelineRasterizationStateCreateInfo RasterizationInfo = {};
+
+        VkPipelineMultisampleStateCreateInfo MultisampleInfo = {};
+
+        VkPipelineColorBlendAttachmentState ColorBlendAttachment = {};
+        VkPipelineColorBlendStateCreateInfo ColorBlendStateInfo = {};
+
+        VkPipelineLayoutCreateInfo PipelineLayoutInfo = {};
+
+        vector<VkDynamicState> DynamicStates;
+        VkPipelineDynamicStateCreateInfo DynamicStateInfo = {};
+
+        VkGraphicsPipelineCreateInfo PipelineInfo = {};
+
+        // IMPORTANT: no actual VkShaderModule, VkPipelineLayout, VkPipeline yet
+
+        SERIALIZABLE_FIELDS(PipelineName, ShaderData)
+    };
+
+    struct ShaderProgram
+    {
+        Pipeline pm_GraphicsPipe;
+
+        bool
+            BakePipelineData
+            (
+                const string& fp_Name,
+                Logger* logger
+            );
+
+    };
+
+} //namespace Vulkan
+} //namespace PeachCore

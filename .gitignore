@@ -32,7 +32,7 @@
 /idk maybe
 
 # JSON
-/Cool-People/header_only/spirv-headers/*.json
+/third_party/peach_core/header_only/spirv-headers/*.json
 
 # individual files
 /TODO.txt
@@ -44,7 +44,7 @@
 
 #Compressed deps
 
-third_party/Peach-Editor/assimp/win64/release_v*/
-third_party/Peach-Editor/assimp/win64/debug_v*/
-third_party/Peach-Editor/vulkan/win64/debug_v*/
+third_party/peach_editor/assimp/win64/release_v*/
+third_party/peach_editor/assimp/win64/debug_v*/
+third_party/peach_editor/vulkan/win64/debug_v*/
 

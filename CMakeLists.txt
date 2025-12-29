@@ -1,6 +1,6 @@
 ####################################### Config Options
 
-option(BUILD_PEACH_API_SHARED "Builds peach_api as a shared library" ON) #build peach api shared by default uwu
+option(BUILD_PEACH_SHARED "Builds peach_core as a shared library" OFF) #build peach api shared by default uwu
 
 ####################################### Enforce CMake Version
 
@@ -107,9 +107,9 @@ file(
     GLOB_RECURSE 
     PEACH_CORE_SOURCES 
     CONFIGURE_DEPENDS 
-    "src/Peach-Core/*.cpp" 
-    "include/Peach-Core/*.h"
-    "include/Peach-Core/*.hpp"
+    "src/peach_core/*.cpp" 
+    "src/peach_core/*.h"
+    "src/peach_core/*.hpp"
 )
 
 # Peach Engine
@@ -117,7 +117,7 @@ file(
     GLOB_RECURSE 
     PEACH_ENGINE_SOURCES 
     CONFIGURE_DEPENDS 
-    "src/Peach-Engine/main.cpp" #thin wrapper for Peach Engine executable
+    "src/peach_engine/main.cpp" #thin wrapper for Peach Engine executable
 )
 
 # Peach Editor
@@ -125,45 +125,27 @@ file(
     GLOB_RECURSE 
     PEACH_EDITOR_SOURCES 
     CONFIGURE_DEPENDS 
-    "src/Peach-Editor/*.cpp" 
-    "include/Peach-Editor/*.h"
-    "include/Peach-Editor/*.hpp"
+    "src/peach_editor/*.cpp" 
+    "src/peach_editor/*.h"
+    "src/peach_editor/*.hpp"
 )
 
-# Peach API
-file(
-    GLOB_RECURSE 
-    PEACH_API_SOURCES 
-    CONFIGURE_DEPENDS 
-    "peach_api/PeachAPI.h"
-    "peach_api/PeachAPI.cpp"
-)
+####################################### Static/Dynamic Library Target
 
-####################################### Static Library Target
-
-if(WIN32)
-    set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/python/win64/include")
-
-elseif(TARGET_PLATFORM STREQUAL "macos")
-    set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/python/steveARM64/include")
-
-elseif(TARGET_PLATFORM STREQUAL "linux")
-    set(PYTHON_INCLUDES "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/python/tux64/include")
-
+if(BUILD_PEACH_SHARED)
+    set(PEACH_BUILD_TYPE SHARED)
 else()
-    message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
-
+    set(PEACH_BUILD_TYPE STATIC)
 endif()
 
-# Create a static library for peach_core
-add_library(peach STATIC 
+# Create a static or dynamic library for peach_core
+add_library(peach ${PEACH_BUILD_TYPE} 
     ${PEACH_CORE_SOURCES}
 )
 
 target_include_directories(peach PUBLIC
-    ${PROJECT_SOURCE_DIR}/include/Peach-Core
-    ${PROJECT_SOURCE_DIR}/third_party/Peach-Core/header_only #header only library includes
-    ${PYTHON_INCLUDES} #because python is a special boy w different headers on different plats
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/header_only #header only library includes
+    ${PROJECT_SOURCE_DIR}/src/peach_core
 )
 
 set_target_properties(peach PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach PIC friendly UwU
@@ -184,11 +166,11 @@ if(TARGET_PLATFORM STREQUAL "macos") #create a bundle instead of a regular exe f
     )
 
     # Paths to MoltenVK runtime stuff
-    set(MOLTENVK_LIB "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/steveARM64/libMoltenVK.dylib")
-    set(VULKAN_LIB "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/steveARM64/libvulkan.1.dylib")
-    set(VALIDATION_LAYER "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/steveARM64/libVkLayer_khronos_validation.dylib")
+    set(MOLTENVK_LIB "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libMoltenVK.dylib")
+    set(VULKAN_LIB "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libvulkan.1.dylib")
+    set(VALIDATION_LAYER "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libVkLayer_khronos_validation.dylib")
 
-    set(JSON_CONFIGS "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/steveARM64/vulkan")
+    set(JSON_CONFIGS "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/vulkan")
 
     # Where to copy them in the app bundle
     set(APP_CONTENTS_DIR "$<TARGET_BUNDLE_CONTENT_DIR:Peach_Editor>")
@@ -233,22 +215,6 @@ target_link_libraries(Peach_Editor PRIVATE
     peach
 )
 
-####################################### Dynamic API Library
-
-if(BUILD_PEACH_API_SHARED)
-    set(PEACH_API_BUILD_TYPE SHARED)
-else()
-    set(PEACH_API_BUILD_TYPE STATIC)
-endif()
-
-add_library(peach_api ${PEACH_API_BUILD_TYPE}
-    ${PEACH_API_SOURCES}
-)
-
-target_link_libraries(peach_api PRIVATE
-    peach
-)
-
 ####################################### Static Imports
 
 # helper macro for reducing repeated boiler plate for vulkan imports uwu
@@ -270,229 +236,229 @@ if(TARGET_PLATFORM STREQUAL "windows")
     ############ GL extensions for legacy systems
 
     STATIC_IMPORT(glew 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/glew/win64/release/libglew32.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/glew/win64/debug/libglew32d.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/glew/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/win64/release/libglew32.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/win64/debug/libglew32d.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
     )
 
     ############ Crypto
 
     STATIC_IMPORT(libsodium 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/libsodium/win64/release/libsodium.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/libsodium/win64/debug/libsodium.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/libsodium/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/win64/release/libsodium.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/win64/debug/libsodium.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/include"
     )
 
     ############ Pretty Fonts
 
     STATIC_IMPORT(msdfgen_libpng 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/win64/release/libpng16_static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/win64/debug/libpng16_staticd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/release/libpng16_static.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/debug/libpng16_staticd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_freetype 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/win64/release/freetype.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/win64/debug/freetyped.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/release/freetype.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/debug/freetyped.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_core 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/win64/release/msdfgen-core.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/win64/debug/msdfgen-core.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/release/msdfgen-core.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/debug/msdfgen-core.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_ext 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/win64/release/msdfgen-ext.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/win64/debug/msdfgen-ext.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/release/msdfgen-ext.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/debug/msdfgen-ext.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(zlib 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/zlib/win64/release/zlibstatic.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/zlib/win64/debug/zlibstaticd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/zlib/win64/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/win64/release/zlibstatic.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/win64/debug/zlibstaticd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/win64/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(clipper2 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/clipper2/win64/release/Clipper2.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/clipper2/win64/debug/Clipper2.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/clipper2/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/clipper2/win64/release/Clipper2.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/clipper2/win64/debug/Clipper2.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/clipper2/include"
     )
 
     ############ Jolt Physics 3D
 
     STATIC_IMPORT(jolt_physics 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/jolt_physics/win64/release/Jolt.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/jolt_physics/win64/debug/Jolt.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/jolt_physics/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/win64/release/Jolt.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/win64/debug/Jolt.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/include"
     )
 
     ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
 
     STATIC_IMPORT(physfs 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/physfs/win64/release/physfs-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/physfs/win64/debug/physfs-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/physfs/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/win64/release/physfs-static.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/win64/debug/physfs-static.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/include"
     )
 
     # ############ Asset Importing
 
     STATIC_IMPORT(assimp 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/win64/release_v143/assimp-vc143-mt.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/win64/debug_v143/assimp-vc143-mtd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/release_v143/assimp-vc143-mt.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/debug_v143/assimp-vc143-mtd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
     )
 
     STATIC_IMPORT(assimp_draco 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/win64/release_v143/draco.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/win64/debug_v143/dracod.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/release_v143/draco.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/debug_v143/dracod.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
     )
 
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/SDL3/win64/release/SDL3-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/SDL3/win64/debug/SDL3-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/SDL3/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64/release/SDL3-static.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64/debug/SDL3-static.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
     ############ 2D physics
 
     STATIC_IMPORT(box2d 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/box2d/win64/release/box2d.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/box2d/win64/debug/box2dd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/box2d/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/win64/release/box2d.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/win64/debug/box2dd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/include"
     )
 
     ############ Lua Stuff
 
     STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/win64/release/lua_compiler.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/win64/debug/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/win64/release/lua_compiler.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/win64/debug/lua_compiler.lib"
         "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/win64/release/lua_runtime.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/win64/debug/lua_runtime.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/win64/release/lua_runtime.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/win64/debug/lua_runtime.lib"
         "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/dotnet/win64/release/libnethost.lib" #juicy static linkage UwU
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/dotnet/win64/debug/nethost.lib" #debug dll
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/dotnet/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/release/libnethost.lib" #juicy static linkage UwU
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/debug/nethost.lib" #debug dll
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
     )
 
     ############ Vulkan Specific Imports
 
     STATIC_IMPORT(shaderC 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/shaderc.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/shadercd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/shaderc"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/shaderc.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/shadercd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
     )
 
     STATIC_IMPORT(volk 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/win64/release/volk.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/win64/debug/volkd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/include/Volk"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/win64/release/volk.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/win64/debug/volkd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/include/Volk"
     )
 
     ############ SPIRV Tools
 
     STATIC_IMPORT(SPIRV_Tools 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/SPIRV-Tools.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Toolsd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/SPIRV-Tools.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Toolsd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Diff 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/SPIRV-Tools-diff.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-diffd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/SPIRV-Tools-diff.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-diffd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Link 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/SPIRV-Tools-link.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-linkd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/SPIRV-Tools-link.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-linkd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Lint 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/SPIRV-Tools-lint.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-lintd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/SPIRV-Tools-lint.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-lintd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Opt 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/SPIRV-Tools-opt.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-optd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/SPIRV-Tools-opt.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-optd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Reduce 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/SPIRV-Tools-reduce.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-reduced.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/SPIRV-Tools-reduce.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/SPIRV-Tools-reduced.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Remapper 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/SPVRemapper.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/SPVRemapperd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/SPVRemapper.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/SPVRemapperd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     ############ SPIRV Cross
 
     STATIC_IMPORT(SPIRV_Cross_Core 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/spirv-cross-core.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-cored.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/spirv-cross-core.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-cored.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_CPP 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/spirv-cross-cpp.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-cppd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/spirv-cross-cpp.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-cppd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_GLSL 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/spirv-cross-glsl.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-glsld.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/spirv-cross-glsl.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-glsld.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_HLSL 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/spirv-cross-hlsl.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-hlsld.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/spirv-cross-hlsl.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-hlsld.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_MSL 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/spirv-cross-msl.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-msld.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/spirv-cross-msl.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-msld.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Reflect 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/spirv-cross-reflect.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-reflectd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/spirv-cross-reflect.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-reflectd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Util 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/release/spirv-cross-util.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-utild.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/spirv-cross-util.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/spirv-cross-utild.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
 elseif(TARGET_PLATFORM STREQUAL "macos")
@@ -500,221 +466,221 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
     ############ Crypto
 
     STATIC_IMPORT(libsodium 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/libsodium/steveARM64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/libsodium/steveARM64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/libsodium/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/steveARM64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/steveARM64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/include"
     )
 
     ############ Pretty Fonts
 
     STATIC_IMPORT(msdfgen_libpng 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/steveARM64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/steveARM64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_freetype 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/steveARM64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/steveARM64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_core 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/steveARM64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/steveARM64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_ext 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/steveARM64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/steveARM64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(zlib 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/zlib/steveARM64/libz.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/zlib/steveARM64/libz.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/zlib/steveARM64/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/steveARM64/libz.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/steveARM64/libz.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/steveARM64/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(clipper2 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/clipper2/steveARM64/libClipper2.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/clipper2/steveARM64/libClipper2.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/clipper2/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/clipper2/steveARM64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/clipper2/steveARM64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/clipper2/include"
     )
 
     ############ Jolt Physics 3D
 
     STATIC_IMPORT(jolt_physics 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/jolt_physics/steveARM64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/jolt_physics/steveARM64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/jolt_physics/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/steveARM64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/steveARM64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/include"
     )
 
     ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
 
     STATIC_IMPORT(physfs 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/physfs/steveARM64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/physfs/steveARM64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/physfs/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/steveARM64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/steveARM64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/include"
     )
 
     # ############ Asset Importing
 
     STATIC_IMPORT(assimp 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/steveARM64/libassimp.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/steveARM64/libassimp.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
     )
 
     STATIC_IMPORT(assimp_draco 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/steveARM64/libdraco.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/steveARM64/libdraco.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
     )
 
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/SDL3/steveARM64/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/SDL3/steveARM64/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/SDL3/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steveARM64/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steveARM64/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
     ############ 2D physics
 
     STATIC_IMPORT(box2d 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/box2d/steveARM64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/box2d/steveARM64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/box2d/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/steveARM64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/steveARM64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/include"
     )
 
     ############ Lua Stuff
 
     STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/steveARM64/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/steveARM64/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/steveARM64/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/steveARM64/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/steveARM64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/steveARM64/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/steveARM64/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/steveARM64/liblua_runtime.a"
         "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/dotnet/steveARM64/libnethost.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/dotnet/steveARM64/libnethost.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/dotnet/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steveARM64/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steveARM64/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
     )
 
     ############ Vulkan Specific Imports
 
     STATIC_IMPORT(shaderC 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libshaderc.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libshaderc.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/shaderc"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libshaderc.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libshaderc.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
     )
 
     STATIC_IMPORT(volk 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/steveARM64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/steveARM64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/include/Volk"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libvolk.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libvolk.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/include/Volk"
     )
 
     ############ SPIRV Tools
 
     STATIC_IMPORT(SPIRV_Tools 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Diff 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-diff.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-diff.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-diff.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-diff.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Link 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-link.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-link.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-link.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-link.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Lint 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-lint.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-lint.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-lint.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-lint.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Opt 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-opt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-opt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-opt.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-opt.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Reduce 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-reduce.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPIRV-Tools-reduce.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-reduce.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-reduce.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Remapper 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPVRemapper.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libSPVRemapper.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPVRemapper.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPVRemapper.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     ############ SPIRV Cross
 
     STATIC_IMPORT(SPIRV_Cross_Core 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_CPP 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-cpp.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-cpp.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-cpp.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-cpp.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_GLSL 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-glsl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-glsl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-glsl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-glsl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_HLSL 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-hlsl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-hlsl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-hlsl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-hlsl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_MSL 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-msl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-msl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-msl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-msl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Reflect 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-reflect.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-reflect.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-reflect.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-reflect.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Util 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-util.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/steveARM64/libspirv-cross-util.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-util.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-util.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
 elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
@@ -723,229 +689,229 @@ elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile 
     ############ GL extensions for legacy systems
 
     STATIC_IMPORT(glew 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/glew/tux64/libGLEW.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/glew/tux64/libGLEW.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/glew/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64/libGLEW.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64/libGLEW.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
     )
 
     ############ Crypto
 
     STATIC_IMPORT(libsodium 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/libsodium/tux64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/libsodium/tux64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/libsodium/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/tux64/libsodium.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/include"
     )
 
     ############ Pretty Fonts
 
     STATIC_IMPORT(msdfgen_libpng 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/tux64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/tux64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_freetype 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/tux64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/tux64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_core 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/tux64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/tux64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_ext 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/tux64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/tux64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(zlib 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/zlib/tux64/libz.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/zlib/tux64/libz.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/zlib/tux64/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/tux64/include"
     )
 
     ############ Geometry Manipulation Operations
 
     STATIC_IMPORT(clipper2 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/clipper2/tux64/libClipper2.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/clipper2/tux64/libClipper2.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/clipper2/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/clipper2/tux64/libClipper2.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/clipper2/include"
     )
 
     ############ Jolt Physics 3D
 
     STATIC_IMPORT(jolt_physics 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/jolt_physics/tux64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/jolt_physics/tux64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/jolt_physics/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/tux64/libJolt.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/include"
     )
 
     ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
 
     STATIC_IMPORT(physfs 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/physfs/tux64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/physfs/tux64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/physfs/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/tux64/libphysfs.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/include"
     )
 
     # ############ Asset Importing
 
     STATIC_IMPORT(assimp 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/tux64/libassimp.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/tux64/libassimp.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64/libassimp.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
     )
 
     STATIC_IMPORT(assimp_draco 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/tux64/libdraco.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/tux64/libdraco.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/assimp/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64/libdraco.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
     )
 
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/SDL3/tux64/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/SDL3/tux64/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/SDL3/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
     ############ 2D physics
 
     STATIC_IMPORT(box2d 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/box2d/tux64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/box2d/tux64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/box2d/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/tux64/libbox2d.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/include"
     )
 
     ############ Lua Stuff
 
     STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/tux64/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/lua/tux64/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/tux64/liblua_compiler.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/tux64/liblua_compiler.a"
         "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/tux64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/lua/tux64/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/tux64/liblua_runtime.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/tux64/liblua_runtime.a"
         "${PROJECT_SOURCE_DIR}/third_party/lua/include"
     )
 
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/dotnet/tux64/libnethost.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/dotnet/tux64/libnethost.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/dotnet/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/tux64/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/tux64/libnethost.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
     )
 
     ############ Vulkan Specific Imports
 
     STATIC_IMPORT(shaderC 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libshaderc.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libshaderc.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/shaderc"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
     )
 
     STATIC_IMPORT(volk 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/tux64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/tux64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Core/vulkan/include/Volk"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/tux64/libvolk.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/tux64/libvolk.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/include/Volk"
     )
 
     ############ SPIRV Tools
 
     STATIC_IMPORT(SPIRV_Tools 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Diff 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-diff.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-diff.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-diff.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-diff.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Link 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-link.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-link.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-link.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-link.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Lint 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-lint.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-lint.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-lint.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-lint.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Opt 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-opt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-opt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-opt.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-opt.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Reduce 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-reduce.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPIRV-Tools-reduce.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-reduce.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-reduce.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     STATIC_IMPORT(SPIRV_Tools_Remapper 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPVRemapper.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libSPVRemapper.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv-tools"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPVRemapper.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPVRemapper.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
     )
 
     ############ SPIRV Cross
 
     STATIC_IMPORT(SPIRV_Cross_Core 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_CPP 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-cpp.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-cpp.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-cpp.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-cpp.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_GLSL 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-glsl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-glsl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-glsl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-glsl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_HLSL 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-hlsl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-hlsl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-hlsl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-hlsl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_MSL 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-msl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-msl.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-msl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-msl.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Reflect 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-reflect.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-reflect.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-reflect.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-reflect.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
     STATIC_IMPORT(SPIRV_Cross_Util 
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-util.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/tux64/libspirv-cross-util.a"
-        "${PROJECT_SOURCE_DIR}/third_party/Peach-Editor/vulkan/include/spirv_cross"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-util.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-util.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
     )
 
 else()
@@ -1092,9 +1058,9 @@ target_compile_definitions(Peach_Editor PRIVATE
     $<$<CONFIG:Debug>:PEACH_DEBUG>
 )
 
-if(BUILD_PEACH_API_SHARED)
-    target_compile_definitions(peach_api PRIVATE
-        PEACH_API_BUILD_DYNAMIC
+if(BUILD_PEACH_SHARED)
+    target_compile_definitions(peach PRIVATE
+        PEACH_BUILD_DYNAMIC
     ) 
 endif()
 
@@ -1118,10 +1084,6 @@ if(WIN32)
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
         target_compile_options(Peach_Editor PRIVATE
-            $<$<CONFIG:Debug>:/MTd>
-            $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
-        ) 
-        target_compile_options(peach_api PRIVATE
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
@@ -1150,7 +1112,7 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio")
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Peach_Editor)
     message(STATUS "Setting Peach_Editor as the default startup project for VS2022")
     
-    set(NETHOST_DLL_PATH "$<SHELL_PATH:${CMAKE_SOURCE_DIR}/third_party/Peach-Editor/dotnet/win64/debug>")
+    set(NETHOST_DLL_PATH "$<SHELL_PATH:${CMAKE_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/debug>")
 
     set_property(TARGET Peach_Editor PROPERTY VS_DEBUGGER_ENVIRONMENT 
         "$<$<CONFIG:Debug>:PATH=${NETHOST_DLL_PATH};%PATH%>"
