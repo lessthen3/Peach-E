@@ -8,22 +8,17 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-namespace Peach;
+local Sprite2D = {}
+Sprite2D.__index = Sprite2D
 
-using System;
-using System.Runtime.InteropServices;
+function Sprite2D.new(nodeID)
+    return setmetatable({ id = nodeID, Position = {0, 0} }, Sprite2D)
+end
 
-public abstract class PeachScript
-{
-    public abstract void OnEnter();
-    public abstract void OnUpdate();
-    public abstract void OnConstantUpdate();
-    public abstract void OnExit();
-}
+function Sprite2D:move(dx, dy)
+    PEACH_MoveNode2D(self.id, dx, dy)
+end
 
-public static class Peach
-{
-    [DllImport("peach_api", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void Peach_Log(string msg);
-}
-
+function Sprite2D:set_visible(v)
+    PEACH_SetNodeVisibility(self.id, v)
+end

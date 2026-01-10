@@ -288,7 +288,7 @@ def main() -> bool:
         nargs=1,
         metavar="[generator]",
         help=CreateColouredText('Used to set the project file generator, options are as follows:', 'bright magenta') + "\n" + \
-                "\t" + CreateColouredText('-G vs2015 --> vs2026 ', 'blue') + CreateColouredText('Generates solution for Visual Studio 2015 - 2022', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G vs2015 --> vs2026 ', 'blue') + CreateColouredText('Generates solution for Visual Studio 2015 - 2026', 'cyan') + "\n" + \
                 
                 "\t" + CreateColouredText('-G xcode ', 'blue') + CreateColouredText('Generates project files for Xcode', 'cyan') + "\n" + \
                 

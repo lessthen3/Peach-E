@@ -47,6 +47,8 @@ namespace PeachCore {
     using MeshID = uint64_t;
     using AnimationID = uint64_t;
 
+    using VulkanShaderBytecode = vector<uint32_t>;
+
     enum class RESOURCE_OP : uint16_t
     {
         RESOURCE_DESTINATION = 69,
@@ -72,38 +74,49 @@ namespace PeachCore {
         INVALID_LOAD
     };
 
-    struct PeachBinaryAsset
-    {
-        uint64_t Offset = 0;
-        uint64_t Size = 0;
-    };
-
-    using ResourceLocation = variant<PeachBinaryAsset, string>;
-
     struct LoadCommand
     {
-        uint64_t NodeID = 0;       //node destination, nodes are created first in the scenetree, then any resources tied to it are asked to be loaded from GameManager
-        RESOURCE_OP OP = RESOURCE_OP::INVALID_LOAD;        // 2 bytes
-        ResourceLocation Location;
-    };
-
-    //////////////////////////////////////////////
-    // Runtime Contexts
-    //////////////////////////////////////////////
-
-    struct LuaRuntimeContext
-    {
-
-    };
-
-    struct BongoJamRuntimeContext
-    {
-
+        uint64_t NodeID = 0; //node destination, nodes are created first in the scenetree, then any resources tied to it are asked to be loaded from GameManager
+        string Location; //either a res:// inside the .peachbin or a location validated by the user on their system
+        bool IsExternal = false; //by default will look in .peachbin otherwise if true will look elsewhere ig
+        RESOURCE_OP OP = RESOURCE_OP::INVALID_LOAD; // UwU!
     };
 
     //////////////////////////////////////////////
     // Data Containers
     //////////////////////////////////////////////
+
+    struct PeachBinSection //don't needa track offset here since PeachBinChapter can do that using ChunkSize from the vector
+    {
+        string ResPath;
+        uint16_t NameSize;
+
+        uint64_t ChunkSize;
+        vector<uint8_t> BinaryData; // absolute offset from start of file //MAYBE: use a unique_ptr here to express ownership
+
+        explicit
+            PeachBinSection(const string& fp_ResPath, vector<uint8_t>&& fp_BinaryData)
+        {
+            if (fp_ResPath.size() > numeric_limits<uint16_t>::max())
+            {
+                throw length_error("PeachBinSection: ResPath too long for uint16_t NameSize");
+            }
+
+            ResPath = fp_ResPath;
+            BinaryData = move(fp_BinaryData);
+            ChunkSize = BinaryData.size();
+            NameSize = static_cast<uint16_t>(fp_ResPath.size());
+        }
+    };
+
+    struct PeachBinChapter
+    {
+        uint8_t Magic = 0;  //Magic Type Number // enum: 1=Textures, 2=Meshes, 3=Bytecode, 4=Audio, ...
+        uint64_t TotalSize;      // Total size of asset chapter
+        unordered_map<string, PeachBinSection> Contents;
+    };
+
+    using PeachBinary = unordered_map<string, PeachBinChapter>;
 
     struct PluginData
     {
@@ -118,7 +131,14 @@ namespace PeachCore {
         // owns data via unique_ptr + custom deleter
         unique_ptr<unsigned char, void(*)(void*)> PixelData{ nullptr, stbi_image_free };
 
-        TextureData(unsigned char* fp_RawData, int fp_Width, int fp_Height, int fp_Channels)
+        explicit
+            TextureData
+            (
+                unsigned char* fp_RawData,
+                int fp_Width,
+                int fp_Height,
+                int fp_Channels
+            )
         {
             Width = fp_Width;
             Height = fp_Height;
@@ -146,7 +166,8 @@ namespace PeachCore {
         unique_ptr<BytecodeData>,
         unique_ptr<ScriptData>,
         unique_ptr<PluginData>,
-        unique_ptr<SceneData>
+        unique_ptr<SceneData>,
+        unique_ptr<VulkanShaderBytecode>
     >;
 
     struct ResourceTransfer //just gonna use holds_alternative instead of a tagged union
@@ -212,10 +233,6 @@ namespace PeachCore {
         //used for asking ResourceManager to load something from the main thread
         shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_LoadCommandQueue = nullptr;
 
-        //////////////////// Waiting Buffer ////////////////////
-
-        vector<ResourceTransfer> pm_WaitingResources;
-
         //////////////////// Resource Logger ////////////////////
 
         //Resource Logger owned by ResourceManager only
@@ -233,12 +250,12 @@ namespace PeachCore {
 
         //////////////////// Semaphore Control ////////////////////
 
-        binary_semaphore pm_ResourceSemaphore{ 0 }; // starts locked (zero tickets)
+        counting_semaphore<PEACH_MAX_PTR_DIFF> pm_ResourceSemaphore{ 0 }; // starts locked (zero tickets)
         atomic<bool> pm_IsRunning = true;
 
         //////////////////// Binary Data ////////////////////
 
-        vector<uint8_t> pm_PeachMetaBinary; //holds the meta file that 
+        unordered_map<string, uint64_t> pm_OffsetTable;
         vector<uint8_t> pm_PeachBinary;
 
 
@@ -282,9 +299,6 @@ namespace PeachCore {
             (
                 Logger* const logger
             ); //this is supposed to be called from the main thread so cant use the resource_logger here for thread reasons
-
-        bool
-            LoadLuaRuntime();
 
         bool
             LoadDotNetRuntime
@@ -346,36 +360,46 @@ namespace PeachCore {
         ////////////////////////////////////////////////
         // Resource Loading Functions
         ////////////////////////////////////////////////
+        // FFS = From File System, FB = From Binary
+        bool
+            LoadPeachBinHeader();
 
         bool
             LoadDotNetScript(const string& fp_ScriptPath);
 
         bool
-            LoadLuaScript(const string& fp_ScriptPath);
+            LoadLuaBytecode(uint64_t fp_BinaryOffset);
 
         bool
             LoadBongoJamScript(const string& fp_ScriptPath);
 
         bool 
-            LoadTexture(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode);
+            LoadTextureFFS(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode);
 
         bool
-            LoadTexture(const PeachBinaryAsset& fp_TextureFilePath, const uint64_t fp_DestinationNode);
+            LoadTextureFB(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode);
 
         bool
-            LoadWavFromFile(const string& fp_WavFilePath);
+            LoadWavFFS(const string& fp_WavFilePath);
 
         bool
-            LoadCompiledSPIRV
+            LoadVulkanShaderFFS
             (
                 const string& fp_ShaderFilePath,
-                vector<uint32_t>& fp_Bytecode
+                const uint64_t fp_DestinationNode
             );
 
         bool
-            LoadScene(const string& fp_ScenePath); //load scene locally from PhysFS
+            LoadOpenGLShaderFFS
+            (
+                const string& fp_ShaderFilePath,
+                const uint64_t fp_DestinationNode
+            );
 
         bool
-            LoadScene(const PeachBinaryAsset& fp_Offset); //unpacked from peachbin file loaded into peach engine rn
+            LoadSceneFFS(const string& fp_ScenePath); //load scene locally from PhysFS
+
+        bool
+            LoadSceneFB(const string& fp_ScenePath); //unpacked from peachbin file loaded into peach engine rn
     };
 }

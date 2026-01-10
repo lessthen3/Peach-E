@@ -17,9 +17,12 @@
 ///Ew Microsoft
 #include <dotnet/nethost.h>
 
-namespace PeachEditor{
 
+namespace PeachEditor {
     using namespace std;
+}
+
+namespace PeachEditor::Dotnet{
 
     struct RuntimeConfig //this looks kinda stupid but whatever thats how Serializer.h works uwu
     {
@@ -33,16 +36,16 @@ namespace PeachEditor{
                 string name = "Microsoft.NETCore.App";
                 string version = "6.0.0";
 
-                SERIALIZABLE_FIELDS(name, version)
+                //SERIALIZABLE_FIELDS(name, version)
             } framework; //needs to be named all lowercase since serializer.h will insert the var name into the json
 
-            SERIALIZABLE_FIELDS(tfm, rollForward, framework)
+            //SERIALIZABLE_FIELDS(tfm, rollForward, framework)
         } runtimeOptions;
 
-        SERIALIZABLE_FIELDS(runtimeOptions)
+        //SERIALIZABLE_FIELDS(runtimeOptions)
     };
 
-    struct DotnetConfigs
+    struct Configs
     {
         RuntimeConfig RuntimeConfigs;
 
@@ -53,8 +56,6 @@ namespace PeachEditor{
         string ProjectPath;
         string OutpathPath;
     };
-
-namespace DotnetUtils{
 
     constexpr int MAX_PATH_LENGTH = 1024;
 
@@ -74,7 +75,7 @@ namespace DotnetUtils{
     bool
         GenerateProjectFiles
         (
-            DotnetConfigs& DotnetConfigs,
+            Configs& DotnetConfigs,
             const string& fp_ProjectName,
             const string& fp_ProjectPath,
             const string& fp_PeachBridgePath,
@@ -101,5 +102,25 @@ namespace DotnetUtils{
     bool
         GetHostFxrLocalPath(string* fp_HostFxrString, PeachCore::Logger* logger);
 
-}// namespace LangUtils
 }//namespace PeachEditor
+
+namespace PeachEditor::Lua {
+
+    bool
+        GenerateDefaultScript
+        (
+            const string& fp_ScriptName,
+            const string& fp_NodeType,
+            const string& fp_ScriptFilePath,
+            PeachCore::Logger* logger
+        );
+
+    bool
+        CompileProjectScripts //XXX: need to add support for if the user deleted the sln file, or if the game project is pulled off git since they shouldnt include build artifacts within the repo
+        (
+            const vector<filesystem::path>& fp_ScriptPaths,
+            PeachCore::PeachBinChapter& fp_PeachBinChapter,
+            PeachCore::Logger* logger
+        );
+
+}

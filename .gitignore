@@ -26,13 +26,14 @@
 /local_tests
 
 # Logs
-/logs
+**/logs
 
 #possible additions
 /idk maybe
 
 # JSON
 /third_party/peach_core/header_only/spirv-headers/*.json
+/tests/serialization/*.json
 
 # individual files
 /TODO.txt

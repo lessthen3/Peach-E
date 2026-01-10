@@ -1,10 +1,11 @@
 ####################################### Config Options
 
-option(BUILD_PEACH_SHARED "Builds peach_core as a shared library" OFF) #build peach api shared by default uwu
+option(BUILD_PEACH_CORE_SHARED "Builds peach_core as a shared library" OFF) #build peach_core shared by default uwu
+option(BUILD_PEACH_TESTS "build test suite" ON)
 
 ####################################### Enforce CMake Version
 
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 4.2.0) #need this for vs2026
 
 ####################################### Project definition
 
@@ -59,7 +60,7 @@ elseif(ANDROID)
     set(TARGET_PLATFORM "android")
     message(STATUS "Android detected! Purr in my pocket, take me anywhere~ 🤳🐾")
 
-elseif(UNIX AND NOT APPLE) #apparently cmake lumps apple into the unix bucket which it is technically but not useful here uwu
+elseif(UNIX AND NOT APPLE) #apparently cmake lumps apple into the unix bucket which it is kinda technically but not useful here uwu
 
     # Now we dive even deeper for all the extra *special* UNIXes~
     execute_process(
@@ -132,23 +133,23 @@ file(
 
 ####################################### Static/Dynamic Library Target
 
-if(BUILD_PEACH_SHARED)
+if(BUILD_PEACH_CORE_SHARED)
     set(PEACH_BUILD_TYPE SHARED)
 else()
     set(PEACH_BUILD_TYPE STATIC)
 endif()
 
 # Create a static or dynamic library for peach_core
-add_library(peach ${PEACH_BUILD_TYPE} 
+add_library(peach_core ${PEACH_BUILD_TYPE} 
     ${PEACH_CORE_SOURCES}
 )
 
-target_include_directories(peach PUBLIC
+target_include_directories(peach_core PUBLIC
     ${PROJECT_SOURCE_DIR}/third_party/peach_core/header_only #header only library includes
     ${PROJECT_SOURCE_DIR}/src/peach_core
 )
 
-set_target_properties(peach PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach PIC friendly UwU
+set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach_core PIC friendly UwU
 
 ####################################### Executable Targets
 
@@ -207,13 +208,39 @@ endif()
 
 # Link Peach Engine to Peach Core
 target_link_libraries(${PROJECT_NAME} PRIVATE 
-    peach
+    peach_core
 )
 
 # Link Peach_Editor to Peach Core
 target_link_libraries(Peach_Editor PRIVATE 
-    peach
+    peach_core
 )
+
+if(BUILD_PEACH_TESTS)
+    file(
+        GLOB_RECURSE 
+        PEACH_TEST_SOURCES 
+        CONFIGURE_DEPENDS 
+        "tests/*.cpp" 
+        "tests/*.h"
+        "tests/*.hpp"
+    )
+
+    add_executable( 
+        Peach_Tests
+        ${PEACH_TEST_SOURCES}
+    )
+
+    target_link_libraries(Peach_Tests PRIVATE 
+        peach_core
+    )
+
+    target_compile_options(Peach_Tests PRIVATE
+    $<$<CONFIG:Debug>:/MTd>
+    $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+    ) 
+
+endif()
 
 ####################################### Static Imports
 
@@ -925,7 +952,7 @@ if(TARGET_PLATFORM STREQUAL "linux")
 
     find_package(OpenGL REQUIRED)
 
-    target_link_libraries(peach PUBLIC
+    target_link_libraries(peach_core PUBLIC
         #opengl
         GL
         glew    
@@ -935,7 +962,7 @@ elseif(TARGET_PLATFORM STREQUAL "windows")
 
     find_package(OpenGL REQUIRED)
 
-    target_link_libraries(peach PUBLIC
+    target_link_libraries(peach_core PUBLIC
         #opengl
         opengl32
         glew    
@@ -944,7 +971,7 @@ elseif(TARGET_PLATFORM STREQUAL "windows")
 endif()
 
 # Peach Core
-target_link_libraries(peach PUBLIC
+target_link_libraries(peach_core PUBLIC
     #file system
     physfs
 
@@ -979,7 +1006,7 @@ target_link_libraries(peach PUBLIC
 
 if(TARGET_PLATFORM STREQUAL "macos") #TODO fix iokit and other frameworks that dont exist on ios ipados or tvos and watchos
 
-    target_link_libraries(peach PRIVATE
+    target_link_libraries(peach_core PRIVATE
         "-framework AVFoundation"
         "-framework AudioToolbox"
         "-framework CoreAudio"
@@ -999,7 +1026,7 @@ if(TARGET_PLATFORM STREQUAL "macos") #TODO fix iokit and other frameworks that d
     ) #needed for statically linking SDL3
 
 elseif(WIN32)
-    target_link_libraries(peach PRIVATE  
+    target_link_libraries(peach_core PRIVATE  
         setupapi 
         version 
         imm32 
@@ -1013,7 +1040,7 @@ elseif(WIN32)
         #dont change these, the build breaks for debug otherwise
         $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:msvcrt>
         $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:advapi32>
-    ) #needed for statically linking nethost for peach editor
+    ) #needed for statically linking nethost for peach_editor
 endif()
 
 # Peach Editor
@@ -1050,7 +1077,7 @@ target_link_libraries(Peach_Editor PUBLIC
 
 ####################################### Compiler Options and Definitions
 
-target_compile_definitions(peach PRIVATE 
+target_compile_definitions(peach_core PRIVATE 
     $<$<CONFIG:Debug>:PEACH_DEBUG>
 )
 
@@ -1058,8 +1085,8 @@ target_compile_definitions(Peach_Editor PRIVATE
     $<$<CONFIG:Debug>:PEACH_DEBUG>
 )
 
-if(BUILD_PEACH_SHARED)
-    target_compile_definitions(peach PRIVATE
+if(BUILD_PEACH_CORE_SHARED)
+    target_compile_definitions(peach_core PRIVATE
         PEACH_BUILD_DYNAMIC
     ) 
 endif()
@@ -1068,14 +1095,14 @@ if(WIN32)
     target_compile_definitions(Peach_Editor PRIVATE
         $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:NETHOST_USE_AS_STATIC> #need this for nethost to be used statically
     )
-    target_compile_definitions(peach PUBLIC
+    target_compile_definitions(peach_core PUBLIC
         PHYSFS_STATIC
         SODIUM_STATIC #needed for statically linking libsodium
         GLEW_STATIC #needed for statically linking glew
     )
 
     if(MSVC)
-        target_compile_options(peach PRIVATE
+        target_compile_options(peach_core PRIVATE
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 

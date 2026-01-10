@@ -16,14 +16,6 @@ namespace PeachEditor{
 
     using namespace std;
 
-    enum ScriptRuntimeType : uint8_t //flag since a project can have multiple runtimes in it for whatever reason
-    {
-        Dotnet  = 1 << 0,
-        Python = 1 << 1,
-        Lua = 1 << 2,
-        None = 0
-    };
-
     struct PeachProjectSettings //per project settings/configs
     {
         unordered_map<string, string> ProjectSettings;
@@ -33,13 +25,13 @@ namespace PeachEditor{
 
         //theme stuff
 
-        SERIALIZABLE_FIELDS(FontSize, CurrentFont)
+        //SERIALIZABLE_FIELDS(FontSize, CurrentFont)
     };
 
     struct ProjectLocalEditorSettings
     {
 
-        SERIALIZABLE_FIELDS()
+        //SERIALIZABLE_FIELDS()
     };
 
     struct ExportConfigSettings
@@ -49,13 +41,13 @@ namespace PeachEditor{
 
         bool IsDebug = false;
 
-        SERIALIZABLE_FIELDS()
+        //SERIALIZABLE_FIELDS()
     };
 
     struct PeachProject
     {
         string ProjectName;
-        uint8_t RuntimeType = None;
+        uint8_t RuntimeType = 0;
 
         unordered_map<string, string> ScriptPaths;
         unordered_map<string, string> ScenePaths; // Key : ObjectID, Val : path -> resource
@@ -78,7 +70,7 @@ namespace PeachEditor{
         }
 
     private:
-        SERIALIZABLE_FIELDS(ProjectName, RuntimeType, ScriptPaths, ScenePaths, TexturePaths, AudioPaths, ProjectSettings)
+        //SERIALIZABLE_FIELDS(ProjectName, RuntimeType, ScriptPaths, ScenePaths, TexturePaths, AudioPaths, ProjectSettings)
 
     };
 

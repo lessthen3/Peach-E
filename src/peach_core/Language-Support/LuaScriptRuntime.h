@@ -10,33 +10,77 @@
 ********************************************************************/
 #pragma once
 
+///PeachCore
 #include "../peach_api/PeachAPI.h"
 #include "../Utils/Logger.h"
 
+///Lua
+#include <lua/lua.h>
+#include <lua/lualib.h>
+#include <lua/lauxlib.h>
+
 namespace PeachCore {
+namespace Lua {
 
-    struct LuaScriptComponent
+    struct ScriptInstance
     {
-
+        string Name;
+        int TableRef = LUA_NOREF;      // ref to the script’s table in the Lua registry
     };
 
-    class LuaScriptRuntime
+    struct ScriptRuntime
     {
     public:
-        LuaScriptRuntime() = default;
-        ~LuaScriptRuntime() = default;
+        ScriptRuntime() = default;
+        ~ScriptRuntime() = default;
 
-        LuaScriptRuntime(const LuaScriptRuntime&) = delete;
-        LuaScriptRuntime& operator=(const LuaScriptRuntime&) = delete;
+        ScriptRuntime(const ScriptRuntime&) = delete;
+        ScriptRuntime& operator=(const ScriptRuntime&) = delete;
 
     public:
+        bool Initialize(shared_ptr<Logger> fp_Logger);  
+        void Shutdown();                 
 
-        //sol::state Lua;
-        void 
-            RunLuaScript
+    private:
+        lua_State* pm_LuaState = nullptr;
+        shared_ptr<Logger> lua_logger = nullptr;
+
+    public:
+        bool
+            CreateInstanceFromBytecode
             (
-                const string& script, 
-                const string& fp_ScriptName
+                const uint8_t* fp_Bytecode,
+                size_t fp_Size,
+                const string& fp_Name,
+                ScriptInstance& fp_OutInstance
+            );
+
+        bool
+            CallOnUpdate
+            (
+                ScriptInstance& fp_ScriptInstance, 
+                float fp_Delta
+            );
+
+        bool
+            CallOnConstantUpdate
+            (
+                ScriptInstance& fp_ScriptInstance,
+                float fp_Delta
+            );
+
+        bool
+            CallOnEnter
+            (
+                ScriptInstance& fp_ScriptInstance, 
+                PEACH_NODE fp_NodeID
+            );
+
+        bool
+            CallOnExit
+            (
+                ScriptInstance& fp_ScriptInstance
             );
     };
-}
+}//namespace Lua
+}//namespace PeachCore

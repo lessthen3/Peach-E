@@ -28,11 +28,12 @@
 
 namespace PeachCore {
 
-    enum ScriptRuntimeType : uint8_t
+    enum class ScriptRuntimeType : uint8_t
     {
         Dotnet = 1 <<0,
-        Python = 1 << 1,
-        Lua = 1 << 2
+        BongoJam = 1 << 1,
+        Lua = 1 << 2,
+        None = 0
     };
 
     class GameManager 
@@ -94,8 +95,8 @@ namespace PeachCore {
         //////////////////// Script Runtime Contexts ////////////////////
 
         DotnetContext pm_DotnetContext;
-        LuaRuntimeContext pm_LuaRuntimeContext;
-        BongoJamRuntimeContext pm_BongoJamRuntimeContext;
+        Lua::ScriptRuntime pm_LuaRuntimeContext;
+        //BongoJamRuntimeContext pm_BongoJamRuntimeContext;
 
         //////////////////// Thread Handles ////////////////////
 
@@ -192,7 +193,7 @@ namespace PeachCore {
         }
 
         bool
-            LoadScriptRuntime
+            SetupScriptRuntime
             (
                 const string& fp_BootConfPath,
                 const uint8_t fp_RequiredScriptRuntimes

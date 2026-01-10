@@ -19,7 +19,7 @@ namespace PeachEditor {
     struct PeachEditorSettings
     {
 
-        SERIALIZABLE_FIELDS()
+        //SERIALIZABLE_FIELDS()
     };
 
     struct GlobalPeachEditorData
@@ -28,7 +28,7 @@ namespace PeachEditor {
 
         PeachEditorSettings EditorSettings; //global settings that persist across projects
 
-        SERIALIZABLE_FIELDS(ListOfAllProjects, EditorSettings)
+        //SERIALIZABLE_FIELDS(ListOfAllProjects, EditorSettings)
     };
 
     struct ProjectManager

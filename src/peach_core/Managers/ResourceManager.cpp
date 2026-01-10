@@ -99,31 +99,31 @@ namespace PeachCore {
             break;
         case RESOURCE_OP::LOAD_TEXTURE:
         {
-            if (holds_alternative<string>(fp_Command.Location))
+            if (fp_Command.IsExternal)
             {
-                LoadTexture(get<string>(fp_Command.Location), fp_Command.NodeID);
+                LoadTextureFFS(fp_Command.Location, fp_Command.NodeID);
             }
             else
             {
-                LoadTexture(get<PeachBinaryAsset>(fp_Command.Location), fp_Command.NodeID);
+                LoadTextureFB(fp_Command.Location, fp_Command.NodeID);
             }
         }
         break;
         case RESOURCE_OP::LOAD_SCENE:
         {
-            if (holds_alternative<string>(fp_Command.Location))
+            if (fp_Command.IsExternal)
             {
-                LoadScene(get<string>(fp_Command.Location));
+                LoadSceneFFS(fp_Command.Location);
             }
             else
             {
-                LoadScene(get<PeachBinaryAsset>(fp_Command.Location));
+                LoadSceneFB(fp_Command.Location);
             }
         }
         break;
         case RESOURCE_OP::LOAD_OPENGL_SHADER:
         {
-            if (holds_alternative<string>(fp_Command.Location))
+            if (fp_Command.IsExternal)
             {
             }
             else
@@ -133,7 +133,7 @@ namespace PeachCore {
         break;
         case RESOURCE_OP::LOAD_MP3:
         {
-            if (holds_alternative<string>(fp_Command.Location))
+            if (fp_Command.IsExternal)
             {
             }
             else
@@ -219,8 +219,29 @@ namespace PeachCore {
     //////////////////////////////////////////////
 
     bool
-        ResourceManager::LoadLuaRuntime()
+        ResourceManager::LoadLuaBytecode(uint64_t fp_BinaryOffset)
     {
+        size_t offset = 0;
+
+        //while (offset + 2 <= data.size()) 
+        //{
+        //    uint16_t nameLen = data[offset] | (data[offset + 1] << 8);
+        //    offset += 2;
+
+        //    string name(reinterpret_cast<const char*>(&data[offset]), nameLen);
+        //    offset += nameLen;
+
+        //    uint32_t chunkSize = data[offset] |
+        //        (data[offset + 1] << 8) |
+        //        (data[offset + 2] << 16) |
+        //        (data[offset + 3] << 24);
+        //    offset += 4;
+
+        //    const uint8_t* chunk = &data[offset];
+        //    offset += chunkSize;
+
+        //    // feed chunk to luaL_loadbuffer(L, (const char*)chunk, chunkSize, name.c_str())
+        //}
 
         return true;
     }
@@ -323,7 +344,7 @@ namespace PeachCore {
     peachnode owner of the texture, where it's used, if its visible, associated shaders/pipeline, texture filtering, initial size
     */
     bool 
-        ResourceManager::LoadTexture(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode)
+        ResourceManager::LoadTextureFFS(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode)
     {
         // Ensure directory exists
         if (not filesystem::exists(fp_TextureFilePath))
@@ -365,14 +386,14 @@ namespace PeachCore {
     }
 
     bool
-        ResourceManager::LoadTexture(const PeachBinaryAsset& fp_TextureFilePath, const uint64_t fp_DestinationNode)
+        ResourceManager::LoadTextureFB(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode)
     {
 
         return true;
     }
 
     bool 
-        ResourceManager::LoadWavFromFile(const string& fp_WavFilePath)
+        ResourceManager::LoadWavFFS(const string& fp_WavFilePath)
     {
     //    ifstream file(filename, ios::binary);
     //    if (!file) 
@@ -454,26 +475,24 @@ namespace PeachCore {
     }
 
     bool
-        ResourceManager::LoadCompiledSPIRV
+        ResourceManager::LoadVulkanShaderFFS
         (
             const string& fp_ShaderFilePath,
-            vector<uint32_t>& fp_Bytecode
+            const uint64_t fp_DestinationNode
         )
     {
-        // Ensure directory exists
+        ////////////////////////////////////////////// Ensure directory exists //////////////////////////////////////////////
+
         if (not filesystem::exists(fp_ShaderFilePath))
         {
             resource_logger->Error("Tried to pass invalid directory to LoadSPIRVFromFile()", "ResourceManager");
             return false;
         }
 
-        if (not fp_Bytecode.empty()) //check if the byte vector is empty before reading data into it OwO
-        {
-            resource_logger->Error(format("Tried passing non-empty byte vector for reading to file name: '{}', nothing was done.", fp_ShaderFilePath), "ResourceManager");
-            return false;
-        }
+        vector<uint32_t> f_Bytecode;
 
-        // Extract file extension assuming format "filename.ext"
+        ////////////////////////////////////////////// Extract file extension assuming format "filename.ext" //////////////////////////////////////////////
+
         size_t lastDotIndex = fp_ShaderFilePath.rfind('.');
 
         if (lastDotIndex == string::npos)
@@ -508,10 +527,23 @@ namespace PeachCore {
             return false;
         }
 
-        fp_Bytecode.resize(f_ShaderFileSize / sizeof(uint32_t));
+        f_Bytecode.resize(f_ShaderFileSize / sizeof(uint32_t));
 
-        f_ShaderFileHandle.read(reinterpret_cast<char*>(fp_Bytecode.data()), f_ShaderFileSize);
+        f_ShaderFileHandle.read(reinterpret_cast<char*>(f_Bytecode.data()), f_ShaderFileSize);
         f_ShaderFileHandle.close();
+
+        pm_DrawableResourceLoadingQueue->emplace(fp_DestinationNode, make_unique<VulkanShaderBytecode>(f_Bytecode)); //force an emplace dont care ab block growing
+
+        return true;
+    }
+
+    bool
+        LoadOpenGLShaderFFS
+        (
+            const string& fp_ShaderFilePath,
+            const uint64_t fp_DestinationNode
+        )
+    {
 
         return true;
     }
@@ -562,14 +594,14 @@ namespace PeachCore {
     }
 
     bool
-        ResourceManager::LoadScene(const string& fp_ScenePath)
+        ResourceManager::LoadSceneFFS(const string& fp_ScenePath)
     {
 
         return true;
     }
 
     bool
-        ResourceManager::LoadScene(const PeachBinaryAsset& fp_Offset)
+        ResourceManager::LoadSceneFB(const string& fp_Offset)
     {
 
         return true;
@@ -582,23 +614,23 @@ namespace PeachCore {
     void
         ResourceManager::CheckForDirectoryChanges()
     {
-        static unordered_map<string, PHYSFS_sint64> lastModifiedTimes;
+        static unordered_map<string, PHYSFS_sint64> sf_LastModifiedTimes;
 
         char** rc = PHYSFS_enumerateFiles("/");
 
         for (char** i = rc; *i != NULL; i++)
         {
-            string fullPath = string("/") + *i;
-            PHYSFS_Stat stat;
+            string f_FullPath = string("/") + *i;
+            PHYSFS_Stat f_Status;
 
-            if (PHYSFS_stat(fullPath.c_str(), &stat))
+            if (PHYSFS_stat(f_FullPath.c_str(), &f_Status))
             {
-                if (lastModifiedTimes.find(fullPath) == lastModifiedTimes.end() or lastModifiedTimes[fullPath] != stat.modtime)
+                if (sf_LastModifiedTimes.find(f_FullPath) == sf_LastModifiedTimes.end() or sf_LastModifiedTimes[f_FullPath] != f_Status.modtime)
                 {
                     // File has changed or is new
-                    //processFileChange(fullPath);
+                    //ProcessFileChange(fullPath);
                     // Update the last modified time
-                    lastModifiedTimes[fullPath] = stat.modtime;
+                    sf_LastModifiedTimes[f_FullPath] = f_Status.modtime;
                 }
             }
         }

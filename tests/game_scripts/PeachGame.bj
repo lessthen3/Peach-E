@@ -1,0 +1,25 @@
+
+namespace Game;
+
+class Game
+{
+    func OnEnter() -> void
+    {
+
+    }
+
+    func OnUpdate(float fp_Delta) -> void
+    {
+
+    }
+
+    func OnConstantUpdate(float fp_Delta) -> void
+    {
+
+    }
+
+    func OnExit() -> void
+    {
+
+    }
+}

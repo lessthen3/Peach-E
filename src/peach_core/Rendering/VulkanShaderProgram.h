@@ -28,7 +28,7 @@ namespace Vulkan { //namespacing this because it doesnt need to be a class, just
         vector<uint32_t> Bytecode;
         VkShaderStageFlagBits Stage;
 
-        SERIALIZABLE_FIELDS(Bytecode, Stage)
+        //SERIALIZABLE_FIELDS(Bytecode, Stage)
     };
 
     struct Shaders
@@ -39,7 +39,7 @@ namespace Vulkan { //namespacing this because it doesnt need to be a class, just
         CompiledShader Compute;
         CompiledShader Geometry;
 
-        SERIALIZABLE_FIELDS(Vertex, Fragment)
+        //SERIALIZABLE_FIELDS(Vertex, Fragment)
     };
 
     struct Pipeline
@@ -70,7 +70,7 @@ namespace Vulkan { //namespacing this because it doesnt need to be a class, just
 
         // IMPORTANT: no actual VkShaderModule, VkPipelineLayout, VkPipeline yet
 
-        SERIALIZABLE_FIELDS(PipelineName, ShaderData)
+        //SERIALIZABLE_FIELDS(PipelineName, ShaderData)
     };
 
     struct ShaderProgram

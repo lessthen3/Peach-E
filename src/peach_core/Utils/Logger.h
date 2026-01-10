@@ -181,9 +181,19 @@ namespace PeachCore {
 
     struct LogMessage
     {
-        string Log;
-        string Sender;
-        uint8_t Level = 69;
+        const string Timestamp;  // "2025-01-01 13:37:00.123"
+        const string Message;
+        const string Sender;
+        const uint8_t Level;
+
+        explicit
+            LogMessage(const string& fp_TimeStamp, const string& fp_Message, const string& fp_Sender, const uint8_t fp_Level) : Timestamp(fp_TimeStamp), Message(fp_Message), Sender(fp_Sender), Level(fp_Level) {}
+
+        [[nodiscard]] string
+            Formatted(const string& fp_LevelName) const
+        {
+            return "[" + Timestamp + "][" + fp_LevelName + "][" + Sender + "]: " + Message;
+        }
     };
 
     //////////////////////////////////////////////
@@ -192,7 +202,7 @@ namespace PeachCore {
 
     enum ThreadName : uint8_t
     {
-        NoOwner = 0,
+        NO_THREAD = 0,
         MainThread = 1 << 0,
         RenderThread = 1 << 1,
         ResourceThread = 1 << 2,
@@ -260,10 +270,10 @@ namespace PeachCore {
         string pm_CurrentWorkingDirectory = "nothing";
 
         thread::id pm_ThreadOwnerID;
-        ThreadName pm_ThreadOwnerName = ThreadName::NoOwner;
+        ThreadName pm_ThreadOwnerName = ThreadName::NO_THREAD;
 
         uint8_t pm_ActiveLogMask = LogLevel::ALL_LOGS;
-        LogLevel pm_FlushMask = static_cast<LogLevel>(LogLevel::ERROR_LOG | LogLevel::FATAL_LOG); // or make this user-configurable
+        uint8_t pm_FlushMask = LogLevel::ALL_LOGS; // or make this user-configurable
         
         uint32_t pm_LogSizeCounter = 0;
 

@@ -21,24 +21,32 @@ public static class ScriptBridge
     public static IntPtr CreateScriptInstance(IntPtr fp_ScriptName, IntPtr fp_TypeName)
     {
         if (fp_ScriptName == IntPtr.Zero || fp_TypeName == IntPtr.Zero)
+        {
             return IntPtr.Zero;
-
+        }
+        
         string f_ScriptName = Marshal.PtrToStringUTF8(fp_ScriptName);
         string f_TypeName = Marshal.PtrToStringUTF8(fp_TypeName);
 
         if (string.IsNullOrEmpty(f_ScriptName) || string.IsNullOrEmpty(f_TypeName))
+        {
             return IntPtr.Zero;
+        }
 
         var type = Type.GetType(f_TypeName + ", " + f_ScriptName);
 
         if (type == null)
+        {
             return IntPtr.Zero;
+        }
 
         var instance = Activator.CreateInstance(type) as PeachScript;
 
         if (instance == null)
+        {
             return IntPtr.Zero;
-
+        }
+        
         GCHandle handle = GCHandle.Alloc(instance); // pin object
 
         return GCHandle.ToIntPtr(handle);

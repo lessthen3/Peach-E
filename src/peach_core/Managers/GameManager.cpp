@@ -321,18 +321,24 @@ namespace PeachCore
     }
 
     bool
-        GameManager::LoadScriptRuntime
+        GameManager::SetupScriptRuntime
         (
             const string& fp_BootConfPath,
             const uint8_t fp_RequiredScriptRuntimes
         )
     {
-        if (fp_RequiredScriptRuntimes & ScriptRuntimeType::Dotnet and not ResourceManager::get_single().LoadDotNetRuntime(fp_BootConfPath, pm_DotnetContext))
+        //if (fp_RequiredScriptRuntimes & ScriptRuntimeType::Dotnet and not ResourceManager::get_single().LoadDotNetRuntime(fp_BootConfPath, pm_DotnetContext))
+        //{
+
+        //    return false;
+        //}
+        if (fp_RequiredScriptRuntimes & static_cast<uint8_t>(ScriptRuntimeType::Lua))
         {
 
             return false;
         }
-        if (fp_RequiredScriptRuntimes & ScriptRuntimeType::Lua and not ResourceManager::get_single().LoadLuaRuntime())
+
+        if (fp_RequiredScriptRuntimes & static_cast<uint8_t>(ScriptRuntimeType::BongoJam))
         {
 
             return false;

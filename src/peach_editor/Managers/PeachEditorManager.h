@@ -42,7 +42,7 @@ namespace PeachEditor{
     private:
         shared_ptr<PeachCore::Logger> main_editor_logger = nullptr;
 
-        DotnetConfigs pm_DotnetConfiguration;
+        Dotnet::Configs pm_DotnetConfiguration;
 
     //////////////////////////////////////////////
     // Public Members
@@ -146,9 +146,9 @@ namespace PeachEditor{
 
             string f_HostFxrPath;
 
-            if (DotnetUtils::AssertDotnetExists()) //dummy call but should actually make lmfao
+            if (Dotnet::AssertDotnetExists()) //dummy call but should actually make lmfao
             {
-                DotnetUtils::GetHostFxrLocalPath(&f_HostFxrPath, main_editor_logger.get());
+                Dotnet::GetHostFxrLocalPath(&f_HostFxrPath, main_editor_logger.get());
             }
 
             //DotnetUtils::GenerateDefaultScript("FirstGeneratedScript", "Sprite2D", fp_RootPath + "/local_tests", main_logger.get());
