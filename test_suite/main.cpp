@@ -16,8 +16,10 @@
 #define BUILD_PEACH_SERIALIZER_TEST ////////////////////////////////////////////// Here just for a bit for testing the testing suite UwU
 
 #ifdef BUILD_PEACH_SERIALIZER_TEST
-#include "serialization/cereal.h"
+#include "tests/serialization/cereal.h"
 #endif
+
+#include "tests/logging/LoggerTest.h"
 
 static inline constexpr void
     ReplaceChar(std::string* fp_String, char fp_OldChar, char fp_NewChar)
@@ -62,19 +64,21 @@ int
 
     ////////////////////////////////////////////// Setup the Testing Logger //////////////////////////////////////////////
 
+    using PLF = PeachCore::Logger::Flags;
+
     std::unique_ptr<PeachCore::Logger> testing_logger = nullptr;
     
-    const std::string f_TestsRootDir = mf_PeachERootPath + "/tests";
+    const std::string f_TestsRootDir = mf_PeachERootPath + "/test_suite/tests";
 
-    testing_logger = std::make_unique<PeachCore::Logger>();
+    testing_logger = PeachCore::Logger::CreateUnique("PeachTests", PLF::ALL_LOGS | PLF::FLUSH_ERROR | PLF::FLUSH_FATAL, f_TestsRootDir + "/logs");
 
-    if (not testing_logger->Initialize(PeachCore::ThreadName::MainThread, f_TestsRootDir + "/logs", "Test_Suite", PeachCore::Logger::LogLevel::ALL_LOGS))
+    if (not testing_logger)
     {
-        PeachCore::PrintError("Initialization error: Was not able to initialize Test_Suite's main logger");
+        PeachCore::PrintError("Initialization error: Was not able to initialize PeachTests' main logger");
         return EXIT_FAILURE;
     }
 
-    testing_logger->Debug("Main editor logger successfully initialized", "Test_Suite");
+    testing_logger->Debug("Main editor logger successfully initialized", "PeachTests");
 
     ////////////////////////////////////////////// Try to Initialize Peach-E and Run Desired Tests //////////////////////////////////////////////
 
@@ -85,8 +89,8 @@ int
         engine_manager->InitializePeachEngine
         (
             f_TestsRootDir,
-            "f_HostFxrPath", 
-            PeachCore::RendererType::Vulkan, PeachCore::ThreadName::NO_THREAD
+            PeachCore::ThreadName::NO_THREAD,
+            PeachCore::RendererType::Vulkan
         );
 
         ////////////////////////////////////////////// Serializer Tests //////////////////////////////////////////////
@@ -114,6 +118,8 @@ int
 #ifdef BUILD_PEACH_VULKAN_TEXTURE_TEST
 
 #endif
+
+        PeachTests::RunLoggerTests(f_TestsRootDir + "/logging", testing_logger.get());
 
         engine_manager->ShutdownPeachEngine();
 

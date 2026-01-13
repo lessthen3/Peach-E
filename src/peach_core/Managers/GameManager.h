@@ -28,6 +28,24 @@
 
 namespace PeachCore {
 
+    //////////////////////////////////////////////
+    // ThreadName Enum
+    //////////////////////////////////////////////
+
+    enum ThreadName : uint8_t
+    {
+        MainThread = 1 << 0,
+        RenderThread = 1 << 1,
+        ResourceThread = 1 << 2,
+        NetworkThread = 1 << 3,
+        PhysicsThread = 1 << 4,
+        AudioThread = 1 << 5,
+
+        NO_THREAD = 0,
+        ALL_THREADS = MainThread | RenderThread | ResourceThread | NetworkThread | PhysicsThread | AudioThread
+    };
+
+
     enum class ScriptRuntimeType : uint8_t
     {
         Dotnet = 1 <<0,
@@ -123,7 +141,7 @@ namespace PeachCore {
     // Public Members
     //////////////////////////////////////////////
     public:
-        shared_ptr<Logger> m_UserLogger;
+        unique_ptr<Logger> m_UserLogger;
 
     //////////////////////////////////////////////
     // Public Methods
@@ -133,9 +151,8 @@ namespace PeachCore {
             InitializePeachEngine
             (
                 const string& fp_RootPath,
-                const string& fp_BootConfPath,
-                const RendererType fp_RenderingBackend,
                 const uint8_t fp_RequiredThreads,
+                const RendererType fp_RenderingBackend,
                 bool fp_IsSegfaultHandled = false
             );
 

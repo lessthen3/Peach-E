@@ -28,9 +28,8 @@ namespace PeachCore
         GameManager::InitializePeachEngine
         (
             const string& fp_RootPath,
-            const string& fp_BootConfPath,
-            const RendererType fp_RenderingBackend,
             const uint8_t fp_RequiredThreads,
+            const RendererType fp_RenderingBackend,
             bool fp_IsSegfaultHandled
         )
     {
@@ -51,15 +50,29 @@ namespace PeachCore
             EnableColors();
         #endif
 
-        //////////////////// Logger Initialization ////////////////////
+        ////////////////////////////////////////////// Initialize Main Thread Logger //////////////////////////////////////////////
 
-        main_logger = make_unique<Logger>();
-        main_logger->Initialize(ThreadName::MainThread, fp_RootPath + "/logs", "MainLogger", Logger::LogLevel::ALL_LOGS);
-        main_logger->Debug("MainLogger successfully initialized", "PeachEngineManager");
+        main_logger = Logger::CreateUnique("GameManager", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_RootPath + "/logs");
 
-        m_UserLogger = make_shared<Logger>();
-        m_UserLogger->Initialize(ThreadName::MainThread, fp_RootPath + "/logs", "UserLogger", Logger::LogLevel::ALL_LOGS);
-        m_UserLogger->Debug("UserLogger successfully initialized", "PeachEngineManager");
+        if (not main_logger)
+        {
+            PrintError("[CRITICAL_LOGGING_ERROR]: GameManager failed to initialize the main_thread logger >w<");
+            return false;
+        }
+
+        main_logger->Debug("main_thread logger successfully initialized", "GameManager");
+
+        ////////////////////////////////////////////// Initialize User Logger //////////////////////////////////////////////
+
+        m_UserLogger = Logger::CreateUnique("UserLogger", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_RootPath + "/logs");
+
+        if(not m_UserLogger)
+        {
+            PrintError("[CRITICAL_LOGGING_ERROR]: GameManager failed to initialize the user_logger >w<");
+            return false;
+        }
+
+        m_UserLogger->Debug("UserLogger successfully initialized", "GameManager");
 
         //////////////////// Initialize Subsystems ////////////////////
 
@@ -425,7 +438,6 @@ namespace PeachCore
                 f_GeneralUpdateAccumulator -= f_UserDefinedDeltaTime;
             }
         }
-        Print("EXIT UWUWUWUWUWUWU");
     }
 
     //////////////////////////////////////////////

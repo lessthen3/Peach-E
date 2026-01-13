@@ -36,16 +36,17 @@
 
 #include <unordered_map>
 #include <format>
+#include <memory>
 
 #include <thread>
+
+#include <optional>
 
 #include "../Utils/RingBuffer.h"
 
 //#ifndef $ //Used for bookkeeping and tracking what variables are mutable inside a function
 //#define $
 //#endif
-
-constexpr uint32_t MAX_NUMBER_OF_LOGS = 1024;
 
 constexpr const int FAILED_TO_CREATE_MAIN_WINDOW = -1000;
 constexpr const int FAILED_TO_INITIALIZE_OPENGL = -1001;
@@ -60,7 +61,7 @@ namespace PeachCore {
 
     using namespace std;
 
-    #if defined(_WIN32) || defined(_WIN64) && defined(PEACH_USING_OS_TERMINAL)
+    #if (defined(_WIN32) || defined(_WIN64)) && defined(PEACH_USING_OS_TERMINAL)
 
         static bool
             EnableColors()
@@ -75,7 +76,7 @@ namespace PeachCore {
             }
             else
             {
-                cout << ("Was not able to set console mode to allow windows to display ANSI escape codes") << "\n";
+                cerr << ("Was not able to set console mode to allow windows to display ANSI escape codes") << "\n";
                 return false;
             }
         }
@@ -181,35 +182,17 @@ namespace PeachCore {
 
     struct LogMessage
     {
-        const string Timestamp;  // "2025-01-01 13:37:00.123"
-        const string Message;
-        const string Sender;
-        const uint8_t Level;
-
-        explicit
-            LogMessage(const string& fp_TimeStamp, const string& fp_Message, const string& fp_Sender, const uint8_t fp_Level) : Timestamp(fp_TimeStamp), Message(fp_Message), Sender(fp_Sender), Level(fp_Level) {}
+        string Timestamp;  // "2025-01-01 13:37:00.123"
+        string Message;
+        string Sender;
+        uint8_t Level;
 
         [[nodiscard]] string
-            Formatted(const string& fp_LevelName) const
+            Formatted(const string& fp_LevelName) 
+            const
         {
             return "[" + Timestamp + "][" + fp_LevelName + "][" + Sender + "]: " + Message;
         }
-    };
-
-    //////////////////////////////////////////////
-    // ThreadName Enum
-    //////////////////////////////////////////////
-
-    enum ThreadName : uint8_t
-    {
-        NO_THREAD = 0,
-        MainThread = 1 << 0,
-        RenderThread = 1 << 1,
-        ResourceThread = 1 << 2,
-        NetworkThread = 1 << 3,
-        PhysicsThread = 1 << 4,
-        AudioThread = 1 << 5,
-        AllThreads = MainThread | RenderThread | ResourceThread | NetworkThread | PhysicsThread | AudioThread
     };
 
     //////////////////////////////////////////////
@@ -218,183 +201,278 @@ namespace PeachCore {
 
     class Logger
     {
-    //////////////////////////////////////////////
-    // Public Destructor
-    //////////////////////////////////////////////
+        //////////////////////////////////////////////
+        // Public Destructor
+        //////////////////////////////////////////////
     public:
         ~Logger() ///XXX: Just copy and pasted the flushalllogs method because they have the assert at the beginning and wont work with premature exit
         {
-            for (auto& _f : pm_LogFiles)
+            for (auto& lv_LogFile : pm_LogFiles)
             {
-                if (_f.second.is_open())
+                if (lv_LogFile.second.is_open())
                 {
-                    _f.second.flush();
+                    lv_LogFile.second.flush();
                 }
             }  // Ensure all logs are flushed before destruction
 
             CloseOpenLogFiles(); //Closes any files that are open to prevent introducing vulnerabilities in privileged environments
         }
 
-    //////////////////////////////////////////////
-    // Public Constructor
-    //////////////////////////////////////////////
-    public:
+        Logger(const Logger&) = delete;
+        Logger& operator=(const Logger&) = delete;
+        Logger& operator=(Logger&&) = delete;
+
+        /*
+            needed for stack allocated Create(), allows for nrvo and also is kosher since move constructors play w the strict ownership model that is the foundation of the thread owning system uwu
+            so the pattern is using optional return a nrvo Logger, and the thread thats using it calls Create() so this_thread::thread::id works properly ^_^
+        */
+        Logger(Logger&&) = default; 
+
+        static constexpr uint32_t FLUSH_EVERY_N_LOGS = 256;
+        static constexpr uint32_t MAX_NUMBER_OF_LOGS = 1024;
+        static constexpr uintmax_t MAX_LOG_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+        static constexpr uint8_t FLUSH_TRACE_BIT = 1u << 0;
+        static constexpr uint8_t FLUSH_DEBUG_BIT = 1u << 1;
+        static constexpr uint8_t FLUSH_INFO_BIT = 1u << 2;
+        static constexpr uint8_t FLUSH_WARNING_BIT = 1u << 3;
+        static constexpr uint8_t FLUSH_ERROR_BIT = 1u << 4;
+        static constexpr uint8_t FLUSH_FATAL_BIT = 1u << 5;
+
+
+        //////////////////////////////////////////////
+        // Protected Constructor
+        //////////////////////////////////////////////
+    protected:
         Logger() = default;
 
-    ////////////////////////////////////////////////
-    // Helper Enum For LogLevel Specification
-    ////////////////////////////////////////////////
+        ////////////////////////////////////////////////
+        // Helper Enum For LogLevel Specification
+        ////////////////////////////////////////////////
     public:
-        enum LogLevel : uint8_t 
+
+        enum Flags : uint32_t
         {
-            TRACE_LOG = 1 << 0,
-            DEBUG_LOG = 1 << 1,
-            INFO_LOG = 1 << 2,
-            WARNING_LOG = 1 << 3,
-            ERROR_LOG = 1 << 4,
-            FATAL_LOG = 1 << 5,
-            ALL_LOGS = TRACE_LOG | DEBUG_LOG | INFO_LOG | WARNING_LOG | ERROR_LOG | FATAL_LOG
+            // low byte is active mask
+            TRACE_LOG = 1u << 0,
+            DEBUG_LOG = 1u << 1,
+            INFO_LOG = 1u << 2,
+            WARNING_LOG = 1u << 3,
+            ERROR_LOG = 1u << 4,
+            FATAL_LOG = 1u << 5,
+
+            ALL_LOGS = TRACE_LOG | DEBUG_LOG | INFO_LOG | WARNING_LOG | ERROR_LOG | FATAL_LOG,
+
+            //middle byte is flush mask
+            FLUSH_TRACE =  1u << 8,
+            FLUSH_DEBUG = 1u << 9,
+            FLUSH_INFO = 1u << 10,
+            FLUSH_WARNING = 1u << 11,
+            FLUSH_ERROR = 1u << 12,
+            FLUSH_FATAL = 1u << 13,
+
+            FLUSH_ALL = FLUSH_TRACE | FLUSH_DEBUG | FLUSH_INFO | FLUSH_WARNING | FLUSH_ERROR | FLUSH_FATAL,
+
+            //high byte is aux flags
+            DONT_CREATE_DIRECTORY = 1u << 16,
+            LOG_TO_ONLY_SNAPSHOT_BUFFER = 1u << 17
         };
 
-    //////////////////////////////////////////////
-    // Protected Class Members
-    //////////////////////////////////////////////
+        //////////////////////////////////////////////
+        // Protected Class Members
+        //////////////////////////////////////////////
     protected:
-        bool pm_HasBeenInitialized = false;
-
         unordered_map<string, ofstream> pm_LogFiles;
 
-        unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_LogSnapshotBuffer = nullptr;
+        unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_SnapshotBuffer = nullptr;
 
         string pm_LoggerName = "No_Logger_Name";
         string pm_CurrentWorkingDirectory = "nothing";
 
         thread::id pm_ThreadOwnerID;
-        ThreadName pm_ThreadOwnerName = ThreadName::NO_THREAD;
 
-        uint8_t pm_ActiveLogMask = LogLevel::ALL_LOGS;
-        uint8_t pm_FlushMask = LogLevel::ALL_LOGS; // or make this user-configurable
-        
+        uint8_t pm_ActiveLogMask = 0;
+        uint8_t pm_FlushMask = 0;
+
+        bool pm_LogToFile = true;
+
         uint32_t pm_LogSizeCounter = 0;
 
-    //////////////////////////////////////////////
-    // Public Methods
-    //////////////////////////////////////////////
+        //////////////////////////////////////////////
+        // Public Methods
+        //////////////////////////////////////////////
     public:
-        bool
-            Initialize
+
+        [[nodiscard]] static optional<Logger>
+            Create
             (
-                const ThreadName fp_ThreadName,
-                const string& fp_DesiredOutputDirectory,
                 const string& fp_DesiredLoggerName,
-                const uint8_t fp_LogLevelFlags,
-                const bool fp_ShouldCreateOutputDirectory = true
+                const uint32_t fp_Flags,
+                const string& fp_DesiredOutputDirectory = ""
             )
         {
-#ifdef PEACH_DEBUG
-            stringstream f_UckCPlusPlus; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
-            f_UckCPlusPlus << this_thread::get_id();
-            string f_CallerThreadID = f_UckCPlusPlus.str();
+            Logger f_CreatedLogger; 
 
-            //PrintError(format("Logger name: '{}' from thread number : {}, [Caller Thread ID]: {}", fp_DesiredLoggerName, static_cast<uint8_t>(fp_ThreadName), f_CallerThreadID));
-#endif
-            if (pm_HasBeenInitialized) //stops accidental reinitialization of logmanager
+            if (not f_CreatedLogger.Initialize(fp_DesiredLoggerName, fp_DesiredOutputDirectory, fp_Flags))
             {
-                PrintError(format("Logger with name : '{}' has already been initialized, Logger is only allowed to initialize once", fp_DesiredLoggerName));
+                PrintError("Unable to initialize logger named: " + fp_DesiredLoggerName);
+                return nullopt;
+            }
+
+            return f_CreatedLogger; //NRVO
+        }
+
+        [[nodiscard]] static unique_ptr<Logger>
+            CreateUnique
+            (
+                const string& fp_DesiredLoggerName,
+                const uint32_t fp_Flags,
+                const string& fp_DesiredOutputDirectory = ""
+            )
+        {
+            unique_ptr<Logger> f_CreatedLogger(new Logger()); //this is dumb but std doesn't like my private constructor uwu!
+
+            if (not f_CreatedLogger->Initialize(fp_DesiredLoggerName, fp_DesiredOutputDirectory, fp_Flags))
+            {
+                PrintError("Unable to initialize logger named: " + fp_DesiredLoggerName);
+                return nullptr;
+            }
+
+            return move(f_CreatedLogger);
+        }
+
+        [[nodiscard]] static shared_ptr<Logger>
+            CreateShared
+            (
+                const string& fp_DesiredLoggerName,
+                const uint32_t fp_Flags,
+                const string& fp_DesiredOutputDirectory = ""
+            )
+        {
+            shared_ptr<Logger> f_CreatedLogger(new Logger()); //this is dumb but std doesn't like my private constructor uwu!
+
+            if (not f_CreatedLogger->Initialize(fp_DesiredLoggerName, fp_DesiredOutputDirectory, fp_Flags))
+            {
+                PrintError("Unable to initialize logger named: " + fp_DesiredLoggerName);
+                return nullptr;
+            }
+
+            return f_CreatedLogger;
+        }
+
+        bool
+            UpdateThreadOwner //the owning thread must update and pass off the logger to be considered valid otherwise it wont uwu
+            (
+                const thread::id& fp_NewThreadID
+            ) 
+        {
+            if (not AssertThreadAccess("UpdateThreadOwner"))
+            {
+                //can't log here since it's only triggered by improper thread usage which will trigger asserthreadacess again
+                PrintError(format("Tried to call UpdateThreadOwner from a thread that didn't own logger named: {}", pm_LoggerName)); 
                 return false;
             }
 
-            pm_LoggerName = fp_DesiredLoggerName;
-
-            pm_ActiveLogMask = fp_LogLevelFlags;
-
-            pm_ThreadOwnerName = fp_ThreadName;
-            pm_ThreadOwnerID = this_thread::get_id();
-
-            pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + pm_LoggerName;
-
-            // Ensure log directory exists
-            if ((not filesystem::exists(pm_CurrentWorkingDirectory)) and fp_ShouldCreateOutputDirectory)
-            {
-                try
-                {
-                    filesystem::create_directories(pm_CurrentWorkingDirectory); //XXX: this can throw so we wrap it in a try catch
-                }
-                catch (const exception& f_Exception)
-                {
-                    PrintError(format("Failed to create desired log output directory with exception: '{}'", f_Exception.what()));
-                    return false;
-                }
-            }
-            else if (not filesystem::exists(pm_CurrentWorkingDirectory))
-            {
-                PrintError("Failed to find valid log output directory");
-                return false;
-            }
-            
-            //Create Log files based off of log level flags
-            const unordered_map<uint8_t, string> f_LogLevels = 
-            {
-                {TRACE_LOG, "trace"},
-                {DEBUG_LOG, "debug"},
-                {INFO_LOG, "info"},
-                {WARNING_LOG, "warn"},
-                {ERROR_LOG, "error"},
-                {FATAL_LOG, "fatal"}
-            };
-
-            for (const auto& [__key, __val] : f_LogLevels)
-            {
-                if(pm_ActiveLogMask & __key)
-                {
-                    CreateLogFile(pm_CurrentWorkingDirectory, __val + ".log");
-                }
-            }
-
-            pm_LogSnapshotBuffer = make_unique<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>>();
-
-            pm_HasBeenInitialized = true; //well if everything went as planned we should be good to set this to true uwu
+            pm_ThreadOwnerID = fp_NewThreadID;
 
             return true;
         }
 
-        void
-            UpdateThreadOwner()
+        [[nodiscard]] bool 
+            UpdateActiveMask(const uint32_t fp_NewLogMask)
         {
-            pm_ThreadOwnerID = this_thread::get_id();
+            ////////////////////////////////////////////// Change Active Mask if logging to snapshot buffer only uwu //////////////////////////////////////////////
+
+            if (not pm_LogToFile)
+            {
+                pm_ActiveLogMask = ExtractLevelMask(fp_NewLogMask);
+                return true;
+            }
+
+            ////////////////////////////////////////////// flush all logs before making any changes //////////////////////////////////////////////
+
+            if (not FlushAllLogs()) 
+            {
+                return false;
+            }
+
+            ////////////////////////////////////////////// clear every file //////////////////////////////////////////////
+
+            pm_LogFiles.clear(); 
+
+            ////////////////////////////////////////////// Reset Mask //////////////////////////////////////////////
+
+            pm_ActiveLogMask = 0;
+
+            ////////////////////////////////////////////// Create Log files based off of Current active mask uwu //////////////////////////////////////////////
+
+            static const unordered_map<uint8_t, const string> f_LogLevels = //this is fine being static since its not mutable so reading from multiple threads is kosher
+            {
+                {TRACE_LOG, "trace.log"},
+                {DEBUG_LOG, "debug.log"},
+                {INFO_LOG, "info.log"},
+                {WARNING_LOG, "warning.log"},
+                {ERROR_LOG, "error.log"},
+                {FATAL_LOG, "fatal.log"}
+            };
+
+            for (const auto& [lv_LogEnum, lv_LogStringName] : f_LogLevels)
+            {
+                if (fp_NewLogMask & lv_LogEnum)
+                {
+                    if (not CreateLogFile(pm_CurrentWorkingDirectory, lv_LogStringName))
+                    {
+                        PrintError("Failed to create log file named: " + lv_LogStringName);
+                        return false;
+                    }
+
+                    pm_ActiveLogMask |= static_cast<uint8_t>(lv_LogEnum);
+                }
+            }
+
+            ////////////////////////////////////////////// Success! //////////////////////////////////////////////
+
+            return true;
         }
+
+        const RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>&
+            GetSnapshotBuffer() 
+            const noexcept
+        {
+            return *pm_SnapshotBuffer;
+        }
+
 
         //////////////////// Flush All Logs ////////////////////
 
-        void
+        [[nodiscard]] bool
             FlushAllLogs()
         {
-            #ifdef PEACH_DEBUG
-                if (not AssertThreadAccess("FlushAllLogs"))
-                {
-                    return;
-                }
-            #endif
-
-            for (auto& _f : pm_LogFiles)
+            if (not AssertThreadAccess("FlushAllLogs"))
             {
-                if (_f.second.is_open())
+                return false;
+            }
+
+            for (auto& lv_LogFile : pm_LogFiles)
+            {
+                if (lv_LogFile.second.is_open())
                 {
-                    _f.second.flush();
+                    lv_LogFile.second.flush();
                 }
             }
+
+            pm_LogSizeCounter = 0; //reset since all logs have been flushed
+
+            return true;
         }
 
-        bool
+        [[nodiscard]] bool
             ValidateLogMsg(const uint8_t fp_LogLevel)
         {
-            //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
-            #ifdef PEACH_DEBUG
-                return (pm_ActiveLogMask & fp_LogLevel) and pm_HasBeenInitialized and AssertThreadAccess("Log");
-            #else
-                    return (pm_ActiveLogMask & fp_LogLevel);
-            #endif
+            return (AssertThreadAccess("ValidateLogMsg") and pm_ActiveLogMask & fp_LogLevel); //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
         }
+
+        //////////////////////////////////////////////////////////// Logging Functions  ////////////////////////////////////////////////////////////
 
         void
             Trace
@@ -403,24 +481,30 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(LogLevel::TRACE_LOG))
+            if (ValidateLogMsg(static_cast<uint8_t>(Flags::TRACE_LOG))) //IMPORTANT: don't need to check if the log file was created since activelogmask tracks that as well >w< and the activemask can't be modified directly since its private
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
                 const string f_LogEntry = "[" + f_TimeStamp + "][trace][" + fp_Sender + "]: " + fp_Message;
 
-                // Log to specific file and all-logs file
-                const string f_LogFileName = "trace.log";
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::TRACE_LOG));
 
-                if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+                if (pm_LogToFile)
                 {
-                    pm_LogFiles[f_LogFileName] << f_LogEntry << "\n";
-                    // Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
-                    //pm_LogSizeCounter++;
+                    ofstream& f_LogFile = pm_LogFiles.at("trace.log"); //safe to call at() here since its synced at all times w pm_ActiveMask
 
-                    //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
-                    //{
-                    //    pm_LogFiles[f_LogFileName].flush();
-                    //}
+                    if(f_LogFile.is_open())
+                    {
+                        f_LogFile << f_LogEntry << "\n";
+
+                        if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                        {
+                            ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
+                        }
+                        else if (pm_FlushMask & FLUSH_TRACE_BIT)
+                        {
+                            f_LogFile.flush();
+                        }
+                    }
                 }
 
                 #ifdef PEACH_USING_OS_TERMINAL
@@ -436,24 +520,30 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(LogLevel::DEBUG_LOG))
+            if (ValidateLogMsg(static_cast<uint8_t>(Flags::DEBUG_LOG)))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
-                const string f_LogEntry = "[" + f_TimeStamp + "][Debug][" + fp_Sender + "]: " + fp_Message;
+                const string f_LogEntry = "[" + f_TimeStamp + "][debug][" + fp_Sender + "]: " + fp_Message;
 
-                // Log to specific file and all-logs file
-                const string f_LogFileName = "debug.log";
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::DEBUG_LOG));
 
-                if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+                if (pm_LogToFile)
                 {
-                    pm_LogFiles[f_LogFileName] << f_LogEntry << "\n";
-                    // Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
-                    //pm_LogSizeCounter++;
+                    ofstream& f_LogFile = pm_LogFiles.at("debug.log"); // Log to specific log file >W<
 
-                    //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
-                    //{
-                    //    pm_LogFiles[f_LogFileName].flush();
-                    //}
+                    if(f_LogFile.is_open())
+                    {
+                        f_LogFile << f_LogEntry << "\n";
+
+                        if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                        {
+                            ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
+                        }
+                        else if (pm_FlushMask & FLUSH_DEBUG_BIT)
+                        {
+                            f_LogFile.flush();
+                        }
+                    }
                 }
 
                 #ifdef PEACH_USING_OS_TERMINAL
@@ -469,24 +559,30 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(LogLevel::INFO_LOG))
+            if (ValidateLogMsg(static_cast<uint8_t>(Flags::INFO_LOG)))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
-                const string f_LogEntry = "[" + f_TimeStamp + "][Info][" + fp_Sender + "]: " + fp_Message;
+                const string f_LogEntry = "[" + f_TimeStamp + "][info][" + fp_Sender + "]: " + fp_Message;
 
-                // Log to specific file and all-logs file
-                const string f_LogFileName = "info.log";
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::INFO_LOG));
 
-                if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+                if (pm_LogToFile)
                 {
-                    pm_LogFiles[f_LogFileName] << f_LogEntry << "\n";
-                    // Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
-                    //pm_LogSizeCounter++;
+                    ofstream& f_LogFile = pm_LogFiles.at("info.log"); // Log to specific file and all-logs file
 
-                    //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
-                    //{
-                    //    pm_LogFiles[f_LogFileName].flush();
-                    //}
+                    if(f_LogFile.is_open())
+                    {
+                        f_LogFile << f_LogEntry << "\n";
+
+                        if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                        {
+                            ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
+                        }
+                        else if (pm_FlushMask & FLUSH_INFO_BIT)
+                        {
+                            f_LogFile.flush();
+                        }
+                    }
                 }
 
                 #ifdef PEACH_USING_OS_TERMINAL
@@ -502,24 +598,30 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(LogLevel::WARNING_LOG))
+            if (ValidateLogMsg(static_cast<uint8_t>(Flags::WARNING_LOG)))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
-                const string f_LogEntry = "[" + f_TimeStamp + "][Warning][" + fp_Sender + "]: " + fp_Message;
+                const string f_LogEntry = "[" + f_TimeStamp + "][warning][" + fp_Sender + "]: " + fp_Message;
 
-                // Log to specific file and all-logs file
-                const string f_LogFileName = "warning.log";
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::WARNING_LOG));
 
-                if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+                if (pm_LogToFile)
                 {
-                    pm_LogFiles[f_LogFileName] << f_LogEntry << "\n";
-                    // Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
-                    //pm_LogSizeCounter++;
+                    ofstream& f_LogFile = pm_LogFiles.at("warning.log"); // Log to specific file and all-logs file
 
-                    //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
-                    //{
-                    //    pm_LogFiles[f_LogFileName].flush();
-                    //}
+                    if(f_LogFile.is_open())
+                    {
+                        f_LogFile << f_LogEntry << "\n";
+
+                        if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                        {
+                            ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
+                        }
+                        else if (pm_FlushMask & FLUSH_WARNING_BIT)
+                        {
+                            f_LogFile.flush();
+                        }
+                    }
                 }
 
                 #ifdef PEACH_USING_OS_TERMINAL
@@ -535,24 +637,30 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(LogLevel::ERROR_LOG))
+            if (ValidateLogMsg(static_cast<uint8_t>(Flags::ERROR_LOG)))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
-                const string f_LogEntry = "[" + f_TimeStamp + "][Error][" + fp_Sender + "]: " + fp_Message;
+                const string f_LogEntry = "[" + f_TimeStamp + "][error][" + fp_Sender + "]: " + fp_Message;
 
-                // Log to specific file and all-logs file
-                const string f_LogFileName = "error.log";
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::ERROR_LOG));
 
-                if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+                if (pm_LogToFile)
                 {
-                    pm_LogFiles[f_LogFileName] << f_LogEntry << "\n";
-                    // Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
-                    //pm_LogSizeCounter++;
+                    ofstream& f_LogFile = pm_LogFiles.at("error.log"); // Log to specific file and all-logs file
 
-                    //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
-                    //{
-                    //    pm_LogFiles[f_LogFileName].flush();
-                    //}
+                    if(f_LogFile.is_open())
+                    {
+                        f_LogFile << f_LogEntry << "\n";
+
+                        if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                        {
+                            ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
+                        }
+                        else if (pm_FlushMask & FLUSH_ERROR_BIT)
+                        {
+                            f_LogFile.flush();
+                        }
+                    }
                 }
 
                 #ifdef PEACH_USING_OS_TERMINAL
@@ -568,24 +676,30 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(LogLevel::FATAL_LOG))
+            if (ValidateLogMsg(static_cast<uint8_t>(Flags::FATAL_LOG)))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
-                const string f_LogEntry = "[" + f_TimeStamp + "][Fatal][" + fp_Sender + "]: " + fp_Message;
+                const string f_LogEntry = "[" + f_TimeStamp + "][fatal][" + fp_Sender + "]: " + fp_Message;
 
-                // Log to specific file and all-logs file
-                const string f_LogFileName = "fatal.log";
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::FATAL_LOG));
 
-                if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
+                if (pm_LogToFile)
                 {
-                    pm_LogFiles[f_LogFileName] << f_LogEntry << "\n";
-                    // Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
-                    //pm_LogSizeCounter++;
+                    ofstream& f_LogFile = pm_LogFiles.at("fatal.log"); // Log to specific file and all-logs file
 
-                    //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
-                    //{
-                    //    pm_LogFiles[f_LogFileName].flush();
-                    //}
+                    if(f_LogFile.is_open())
+                    {
+                        f_LogFile << f_LogEntry << "\n";
+
+                        if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                        {
+                            ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
+                        }
+                        else if (pm_FlushMask & FLUSH_FATAL_BIT)
+                        {
+                            f_LogFile.flush();
+                        }
+                    }
                 }
 
                 #ifdef PEACH_USING_OS_TERMINAL
@@ -594,67 +708,141 @@ namespace PeachCore {
             }
         }
 
-        //////////////////// Logging Functions  ////////////////////
-
-        //string
-        //    Log
-        //    (
-        //        const string& fp_Message,
-        //        const string& fp_Sender,
-        //        const string& fp_LogLevel
-        //    )
-        //{
-        //    const string f_TimeStamp = GetCurrentTimestamp();
-        //    const string f_LogEntry = "[" + f_TimeStamp + "]["+ fp_LogLevel +"][" + fp_Sender + "]: " + fp_Message;
-
-        //    // Log to specific file and all-logs file
-        //    const string f_LogFileName = fp_LogLevel + ".log";
-
-        //    if (pm_LogFiles.find(f_LogFileName) != pm_LogFiles.end() and pm_LogFiles[f_LogFileName].is_open())
-        //    {
-        //        pm_LogFiles[f_LogFileName] << f_LogEntry << "\n";
-        //        // Print("size of ofstream: " + to_string(sizeof(pm_LogFiles[f_LogFileName])));
-        //        //pm_LogSizeCounter++;
-
-        //        //if (pm_LogFiles[f_LogFileName].tellg >= MAX_NUMBER_OF_LOGS)
-        //        //{
-        //        //    pm_LogFiles[f_LogFileName].flush();
-        //        //}
-        //    }
-
-        //    return f_LogEntry;
-        //}
-
     //////////////////////////////////////////////
     // Protected Methods
     //////////////////////////////////////////////
     protected:
-        //////////////////// Utility Functions  ////////////////////
+        [[nodiscard]] bool
+            Initialize
+            (
+                const string& fp_DesiredLoggerName,
+                const string& fp_DesiredOutputDirectory,
+                const uint32_t fp_Flags
+            )
+        {
+#ifdef PEACH_DEBUG
+            //stringstream f_UckCPlusPlus; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
+            //f_UckCPlusPlus << this_thread::get_id();
+            //string f_CallerThreadID = f_UckCPlusPlus.str();
 
-        void
+            //PrintError(format("Logger name: '{}' from thread number : {}, [Caller Thread ID]: {}", fp_DesiredLoggerName, static_cast<uint8_t>(fp_ThreadName), f_CallerThreadID));
+#endif
+            ////////////////////////////////////////////// Store Initializer Thread ID //////////////////////////////////////////////
+
+            pm_ThreadOwnerID = this_thread::get_id();
+
+            ////////////////////////////////////////////// Set Logger Name + Directory //////////////////////////////////////////////
+
+            pm_LoggerName = fp_DesiredLoggerName;
+            pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + pm_LoggerName;
+
+            if (fp_Flags & Flags::LOG_TO_ONLY_SNAPSHOT_BUFFER)
+            {
+                pm_LogToFile = false;
+            }
+
+            ////////////////////////////////////////////// Set Flush Mask //////////////////////////////////////////////
+
+            pm_FlushMask = ExtractFlushMask(fp_Flags);
+
+            ////////////////////////////////////////////// Initialize Snapshot Ring Buffer //////////////////////////////////////////////
+
+            pm_SnapshotBuffer = make_unique<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>>();
+
+            ////////////////////////////////////////////// Ensure log directory exists //////////////////////////////////////////////
+
+            if (not filesystem::exists(pm_CurrentWorkingDirectory))
+            {
+                if(fp_Flags & Flags::DONT_CREATE_DIRECTORY)
+                {
+                    PrintError("[CRITICAL_LOGGING_ERROR]: Failed to find valid log output directory");
+                    return false;
+                }
+
+                try
+                {
+                    filesystem::create_directories(pm_CurrentWorkingDirectory); //XXX: this can throw so we wrap it in a try catch
+                }
+                catch (const exception& f_Exception)
+                {
+                    PrintError(format("Failed to create desired log output directory with exception: '{}'", f_Exception.what()));
+                    return false;
+                }
+            }
+
+            ////////////////////////////////////////////// Create Log Files Based on Current Active Mask //////////////////////////////////////////////
+
+            if (not UpdateActiveMask(fp_Flags))
+            {
+                PrintError("[CRITICAL_LOGGING_ERROR]: Failed to create required log files for logger named: " + pm_LoggerName);
+                return false;
+            }
+
+            ////////////////////////////////////////////// Success! //////////////////////////////////////////////
+
+            return true;
+        }
+
+        //////////////////////////////////////////////////////////// Utility Functions  ////////////////////////////////////////////////////////////
+
+        [[nodiscard]] bool
             CreateLogFile
             (
                 const string& fp_FilePath,
                 const string& fp_FileName
             )
         {
-            ofstream f_LogFile;
+            ////////////////////////////////////////////// Cache Full Path String //////////////////////////////////////////////
 
-            f_LogFile.open(fp_FilePath + "/" + fp_FileName, ios::out | ios::app);
+            const string f_FullPath = fp_FilePath + "/" + fp_FileName;
+
+            ////////////////////////////////////////////// If file exists and is too big, truncate it //////////////////////////////////////////////
+            error_code f_ErrorCode;
+
+            if (filesystem::exists(f_FullPath, f_ErrorCode) and not f_ErrorCode)
+            {
+                auto f_LogFileSize = filesystem::file_size(f_FullPath, f_ErrorCode);
+
+                if (not f_ErrorCode and f_LogFileSize >= MAX_LOG_FILE_SIZE_BYTES)
+                {
+                    ////////////////////////////////////////////// truncate by reopening with ios::trunc //////////////////////////////////////////////
+
+                    ofstream f_LogFile(f_FullPath, ios::out | ios::trunc);
+
+                    if (not f_LogFile.is_open())
+                    {
+                        PrintError(format("Failed to truncate oversized log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName));
+                        return false;
+                    }
+
+                    pm_LogFiles[fp_FileName] = move(f_LogFile);
+
+                    ////////////////////////////////////////////// Success! //////////////////////////////////////////////
+
+                    return true;
+                }
+            }
+
+            ////////////////////////////////////////////// If file doesn't exist or isn't too big it's business as usual UwU //////////////////////////////////////////////
+
+            ofstream f_LogFile(f_FullPath, ios::out | ios::app);
 
             if (not f_LogFile.is_open())
             {
-                PrintError(format("Failed to open log file: '{}'", fp_FileName));
+                PrintError(format("Failed to open log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName));
+                return false;
             }
-            else
-            {
-                pm_LogFiles[fp_FileName] = move(f_LogFile);
-            }
+
+            pm_LogFiles[fp_FileName] = move(f_LogFile);
+
+            ////////////////////////////////////////////// Success! //////////////////////////////////////////////
+
+            return true; 
         }
 
         [[nodiscard]] inline string //thank you chat-gpt uwu
             GetCurrentTimestamp()
-            const noexcept
+            const
         {
             const auto now = chrono::system_clock::now();
             auto time_t_now = chrono::system_clock::to_time_t(now);
@@ -667,15 +855,15 @@ namespace PeachCore {
                 localtime_r(&time_t_now, &local_time);
             #endif
 
-            stringstream ss;
-            ss << put_time(&local_time, "%Y-%m-%d %H:%M:%S");
+            stringstream f_AssembledTimeString;
+            f_AssembledTimeString << put_time(&local_time, "%Y-%m-%d %H:%M:%S");
 
             const auto since_epoch = now.time_since_epoch();
             const auto milliseconds = chrono::duration_cast<chrono::milliseconds>(since_epoch).count() % 1000;
 
-            ss << '.' << setfill('0') << setw(3) << milliseconds;
+            f_AssembledTimeString << '.' << setfill('0') << setw(3) << milliseconds;
 
-            return ss.str();
+            return f_AssembledTimeString.str();
         }
 
         void
@@ -690,24 +878,48 @@ namespace PeachCore {
             }
         }
 
-        #ifdef PEACH_DEBUG
-            [[nodiscard]] inline bool ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
-                AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the Logger instance
-                const
+        [[nodiscard]] inline bool ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
+            AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the Logger instance
+            const
+        {
+            if (this_thread::get_id() == pm_ThreadOwnerID)
             {
-                if (this_thread::get_id() == pm_ThreadOwnerID)
-                {
-                    return true;
-                }
-
-                stringstream f_UckCPlusPlus; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
-                f_UckCPlusPlus << this_thread::get_id();
-                string f_CallerThreadID = f_UckCPlusPlus.str();
-
-                PrintError(format("Logger name: '{}' called method '{}' from the wrong thread, [Caller Thread ID]: {}", pm_LoggerName, fp_FunctionName, f_CallerThreadID));
-
-                return false;
+                return true;
             }
-        #endif
+
+            stringstream f_UckCPlusPlus; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
+            f_UckCPlusPlus << this_thread::get_id();
+            string f_CallerThreadID = f_UckCPlusPlus.str();
+
+            PrintError(format("Logger name: '{}' called method '{}' from the wrong thread, [Caller Thread ID]: {}", pm_LoggerName, fp_FunctionName, f_CallerThreadID));
+
+            return false;
+        }
+
+        void
+            ForceFlushAllLogs() //called by functions that already do an AssertThreadAccess call in them uwu this is to avoid double calling OwO!
+        {
+            for (auto& lv_LogFile : pm_LogFiles)
+            {
+                if (lv_LogFile.second.is_open())
+                {
+                    lv_LogFile.second.flush();
+                }
+            }
+
+            pm_LogSizeCounter = 0; //reset since all logs have been flushed
+        }
+
+        static constexpr uint8_t 
+            ExtractLevelMask(uint32_t fp_Flags) noexcept
+        {
+            return static_cast<uint8_t>(fp_Flags & 0xFF);
+        }
+
+        static constexpr uint8_t 
+            ExtractFlushMask(uint32_t fp_Flags) noexcept
+        {
+            return static_cast<uint8_t>((fp_Flags >> 8) & 0xFF);
+        }
     };
 }

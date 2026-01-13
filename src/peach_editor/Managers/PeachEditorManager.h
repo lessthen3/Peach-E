@@ -40,7 +40,7 @@ namespace PeachEditor{
     // Private Members
     //////////////////////////////////////////////
     private:
-        shared_ptr<PeachCore::Logger> main_editor_logger = nullptr;
+        unique_ptr<PeachCore::Logger> main_editor_logger = nullptr;
 
         Dotnet::Configs pm_DotnetConfiguration;
 
@@ -83,9 +83,9 @@ namespace PeachEditor{
 
             const string f_LogDir = fp_RootPath + "/logs";
 
-            main_editor_logger = make_unique<PeachCore::Logger>();
+            main_editor_logger = PeachCore::Logger::CreateUnique("PeachEditorManager", PeachCore::Logger::Flags::ALL_LOGS | PeachCore::Logger::Flags::FLUSH_ERROR | PeachCore::Logger::Flags::FLUSH_FATAL, f_LogDir);
 
-            if (not main_editor_logger->Initialize(PeachCore::ThreadName::MainThread, f_LogDir, "PeachEditorManager", PeachCore::Logger::LogLevel::ALL_LOGS))
+            if (not main_editor_logger)
             {
                 PeachCore::PrintError("Initialization error: Was not able to initialize PeachEditorManager's main logger");
                 return false;
@@ -96,8 +96,15 @@ namespace PeachEditor{
             //////////////////// Main Initialization Calls //////////////////// 
             // //NEEDA: figure out a better way to handle dotnet projects, maybe feed a string like "NUHUH" to signal the InitializePeachEngine call that this aint a dotnet game
 
-            if (not PeachCore::GameManager::get_single().InitializePeachEngine(fp_RootPath, "f_HostFxrPath", 
-                PeachCore::RendererType::Vulkan, PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread | PeachCore::ThreadName::AudioThread))
+            if 
+            (
+                not PeachCore::GameManager::get_single().InitializePeachEngine
+                (
+                    fp_RootPath, 
+                    PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread | PeachCore::ThreadName::AudioThread, 
+                    PeachCore::RendererType::Vulkan
+                )
+            )
             {
 
                 return false;

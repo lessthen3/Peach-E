@@ -221,9 +221,9 @@ if(BUILD_PEACH_TESTS)
         GLOB_RECURSE 
         PEACH_TEST_SOURCES 
         CONFIGURE_DEPENDS 
-        "tests/*.cpp" 
-        "tests/*.h"
-        "tests/*.hpp"
+        "test_suite/*.cpp" 
+        "test_suite/*.h"
+        "test_suite/*.hpp"
     )
 
     add_executable( 

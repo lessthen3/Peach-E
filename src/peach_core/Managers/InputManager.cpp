@@ -16,13 +16,19 @@ namespace PeachCore {
         InputManager::Initialize
         (
             const string& fp_LogOutputDirectory,
-            const Logger::LogLevel fp_LogFilter
+            const uint32_t fp_LogFlags
         )
     {
         //////////////////// Initialize Logger ////////////////////
 
-        input_logger = make_unique<Logger>();
-        input_logger->Initialize(ThreadName::RenderThread, fp_LogOutputDirectory, "InputManager", fp_LogFilter);
+        input_logger = Logger::CreateUnique("InputManager", fp_LogFlags, fp_LogOutputDirectory);
+
+        if (not input_logger)
+        {
+            PrintError("[CRITICAL_LOGGING_ERROR]: InputManager failed to initialize the input_logger >O<");
+            return false;
+        }
+
         input_logger->Debug("InputLogger successfully initialized", "RenderingManager");
 
         return true;

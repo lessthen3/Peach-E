@@ -163,12 +163,14 @@ namespace PeachCore {
                 const bool fp_Is3D = false
             )
         {
-            physics_logger = make_unique<Logger>();
-            if (not physics_logger->Initialize(ThreadName::PhysicsThread, fp_LogOutputDirectory, "PhysicsManager", Logger::LogLevel::ALL_LOGS))
+            physics_logger = Logger::CreateUnique("PhysicsManager", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
+
+            if (not physics_logger)
             {
                 PrintError("PhysicsManager failed to initialize the physics_thread logger >w<");
                 return false;
             }
+
             physics_logger->Debug("PhysicsLogger successfully initialized", "PhysicsManager");
 
             b2Vec2 f_Gravity = { fp_GravityX, fp_GravityY };

@@ -11,9 +11,8 @@
 #pragma once
 
 #include <array>
-#include <cstddef>
-#include <cassert>
 #include <utility>
+#include <stdexcept>
 
 namespace PeachCore {
 
@@ -27,147 +26,234 @@ namespace PeachCore {
     public:
         constexpr RingBuffer() = default;
 
-        constexpr void Clear() noexcept 
+        constexpr void 
+            Clear() 
+            noexcept 
         {
-            pm_Head = pm_Tail = pm_Size = 0;
+            pm_Head = pm_Size = 0;
         }
 
-        constexpr void SafePush(const T& value)
-        {
-            assert(not IsFull() and "RingBuffer overflow (consider overwriting or increasing capacity)");
-            Push(value); // Safe push, now guaranteed to not assert
-        }
-
-        constexpr void SafePush(T&& value) 
-        {
-            assert(not IsFull() and "RingBuffer overflow (consider overwriting or increasing capacity)");
-            Push(move(value)); // Move into buffer
-        }
-
-        template<typename... Args>
-        constexpr void SafeEmplace(Args&&... args)
-        {
-            assert(not IsFull() and "RingBuffer overflow (consider overwriting or increasing capacity)");
-            pm_Buffer[pm_Head] = T(forward<Args>(args)...);
-            pm_Head = (pm_Head + 1) % pm_MaxCapacity;
-            ++pm_Size;
-        }
-
-        constexpr void ForcePush(const T& value)
-        {
-            if (IsFull()) 
-            {
-                Pop(); // Drop the oldest value to make space
-            }
-
-            Push(value); // Safe push, now guaranteed to not assert
-        }
-
-        constexpr void ForcePush(T&& value)
-        {
-            if (IsFull()) 
-            {
-                Pop(); // Drop the oldest value
-            }
-
-            Push(move(value)); // Move into buffer
-        }
-
-        template<typename... Args>
-        constexpr void ForceEmplace(Args&&... args)
+        [[nodiscard]] bool 
+            TryPush(const T& fp_Val)
         {
             if (IsFull())
             {
-                Pop(); // Make room
-            }
+                return false;
+            }          
 
-            pm_Buffer[pm_Head] = T(forward<Args>(args)...); // Construct T using args, assign to slot
-            pm_Head = (pm_Head + 1) % pm_MaxCapacity;
-            ++pm_Size;
+            PushOverwrite(fp_Val); // Safe push, now guaranteed to not assert
+
+            return true;
         }
 
-        constexpr void Pop() 
+        [[nodiscard]] bool 
+            TryPush(T&& fp_Val)
         {
-            assert(not IsEmpty() and "Cannot pop from empty RingBuffer");
-            pm_Tail = (pm_Tail + 1) % pm_MaxCapacity;
+            if (IsFull())
+            {
+                return false;
+            }
+
+            PushOverwrite(move(fp_Val)); // Move into buffer
+
+            return true;
+        }
+
+        template<typename... Args>
+        [[nodiscard]] bool
+            TryEmplace(Args&&... fp_Args)
+        {
+            if (IsFull())
+            {
+                return false;
+            }
+
+            EmplaceOverwrite(forward<Args>(fp_Args)...);
+
+            return true;
+        }
+
+        constexpr void 
+            Push(const T& fp_Val)
+        {
+            PushOverwrite(fp_Val);
+        }
+
+        constexpr void 
+            Push(T&& fp_Val)
+        {
+            PushOverwrite(move(fp_Val));
+        }
+
+        template<typename... Args>
+        constexpr void 
+            Emplace(Args&&... fp_Args)
+        {
+            EmplaceOverwrite(forward<Args>(fp_Args)...);
+        }
+
+        void 
+            Pop() 
+        {
+            if (IsEmpty())
+            {
+                throw underflow_error("Cannot pop from empty RingBuffer");
+            }
+
+            // We remove the oldest element, oldest is at FrontIndex() so we just reduce size.
             --pm_Size;
         }
 
-        [[nodiscard]] constexpr T& Front()
+        [[nodiscard]] T&
+            Front()
         {
-            assert(not IsEmpty() and "Cannot access front of empty RingBuffer");
-            return pm_Buffer[pm_Tail];
+            if (IsEmpty())
+            {
+                throw underflow_error("Cannot access front of empty RingBuffer");
+            }
+
+            return pm_Buffer[FrontIndex()];
         }
 
-        [[nodiscard]] constexpr const T& Front() const 
+        [[nodiscard]] const T&
+            Front()
+            const 
         {
-            assert(not IsEmpty() and "Cannot access front of empty RingBuffer");
-            return pm_Buffer[pm_Tail];
+            if (IsEmpty())
+            {
+                throw underflow_error("Cannot access front of empty RingBuffer");
+            }
+
+            return pm_Buffer[FrontIndex()];
         }
 
-        [[nodiscard]] constexpr T& Back()
+        [[nodiscard]] T& 
+            Back()
         {
-            assert(not IsEmpty() and "Cannot access back of empty RingBuffer");
-            return pm_Buffer[(pm_Head + pm_MaxCapacity - 1) % pm_MaxCapacity];
+            if (IsEmpty())
+            {
+                throw out_of_range("RingBuffer::Back: buffer is empty");
+            }
+
+            return pm_Buffer[BackIndex()];
         }
         
-        [[nodiscard]] constexpr const T& Back() const
+        [[nodiscard]] const T& 
+            Back()
+            const
         {
-            assert(not IsEmpty() and "Cannot access back of empty RingBuffer");
-            return pm_Buffer[(pm_Head + pm_MaxCapacity - 1) % pm_MaxCapacity];
+            if (IsEmpty())
+            {
+                throw out_of_range("RingBuffer::Back: buffer is empty");
+            }
+
+            return pm_Buffer[BackIndex()];
         }
 
-        [[nodiscard]] constexpr T& At(size_t index)
+        [[nodiscard]] T& 
+            At(size_t fp_Index)
         {
-            assert(index < pm_Size and "Index out of bounds");
-            return pm_Buffer[(pm_Tail + index) % pm_MaxCapacity];
+            if (fp_Index >= pm_Size)
+            {
+                throw out_of_range("RingBuffer::At: index out of range");
+            }
+
+            return pm_Buffer[(FrontIndex() + fp_Index) % pm_MaxCapacity];
         }
 
-        [[nodiscard]] constexpr const T& At(size_t index) const 
+        [[nodiscard]] const T& 
+            At(size_t fp_Index)
+            const 
         {
-            assert(index < pm_Size and "Index out of bounds");
-            return pm_Buffer[(pm_Tail + index) % pm_MaxCapacity];
+            if (fp_Index >= pm_Size)
+            {
+                throw out_of_range("RingBuffer::At: index out of range");
+            }
+
+            return pm_Buffer[(FrontIndex() + fp_Index) % pm_MaxCapacity];
         }
 
-        [[nodiscard]] constexpr size_t CurrentSize() const noexcept 
+        [[nodiscard]] constexpr size_t 
+            CurrentSize() 
+            const noexcept 
         {
             return pm_Size;
         }
 
-        [[nodiscard]] constexpr size_t MaxCapacity() const noexcept 
+        [[nodiscard]] constexpr size_t 
+            MaxCapacity() 
+            const noexcept 
         {
             return pm_MaxCapacity;
         }
 
-        [[nodiscard]] constexpr bool IsEmpty() const noexcept 
+        [[nodiscard]] constexpr bool 
+            IsEmpty() 
+            const noexcept 
         {
             return pm_Size == 0;
         }
 
-        [[nodiscard]] constexpr bool IsFull() const noexcept 
+        [[nodiscard]] constexpr bool 
+            IsFull() 
+            const noexcept 
         {
             return pm_Size == pm_MaxCapacity;
         }
 
     private:
         array<T, pm_MaxCapacity> pm_Buffer{};
-        size_t pm_Head = 0;
-        size_t pm_Tail = 0;
-        size_t pm_Size = 0;
+        size_t pm_Head = 0;   // index of next write
+        size_t pm_Size = 0;   // number of valid elements
 
     private:
-        constexpr void Push(const T& value)
+        ////////////////// helpers //////////////////
+
+        [[nodiscard]] size_t
+            FrontIndex() const noexcept
         {
-            pm_Buffer[pm_Head] = value;
-            pm_Head = (pm_Head + 1) % pm_MaxCapacity;
-            ++pm_Size;
+            // Oldest element
+            return (pm_Head + pm_MaxCapacity - pm_Size) % pm_MaxCapacity;
         }
 
-        constexpr void Push(T&& value)
+        [[nodiscard]] size_t
+            BackIndex() const noexcept
         {
-            pm_Buffer[pm_Head] = move(value);
+            // Most recently inserted element
+            return (pm_Head + pm_MaxCapacity - 1) % pm_MaxCapacity;
+        }
+
+        void
+            AdvanceHead() noexcept
+        {
             pm_Head = (pm_Head + 1) % pm_MaxCapacity;
-            ++pm_Size;
+            if (pm_Size < pm_MaxCapacity)
+            {
+                ++pm_Size;
+            }
+            // If already full, we overwrote the oldest; size stays at capacity.
+        }
+
+        void
+            PushOverwrite(const T& fp_Val)
+        {
+            pm_Buffer[pm_Head] = fp_Val;
+            AdvanceHead();
+        }
+
+        void
+            PushOverwrite(T&& fp_Val)
+        {
+            pm_Buffer[pm_Head] = move(fp_Val);
+            AdvanceHead();
+        }
+
+        template<typename... Args>
+        void
+            EmplaceOverwrite(Args&&... fp_Args)
+        {
+            pm_Buffer[pm_Head] = T(forward<Args>(fp_Args)...);
+            AdvanceHead();
         }
     };
 } // namespace PeachCore

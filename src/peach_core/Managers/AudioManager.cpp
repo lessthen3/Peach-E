@@ -77,8 +77,14 @@ namespace PeachCore {
     {
         //////////////////// Initialize Logger ////////////////////
 
-        audio_logger = make_unique<Logger>();
-        audio_logger->Initialize(ThreadName::AudioThread, fp_LogOutputDirectory, "AudioManager", Logger::LogLevel::ALL_LOGS);
+        audio_logger = Logger::CreateUnique("AudioManager", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
+
+        if (not audio_logger)
+        {
+            PrintError("[CRITICAL_LOGGING_ERROR]: AudioManager failed to initialize the audio_thread logger >w<");
+            return false;
+        }
+
         audio_logger->Debug("AudioLogger successfully initialized", "AudioManager");
 
         //////////////////// Initialize Loading and Command Queues ////////////////////

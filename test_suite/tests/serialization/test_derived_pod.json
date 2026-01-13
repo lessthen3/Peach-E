@@ -1,0 +1,8 @@
+{
+    "baseHealth": 1337, 
+    "baseName": "BasePeach", 
+    "speed": 9.8100004196166992, 
+    "inventory": [
+        1, 2, 3, 5, 8, 13
+    ]
+}

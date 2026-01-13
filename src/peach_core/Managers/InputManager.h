@@ -235,7 +235,7 @@ namespace PeachCore {
             Initialize
             (
                 const string& fp_LogOutputDirectory,
-                const Logger::LogLevel fp_LogFilter
+                const uint32_t fp_LogFlags
             );
 
         void

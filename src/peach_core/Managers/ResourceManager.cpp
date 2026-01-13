@@ -21,8 +21,14 @@ namespace PeachCore {
     {
         //////////////////// Resource Logger Initialization ////////////////////
 
-        resource_logger = make_unique<Logger>();
-        resource_logger->Initialize(ThreadName::ResourceThread, fp_LogOutputDirectory, "ResourceThread", Logger::LogLevel::ALL_LOGS);
+        resource_logger = Logger::CreateUnique("ResourceThread", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
+
+        if(not resource_logger)
+        {
+            PrintError("[CRITICAL_LOGGING_ERROR]: ResourceManager failed to initialize the resource_thread logger >w<");
+            return false;
+        }
+
         resource_logger->Debug("ResourceThreadLogger successfully initialized", "ResourceManager");
 
         //////////////////// Initialize Queues ////////////////////

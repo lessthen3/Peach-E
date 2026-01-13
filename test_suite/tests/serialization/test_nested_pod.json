@@ -1,0 +1,47 @@
+{
+    "core": {
+        "id": 42, 
+        "value": 0.5, 
+        "name": "core-peach"
+    }, 
+    "map": {
+        "first": {
+            "id": 10, 
+            "value": 1, 
+            "name": "first"
+        }, 
+        "second": {
+            "id": -10, 
+            "value": -1, 
+            "name": "second"
+        }
+    }, 
+    "list": [
+        {
+            "id": 1, 
+            "value": 10, 
+            "name": "one"
+        }, 
+        {
+            "id": -5, 
+            "value": -0.0010000000474974513, 
+            "name": "minus"
+        }, 
+        {
+            "id": 999999, 
+            "value": 1234.5677490234375, 
+            "name": "big"
+        }
+    ], 
+    "buckets": {
+        "empty": [
+            
+        ], 
+        "edge": [
+            -2147483648, 0, 2147483647
+        ], 
+        "small": [
+            1, 2, 3
+        ]
+    }
+}

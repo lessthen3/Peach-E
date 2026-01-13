@@ -18,8 +18,14 @@ namespace PeachCore {
             const string& fp_LogOutputDirectory
         )
     {
-        network_logger = make_unique<Logger>();
-        network_logger->Initialize(ThreadName::NetworkThread, fp_LogOutputDirectory, "NetworkLogger", Logger::LogLevel::ALL_LOGS);
+        network_logger = Logger::CreateUnique("NetworkLogger", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
+
+        if (not network_logger)
+        {
+            PrintError("[CRITICAL_LOGGING_ERROR]: NetworkManager failed to initialize the network_thread logger >w<");
+            return false;
+        }
+
         network_logger->Debug("NetworkLogger successfully initialized", "NetworkManager");
 
         return true;

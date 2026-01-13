@@ -54,13 +54,19 @@ namespace PeachCore {
     {
         //////////////////// Initialize Logger ////////////////////
 
-        rendering_logger = make_shared<Logger>(); 
-        rendering_logger->Initialize(ThreadName::RenderThread, fp_LogOutputDirectory, "RenderingThread", Logger::LogLevel::ALL_LOGS);
+        rendering_logger = Logger::CreateShared("RenderingManager", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
+
+        if (not rendering_logger)
+        {
+            PrintError("[CRITICAL_LOGGING_ERROR]: RenderingManager failed to initialize the render_thread logger >w<");
+            return false;
+        }
+
         rendering_logger->Debug("RenderingLogger successfully initialized", "RenderingManager");
 
         //////////////////// Intialize InputManager ////////////////////
 
-        if (not InputManager::get_single().Initialize(fp_LogOutputDirectory, Logger::LogLevel::ALL_LOGS))
+        if (not InputManager::get_single().Initialize(fp_LogOutputDirectory, Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL))
         {
 
             return false;
