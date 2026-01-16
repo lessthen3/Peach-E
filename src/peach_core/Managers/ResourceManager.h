@@ -41,6 +41,14 @@ typedef void (*DestroyPluginFunc)(Plugin*);
 
 namespace PeachCore {
 
+    //struct PeachResPath //used to convert OS directory paths -> res:// vfs paths uwu
+    //{
+    //    string ResourcePath;
+
+    //    explicit
+    //        PeachResPath()
+    //};
+
     //for longer lived pure data sources, ID's are helpful for locating them on the gpu or PCM audio
     using AudioID = uint64_t;
     using TextureID = uint64_t;
@@ -83,8 +91,23 @@ namespace PeachCore {
     };
 
     //////////////////////////////////////////////
-    // Data Containers
+    // PeachBinary Data
     //////////////////////////////////////////////
+
+    enum class PeachBinChapterType : uint8_t
+    {
+        INVALID,
+        PNG_TEXTURE,
+        JPEG_TEXTURE,
+        OBJ_MESH,
+        ANIMATION,
+        MP3_AUDIO,
+        WAV_AUDIO,
+        FLAC_AUDIO,
+        LUA_BYTECODE,
+        SHADER_BYTECODE,
+        SCENE
+    };
 
     struct PeachBinSection //don't needa track offset here since PeachBinChapter can do that using ChunkSize from the vector
     {
@@ -124,7 +147,10 @@ namespace PeachCore {
         DYNLIB_HANDLE Handle = nullptr; //>w<
     };
 
-    // ResourcePackage.h
+    //////////////////////////////////////////////
+    // Data Containers
+    //////////////////////////////////////////////
+
     struct TextureData
     {
         int Width, Height, Channels;

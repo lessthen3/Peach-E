@@ -45,7 +45,7 @@ Features:
 
 If you want to build Peach-E for yourself:
 
-0. This project is built using __C++20__, and you will need __CMake 3.20+__ 
+0. This project is built using __C++20__, and you will need [__CMake 4.2.0+__](https://cmake.org/download/) 
 
 1. Clone the repo
 
@@ -58,7 +58,7 @@ If you want to build Peach-E for yourself:
 >Build output:
 > * Peach_Editor (executable or bundle on MacOS)
 > * Peach_Engine (executable or bundle on MacOS)
-> * peach (static core library)
+> * peach_core (static core library)
 
 ## Why Another Game Engine
 

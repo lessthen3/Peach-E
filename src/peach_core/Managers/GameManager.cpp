@@ -46,8 +46,8 @@ namespace PeachCore
 
         //////////////////// Enable ANSI colour codes for windows console grumble grumble ////////////////////
 
-        #if defined(_WIN32) || defined(_WIN64) && defined(PEACH_USING_OS_TERMINAL)
-            EnableColors();
+        #if (defined(_WIN32) || defined(_WIN64)) && defined(PEACH_USING_OS_TERMINAL)
+            EnableColours();
         #endif
 
         ////////////////////////////////////////////// Initialize Main Thread Logger //////////////////////////////////////////////

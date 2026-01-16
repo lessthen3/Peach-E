@@ -10,11 +10,6 @@
 ********************************************************************/
 #include "LangUtils.h"
 
-// Lua runtime for *editor tools* (compiling scripts)
-//#include <lua/lua.h>
-//#include <lua/lauxlib.h>
-//#include <lua/lualib.h>
-
 namespace PeachEditor::Dotnet
 {
     bool
@@ -378,157 +373,157 @@ namespace PeachEditor::Dotnet
     }
 }
 
-//namespace PeachEditor::Lua
-//{
-//    bool
-//        GenerateDefaultScript
-//        (
-//            const string& fp_ScriptName,
-//            const string& fp_NodeType,
-//            const string& fp_ScriptFilePath,
-//            PeachCore::Logger* logger
-//        )
-//    {
-//
-//        return true;
-//    }
-//
-//    ////////////////////////////////////////////// Local helper for lua_dump //////////////////////////////////////////////
-//
-//    static int
-//        LuaChunkWriter
-//        (
-//            lua_State* /*fp_LuaState*/, 
-//            const void* fp_Data, 
-//            size_t fp_Size, 
-//            void* fp_UserData
-//        )
-//    {
-//        auto& f_DataOut = *static_cast<vector<uint8_t>*>(fp_UserData);
-//        const auto* f_DataIn = static_cast<const uint8_t*>(fp_Data);
-//
-//        f_DataOut.insert(f_DataOut.end(), f_DataIn, f_DataIn + fp_Size);
-//
-//        return 0; // success
-//    }
-//
-//    ////////////////////////////////////////////// Lua -> Bytecode //////////////////////////////////////////////
-//
-//    bool
-//        CompileProjectScripts 
-//        (
-//            const vector<filesystem::path>& fp_ScriptPaths,
-//            PeachCore::PeachBinChapter& fp_PeachBinChapter,
-//            PeachCore::Logger* logger
-//        )
-//    {
-//        ////////////////////////////////////////////// Safety checks //////////////////////////////////////////////
-//
-//        if (not logger)
-//        {
-//            PeachCore::PrintError("Tried passing a nullptr ref to logger inside Lua::CompileProjectScripts()");
-//            return false;
-//        }
-//
-//        if (fp_ScriptPaths.empty())
-//        {
-//            logger->Warning("CompileProjectScripts called with empty script list", "Lua::CompileProjectScripts");
-//            return false; 
-//        }
-//
-//        if (not fp_PeachBinChapter.Contents.empty())
-//        {
-//            logger->Warning("Attempted to pass a non-empty PeachBinChapter -> CompileProjectScripts() please only feed an empty default initialized PeachBinChapter i'm lookin at you Ryan >///<", "Lua::CompileProjectScripts");
-//            return false; 
-//        }
-//
-//        ////////////////////////////////////////////// Create Lua state //////////////////////////////////////////////
-//
-//        lua_State* f_LuaState = luaL_newstate();
-//
-//        if (not f_LuaState)
-//        {
-//            logger->Error("Failed to create Lua state for compilation", "Lua::CompileProjectScripts");
-//            return false;
-//        }
-//
-//        ////////////////////////////////////////////// Open every lib except for OS and IO //////////////////////////////////////////////
-//
-//        luaL_requiref(f_LuaState, "_G", luaopen_base, 1); lua_pop(f_LuaState, 1);
-//        luaL_requiref(f_LuaState, "package", luaopen_package, 1); lua_pop(f_LuaState, 1);
-//        luaL_requiref(f_LuaState, "string", luaopen_string, 1); lua_pop(f_LuaState, 1);
-//        luaL_requiref(f_LuaState, "table", luaopen_table, 1); lua_pop(f_LuaState, 1);
-//        luaL_requiref(f_LuaState, "math", luaopen_math, 1); lua_pop(f_LuaState, 1);
-//        luaL_requiref(f_LuaState, "utf8", luaopen_utf8, 1); lua_pop(f_LuaState, 1);
-//        luaL_requiref(f_LuaState, "debug", luaopen_debug, 1); lua_pop(f_LuaState, 1);
-//
-//        ////////////////////////////////////////////// Compile each script //////////////////////////////////////////////
-//
-//        for (const auto& lv_ScriptPath : fp_ScriptPaths)
-//        {
-//            vector<uint8_t> f_Bytecode;
-//
-//            string f_ScriptName = lv_ScriptPath.filename().string();
-//
-//            ////////////////////////////////////////////// Safety Check for Name Length //////////////////////////////////////////////
-//
-//            if (f_ScriptName.size() > numeric_limits<uint16_t>::max())
-//            {
-//                logger->Error(format("Tried to pass a script named: '{}' that is bigger than 65536 characters, full compilation of lua project was unable to proceed!", f_ScriptName), "Lua::CompileProjectScripts");
-//                return false;
-//            }
-//
-//            logger->Info(format("Compiling Lua script: '{}' -> '{}'", lv_ScriptPath.string(), f_ScriptName), "Lua::CompileProjectScripts");
-//
-//            ////////////////////////////////////////////// Compile: pushes function (chunk) onto the stack on success //////////////////////////////////////////////
-//
-//            int f_CompilationStatus = luaL_loadfile(f_LuaState, lv_ScriptPath.string().c_str());
-//
-//            if (f_CompilationStatus != LUA_OK)
-//            {
-//                const char* f_LuaError = lua_tostring(f_LuaState, -1);
-//                logger->Error(format("Lua compile error in '{}': {}", lv_ScriptPath.string(), f_LuaError ? f_LuaError : "<unknown>"), "Lua::CompileProjectScripts");
-//
-//                lua_pop(f_LuaState, 1); // pop error
-//                lua_close(f_LuaState);
-//
-//                return false;
-//            }
-//
-//            ////////////////////////////////////////////// Dump Lua Bytecode Into f_Bytecode //////////////////////////////////////////////
-//
-//            int f_DumpStatus = lua_dump
-//            (
-//                f_LuaState,
-//                LuaChunkWriter,
-//                &f_Bytecode,
-//                0   // strip debug info? 0 = keep, 1 = strip
-//            );
-//
-//            if (f_DumpStatus != 0)
-//            {
-//                logger->Error(format("lua_dump failed for script '{}'", lv_ScriptPath.string()), "Lua::CompileProjectScripts");
-//                lua_pop(f_LuaState, 1); // pop compiled function
-//                lua_close(f_LuaState);
-//
-//                return false;
-//            }
-//
-//            ////////////////////////////////////////////// Store Section Inside Chapter //////////////////////////////////////////////
-//
-//            fp_PeachBinChapter.Contents.emplace_back(f_ScriptName, move(f_Bytecode));
-//
-//            ////////////////////////////////////////////// Pop compiled chunk from stack //////////////////////////////////////////////
-//
-//            lua_pop(f_LuaState, 1);
-//        }
-//
-//        ////////////////////////////////////////////// Close Lua State and Log //////////////////////////////////////////////
-//
-//        lua_close(f_LuaState);
-//
-//        //logger->Info(format("Successfully compiled {} Lua scripts into {} bytes of bytecode", fp_ScriptPaths.size(), fp_OutputBytecode.size()), "Lua::CompileProjectScripts");
-//
-//        return true;
-//    }
-//}
+namespace PeachEditor::Lua
+{
+    bool
+        GenerateDefaultScript
+        (
+            const string& fp_ScriptName,
+            const string& fp_NodeType,
+            const string& fp_ScriptFilePath,
+            PeachCore::Logger* logger
+        )
+    {
+
+        return true;
+    }
+
+    ////////////////////////////////////////////// Local helper for lua_dump //////////////////////////////////////////////
+
+    static int
+        LuaChunkWriter
+        (
+            lua_State* /*fp_LuaState*/, 
+            const void* fp_Data, 
+            size_t fp_Size, 
+            void* fp_UserData
+        )
+    {
+        auto& f_DataOut = *static_cast<vector<uint8_t>*>(fp_UserData);
+        const auto* f_DataIn = static_cast<const uint8_t*>(fp_Data);
+
+        f_DataOut.insert(f_DataOut.end(), f_DataIn, f_DataIn + fp_Size);
+
+        return 0; // success
+    }
+
+    ////////////////////////////////////////////// Lua -> Bytecode //////////////////////////////////////////////
+
+    bool
+        CompileProjectScripts 
+        (
+            const vector<filesystem::path>& fp_ScriptPaths,
+            PeachCore::PeachBinChapter& fp_PeachBinChapter,
+            PeachCore::Logger* logger
+        )
+    {
+        ////////////////////////////////////////////// Safety checks //////////////////////////////////////////////
+
+        if (not logger)
+        {
+            PeachCore::PrintError("Tried passing a nullptr ref to logger inside Lua::CompileProjectScripts()");
+            return false;
+        }
+
+        if (fp_ScriptPaths.empty())
+        {
+            logger->Warning("CompileProjectScripts called with empty script list", "Lua::CompileProjectScripts");
+            return false; 
+        }
+
+        if (not fp_PeachBinChapter.Contents.empty())
+        {
+            logger->Warning("Attempted to pass a non-empty PeachBinChapter -> CompileProjectScripts() please only feed an empty default initialized PeachBinChapter i'm lookin at you Ryan >///<", "Lua::CompileProjectScripts");
+            return false; 
+        }
+
+        ////////////////////////////////////////////// Create Lua state //////////////////////////////////////////////
+
+        lua_State* f_LuaState = luaL_newstate();
+
+        if (not f_LuaState)
+        {
+            logger->Error("Failed to create Lua state for compilation", "Lua::CompileProjectScripts");
+            return false;
+        }
+
+        ////////////////////////////////////////////// Open every lib except for OS and IO //////////////////////////////////////////////
+
+        luaL_requiref(f_LuaState, "_G", luaopen_base, 1); lua_pop(f_LuaState, 1);
+        luaL_requiref(f_LuaState, "package", luaopen_package, 1); lua_pop(f_LuaState, 1);
+        luaL_requiref(f_LuaState, "string", luaopen_string, 1); lua_pop(f_LuaState, 1);
+        luaL_requiref(f_LuaState, "table", luaopen_table, 1); lua_pop(f_LuaState, 1);
+        luaL_requiref(f_LuaState, "math", luaopen_math, 1); lua_pop(f_LuaState, 1);
+        luaL_requiref(f_LuaState, "utf8", luaopen_utf8, 1); lua_pop(f_LuaState, 1);
+        luaL_requiref(f_LuaState, "debug", luaopen_debug, 1); lua_pop(f_LuaState, 1);
+
+        ////////////////////////////////////////////// Compile each script //////////////////////////////////////////////
+
+        for (const auto& lv_ScriptPath : fp_ScriptPaths)
+        {
+            vector<uint8_t> f_Bytecode;
+
+            string f_ScriptName = lv_ScriptPath.filename().string();
+
+            ////////////////////////////////////////////// Safety Check for Name Length //////////////////////////////////////////////
+
+            if (f_ScriptName.size() > numeric_limits<uint16_t>::max())
+            {
+                logger->Error(format("Tried to pass a script named: '{}' that is bigger than 65536 characters, full compilation of lua project was unable to proceed!", f_ScriptName), "Lua::CompileProjectScripts");
+                return false;
+            }
+
+            logger->Info(format("Compiling Lua script: '{}' -> '{}'", lv_ScriptPath.string(), f_ScriptName), "Lua::CompileProjectScripts");
+
+            ////////////////////////////////////////////// Compile: pushes function (chunk) onto the stack on success //////////////////////////////////////////////
+
+            int f_CompilationStatus = luaL_loadfile(f_LuaState, lv_ScriptPath.string().c_str());
+
+            if (f_CompilationStatus != LUA_OK)
+            {
+                const char* f_LuaError = lua_tostring(f_LuaState, -1);
+                logger->Error(format("Lua compile error in '{}': {}", lv_ScriptPath.string(), f_LuaError ? f_LuaError : "<unknown>"), "Lua::CompileProjectScripts");
+
+                lua_pop(f_LuaState, 1); // pop error
+                lua_close(f_LuaState);
+
+                return false;
+            }
+
+            ////////////////////////////////////////////// Dump Lua Bytecode Into f_Bytecode //////////////////////////////////////////////
+
+            int f_DumpStatus = lua_dump
+            (
+                f_LuaState,
+                LuaChunkWriter,
+                &f_Bytecode,
+                0   // strip debug info? 0 = keep, 1 = strip
+            );
+
+            if (f_DumpStatus != 0)
+            {
+                logger->Error(format("lua_dump failed for script '{}'", lv_ScriptPath.string()), "Lua::CompileProjectScripts");
+                lua_pop(f_LuaState, 1); // pop compiled function
+                lua_close(f_LuaState);
+
+                return false;
+            }
+
+            ////////////////////////////////////////////// Store Section Inside Chapter //////////////////////////////////////////////
+
+            //fp_PeachBinChapter.Contents.emplace(f_ScriptName, lv_ScriptPath.string(), move(f_Bytecode));
+
+            ////////////////////////////////////////////// Pop compiled chunk from stack //////////////////////////////////////////////
+
+            lua_pop(f_LuaState, 1);
+        }
+
+        ////////////////////////////////////////////// Close Lua State and Log //////////////////////////////////////////////
+
+        lua_close(f_LuaState);
+
+        //logger->Info(format("Successfully compiled {} Lua scripts into {} bytes of bytecode", fp_ScriptPaths.size(), fp_OutputBytecode.size()), "Lua::CompileProjectScripts");
+
+        return true;
+    }
+}

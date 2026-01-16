@@ -366,16 +366,10 @@ if(TARGET_PLATFORM STREQUAL "windows")
 
     ############ Lua Stuff
 
-    STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/win64/release/lua_compiler.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/win64/debug/lua_compiler.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
-    )
-
     STATIC_IMPORT(Lua_Runtime 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/win64/release/lua_runtime.lib"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/win64/debug/lua_runtime.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/include"
     )
 
     ############ dotnet stuff
@@ -588,16 +582,10 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
 
     ############ Lua Stuff
 
-    STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/steveARM64/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/steveARM64/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
-    )
-
     STATIC_IMPORT(Lua_Runtime 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/steveARM64/liblua_runtime.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/steveARM64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/include"
     )
 
     ############ dotnet stuff
@@ -819,16 +807,10 @@ elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile 
 
     ############ Lua Stuff
 
-    STATIC_IMPORT(Lua_Compiler 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/tux64/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/lua/tux64/liblua_compiler.a"
-        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
-    )
-
     STATIC_IMPORT(Lua_Runtime 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/tux64/liblua_runtime.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/tux64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/lua/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/include"
     )
 
     ############ dotnet stuff
@@ -1066,7 +1048,6 @@ target_link_libraries(Peach_Editor PUBLIC
     
     #compilers
     shaderC
-    Lua_Compiler
     #dotnet
     nethost #used for utilizing the host system's dotnet if it satisfies >=v6.0
 
@@ -1099,6 +1080,8 @@ if(WIN32)
         PHYSFS_STATIC
         SODIUM_STATIC #needed for statically linking libsodium
         GLEW_STATIC #needed for statically linking glew
+
+        PEACH_API_STATIC #used for compiling peach_api as a static lib uwu
     )
 
     if(MSVC)

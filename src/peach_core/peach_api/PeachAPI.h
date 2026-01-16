@@ -22,6 +22,8 @@
     //XXX: need to have C calling convention since this'll be called by external runtimes which probably just use a C calling convention esp C#
     #if (defined(_WIN32) || defined(_WIN64)) && defined(PEACH_BUILD_DYNAMIC)
             #define PEACH_API extern "C" __declspec(dllexport)
+    #elif (defined(_WIN32) || defined(_WIN64)) && !defined(PEACH_API_STATIC)
+            #define PEACH_API extern "C" __declspec(dllimport)
     #else
             #define PEACH_API extern "C"
     #endif

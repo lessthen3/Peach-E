@@ -14,6 +14,14 @@
 #include <Managers/ResourceManager.h>
 #include <Language-Support/DotnetRuntime.h>
 
+// Lua runtime for *editor tools* (compiling scripts)
+extern "C"
+{
+    #include <lua/lua.h>
+    #include <lua/lauxlib.h>
+    #include <lua/lualib.h>
+}
+
 ///Ew Microsoft
 #include <dotnet/nethost.h>
 

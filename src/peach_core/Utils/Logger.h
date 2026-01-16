@@ -64,7 +64,7 @@ namespace PeachCore {
     #if (defined(_WIN32) || defined(_WIN64)) && defined(PEACH_USING_OS_TERMINAL)
 
         static bool
-            EnableColors()
+            EnableColours()
         {
             DWORD f_ConsoleMode;
             HANDLE f_OutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);

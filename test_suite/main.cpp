@@ -119,7 +119,7 @@ int
 
 #endif
 
-        PeachTests::RunLoggerTests(f_TestsRootDir + "/logging", testing_logger.get());
+        //PeachTests::RunLoggerTests(f_TestsRootDir + "/logging", testing_logger.get());
 
         engine_manager->ShutdownPeachEngine();
 

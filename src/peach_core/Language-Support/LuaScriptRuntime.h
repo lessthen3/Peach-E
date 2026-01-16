@@ -15,9 +15,12 @@
 #include "../Utils/Logger.h"
 
 ///Lua
-#include <lua/lua.h>
-#include <lua/lualib.h>
-#include <lua/lauxlib.h>
+extern "C"
+{
+    #include <lua/lua.h>
+    #include <lua/lauxlib.h>
+    #include <lua/lualib.h>
+}
 
 namespace PeachCore {
 namespace Lua {
