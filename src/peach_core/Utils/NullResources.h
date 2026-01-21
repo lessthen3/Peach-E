@@ -10,20 +10,19 @@
 ********************************************************************/
 #pragma once
 
-#include "../PeachNode.h"
-#include "ShapePrimitives.h"
+#include <cstdint>
 
-namespace PeachCore::PUI {
+namespace PeachCore::NullResources {
 
-    struct MenuBar : public Node
-    {
-        Rectangle m_Shape;
+    using namespace std;
 
-        MenuBar(const string& fp_NodeName, uint64_t fp_NodeID, const uint8_t fp_Flags, const ShapeType fp_ButtonShape) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::MenuBar)
-        {
-            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! ^_^ !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        }
-    };
+    extern const unsigned char PEACH_NULL_TEXTURE[];
 
+    extern const unsigned char PEACH_NULL_FONT[];
 
-}// namespace PeachCore::PUI
+    [[nodiscard]] extern constexpr size_t
+        GetDefaultTextureSize();
+
+    [[nodiscard]] extern constexpr size_t
+        GetDefaultFontSize();
+}

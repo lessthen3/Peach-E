@@ -47,7 +47,7 @@ namespace PeachCore
         //////////////////// Enable ANSI colour codes for windows console grumble grumble ////////////////////
 
         #if (defined(_WIN32) || defined(_WIN64)) && defined(PEACH_USING_OS_TERMINAL)
-            EnableColours();
+            EnableWindowsConsoleColours();
         #endif
 
         ////////////////////////////////////////////// Initialize Main Thread Logger //////////////////////////////////////////////
@@ -208,9 +208,13 @@ namespace PeachCore
         pm_ResourceThread = jthread(&ResourceManager::ResourceLoop, &ResourceManager::get_single(), f_LogDir, fp_RootPath, std::ref(pm_ResourceInitializationLatch));
         pm_ResourceInitializationLatch.wait();
 
-        if (pm_RequiredThreads & ThreadName::RenderThread)
+        if (pm_RequiredThreads & ThreadName::RenderThread and fp_RenderingBackend == RendererType::Vulkan)
         {
-            pm_RenderThread = jthread(&RenderingManager::RenderLoop, &RenderingManager::get_single(), fp_RenderingBackend, f_LogDir, std::ref(pm_ThreadInitializationLatch));
+            pm_RenderThread = jthread(&RenderingManager::RenderLoopVK, &RenderingManager::get_single(), f_LogDir, std::ref(pm_ThreadInitializationLatch));
+        }
+        else if (pm_RequiredThreads & ThreadName::RenderThread and fp_RenderingBackend == RendererType::OpenGL)
+        {
+            pm_RenderThread = jthread(&RenderingManager::RenderLoopGL, &RenderingManager::get_single(), f_LogDir, std::ref(pm_ThreadInitializationLatch));
         }
         else
         {
@@ -449,10 +453,10 @@ namespace PeachCore
     {
         for (const auto& lv_PluginPath : fp_ListOfPluginsToLoad)
         {
-            PluginData f_TempPlugin = {};
-            ResourceManager::get_single().LoadPlugin(lv_PluginPath, f_TempPlugin);
+            NativeScriptData f_TempPlugin = {};
+            ResourceManager::get_single().LoadNativeSciptInstanceFFS(lv_PluginPath, f_TempPlugin);
 
-            pm_PluginInstances.emplace_back(move(f_TempPlugin.Pwugin), f_TempPlugin.Handle);
+            pm_NativeScriptPlugins.emplace_back(move(f_TempPlugin.Instance), f_TempPlugin.Handle);
         }
     }
 
@@ -460,9 +464,9 @@ namespace PeachCore
         GameManager::InitializePlugins()
         const
     {
-        for (auto& lv_PluginInfo : pm_PluginInstances)
+        for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
         {
-            lv_PluginInfo.Pwugin->Initialize();
+            lv_PluginInfo.Instance->Initialize();
         }
     }
 
@@ -470,9 +474,9 @@ namespace PeachCore
         GameManager::UpdatePlugins(float fp_TimeSinceLastFrame)
         const
     {
-        for (auto& lv_PluginInfo : pm_PluginInstances)
+        for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
         {
-            lv_PluginInfo.Pwugin->Update(fp_TimeSinceLastFrame);
+            lv_PluginInfo.Instance->Update(fp_TimeSinceLastFrame);
         }
     }
 
@@ -480,28 +484,28 @@ namespace PeachCore
         GameManager::ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
         const
     {
-        for (auto& lv_PluginInfo : pm_PluginInstances)
+        for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
         {
-            lv_PluginInfo.Pwugin->ConstantUpdate(fp_TimeSinceLastFrame);
+            lv_PluginInfo.Instance->ConstantUpdate(fp_TimeSinceLastFrame);
         }
     }
 
     void 
         GameManager::ShutdownPlugins()
     {
-        for (auto& lv_PluginInfo : pm_PluginInstances)
+        for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
         {
-            lv_PluginInfo.Pwugin->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
+            lv_PluginInfo.Instance->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
 
             if (lv_PluginInfo.Handle != nullptr)
             {
                 DYNLIB_UNLOAD(lv_PluginInfo.Handle);
             }
 
-            lv_PluginInfo.Pwugin.reset(); //clear plugin and let it delete but should change this to be explicit and not inside the plugin itself shutdown is sufficient tbh
+            lv_PluginInfo.Instance.reset(); //clear plugin and let it delete but should change this to be explicit and not inside the plugin itself shutdown is sufficient tbh
         }
 
-        pm_PluginInstances.clear(); //wait why am i clearing plugin handles before unloading them LMFAO, XXX: fixed it uwu ><
+        pm_NativeScriptPlugins.clear(); //wait why am i clearing plugin handles before unloading them LMFAO, XXX: fixed it uwu ><
     }
 
     //////////////////////////////////////////////

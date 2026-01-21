@@ -11,8 +11,7 @@
 #pragma once
 
 #include "../Utils/Logger.h"
-
-#include <moody_camel/readerwriterqueue.h>
+#include "../Managers/ResourceManager.h"
 
 namespace PeachCore {
 
@@ -28,12 +27,14 @@ namespace PeachCore {
         uint64_t operand;       // 8 bytes
     };
 
+    using NetworkCommandPipe = moodycamel::ReaderWriterQueue<NetworkCommand, MOODY_CAMEL_QUEUE_SIZE>;
+
     class NetworkManager
     {
     //////////////////////////////////////////////
-    // Private Destructor
+    // Public Destructor
     //////////////////////////////////////////////
-    private:
+    public:
         ~NetworkManager() = default;
 
     //////////////////////////////////////////////

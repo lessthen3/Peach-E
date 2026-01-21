@@ -10,15 +10,34 @@
 ********************************************************************/
 #include "PeachConsole.h"
 
-namespace PeachCore {
+namespace PeachCore::PUI {
 
-    PeachConsole::PeachConsole() 
+    //PeachConsole::PeachConsole() 
+    //{
+    //    //pm_PeachLogConsole = make_shared<Console>();
+    //}
+
+    [[nodiscard]] bool
+        PeachConsole::ParseArguments(const string& fp_Args)
     {
-        //pm_PeachLogConsole = make_shared<Console>();
+        for (const char lv_CurrentChar : fp_Args)
+        {
+
+        }
+
+        return true;
     }
 
-    PeachConsole::~PeachConsole()
+    void
+        PeachConsole::SetCommandList(vector<string>&& fp_CommandList)
     {
+        pm_CommandList = move(fp_CommandList);
+    }
+
+    void
+        PeachConsole::HookLogBuffer(shared_ptr<Logger::LogBuffer> fp_SnapshotBuffer)
+    {
+
     }
 
     void 
@@ -33,8 +52,8 @@ namespace PeachCore {
     void 
         PeachConsole::Draw
         (
-            const char* title, 
-            bool* p_open
+            const string& title,
+            bool& p_open
         )
     {
 

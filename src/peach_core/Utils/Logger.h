@@ -59,12 +59,12 @@ constexpr const unsigned int MOODY_CAMEL_QUEUE_SIZE = 128;
 
 namespace PeachCore {
 
-    using namespace std;
+    using namespace std; //this should be here so i dont affect anybody who links against peach
 
     #if (defined(_WIN32) || defined(_WIN64)) && defined(PEACH_USING_OS_TERMINAL)
 
         static bool
-            EnableColours()
+            EnableWindowsConsoleColours()
         {
             DWORD f_ConsoleMode;
             HANDLE f_OutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -228,9 +228,9 @@ namespace PeachCore {
         */
         Logger(Logger&&) = default; 
 
-        static constexpr uint32_t FLUSH_EVERY_N_LOGS = 256;
-        static constexpr uint32_t MAX_NUMBER_OF_LOGS = 1024;
-        static constexpr uintmax_t MAX_LOG_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+        static constexpr uint32_t FLUSH_EVERY_N_LOGS = 256u;
+        static constexpr uint32_t MAX_NUMBER_OF_LOGS = 1024u;
+        static constexpr uintmax_t MAX_LOG_FILE_SIZE_BYTES = 10u * 1024u * 1024u; // 10 MB
 
         static constexpr uint8_t FLUSH_TRACE_BIT = 1u << 0;
         static constexpr uint8_t FLUSH_DEBUG_BIT = 1u << 1;
@@ -239,6 +239,7 @@ namespace PeachCore {
         static constexpr uint8_t FLUSH_ERROR_BIT = 1u << 4;
         static constexpr uint8_t FLUSH_FATAL_BIT = 1u << 5;
 
+        using LogBuffer = RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>;
 
         //////////////////////////////////////////////
         // Protected Constructor
@@ -250,7 +251,6 @@ namespace PeachCore {
         // Helper Enum For LogLevel Specification
         ////////////////////////////////////////////////
     public:
-
         enum Flags : uint32_t
         {
             // low byte is active mask
@@ -284,7 +284,7 @@ namespace PeachCore {
     protected:
         unordered_map<string, ofstream> pm_LogFiles;
 
-        unique_ptr<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>> pm_SnapshotBuffer = nullptr;
+        unique_ptr<LogBuffer> pm_SnapshotBuffer = nullptr;
 
         string pm_LoggerName = "No_Logger_Name";
         string pm_CurrentWorkingDirectory = "nothing";
@@ -747,7 +747,7 @@ namespace PeachCore {
 
             ////////////////////////////////////////////// Initialize Snapshot Ring Buffer //////////////////////////////////////////////
 
-            pm_SnapshotBuffer = make_unique<RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>>();
+            pm_SnapshotBuffer = make_unique<LogBuffer>();
 
             ////////////////////////////////////////////// Ensure log directory exists //////////////////////////////////////////////
 

@@ -17,9 +17,14 @@
 
 namespace PeachCore {
 
-
-    RenderingManager::~RenderingManager() 
+    //IMPORTANT: not really needed to cleanup here and the OS will def clear the memory block associated w the process quicker, RenderingManager Lifetime = Process Lifetime
+    RenderingManager::~RenderingManager()  
     {
+        if (pm_VulkanRenderer)
+        {
+            pm_VulkanRenderer.reset(nullptr);
+        }
+
         #ifndef __APPLE__
             if (pm_OpenGLRenderer)
             {
@@ -45,7 +50,7 @@ namespace PeachCore {
         SDL_Quit(); //Render thread controls everything SDL related so if the render loop is exiting SDL should quit since no other thread touches or relies on SDL related functionality
     }
 
-    bool 
+    [[nodiscard]] bool 
         RenderingManager::Initialize
         (
             const RendererType fp_DesiredRenderer,
@@ -117,15 +122,41 @@ namespace PeachCore {
         return true;
     }
 
-    void
-        RenderingManager::RenderLoop
+    [[nodiscard]] unique_ptr<unsigned char>
+        RenderingManager::LoadDefaultTexture()
+    {
+        int f_Width = 0, f_Height = 0, f_Channels = 0;
+
+        unique_ptr<unsigned char> f_Pixels
         (
-            const RendererType fp_DesiredRenderer,
+            stbi_load_from_memory
+            (
+                NullResources::PEACH_NULL_TEXTURE,
+                static_cast<int>(NullResources::GetDefaultTextureSize()),
+                &f_Width,
+                &f_Height,
+                &f_Channels,
+                4 // force RGBA
+            )
+        );
+
+        if (not f_Pixels)
+        {
+            PrintError(format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
+            return nullptr;
+        }
+
+        return move(f_Pixels);
+    }
+
+    void
+        RenderingManager::RenderLoopVK
+        (
             const string& fp_LogOutputDirectory,
             latch& fp_InitLatch
         )
     {
-        if (not Initialize(fp_DesiredRenderer, fp_LogOutputDirectory))
+        if (not Initialize(RendererType::Vulkan, fp_LogOutputDirectory))
         {
 
             return;
@@ -144,7 +175,40 @@ namespace PeachCore {
             }
 
             ProcessCommands();
-            PresentFrame(); // swap buffers etc.
+            PresentFrameVK(); // swap buffers etc.
+            PollUserInputEvents();
+        }
+
+        Shutdown();
+    }
+
+    void
+        RenderingManager::RenderLoopGL
+        (
+            const string& fp_LogOutputDirectory,
+            latch& fp_InitLatch
+        )
+    {
+        if (not Initialize(RendererType::OpenGL, fp_LogOutputDirectory))
+        {
+
+            return;
+        }
+
+        fp_InitLatch.count_down();
+
+        while (pm_IsRunning.load(std::memory_order_acquire))
+        {
+            // Block until main thread wakes us
+            pm_RenderSemaphore.acquire();
+
+            if (not pm_IsRunning.load(std::memory_order_acquire))
+            {
+                break; // Double check after wake
+            }
+
+            ProcessCommands();
+            PresentFrameGL(); // swap buffers etc.
             PollUserInputEvents();
         }
 
@@ -187,8 +251,8 @@ namespace PeachCore {
         return f_ContainsCommands;
     }
 
-    bool
-        RenderingManager::PresentFrame() //just assuming vulkan for now but this is where the backend magic happens
+    [[nodiscard]] bool
+        RenderingManager::PresentFrameVK() //just assuming vulkan for now but this is where the backend magic happens
     {
         //////////////////// Submit Draw Calls ////////////////////
 
@@ -212,6 +276,13 @@ namespace PeachCore {
             PrintError(format("EndFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
             return false;
         }
+
+        return true;
+    }
+
+    [[nodiscard]] bool
+        RenderingManager::PresentFrameGL()
+    {
 
         return true;
     }
@@ -300,14 +371,14 @@ namespace PeachCore {
             return false;
         }
 
-        pm_RenderCommandQueue = make_shared<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>>();
+        pm_RenderCommandQueue = make_shared<RenderCommandPipe>();
 
         rendering_logger->Info("RenderingManager successfully initialized the draw command queue", "RenderingManager");
 
         return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
-    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>>
+    [[nodiscard]] shared_ptr<RenderCommandPipe>
         RenderingManager::GetDrawCommandQueue
         (
             Logger* const logger

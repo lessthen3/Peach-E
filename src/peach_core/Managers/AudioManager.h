@@ -30,6 +30,16 @@ namespace PeachCore {
         uint64_t operand = 0;       // 8 bytes
     };
 
+    //////////////////////////////////////////////
+    // Audio Pipe Mask
+    //////////////////////////////////////////////
+
+    using AudioCommandPipe = moodycamel::ReaderWriterQueue<AudioCommand, MOODY_CAMEL_QUEUE_SIZE>;
+
+    //////////////////////////////////////////////
+    // AudioManager UwU!
+    //////////////////////////////////////////////
+
     class AudioManager 
     {
     //////////////////////////////////////////////
@@ -65,11 +75,11 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_LoadedAudioResourceQueue = nullptr;
-        shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
+        shared_ptr<ResourcePipe> pm_LoadedAudioResourceQueue = nullptr;
+        shared_ptr<AudioCommandPipe> pm_AudioCommandQueue = nullptr;
 
-        atomic<bool> pm_IsRunning = true; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
-        atomic<bool> pm_IsInitialized = false;
+        atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
+        atomic<bool> pm_IsInitialized{ false };
 
         unordered_map<AudioID, ma_sound> m_Sounds;         // static SFX
         unordered_map<AudioID, ma_sound> m_StreamedSounds; // music/ambient
@@ -78,7 +88,6 @@ namespace PeachCore {
         ma_sound_group m_MasterGroup;
         ma_sound_group m_MusicGroup;
         ma_sound_group m_SFXGroup;
-
 
         unique_ptr<Logger> audio_logger = nullptr;
 
@@ -114,7 +123,7 @@ namespace PeachCore {
         bool
             InitializeAudioCommandQueue();
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, MOODY_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<AudioCommandPipe>
             GetAudioCommandQueue(Logger*const logger);
 
         void 

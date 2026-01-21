@@ -10,9 +10,9 @@
 ********************************************************************/
 #pragma once
 
-struct Plugin 
+struct NativeScript 
 {
-    virtual ~Plugin() = default;
+    virtual ~NativeScript() = default;
     virtual void Initialize() = 0;
     virtual void Update(double TimeSinceLastFrame) = 0;
     virtual void ConstantUpdate(double TimeSinceLastFrame) = 0;

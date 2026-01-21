@@ -73,6 +73,12 @@ namespace PeachCore {
         uint64_t operand;       // 8 bytes
     };
 
+    //////////////////////////////////////////////
+    // Physics Pipe Mask
+    //////////////////////////////////////////////
+
+    using PhysicsCommandPipe = moodycamel::ReaderWriterQueue<PhysicsCommand, MOODY_CAMEL_QUEUE_SIZE>;
+
     ////////////////////////////////////////////////
     // PhysicsManager Class
     ////////////////////////////////////////////////
@@ -188,17 +194,20 @@ namespace PeachCore {
             return true;
         }
 
-        void RegisterCollisionPolygon2D()
+        void 
+            RegisterCollisionPolygon2D()
         {
 
         }
 
-        void RegisterCollisionShape2D()
+        void 
+            RegisterCollisionShape2D()
         {
 
         }
                                                                                  //Box2D only works best with world sizes less than 2 km, so if we want a bigger world, shifiting the origin is the most ideal solution
-        bool CheckIfWorldOriginNeedsToBeShifted() //checks if the player character has moved too far outside of the physics world, and shifts the origin to adjust for weird behaviour caused by sizing mistmatch
+        bool 
+            CheckIfWorldOriginNeedsToBeShifted() //checks if the player character has moved too far outside of the physics world, and shifts the origin to adjust for weird behaviour caused by sizing mistmatch
         {
             // Example: Check player's distance from origin
             glm::vec2 f_PlayerPosition = GetBodyPosition("player"); //measured in pixels, getbodyposition gets the position we stored when the collision object was added idk we'll figure it out
@@ -243,7 +252,8 @@ namespace PeachCore {
 
         //DOUBLE CHECK THIS METHOD FOR PROPER FUNCTIONING, UNTESTED!
         // Get the position of a body
-        glm::vec2 GetBodyPosition(const string& fp_ID)
+        glm::vec2 
+            GetBodyPosition(const string& fp_ID)
         {
             if (pm_Bodies.find(fp_ID) != pm_Bodies.end())
             {
@@ -253,14 +263,16 @@ namespace PeachCore {
             return glm::vec2();
         }
 
-        unordered_map<string, b2Vec2*>& GetCurrentPositionOfAllBodies()
+        unordered_map<string, b2Vec2*>& 
+            GetCurrentPositionOfAllBodies()
         {
             return pm_CurrentPositionOfAllBodies;
         }
 
         //DOUBLE CHECK THIS METHOD FOR PROPER FUNCTIONING, UNTESTED!
         // Delete a body
-        void DeleteBody(const string& fp_ID) 
+        void 
+            DeleteBody(const string& fp_ID) 
         {
             if (pm_Bodies.find(fp_ID) != pm_Bodies.end())
             {
@@ -273,7 +285,13 @@ namespace PeachCore {
 
         //THIS SHOULD WORK PROPERLY I HOPE
         // Set collision filtering for all attached shapes to a desired body
-        void SetCollisionFiltering(b2BodyId fp_Body, const CollisionLayer fp_CollisionLayer, const CollisionLayer fp_CollisionLayerMask)
+        void 
+            SetCollisionFiltering
+            (
+                b2BodyId fp_Body, 
+                const CollisionLayer fp_CollisionLayer, 
+                const CollisionLayer fp_CollisionLayerMask
+            )
         {
             //GET ALL JOINTS AND SHAPES ATTACHED TO THE BODYID PASSED IN
             const unsigned int f_ShapeCount = b2Body_GetShapeCount(fp_Body);

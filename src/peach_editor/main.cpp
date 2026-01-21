@@ -28,6 +28,8 @@ static inline constexpr void
 int 
     main(int fp_ArgCount, const char* fp_ArgVector[])
 {
+    PeachCore::Print(std::to_string(PeachCore::NullResources::GetDefaultFontSize()));
+
     std::cout << fp_ArgVector[0] << "\n"; //COOL AF
 
     //WARNING: WE ONLY USE THIS FOR DEVELOPMENT, FOR DEPLOYMENT WE NEED THIS DIRECTORY TO BE THE BASE DIR OF THE EXECUTABLE

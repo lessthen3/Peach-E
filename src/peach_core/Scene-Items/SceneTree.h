@@ -12,14 +12,51 @@
 
 //this struct owns the every node in the scene and handles all responsibilities regarding management of nodes, controlled via the GameManager
 
-///STL
+///PeachCore
 #include "PeachNode.h"
 #include "../Utils/Serializer.h"
+
+#include "UI/PeachConsole.h"
 
 ///STL
 #include <queue>
 
 namespace PeachCore {
+
+    constexpr uint64_t PEACH_NODE_TYPE_MASK = 0xFFull;        // lower 8 bits
+    constexpr uint64_t PEACH_NODE_INDEX_MASK = ~PEACH_NODE_TYPE_MASK;
+    constexpr uint64_t PEACH_NODE_TYPE_BITS = 8U;
+
+    constexpr uint64_t PEACH_NODE_NULL_ID = 0; //Represents no ID, or invalid ID
+
+    [[nodiscard]] static inline PeachNodeID
+        MintNewNodeID(uint64_t fp_Index, uint8_t fp_NodeType)
+        noexcept
+    {
+        return (fp_Index << PEACH_NODE_TYPE_BITS) | static_cast<uint64_t>(fp_NodeType); // index goes into the upper 56 bits, type in lower 8
+    }
+
+    [[nodiscard]] static inline uint8_t
+        GetNodeType(PeachNodeID fp_NodeID)
+        noexcept
+    {
+        return static_cast<uint8_t>(fp_NodeID & PEACH_NODE_TYPE_MASK);
+    }
+
+    [[nodiscard]] static inline uint64_t
+        GetNodeIndex(PeachNodeID fp_NodeID)
+        noexcept
+    {
+        return fp_NodeID >> PEACH_NODE_TYPE_BITS;
+    }
+
+    enum PeachNodeType : uint8_t
+    {
+        Blank = 0,
+        Render = 1 << 0,
+        Physics = 1 << 1,
+        Audio = 1 << 2
+    };
 
     struct SceneTree 
     {
@@ -46,7 +83,11 @@ namespace PeachCore {
 
     public:
         PEACH_STATUS_CODE
-            InitializeScene(const vector<uint8_t>& fp_SceneBinaryData, shared_ptr<Logger> fp_Logger)
+            InitializeNewScene
+            (
+                const vector<uint8_t>& fp_SceneBinaryData, 
+                shared_ptr<Logger> fp_Logger
+            )
         {
             if (not fp_Logger)
             {
@@ -71,13 +112,6 @@ namespace PeachCore {
             }
 
             return PEACH_STATUS_CODE::PEACH_OK;
-        }
-
-        void 
-            AddNode(unique_ptr<PeachNode> fp_PeachGameObject)
-        {
-            //make unique here and push that back
-            //pm_PeachNodes.push_back(fp_PeachGameObject);
         }
 
         [[nodiscard]] PEACH_STATUS_CODE
@@ -126,39 +160,17 @@ namespace PeachCore {
             return PEACH_STATUS_CODE::PEACH_OK;
         }
 
-        void 
-            CleanSceneTree() 
-         {
-            while (not pm_PeachNodesQueuedForRemoval.empty())
-            {
-                PeachNodeID f_NodeID = pm_PeachNodesQueuedForRemoval.front(); //Only index bits are pushed into the removal queue uwu
-                pm_PeachNodesQueuedForRemoval.pop();
-
-                RemoveEntireTree(move(pm_PeachNodes[f_NodeID]));
-            }
-        }
-
-        bool
-            RemoveEntireTree(unique_ptr<PeachNode>&& fp_ParentNode) //can do a ownership transfer since the node is gonna be destroyed anyways uwu
+        [[nodiscard]] PEACH_STATUS_CODE
+            ReparentPeachNode //returns true if operation was successful, returns false otherwise
+            (
+                const PeachNodeID fp_OriginalParent,
+                const PeachNodeID fp_NewParent,
+                const PeachNodeID fp_ChildNode
+            )
         {
-            if (not fp_ParentNode)
-            {
-                scene_logger->Error("Attempted to remove a peach node that is currently invalid and tried to reference stale node reference that is set -> NULL", "SceneTree");
-                return false;
-            }
+            //uint64_t 
 
-            //recursion base case is that when the lowest level of the "tree" is hit it will just skip the for loop and recurse back up uwu
-            //don't need to remove ID's for children from parent node since the entire tree is being removed if being called by this method
-
-            for (const PeachNodeID lv_ChildNodeID : fp_ParentNode->pm_Children) //dont need to perform bounds checks since the nodeid can only be added if it satisfies the vector bounds at creation uwu
-            {
-                RemoveEntireTree(move(pm_PeachNodes[GetNodeIndex(lv_ChildNodeID)]));//needa get index bits again since the child nodes are full ID's and not the lower 56 bits uwu
-            }
-
-            pm_StringToNodeID.erase(fp_ParentNode->m_Name); //remove node from string lookup
-            fp_ParentNode.reset(); //reset actual node, the slot remains as a dead space since it's not really worth it to refill the slot since generation would be needed and just adding more to the list is better since even w a million nodes it'll only be 8MB on the heap uwu
-
-            return true;
+            return PEACH_OK;
         }
 
         PeachNodeID
@@ -167,8 +179,21 @@ namespace PeachCore {
 
         }
 
+        void
+            PrintTree();
+
+        void
+            GetViewPort(); //?????????? why does godot have this lmfao
+
+        string
+            GetPathInTree();
+
         bool
-            RenameNode(const PeachNodeID fp_DesiredNode, const string& fp_NodeName)
+            RenameNode
+            (
+                const PeachNodeID fp_DesiredNode, 
+                const string& fp_NodeName
+            )
         {
 
             return true;
@@ -191,6 +216,49 @@ namespace PeachCore {
             const
         { 
             return pm_SceneName;
+        }
+
+        void
+            CleanSceneTree()
+        {
+            while (not pm_PeachNodesQueuedForRemoval.empty())
+            {
+                PeachNodeID f_NodeID = pm_PeachNodesQueuedForRemoval.front(); //Only index bits are pushed into the removal queue uwu
+                pm_PeachNodesQueuedForRemoval.pop();
+
+                RemoveEntireTree(move(pm_PeachNodes[f_NodeID]));
+            }
+        }
+
+        void
+            AddNode(unique_ptr<PeachNode>&& fp_PeachGameObject)
+        {
+            //make unique here and push that back
+            //pm_PeachNodes.push_back(fp_PeachGameObject);
+        }
+
+    private:
+        bool
+            RemoveEntireTree(unique_ptr<PeachNode>&& fp_ParentNode) //can do a ownership transfer since the node is gonna be destroyed anyways uwu
+        {
+            if (not fp_ParentNode)
+            {
+                scene_logger->Error("Attempted to remove a peach node that is currently invalid and tried to reference stale node reference that is set -> NULL", "SceneTree");
+                return false;
+            }
+
+            //recursion base case is that when the lowest level of the "tree" is hit it will just skip the for loop and recurse back up uwu
+            //don't need to remove ID's for children from parent node since the entire tree is being removed if being called by this method
+
+            for (const PeachNodeID lv_ChildNodeID : fp_ParentNode->GetChildren()) //dont need to perform bounds checks since the nodeid can only be added if it satisfies the vector bounds at creation uwu
+            {
+                RemoveEntireTree(move(pm_PeachNodes[GetNodeIndex(lv_ChildNodeID)]));//needa get index bits again since the child nodes are full ID's and not the lower 56 bits uwu
+            }
+
+            pm_StringToNodeID.erase(fp_ParentNode->m_PeachName); //remove node from string lookup
+            //fp_ParentNode.reset(); //reset actual node, the slot remains as a dead space since it's not really worth it to refill the slot since generation would be needed and just adding more to the list is better since even w a million nodes it'll only be 8MB on the heap uwu
+
+            return true; //destructor will hit and destroy entire node no need to call reest() here uwu
         }
     };
 }

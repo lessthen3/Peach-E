@@ -26,7 +26,7 @@ PEACH_API PEACH_STATUS_CODE
 {
     PeachCore::GameManager::get_single().m_UserLogger->Info(fp_LogMessage, fp_Sender);
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////// Scene Tree Operations ////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,19 +55,19 @@ PEACH_API PEACH_STATUS_CODE
     if (not fp_DuplicatedNodeContainer)
     {
         //PeachCore::Print("[ERROR]: Tried to pass a nullptr reference to Peach_DuplicatePeachNode(), for desired duplicated peach node container", PeachCore::Colours::Red);
-        return PeachCore::PEACH_STATUS_CODE::PEACH_ERROR_NULLPTR_REF_PASSED;
+        return PEACH_ERROR_NULLPTR_REF_PASSED;
     }
 
     *fp_DuplicatedNodeContainer = 69; //OwO
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
     PEACH_ChangeNodeName(const PEACH_NODE fp_NodeID, const char* fp_NewName)
 {
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////// PeachNode2D Transformations ////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,28 +77,28 @@ PEACH_API PEACH_STATUS_CODE
     PEACH_MoveNode2D(const PEACH_NODE fp_NodeID, const float fp_Dx, const float fp_Dy)
 {
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
     PEACH_RotateNode2D(const PEACH_NODE fp_NodeID, const float fp_Rotation)
 {
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
     PEACH_ScaleNode2D(const PEACH_NODE fp_NodeID, const float fp_Scale)
 {
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
     PEACH_SetNodeVisibility(const PEACH_NODE fp_NodeID, const bool fp_Visibility)
 {
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////// Audio Operations ////////////////////////////////////////////////////////////////////////////////////////////
@@ -107,26 +107,26 @@ PEACH_API PEACH_STATUS_CODE
     PEACH_StreamSound(const PEACH_NODE fp_NodeID)
 {
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
     PEACH_PlaySound(const PEACH_NODE fp_NodeID)
 {
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
     PEACH_SelectAudioOutputDevice(const PEACH_NODE fp_NodeID)
 {
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
     PEACH_SelectAudioInputDevice(const PEACH_NODE fp_NodeID)
 {
 
-    return PeachCore::PEACH_STATUS_CODE::PEACH_OK;
+    return PEACH_OK;
 }

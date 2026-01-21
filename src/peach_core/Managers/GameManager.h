@@ -91,24 +91,24 @@ namespace PeachCore {
         //////////////////// Main Logger and Console Buffers ////////////////////
 
         unique_ptr<Logger> main_logger = nullptr;
-        PeachConsole peach_engine_console;
+        //PeachConsole peach_engine_console;
 
         //////////////////// Loading/Command Queues ////////////////////
 
-        shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_ResourceCommandQueue = nullptr;
+        shared_ptr<LoadCommandPipe> pm_ResourceCommandQueue{ nullptr };
 
-        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_RenderCommandQueue = nullptr;
+        shared_ptr<RenderCommandPipe> pm_RenderCommandQueue{ nullptr };
 
-        shared_ptr<moodycamel::ReaderWriterQueue<AudioCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_AudioCommandQueue = nullptr;
+        shared_ptr<AudioCommandPipe> pm_AudioCommandQueue{ nullptr };
 
-        shared_ptr<moodycamel::ReaderWriterQueue<NetworkCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_NetworkCommandQueue = nullptr;
-        shared_ptr<moodycamel::ReaderWriterQueue<PhysicsCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_PhysicsCommandQueue = nullptr;
+        shared_ptr<NetworkCommandPipe> pm_NetworkCommandQueue = nullptr;
+        shared_ptr<PhysicsCommandPipe> pm_PhysicsCommandQueue = nullptr;
 
         //shared_ptr<CommandQueue> m_UserScriptCommandQueue = nullptr; //XXX: used for submitting update commands -> GameManager from script runtimes
 
         //////////////////// Plugin Stuff ////////////////////
 
-        vector<PluginData> pm_PluginInstances;
+        vector<NativeScriptData> pm_NativeScriptPlugins; //loaded at engine startup since they run alongside the game stuff for now ig idk future ryan what do u think owo? future ryan:
 
         //////////////////// Script Runtime Contexts ////////////////////
 
@@ -133,7 +133,7 @@ namespace PeachCore {
 
         //////////////////// Thread Syncro Stuff ////////////////////
 
-        atomic<bool> m_IsRunning = true;
+        atomic<bool> m_IsRunning{ true };
         latch pm_ThreadInitializationLatch{ 4 }; //4 because thats the number of thread managers  - 1 because the resourcemanager has its own latch since the order is : resource thread first, then every other thread since those arent order sensitive uwu
         latch pm_ResourceInitializationLatch{ 1 };
 

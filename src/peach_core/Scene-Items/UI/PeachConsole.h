@@ -12,23 +12,27 @@
 
 ///STL
 #include <memory>
+#include <variant>
 
 ///PeachCore
 #include "../../Utils/Logger.h"
+#include "../PeachNode.h"
 
-namespace PeachCore {
+namespace PeachCore::PUI {
 
+    using ArgType = variant<string, int64_t, uint64_t, double>;
+
+    constexpr int64_t INVALID_COMMAND = 0;
 
     //////////////////////////////////////////////
     // Console Struct
     //////////////////////////////////////////////
 
-
-    struct PeachConsole 
+    struct PeachConsole : public Node
     {
     public:
-        PeachConsole();
-        ~PeachConsole();
+        virtual ~PeachConsole() = default;
+        PeachConsole(const string& fp_NodeName, const PeachNodeID fp_NodeID, const uint8_t fp_Flags) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::Console) {}
 
         //WIP NEED TO LOCK THE THREAD SO THAT WE CAN SAFELY QUERY THE LOG BUFFERS SINCE THEY CAN BE WRITTEN TOO WHILE
         //bool
@@ -62,9 +66,18 @@ namespace PeachCore {
         void 
             Draw
             (
-                const char* title, 
-                bool* p_open = nullptr
+                const string& title, 
+                bool& p_open
             );
+
+        [[nodiscard]] bool
+            ParseArguments(const string& fp_Args);
+
+        void
+            HookLogBuffer(shared_ptr<Logger::LogBuffer> fp_SnapshotBuffer);
+
+        void
+            SetCommandList(vector<string>&& fp_CommandList);
 
         void 
             SetScrollToBottom() 
@@ -73,6 +86,10 @@ namespace PeachCore {
         }
 
     private:
-        bool pm_IsScrollToBottom = false;
+        bool pm_IsScrollToBottom{ false }; //scroll to bottom whenever new log appears
+
+        unordered_map<uint64_t, shared_ptr<Logger::LogBuffer>> pm_HookedBuffers;
+
+        vector<string> pm_CommandList;
     };
 }

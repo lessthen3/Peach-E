@@ -10,20 +10,19 @@
 ********************************************************************/
 #pragma once
 
-#include "PeachUserInterfaceNode.h"
+#include "../PeachNode.h"
 #include "ShapePrimitives.h"
 
 namespace PeachCore {
 namespace PUI {
 
-    struct Slider : public PeachUserInterfaceNode
+    struct Slider : public Node
     {
         Rectangle m_Shape;
 
-        Slider(string fp_DesiredID)
+        Slider(const string& fp_NodeName, uint64_t fp_NodeID, const uint8_t fp_Flags, const ShapeType fp_ButtonShape) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::Panel)
         {
-            m_Type = NodeType::Slider;
-            m_PeachID = fp_DesiredID;
+            //>w<!
         }
 
     };

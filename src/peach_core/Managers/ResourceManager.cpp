@@ -33,11 +33,11 @@ namespace PeachCore {
 
         //////////////////// Initialize Queues ////////////////////
 
-        pm_AudioResourceLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>();
-        pm_DrawableResourceLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>();
-        pm_MainThreadLoadingQueue = make_shared<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>();
+        pm_AudioResourceLoadingQueue = make_shared<ResourcePipe>();
+        pm_DrawableResourceLoadingQueue = make_shared<ResourcePipe>();
+        pm_MainThreadLoadingQueue = make_shared<ResourcePipe>();
 
-        pm_LoadCommandQueue = make_shared<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>>();
+        pm_LoadCommandQueue = make_shared<LoadCommandPipe>();
 
         //////////////////// Set Executable Root Directory ////////////////////
 
@@ -152,12 +152,21 @@ namespace PeachCore {
         }
         
     }
- 
+    
+    [[nodiscard]] bool
+        LoadPeachBinHeader(const string& fp_BinaryPath)
+    {
+
+
+
+        return true;
+    }
+
     //////////////////////////////////////////////
     // Queue Retrieval
     //////////////////////////////////////////////
 
-    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>>
+    [[nodiscard]] shared_ptr<LoadCommandPipe>
         ResourceManager::GetLoadCommandQueue
         (
             Logger* const logger
@@ -180,7 +189,7 @@ namespace PeachCore {
     //THESE METHODS ONLY ALLOW A MAXIMUM OF ONE REFERENCE PASSED OUT, TO ANYONE ASKING THIS IS MEANT FOR THE AUDIO/RENDER THREAD
     //This method should be one of the first methods called on startup
 
-    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>
+    [[nodiscard]] shared_ptr<ResourcePipe>
         ResourceManager::GetAudioResourceLoadingQueue
         (
             Logger* const logger
@@ -200,7 +209,7 @@ namespace PeachCore {
         return pm_AudioResourceLoadingQueue;
     }
 
-    [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>
+    [[nodiscard]] shared_ptr<ResourcePipe>
         ResourceManager::GetDrawableResourceLoadingQueue
         (
             Logger* const logger
@@ -224,8 +233,15 @@ namespace PeachCore {
     // Runtime Loading
     //////////////////////////////////////////////
 
+    [[nodiscard]] static inline bool
+        ValidateFilePath()
+    {
+
+        return true;
+    }
+
     bool
-        ResourceManager::LoadLuaBytecode(uint64_t fp_BinaryOffset)
+        ResourceManager::LoadLuaBytecodeFB(const string& fp_ResPath)
     {
         size_t offset = 0;
 
@@ -350,10 +366,14 @@ namespace PeachCore {
     peachnode owner of the texture, where it's used, if its visible, associated shaders/pipeline, texture filtering, initial size
     */
     bool 
-        ResourceManager::LoadTextureFFS(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode)
+        ResourceManager::LoadTextureFFS
+        (
+            const string& fp_FilePath, 
+            const uint64_t fp_DestinationNode
+        )
     {
         // Ensure directory exists
-        if (not filesystem::exists(fp_TextureFilePath))
+        if (not filesystem::exists(fp_FilePath))
         {
             resource_logger->Error("Tried to pass invalid directory to LoadTextureFromFile(), Failed to load texture!", "ResourceManager");
             return false;
@@ -364,7 +384,7 @@ namespace PeachCore {
 
         try //This will be wrapped as a unique_ptr with a custom deletor tied to the ptr that just calls stbi_image_free UwU!
         {
-            f_RawTextureDataPtr = stbi_load(fp_TextureFilePath.c_str(), &f_Width, &f_Height, &f_Channels, 0);
+            f_RawTextureDataPtr = stbi_load(fp_FilePath.c_str(), &f_Width, &f_Height, &f_Channels, 0);
         }
         catch (const exception& fp_Exception)
         {
@@ -374,7 +394,7 @@ namespace PeachCore {
 
         if (not f_RawTextureDataPtr)
         {
-            resource_logger->Error(format("Failed to load texture! path: {}, reason: {}", fp_TextureFilePath, stbi_failure_reason()), "ResourceManager");
+            resource_logger->Error(format("Failed to load texture! path: {}, reason: {}", fp_FilePath, stbi_failure_reason()), "ResourceManager");
             return false;
         }
 
@@ -392,7 +412,11 @@ namespace PeachCore {
     }
 
     bool
-        ResourceManager::LoadTextureFB(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode)
+        ResourceManager::LoadTextureFB
+        (
+            const string& fp_ResPath, 
+            const uint64_t fp_DestinationNode
+        )
     {
 
         return true;
@@ -495,21 +519,19 @@ namespace PeachCore {
             return false;
         }
 
-        vector<uint32_t> f_Bytecode;
-
         ////////////////////////////////////////////// Extract file extension assuming format "filename.ext" //////////////////////////////////////////////
 
         size_t lastDotIndex = fp_ShaderFilePath.rfind('.');
 
         if (lastDotIndex == string::npos)
         {
-            resource_logger->Error("No file extension found for Peach-E Binary", "ResourceManager");
+            resource_logger->Error("No file extension found for SPIRV Binary", "ResourceManager");
             return false;
         }
 
         string f_FileExtension = fp_ShaderFilePath.substr(lastDotIndex);
 
-        if (f_FileExtension != ".spv") //file extension for peach-e binary encoding, get it? it's like a bin of peaches >w<
+        if (f_FileExtension != ".spv") //uwu
         {
             resource_logger->Error("Attempted to read from a file that isn't a valid SPIRV Binary", "ResourceManager");
             return false;
@@ -533,6 +555,8 @@ namespace PeachCore {
             return false;
         }
 
+        vector<uint32_t> f_Bytecode;
+
         f_Bytecode.resize(f_ShaderFileSize / sizeof(uint32_t));
 
         f_ShaderFileHandle.read(reinterpret_cast<char*>(f_Bytecode.data()), f_ShaderFileSize);
@@ -555,10 +579,10 @@ namespace PeachCore {
     }
 
     bool
-        ResourceManager::LoadPlugin
+        ResourceManager::LoadNativeSciptInstanceFFS
         (
             const string& fp_PluginFilePath,
-            PluginData& fp_Plugin
+            NativeScriptData& fp_Plugin
         )
         const
     {
@@ -581,8 +605,8 @@ namespace PeachCore {
 
         resource_logger->Debug("Successfully loaded plugin at: " + fp_PluginFilePath, "ResourceManager");
 
-        auto f_CreateFunc = (CreatePluginFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
-        auto f_DestroyFunc = (DestroyPluginFunc)DYNLIB_GETSYM(f_Handle, "destroyPlugin");
+        auto f_CreateFunc = (CreateNativeScriptFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
+        auto f_DestroyFunc = (DestroyNativeScriptFunc)DYNLIB_GETSYM(f_Handle, "destroyPlugin");
 
         if (not f_CreateFunc or not f_DestroyFunc)
         {
@@ -593,21 +617,21 @@ namespace PeachCore {
 
         resource_logger->Debug("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager");
 
-        fp_Plugin.Pwugin = unique_ptr<Plugin, DestroyPluginFunc>(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;
+        fp_Plugin.Instance = unique_ptr<NativeScript, DestroyNativeScriptFunc>(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;
         fp_Plugin.Handle = f_Handle;
 
         return true;
     }
 
     bool
-        ResourceManager::LoadSceneFFS(const string& fp_ScenePath)
+        ResourceManager::LoadSceneFFS(const string& fp_FilePath)
     {
 
         return true;
     }
 
     bool
-        ResourceManager::LoadSceneFB(const string& fp_Offset)
+        ResourceManager::LoadSceneFB(const string& fp_ResPath)
     {
 
         return true;
@@ -665,7 +689,7 @@ namespace PeachCore {
         }
         catch (const filesystem::filesystem_error& e)
         {
-            resource_logger->Error("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "main");
+            resource_logger->Error("LogAndPrint while checking current directory state: " + static_cast<string>(e.what()), "ResourceManager");
         }
 
         return f_Files;
@@ -678,27 +702,27 @@ namespace PeachCore {
             const unordered_map <string, filesystem::file_time_type>& fp_NewState
         )
     {
-        for (const auto& _file : fp_NewState)
+        for (const auto& lv_File : fp_NewState)
         {
-            auto it = fp_OldState.find(_file.first);
+            auto it = fp_OldState.find(lv_File.first);
 
             if (it == fp_OldState.end())
             {
-                resource_logger->Debug("New file found in working directory: " + _file.first, "main");
+                resource_logger->Debug("New file found in working directory: " + lv_File.first, "ResourceManager");
                 return false;
             }
-            else if (it->second != _file.second)
+            else if (it->second != lv_File.second)
             {
-                resource_logger->Trace("Modified file found in working directory: " + _file.first, "main");
+                resource_logger->Trace("Modified file found in working directory: " + lv_File.first, "ResourceManager");
                 return false;
             }
         }
 
-        for (const auto& _file : fp_OldState)
+        for (const auto& lv_File : fp_OldState)
         {
-            if (fp_NewState.find(_file.first) == fp_NewState.end())
+            if (fp_NewState.find(lv_File.first) == fp_NewState.end())
             {
-                resource_logger->Debug("Deleted file from working directory: " + _file.first, "main");
+                resource_logger->Debug("Deleted file from working directory: " + lv_File.first, "ResourceManager");
                 return false;
             }
         }

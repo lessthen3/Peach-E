@@ -10,23 +10,20 @@
 ********************************************************************/
 #pragma once
 
-#include "PeachUserInterfaceNode.h"
+#include "../PeachNode.h"
 #include "ShapePrimitives.h"
 
-namespace PeachCore {
-namespace PUI {
+namespace PeachCore::PUI {
 
-    struct ScrollArea : public PeachUserInterfaceNode
+    struct ScrollArea : public Node
     {
         Rectangle m_Shape;
 
-        ScrollArea(string fp_DesiredID)
+        ScrollArea(const string& fp_NodeName, uint64_t fp_NodeID, const uint8_t fp_Flags, const ShapeType fp_ButtonShape) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::ScrollArea)
         {
-            m_Type = NodeType::ScrollArea;
-            m_PeachID = fp_DesiredID;
+            //>O<!
         }
 
     };
 
-}// namespace PUI
-}// namespace PeachCore
+}// namespace PeachCore::PUI

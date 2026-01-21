@@ -19,12 +19,13 @@
 #include "../Rendering/VulkanShaderProgram.h"
 #include "../Utils/Serializer.h"
 #include "../Utils/DynamicLoader.h"
+#include "../Utils/NullResources.h"
 
 //////////////////////////////////////////////
 // Language Support
 //////////////////////////////////////////////
 
-#include "../Language-Support/Plugin.h"
+#include "../Language-Support/NativeScript.h"
 #include "../Language-Support/DotnetRuntime.h"
 #include "../Language-Support/LuaScriptRuntime.h"
 
@@ -36,8 +37,8 @@
 
 #include <sodium.h>
 
-typedef Plugin* (*CreatePluginFunc)();
-typedef void (*DestroyPluginFunc)(Plugin*);
+typedef NativeScript* (*CreateNativeScriptFunc)();
+typedef void (*DestroyNativeScriptFunc)(NativeScript*);
 
 namespace PeachCore {
 
@@ -139,11 +140,9 @@ namespace PeachCore {
         unordered_map<string, PeachBinSection> Contents;
     };
 
-    using PeachBinary = unordered_map<string, PeachBinChapter>;
-
-    struct PluginData
+    struct NativeScriptData
     {
-        unique_ptr<Plugin, DestroyPluginFunc> Pwugin = { nullptr, nullptr }; //>O<
+        unique_ptr<NativeScript, DestroyNativeScriptFunc> Instance = { nullptr, nullptr }; //>O<
         DYNLIB_HANDLE Handle = nullptr; //>w<
     };
 
@@ -191,7 +190,7 @@ namespace PeachCore {
         unique_ptr<AnimationData> ,
         unique_ptr<BytecodeData>,
         unique_ptr<ScriptData>,
-        unique_ptr<PluginData>,
+        unique_ptr<NativeScriptData>,
         unique_ptr<SceneData>,
         unique_ptr<VulkanShaderBytecode>
     >;
@@ -204,13 +203,15 @@ namespace PeachCore {
 
         ~ResourceTransfer() = default;
 
-        ResourceTransfer(uint64_t fp_NodeDestination, ResourcePayload&& fp_ResourcePayload)
+        ResourceTransfer(const uint64_t fp_NodeDestination, ResourcePayload&& fp_ResourcePayload)
         {
             NodeID = fp_NodeDestination;
             Payload = move(fp_ResourcePayload);
         }
     };
 
+    using ResourcePipe = moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>;
+    using LoadCommandPipe = moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>;
 
     //////////////////////////////////////////////
     // ResourceManager Class
@@ -248,16 +249,16 @@ namespace PeachCore {
         //////////////////// Resource Transfer Queues ////////////////////
 
         //used to push loaded assets that are destined for AudioManager
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_AudioResourceLoadingQueue = nullptr;
+        shared_ptr<ResourcePipe> pm_AudioResourceLoadingQueue = nullptr;
         //used to push loaded assets that are destined for RenderingManager
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_DrawableResourceLoadingQueue = nullptr;
+        shared_ptr<ResourcePipe> pm_DrawableResourceLoadingQueue = nullptr;
         //used to push loaded scripts and config stuff -> MainThread/GameManager
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_MainThreadLoadingQueue = nullptr;
+        shared_ptr<ResourcePipe> pm_MainThreadLoadingQueue = nullptr;
 
         //////////////////// Load Command Queue ////////////////////
 
         //used for asking ResourceManager to load something from the main thread
-        shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_LoadCommandQueue = nullptr;
+        shared_ptr<LoadCommandPipe> pm_LoadCommandQueue = nullptr;
 
         //////////////////// Resource Logger ////////////////////
 
@@ -281,9 +282,10 @@ namespace PeachCore {
 
         //////////////////// Binary Data ////////////////////
 
-        unordered_map<string, uint64_t> pm_OffsetTable;
-        vector<uint8_t> pm_PeachBinary;
+        using PeachBinary = unordered_map<string, uint64_t>; // res:// path : binary_offset
 
+        PeachBinary pm_OffsetTable; // res:// : binary_offset
+        vector<uint8_t> pm_PeachBinary;
 
         //////////////////// Directory Information ////////////////////
 
@@ -308,19 +310,19 @@ namespace PeachCore {
                latch& fp_InitLatch
             );
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<ResourcePipe>
             GetAudioResourceLoadingQueue
             (
                 Logger*const logger
             ); //this is supposed to be called from the audio thread so cant use the resource_logger here for thread reasons
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<ResourcePipe>
             GetDrawableResourceLoadingQueue
             (
                 Logger* const logger
             ); //this is supposed to be called from the render thread so cant use the resource_logger here for thread reasons
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<LoadCommandPipe>
             GetLoadCommandQueue
             (
                 Logger* const logger
@@ -334,10 +336,10 @@ namespace PeachCore {
             );
 
         bool
-            LoadPlugin
+            LoadNativeSciptInstanceFFS
             (
                 const string& fp_PluginFilePath,
-                PluginData& fp_Plugin
+                NativeScriptData& fp_Plugin
             )
             const;
 
@@ -387,23 +389,31 @@ namespace PeachCore {
         // Resource Loading Functions
         ////////////////////////////////////////////////
         // FFS = From File System, FB = From Binary
-        bool
-            LoadPeachBinHeader();
+        [[nodiscard]] bool
+            LoadPeachBinHeader(const string& fp_BinaryPath);
 
         bool
             LoadDotNetScript(const string& fp_ScriptPath);
 
         bool
-            LoadLuaBytecode(uint64_t fp_BinaryOffset);
+            LoadLuaBytecodeFB(const string& fp_ResPath);
 
         bool
             LoadBongoJamScript(const string& fp_ScriptPath);
 
         bool 
-            LoadTextureFFS(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode);
+            LoadTextureFFS
+            (
+                const string& fp_FilePath, 
+                const uint64_t fp_DestinationNode
+            );
 
         bool
-            LoadTextureFB(const string& fp_TextureFilePath, const uint64_t fp_DestinationNode);
+            LoadTextureFB
+            (
+                const string& fp_ResPath, 
+                const uint64_t fp_DestinationNode
+            );
 
         bool
             LoadWavFFS(const string& fp_WavFilePath);
@@ -423,9 +433,9 @@ namespace PeachCore {
             );
 
         bool
-            LoadSceneFFS(const string& fp_ScenePath); //load scene locally from PhysFS
+            LoadSceneFFS(const string& fp_FilePath); //load scene locally from PhysFS
 
         bool
-            LoadSceneFB(const string& fp_ScenePath); //unpacked from peachbin file loaded into peach engine rn
+            LoadSceneFB(const string& fp_ResPath); //unpacked from peachbin file loaded into peach engine rn
     };
 }

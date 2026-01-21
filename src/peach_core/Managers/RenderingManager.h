@@ -35,33 +35,6 @@
 namespace PeachCore {
 
     //////////////////////////////////////////////
-    // Drawable Object Struct
-    //////////////////////////////////////////////
-    //holds all relevant information that the renderer needs to know
-    struct DrawableObject2D
-    {
-        string ObjectID;
-
-        //used for lerping when the FPS > physics ticks per frame
-        glm::vec2 CurrentFramePosition;
-        glm::vec2 PreviousFramePosition;
-
-        uint32_t LayerNumber = 0; //can't imagine there'll be more than 4 billion drawing layers, at that point integer overflow is the least of ur worries lmfao
-
-        bool IsVisible = true;
-        bool IsQueuedForRemoval = false;
-        
-        //TODO: fix this, need to just hold handles and metadata that maps -> descriptor sets, pipeline info
-        uint32_t TextureHandle; //actual data for graphic //used for parsing raw byte information, mainly for audio at the moment
-
-        glm::vec2 Offset; //handles texture offset for atlas stuff and maybe others idfk
-            //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
-        //Drawable GraphicsType; 
-        //WARNING THIS NEEDS TO BE SWITCHED OFF FOR APPLE BUILDS SINCE TIM APPLE DECIDED NOT TO SUPPORT OPENGL ANYMORE UWU
-        // OpenGLShaderProgram Shaders; //Contains multiple shaders relevant to drawing the object
-    };
-
-    //////////////////////////////////////////////
     // Rendering backend helper Enum
     //////////////////////////////////////////////
 
@@ -111,6 +84,7 @@ namespace PeachCore {
     //    constexpr uint8_t RENDER_SHUTDOWN_THREAD = 0x0D; //used for shutting down render thread appropriately uwu
     //};
         
+    using RenderCommandPipe = moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>;
 
     //////////////////////////////////////////////
     // Rendering Manager Class
@@ -158,13 +132,13 @@ namespace PeachCore {
 
         bool pm_IsVSyncEnabled = false;
 
-        // DrawableObject.ObjectID : DrawableObject dict
-        unordered_map<string, DrawableObject2D> pm_ListOfAllDrawables2D;
+        // list of all Node ID's, SceneTree translates from string ID -> uint64_t ID 
+        vector<uint64_t> pm_RenderableNodes;
 
         //////////////////// Command/Resource Queue ////////////////////
 
-        shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>> pm_RenderCommandQueue = nullptr;
-        shared_ptr<moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>> pm_LoadedResourceQueue = nullptr;
+        shared_ptr<RenderCommandPipe> pm_RenderCommandQueue = nullptr;
+        shared_ptr<ResourcePipe> pm_LoadedResourceQueue = nullptr;
 
         //////////////////// Window Stuff ////////////////////
 
@@ -176,6 +150,8 @@ namespace PeachCore {
 
         shared_ptr<Logger> rendering_logger = nullptr;
 
+        unique_ptr<unsigned char> pm_DefaultTexture = LoadDefaultTexture();
+
     public: 
         atomic<bool> pm_IsRunning = true; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
         atomic<bool> pm_IsInitialized = false;
@@ -186,10 +162,22 @@ namespace PeachCore {
     // Public Methods
     //////////////////////////////////////////////
     public:
+
+        //////////////////// Grab and Load Default Texture into Memory UwU ////////////////////
+
+        [[nodiscard]] unique_ptr<unsigned char> //Note: this should be analyzed as a consteval but i can just do that by hand later on since its like it's ~1kb owo
+            LoadDefaultTexture();
+
         void
-            RenderLoop
+            RenderLoopVK
             (
-                const RendererType fp_DesiredRenderer,
+                const string& fp_LogOutputDirectory,
+                latch& fp_InitLatch
+            );
+
+        void
+            RenderLoopGL
+            (
                 const string& fp_LogOutputDirectory,
                 latch& fp_InitLatch
             );
@@ -200,7 +188,7 @@ namespace PeachCore {
         void
             Stop();
 
-        [[nodiscard]] shared_ptr<moodycamel::ReaderWriterQueue<RenderCommand, MOODY_CAMEL_QUEUE_SIZE>>
+        [[nodiscard]] shared_ptr<RenderCommandPipe>
             GetDrawCommandQueue
             (
                 Logger*const logger
@@ -316,7 +304,7 @@ namespace PeachCore {
 
         }
 
-        bool
+        [[nodiscard]] bool
             Initialize
             (
                 const RendererType fp_DesiredRenderer,
@@ -332,8 +320,11 @@ namespace PeachCore {
         [[nodiscard]] bool
             ProcessCommands();
 
-        bool
-            PresentFrame();
+        [[nodiscard]] bool
+            PresentFrameVK();
+
+        [[nodiscard]] bool
+            PresentFrameGL();
 
         void
             Shutdown();

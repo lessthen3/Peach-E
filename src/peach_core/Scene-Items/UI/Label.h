@@ -10,23 +10,25 @@
 ********************************************************************/
 #pragma once
 
-#include "PeachUserInterfaceNode.h"
+///PeachCore
+#include "../PeachNode.h"
 #include "ShapePrimitives.h"
 
-namespace PeachCore {
-namespace PUI {
+///font stuff
+#include <msdfgen/msdfgen.h>
+#include <msdfgen/msdfgen-ext.h>
 
-    struct Label : public PeachUserInterfaceNode //Just a generic text label
+namespace PeachCore::PUI {
+
+    struct Label : public Node //Just a generic text label
     {
         Rectangle m_Shape;
 
-        Label(string fp_DesiredID)
+        Label(const string& fp_NodeName, uint64_t fp_NodeID, const uint8_t fp_Flags, const ShapeType fp_ButtonShape) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::Label)
         {
-            m_Type = NodeType::Label;
-            m_PeachID = fp_DesiredID;
+            //UwU!
         }
 
     };
 
-}// namespace PUI
-}// namespace PeachCore
+}// namespace PeachCore::PUI

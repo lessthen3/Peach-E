@@ -12,9 +12,9 @@
 
 namespace PeachCore {
 
-    PeachNode::~PeachNode()
-    {
+    //PeachNode::~PeachNode()
+    //{
 
-    }
+    //}
 
 }

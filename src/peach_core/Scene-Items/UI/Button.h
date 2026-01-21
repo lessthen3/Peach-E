@@ -10,21 +10,17 @@
 ********************************************************************/
 #pragma once
 
-#include "PeachUserInterfaceNode.h"
+#include "../PeachNode.h"
 #include "ShapePrimitives.h"
 
-namespace PeachCore {
-namespace PUI {
+namespace PeachCore::PUI {
 
-    struct Button final : public PeachUserInterfaceNode
+    struct Button final : public Node
     {
         unique_ptr<Shape> m_Shape = nullptr;
 
-        Button(uint64_t fp_DesiredID, const ShapeType fp_ButtonShape)
+        Button(const string& fp_NodeName, uint64_t fp_NodeID, const uint8_t fp_Flags, const ShapeType fp_ButtonShape) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::Button)
         {
-            m_Type = NodeType::Button;
-            pm_NodeID = fp_DesiredID;
-
             switch(fp_ButtonShape)
             {
                 case ShapeType::Rectangle:
@@ -50,6 +46,4 @@ namespace PUI {
 
     };
 
-
-}// namespace PUI
 }// namespace PeachCore
