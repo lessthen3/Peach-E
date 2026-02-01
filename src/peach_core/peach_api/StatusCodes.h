@@ -23,31 +23,28 @@
 #endif
 
 
-enum PEACH_STATUS_CODE : int64_t
+typedef enum PEACH_STATUS_CODE //only C23 supports the : int64_t definition which is not great for compatibility
 {
     PEACH_OK = 1,
 
-    PEACH_INVALID_SCENE_NAME = -1000,
+    PEACH_ERROR_INVALID_SCENE_NAME,
     PEACH_ERROR_NULLPTR_REF_PASSED,
     PEACH_ERROR_INVALID_NODE_REMOVAL_ID,
-    PEACH_ERROR_INVALID_NODE_REMOVAL_NAME
+    PEACH_ERROR_INVALID_NODE_REMOVAL_NAME,
+
+    //////////////////////// General Rendering Statuses ////////////////////////
+
+    PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW,
+
+    //////////////////////// OpenGL Specific ////////////////////////
+
+    PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL,
+    PEACH_ERROR_FAILED_INITIALIZE_GLEW,
+
+    //////////////////////// Vulkan ////////////////////////
+
+    PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN 
 
 };
-
-//const static unordered_map<int64_t, string> PEACH_STATUS_STRINGS =
-//{
-//    {PEACH_OK, "Working as expected"},
-//    { PEACH_INVALID_SCENE_NAME, "invalid scene name passed, there is no scene with specified name found"}
-//};
-
-//constexpr static inline string
-//    StatusCodeToString(const uint64_t fp_StatusCode)
-//{
-//    //auto f_FindIterator = PEACH_STATUS_STRINGS.find(fp_StatusCode);
-
-
-//    return PEACH_STATUS_STRINGS.at(fp_StatusCode);
-//}
-
 
 #endif

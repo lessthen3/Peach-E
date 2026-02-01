@@ -32,7 +32,17 @@ namespace PeachCore::PUI {
     {
     public:
         virtual ~PeachConsole() = default;
-        PeachConsole(const string& fp_NodeName, const PeachNodeID fp_NodeID, const uint8_t fp_Flags) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::Console) {}
+
+        PeachConsole
+        (
+            const string& fp_NodeName,
+            const PeachNodeID fp_NodeID,
+            const PeachNodeID fp_ParentNodeID = PEACH_NODE_NULL_ID,
+            const uint8_t fp_Flags = PEACH_NODE_HAS_NO_FLAGS
+        ) 
+            :
+            Node(fp_NodeName, fp_NodeID, fp_ParentNodeID, fp_Flags, NodeType::Console)
+        {}
 
         //WIP NEED TO LOCK THE THREAD SO THAT WE CAN SAFELY QUERY THE LOG BUFFERS SINCE THEY CAN BE WRITTEN TOO WHILE
         //bool

@@ -10,11 +10,6 @@
 ********************************************************************/
 #pragma once
 
-///OpenGL
-#ifndef __APPLE__
-#include <GL/glew.h>
-#endif
-
 ///External
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -22,67 +17,74 @@
 ///PeachCore
 #include "PeachMaterial.h"
 
-namespace PeachCore {
+#define PEACH_SIZE_OF_ARRAY_PTR(fp_Type, fp_Ptr)  sizeof(*fp_Ptr) / sizeof(fp_Type)
+
+///OpenGL
+#ifndef __APPLE__
+
+#include <GL/glew.h>
+
+namespace PeachCore::OpenGL {
 
     struct PeachMesh
     {
-         int pm_VAO;
-         int pm_VBO;
-         int pm_VertexCount;
+         GLuint pm_VAO;
+         GLuint pm_VBO;
+         uint64_t pm_VertexCount;
 
-         vector<int> pm_ListVBO;
+         vector<GLuint> pm_ListVBO;
 
-         PeachMaterial pm_Material;
+         vector<PeachMaterial> pm_Materials;
 
         //////////////////////////////////////////////
         //CLASS CONSTRUCTOR
         //////////////////////////////////////////////
 
-         PeachMesh(float fp_Vertices[], int fp_Indices[], float fp_TextCoords[], float fp_Normals[])
+         PeachMesh
+         (
+             float* fp_Vertices, 
+             int* fp_Indices, 
+             float* fp_TextCoords, 
+             float* fp_Normals
+         )
          {
+            try 
+            {
+                pm_VertexCount = PEACH_SIZE_OF_ARRAY_PTR(int, fp_Indices);
 
-            FloatBuffer verticesBuffer = null;
-            IntBuffer indicesBuffer = null;
-            FloatBuffer textCoordsBuffer = null;
-            FloatBuffer normalsBuffer = null;
-
-            try {
-                pm_VertexCount = PEACH_ARRAY_SIZE(fp_Indices);
-
-                pm_VAO = glGenVertexArrays();
+                glGenVertexArrays(1, &pm_VAO);
                 glBindVertexArray(pm_VAO);
 
-                pm_VBO = glGenBuffers();
-                pm_ListVBO.add(pm_VBO);
-                verticesBuffer = MemoryUtil.memAllocFloat(fp_Vertices.length);
-                verticesBuffer.put(fp_Vertices).flip();
+                glGenBuffers(1, &pm_VBO);
+                pm_ListVBO.push_back(pm_VBO);
+
                 glBindBuffer(GL_ARRAY_BUFFER, pm_VBO);
-                glBufferData(GL_ARRAY_BUFFER, verticesBuffer, GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, PEACH_SIZE_OF_ARRAY_PTR(float, fp_Vertices), fp_Vertices, GL_STATIC_DRAW);
                 glEnableVertexAttribArray(0);
                 glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
 
-                pm_VBO = glGenBuffers();
-                pm_ListVBO.add(pm_VBO);
-                indicesBuffer = MemoryUtil.memAllocInt(fp_Indices.length);
-                indicesBuffer.put(fp_Indices).flip();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pm_VBO);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicesBuffer, GL_STATIC_DRAW);
+                // Indices EBO (ELEMENT_ARRAY_BUFFER) - stored in VAO state
+                {
+                    glGenBuffers(1, &pm_VBO);
+                    pm_ListVBO.push_back(pm_VBO);
 
-                pm_VBO = glGenBuffers();
-                pm_ListVBO.add(pm_VBO);
-                textCoordsBuffer = MemoryUtil.memAllocFloat(fp_TextCoords.length);
-                textCoordsBuffer.put(fp_TextCoords).flip();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pm_VBO);
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, PEACH_SIZE_OF_ARRAY_PTR(int, fp_Indices), fp_Indices, GL_STATIC_DRAW);
+
+                    glGenBuffers(1, &pm_VBO);
+                    pm_ListVBO.push_back(pm_VBO);
+                }
+
                 glBindBuffer(GL_ARRAY_BUFFER, pm_VBO);
-                glBufferData(GL_ARRAY_BUFFER, textCoordsBuffer, GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, PEACH_SIZE_OF_ARRAY_PTR(float, fp_TextCoords), fp_TextCoords, GL_STATIC_DRAW);
                 glEnableVertexAttribArray(1);
                 glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
 
-                pm_VBO = glGenBuffers();
-                pm_ListVBO.add(pm_VBO);
-                normalsBuffer = MemoryUtil.memAllocFloat(fp_Normals.length);
-                normalsBuffer.put(fp_Normals).flip();
+                glGenBuffers(1, &pm_VBO);
+                pm_ListVBO.push_back(pm_VBO);
+
                 glBindBuffer(GL_ARRAY_BUFFER, pm_VBO);
-                glBufferData(GL_ARRAY_BUFFER, normalsBuffer, GL_STATIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, PEACH_SIZE_OF_ARRAY_PTR(float, fp_Normals), fp_Normals, GL_STATIC_DRAW);
                 glEnableVertexAttribArray(2);
                 glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
 
@@ -91,14 +93,10 @@ namespace PeachCore {
 
                 glBindVertexArray(0);
             }
-            finally {
-                if (verticesBuffer != null) { MemoryUtil.memFree(verticesBuffer); }
+            catch (const exception& fp_Exception)
+            {
+                PeachCore::PrintError(format("Unhandled exception: {}", fp_Exception.what()));
 
-                if (indicesBuffer != null) { MemoryUtil.memFree(indicesBuffer); }
-
-                if (textCoordsBuffer != null) { MemoryUtil.memFree(textCoordsBuffer); }
-
-                if (normalsBuffer != null) { MemoryUtil.memFree(normalsBuffer); }
             }
         }
 
@@ -106,12 +104,12 @@ namespace PeachCore {
              Render()
              const
          {
-            const PeachTexture* f_Texture = pm_Material.GetTexture();
+            const uint64_t f_Texture = pm_Material.GetTextureID();
 
-            if (f_Texture != nullptr)
+            if (f_Texture != 0)
             {
                 glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, f_Texture->GetTextureID());
+                glBindTexture(GL_TEXTURE_2D, f_Texture);
             }
 
             glBindVertexArray(pm_VAO);
@@ -122,11 +120,11 @@ namespace PeachCore {
             glBindTexture(GL_TEXTURE_2D, 0);
         }
 
-         [[nodiscard]] PeachMaterial* 
+         [[nodiscard]] const PeachMaterial&
              GetMaterial() 
              const noexcept
          {
-            return &pm_Material;
+            return pm_Material;
         }
 
          void 
@@ -156,21 +154,29 @@ namespace PeachCore {
 
             glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-            for (int vbo_id : pm_ListVBO)
+            for (const GLuint vbo_id : pm_ListVBO)
             { 
-                glDeleteBuffers(vbo_id);
+                glDeleteBuffers(1, &vbo_id);
             } //delete all vboid buffers
 
-            const PeachTexture* f_Texture = pm_Material.GetTexture();
+            const uint64_t f_Texture = pm_Material.GetTextureID();
 
-            if (f_Texture != nullptr)
+            if (f_Texture != 0)
             { 
-                f_Texture->CleanUp(); 
+                //f_Texture->CleanUp(); 
             } //cleanup textures
 
             glBindVertexArray(0);
-            glDeleteVertexArrays(pm_VAO);
+            glDeleteVertexArrays(1, &pm_VAO);
         }
     };
+}
+#endif
 
+namespace PeachCore::Vulkan {
+
+    struct Mesh
+    {
+
+    };
 }

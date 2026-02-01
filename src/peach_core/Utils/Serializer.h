@@ -711,7 +711,7 @@ namespace PeachCore {
                 const string& fp_DesiredOutputDirectory,
                 const string& fp_DesiredName,
                 const vector<uint8_t>& fp_Binary,
-                Logger* logger
+                Logger*const logger
             )
         {
             ////////////////////////////////////////////// Logger nullptr Safety Check //////////////////////////////////////////////
@@ -771,7 +771,7 @@ namespace PeachCore {
                 const string& fp_ScriptFilePath,
                 const vector<string>& fp_Extensions,
                 vector<uint8_t>& fp_Binary,
-                Logger* logger
+                Logger*const logger
             )
         {
             ////////////////////////////////////////////// Logger nullptr Safety Check //////////////////////////////////////////////
@@ -857,7 +857,7 @@ namespace PeachCore {
                 const string& fp_DesiredOutputDirectory,
                 const string& fp_DesiredName,
                 const string& fp_FileString,
-                Logger* logger
+                Logger*const logger
             )
         {
             if (not logger)
@@ -906,7 +906,7 @@ namespace PeachCore {
                 const string& fp_ScriptFilePath,
                 const vector<string>& fp_Extensions,
                 vector<char>& fp_CharBuffer,
-                Logger* logger
+                Logger*const logger
             )
         {
             ////////////////////////////////////////////// Logger nullptr Safety Check //////////////////////////////////////////////

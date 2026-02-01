@@ -32,6 +32,10 @@
 // one role, is not safe unless properly synchronized.
 // Using the queue exclusively from one thread is fine, though a bit silly.
 
+#ifndef MOODYCAMEL_ASSERT
+#define MOODYCAMEL_ASSERT(fp_What) assert(fp_What)
+#endif
+
 #ifndef MOODYCAMEL_CACHE_LINE_SIZE
 #define MOODYCAMEL_CACHE_LINE_SIZE 64
 #endif
@@ -108,8 +112,8 @@ public:
 		,dequeuing(false)
 #endif
 	{
-		assert(MAX_BLOCK_SIZE == ceilToPow2(MAX_BLOCK_SIZE) && "MAX_BLOCK_SIZE must be a power of 2");
-		assert(MAX_BLOCK_SIZE >= 2 && "MAX_BLOCK_SIZE must be at least 2");
+		static_assert(MAX_BLOCK_SIZE == ceilToPow2(MAX_BLOCK_SIZE), "MAX_BLOCK_SIZE must be a power of 2");
+		static_assert(MAX_BLOCK_SIZE >= 2, "MAX_BLOCK_SIZE must be at least 2");
 		
 		Block* firstBlock = nullptr;
 		
@@ -348,7 +352,7 @@ public:
 
 			// Since the tailBlock is only ever advanced after being written to,
 			// we know there's for sure an element to dequeue on it
-			assert(nextBlockFront != nextBlockTail);
+			MOODYCAMEL_ASSERT(nextBlockFront != nextBlockTail);
 			AE_UNUSED(nextBlockTail);
 
 			// We're done with this block, let the producer use it if it needs
@@ -413,7 +417,7 @@ public:
 			size_t nextBlockFront = nextBlock->front.load();
 			fence(memory_order_acquire);
 
-			assert(nextBlockFront != nextBlock->tail.load());
+			MOODYCAMEL_ASSERT(nextBlockFront != nextBlock->tail.load());
 			return reinterpret_cast<T*>(nextBlock->data + nextBlockFront * sizeof(T));
 		}
 		
@@ -464,7 +468,7 @@ public:
 			size_t nextBlockTail = nextBlock->localTail = nextBlock->tail.load();
 			fence(memory_order_acquire);
 
-			assert(nextBlockFront != nextBlockTail);
+			MOODYCAMEL_ASSERT(nextBlockFront != nextBlockTail);
 			AE_UNUSED(nextBlockTail);
 
 			fence(memory_order_release);
@@ -585,7 +589,7 @@ private:
 
 				// This block must be empty since it's not the head block and we
 				// go through the blocks in a circle
-				assert(nextBlockFront == nextBlockTail);
+				MOODYCAMEL_ASSERT(nextBlockFront == nextBlockTail);
 				tailBlockNext->localFront = nextBlockFront;
 
 				char* location = tailBlockNext->data + nextBlockTail * sizeof(T);
@@ -615,7 +619,7 @@ private:
 #else
 				new (newBlock->data) T(std::forward<U>(element));
 #endif
-				assert(newBlock->front == 0);
+				MOODYCAMEL_ASSERT(newBlock->front == 0);
 				newBlock->tail = newBlock->localTail = 1;
 
 				newBlock->next = tailBlock_->next.load();
@@ -635,7 +639,7 @@ private:
 				return false;
 			}
 			else {
-				assert(false && "Should be unreachable code");
+				MOODYCAMEL_ASSERT(false && "Should be unreachable code");
 				return false;
 			}
 		}
@@ -651,7 +655,7 @@ private:
 	ReaderWriterQueue& operator=(ReaderWriterQueue const&) {  }
 
 
-	AE_FORCEINLINE static size_t ceilToPow2(size_t x)
+	AE_FORCEINLINE static constexpr size_t ceilToPow2(size_t x)
 	{
 		// From http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
 		--x;
@@ -678,7 +682,7 @@ private:
 		AE_NO_TSAN ReentrantGuard(weak_atomic<bool>& _inSection)
 			: inSection(_inSection)
 		{
-			assert(!inSection && "Concurrent (or re-entrant) enqueue or dequeue operation detected (only one thread at a time may hold the producer or consumer role)");
+			MOODYCAMEL_ASSERT(!inSection && "Concurrent (or re-entrant) enqueue or dequeue operation detected (only one thread at a time may hold the producer or consumer role)");
 			inSection = true;
 		}
 
@@ -862,7 +866,7 @@ public:
 	{
 		if (sema->tryWait()) {
 			bool success = inner.try_dequeue(result);
-			assert(success);
+			MOODYCAMEL_ASSERT(success);
 			AE_UNUSED(success);
 			return true;
 		}
@@ -878,7 +882,7 @@ public:
 		while (!sema->wait());
 		bool success = inner.try_dequeue(result);
 		AE_UNUSED(result);
-		assert(success);
+		MOODYCAMEL_ASSERT(success);
 		AE_UNUSED(success);
 	}
 
@@ -897,7 +901,7 @@ public:
 		}
 		bool success = inner.try_dequeue(result);
 		AE_UNUSED(result);
-		assert(success);
+		MOODYCAMEL_ASSERT(success);
 		AE_UNUSED(success);
 		return true;
 	}
@@ -935,7 +939,7 @@ public:
 	{
 		if (sema->tryWait()) {
 			bool result = inner.pop();
-			assert(result);
+			MOODYCAMEL_ASSERT(result);
 			AE_UNUSED(result);
 			return true;
 		}

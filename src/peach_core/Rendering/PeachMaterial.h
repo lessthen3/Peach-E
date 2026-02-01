@@ -18,72 +18,94 @@
 
 namespace PeachCore {
 
-    const glm::vec4 DEFAULT_COLOUR = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    static const glm::vec4 DEFAULT_COLOUR = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 
     struct PeachMaterial
     {
-         glm::vec4 pm_AmbientColour = DEFAULT_COLOUR;
-         glm::vec4 pm_DiffuseColour = DEFAULT_COLOUR;
-         glm::vec4 pm_SpecularColour = DEFAULT_COLOUR;
+        uint64_t Texture = 0;
+        float pm_Reflectance = 0;
 
-         float pm_Reflectance = 0;
-
-         unique_ptr<PeachTexture> pm_Texture = nullptr;
+        glm::vec4 pm_AmbientColour{ DEFAULT_COLOUR };
+        glm::vec4 pm_DiffuseColour{ DEFAULT_COLOUR };
+        glm::vec4 pm_SpecularColour{ DEFAULT_COLOUR };
 
         ////////////////////////////////////////////// Constructor //////////////////////////////////////////////
 
          PeachMaterial() = default;
 
-         PeachMaterial(unique_ptr<PeachTexture>&& fp_Texture, const glm::vec4& fp_AmbientColour, const glm::vec4& fp_DiffuseColour, const glm::vec4& fp_SpecularColour, const float fp_Reflectance)
-         {
-            pm_AmbientColour = fp_AmbientColour;
-            pm_DiffuseColour = fp_DiffuseColour;
-            pm_SpecularColour = fp_SpecularColour;
-            pm_Texture = move(fp_Texture);
-            pm_Reflectance = fp_Reflectance;
-        }
+         PeachMaterial
+         (
+             const uint64_t fp_Texture, 
+             const float fp_Reflectance,
+             const glm::vec4& fp_AmbientColour, 
+             const glm::vec4& fp_DiffuseColour, 
+             const glm::vec4& fp_SpecularColour
+         )
+             :
+             Texture(fp_Texture),
+             pm_Reflectance(fp_Reflectance),
+             pm_AmbientColour(fp_AmbientColour),
+             pm_DiffuseColour(fp_DiffuseColour),
+             pm_SpecularColour(fp_SpecularColour)
+         {}
 
         ////////////////////////////////////////////// Setter and Getters //////////////////////////////////////////////
 
-         [[nodiscard]] glm::vec4
-             GetAmbientColour() 
-             const noexcept
+         void 
+             SetAmbientColour(const glm::vec4& fp_AmbientColour)
+             noexcept
          {
-            return pm_AmbientColour;
+            pm_AmbientColour = fp_AmbientColour;
         }
 
          void 
-             SetAmbientColour(glm::vec4 pm_AmbientColour)
+             SetDiffuseColour(const glm::vec4& fp_DiffuseColour)
+             noexcept
          {
-            pm_AmbientColour = pm_AmbientColour;
+            pm_DiffuseColour = fp_DiffuseColour;
         }
 
-         [[nodiscard]] glm::vec4
+         void
+             SetSpecularColour(const glm::vec4& fp_SpecularColour)
+             noexcept
+         {
+             pm_SpecularColour = fp_SpecularColour;
+         }
+
+         void
+             SetReflectance(const float fp_Reflectance)
+             noexcept
+         {
+             pm_Reflectance = fp_Reflectance;
+         }
+
+         void
+             SetTexture(const uint64_t fp_Texture)
+             noexcept
+         {
+             Texture = fp_Texture;
+         }
+
+         [[nodiscard]] const glm::vec4&
              GetDiffuseColour()
              const noexcept
          {
-            return pm_DiffuseColour;
-        }
+             return pm_DiffuseColour;
+         }
 
-         void 
-             SetDiffuseColour(glm::vec4 pm_DiffuseColour)
-         {
-            pm_DiffuseColour = pm_DiffuseColour;
-        }
-
-         [[nodiscard]] glm::vec4 
+         [[nodiscard]] const glm::vec4&
              GetSpecularColour() 
              const noexcept
          {
             return pm_SpecularColour;
         }
 
-         void 
-             SetSpecularColour(glm::vec4 fp_SpecularColour)
-             noexcept
+         [[nodiscard]] const glm::vec4&
+             GetAmbientColour()
+             const noexcept
          {
-            pm_SpecularColour = fp_SpecularColour;
-        }
+             return pm_AmbientColour;
+         }
 
          [[nodiscard]] float
              GetReflectance()
@@ -92,33 +114,18 @@ namespace PeachCore {
             return pm_Reflectance;
         }
 
-         void 
-             SetReflectance(float fp_Reflectance)
-             noexcept
+         [[nodiscard]] const uint64_t
+             GetTextureID() 
+             const noexcept
          {
-            pm_Reflectance = fp_Reflectance;
+            return Texture;
         }
 
-         bool 
+         [[nodiscard]] bool
              IsTextured()
              const noexcept
          {
-            return pm_Texture != nullptr;
-        }
-
-         [[nodiscard]] const PeachTexture*
-             GetTexture() 
-             const noexcept
-         {
-            return pm_Texture.get();
-        }
-
-         void 
-             SetTexture(unique_ptr<PeachTexture>&& fp_Texture) 
-             noexcept
-         {
-            pm_Texture = move(fp_Texture);
-        }
-
+             return Texture != 0;
+         }
     };
 }

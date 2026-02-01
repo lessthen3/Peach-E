@@ -65,22 +65,23 @@ namespace OpenGL
         shared_ptr<Logger> pm_RenderingLogger = nullptr;
 
     public:
+        ~Renderer() = default;
 
-        ~Renderer()
-        {
-            SDL_GL_DestroyContext(pm_OpenGLContext);
+        //~Renderer()
+        //{
+        //    SDL_GL_DestroyContext(pm_OpenGLContext);
 
-            if (pm_MainWindow) //RenderingManager handles bookeeping and creation, after though each PeachRenderer takes exclusive control over its SDL window
-            {
-                SDL_DestroyWindow(pm_MainWindow);
-                pm_MainWindow = nullptr;
-            }
+        //    if (pm_MainWindow) //RenderingManager handles bookeeping and creation, after though each PeachRenderer takes exclusive control over its SDL window
+        //    {
+        //        SDL_DestroyWindow(pm_MainWindow);
+        //        pm_MainWindow = nullptr;
+        //    }
 
-            //pm_ListOfScenePeachCameras2D.clear();
-            pm_ShaderPrograms.clear();
-            pm_ListOfRegisteredTextures.clear();
-            pm_RenderingLogger.reset();
-        }
+        //    //pm_ListOfScenePeachCameras2D.clear();
+        //    pm_ShaderPrograms.clear();
+        //    pm_ListOfRegisteredTextures.clear();
+        //    pm_RenderingLogger.reset();
+        //}
 
         explicit
             Renderer //peach renderer is never supposed to create an sdl window, it only manages closing it

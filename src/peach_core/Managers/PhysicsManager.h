@@ -14,52 +14,14 @@
 #include "../Scene-Items/Physics/CollisionPolygon2D.h"
 #include "../Scene-Items/Physics/CollisionShape2D.h"
 
+#include <moody_camel/readerwriterqueue.h>
+
 #include <unordered_map>
 
 #include <semaphore>
 #include <latch>
 
 namespace PeachCore {
-
-    enum CollisionShapeType
-    {
-        Box,
-        Circle,
-        Capsule,
-        RoundedBox,
-        Polygon // For future implementation
-    };
-
-    enum SensorType //idk how im gonna let users/me define sensors and use built in functions like IsOnFloor or IsOnWall or something. But I think allowing users/me to define specific sensors, and do their own thing
-    {                           //maybe we can have a preset character prefab that has a preset IsOnWall, IsOnFloor, and IsOnAnimatableBody(platform) 
-        FloorSensor,
-        WallSensor, // Additional sensors can be defined here
-        PlatformSensor
-    };
-
-    /*
-    This is a bit mask since a single collision object can be in multiple layers or no layers, 
-    so we can store every layer in a single uint32_t for ease and fast bitwise comparisons
-    */
-    enum CollisionLayer : uint32_t //Box2D supports up 32 layers for collision filtering
-    {
-        Layer_1 = 1 << 0, Layer_2 = 1 << 1, Layer_3 = 1 << 2, Layer_4 = 1 << 3,
-        Layer_5 = 1 << 4, Layer_6 = 1 << 5, Layer_7 = 1 << 6, Layer_8 = 1 << 7,
-        Layer_9 = 1 << 8, Layer_10 = 1 << 9, Layer_11 = 1 << 10, Layer_12 = 1 << 11,
-        Layer_13 = 1 << 12, Layer_14 = 1 << 13, Layer_15 = 1 << 14, Layer_16 = 1 << 15,
-
-        Layer_17 = 1 << 16, Layer_18 = 1 << 17, Layer_19 = 1 << 18, Layer_20 = 1 << 19,
-        Layer_21 = 1 << 20, Layer_22 = 1 << 21, Layer_23 = 1 << 22, Layer_24 = 1 << 23,
-        Layer_25 = 1 << 24, Layer_26 = 1 << 25, Layer_27 = 1 << 26, Layer_28 = 1 << 27,
-        Layer_29 = 1 << 28, Layer_30 = 1 << 29, Layer_31 = 1 << 30, Layer_32 = 1U << 31,
-
-        NO_LAYER = 0,
-
-        ALL_LAYERS = 
-        Layer_1 | Layer_2 | Layer_3 | Layer_4 | Layer_5 | Layer_6 | Layer_7 | Layer_8 | Layer_9 | Layer_10 | Layer_11 | Layer_12 |
-        Layer_13 | Layer_14 | Layer_15 | Layer_16 | Layer_17 | Layer_18 | Layer_19 | Layer_20 | Layer_21 | Layer_22 | Layer_23 | Layer_24 |
-        Layer_25 | Layer_26 | Layer_27 | Layer_28 | Layer_29 | Layer_30 | Layer_31 | Layer_32
-    };
 
     //////////////////////////////////////////////
     // ResourceManager word size
@@ -84,18 +46,12 @@ namespace PeachCore {
     ////////////////////////////////////////////////
     class PhysicsManager 
     {
-
     ////////////////////////////////////////////////
     // Private Constructor & Destructor
     ////////////////////////////////////////////////
     private:
         ~PhysicsManager() = default;
         PhysicsManager() = default;
-        //{
-        //    //in box2D 3.0 destroying the world automatically cleans up all resources linked to the world including: bodies, joints and shapes
-        //    b2DestroyWorld(pm_World);
-        //    pm_World = b2_nullWorldId; //what is C
-        //}
 
         PhysicsManager(const PhysicsManager&) = delete;
         PhysicsManager& operator=(const PhysicsManager&) = delete;
@@ -117,6 +73,119 @@ namespace PeachCore {
     // Private Members
     ////////////////////////////////////////////////
     private:
+        unique_ptr<Logger> physics_logger;
+
+        //////////////////// Thread Syncro Stuff ////////////////////
+
+        atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
+        atomic<bool> pm_IsInitialized{ false };
+
+        binary_semaphore pm_PhysicsSemaphore{ 0 }; // starts locked (zero tickets)
+
+        shared_ptr<PhysicsCommandPipe> pm_PhysicsCommandQueue = nullptr;
+
+    ////////////////////////////////////////////////
+    // Public Methods
+    ////////////////////////////////////////////////
+    public:
+
+        void
+            PhysicsLoop2D
+            (
+                const string& fp_LogOutputDirectory,
+                latch& fp_InitLatch,
+                const float fp_GravityX,
+                const float fp_GravityY
+            );
+
+        void
+            PhysicsLoop3D
+            (
+                const string& fp_LogOutputDirectory,
+                latch& fp_InitLatch
+            );
+
+        void
+            RequestPhysicsWorldStep();
+
+        void
+           Stop();
+
+        [[nodiscard]] shared_ptr<PhysicsCommandPipe>
+            GetPhysicsCommandQueue(Logger* const logger);
+
+    ////////////////////////////////////////////////
+    // Private Methods
+    ////////////////////////////////////////////////
+    private:
+        [[nodiscard]] bool
+            InitializePhysicsEngine2D
+            (
+                const string& fp_LogOutputDirectory,
+                const float fp_GravityX,
+                const float fp_GravityY
+            );
+
+        [[nodiscard]] bool
+            InitializePhysicsEngine3D
+            (
+                const string& fp_LogOutputDirectory
+            );
+
+        [[nodiscard]] bool
+            Initialize(const string& fp_LogOutputDirectory);
+    };
+
+} // namespace PeachCore
+
+namespace PeachCore {
+
+    struct Box2D
+    {
+        ~Box2D() = default;
+        Box2D() = default;
+
+        enum CollisionShapeType
+        {
+            Box,
+            Circle,
+            Capsule,
+            RoundedBox,
+            Polygon // For future implementation
+        };
+
+        enum SensorType //idk how im gonna let users/me define sensors and use built in functions like IsOnFloor or IsOnWall or something. But I think allowing users/me to define specific sensors, and do their own thing
+        {                           //maybe we can have a preset character prefab that has a preset IsOnWall, IsOnFloor, and IsOnAnimatableBody(platform) 
+            FloorSensor,
+            WallSensor, // Additional sensors can be defined here
+            PlatformSensor
+        };
+
+        /*
+        This is a bit mask since a single collision object can be in multiple layers or no layers,
+        so we can store every layer in a single uint32_t for ease and fast bitwise comparisons
+        */
+        enum CollisionLayer : uint32_t //Box2D supports up 32 layers for collision filtering
+        {
+            Layer_1 = 1u << 0, Layer_2 = 1 << 1, Layer_3 = 1 << 2, Layer_4 = 1 << 3,
+            Layer_5 = 1 << 4, Layer_6 = 1 << 5, Layer_7 = 1 << 6, Layer_8 = 1 << 7,
+            Layer_9 = 1 << 8, Layer_10 = 1 << 9, Layer_11 = 1 << 10, Layer_12 = 1 << 11,
+            Layer_13 = 1 << 12, Layer_14 = 1 << 13, Layer_15 = 1 << 14, Layer_16 = 1 << 15,
+
+            Layer_17 = 1 << 16, Layer_18 = 1 << 17, Layer_19 = 1 << 18, Layer_20 = 1 << 19,
+            Layer_21 = 1 << 20, Layer_22 = 1 << 21, Layer_23 = 1 << 22, Layer_24 = 1 << 23,
+            Layer_25 = 1 << 24, Layer_26 = 1 << 25, Layer_27 = 1 << 26, Layer_28 = 1 << 27,
+            Layer_29 = 1 << 28, Layer_30 = 1 << 29, Layer_31 = 1 << 30, Layer_32 = 1U << 31,
+
+            NO_LAYER = 0,
+
+            ALL_LAYERS =
+            Layer_1 | Layer_2 | Layer_3 | Layer_4 | Layer_5 | Layer_6 | Layer_7 | Layer_8 | Layer_9 | Layer_10 | Layer_11 | Layer_12 |
+            Layer_13 | Layer_14 | Layer_15 | Layer_16 | Layer_17 | Layer_18 | Layer_19 | Layer_20 | Layer_21 | Layer_22 | Layer_23 | Layer_24 |
+            Layer_25 | Layer_26 | Layer_27 | Layer_28 | Layer_29 | Layer_30 | Layer_31 | Layer_32
+        };
+
+    private:
         b2WorldId pm_World;
 
         unordered_map<string, b2BodyId> pm_Bodies;
@@ -128,57 +197,15 @@ namespace PeachCore {
 
         const float PHYSICS_ORIGIN_MAXIMUM_PLAYER_DISTANCE = ConvertMetersToPixels(2000); //should be under 2km, converts 2km to pixels
 
-        unique_ptr<Logger> physics_logger;
-
-        //////////////////// Thread Syncro Stuff ////////////////////
-
-        atomic<bool> pm_IsRunning = true; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
-        atomic<bool> pm_IsInitialized = false;
-
-        binary_semaphore pm_PhysicsSemaphore{ 0 }; // starts locked (zero tickets)
-
-    ////////////////////////////////////////////////
-    // Public Members
-    ////////////////////////////////////////////////
-    public:
-
-    ////////////////////////////////////////////////
-    // Public Methods
-    ////////////////////////////////////////////////
     public:
 
         void
-            PhysicsLoop
+            CreateWorld
             (
-                const string& fp_LogOutputDirectory,
-                latch& fp_InitLatch
-            );
-
-        void
-            RequestPhysicsFrame();
-
-        void
-           Stop();
-
-        bool
-            InitializePhysicsEngine
-            (
-                const string& fp_LogOutputDirectory,
-                const float fp_GravityX = 0.0f,
-                const float fp_GravityY = -9.8f,
-                const bool fp_Is3D = false
+                const float fp_GravityX,
+                const float fp_GravityY
             )
         {
-            physics_logger = Logger::CreateUnique("PhysicsManager", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
-
-            if (not physics_logger)
-            {
-                PrintError("PhysicsManager failed to initialize the physics_thread logger >w<");
-                return false;
-            }
-
-            physics_logger->Debug("PhysicsLogger successfully initialized", "PhysicsManager");
-
             b2Vec2 f_Gravity = { fp_GravityX, fp_GravityY };
             b2WorldDef f_WorldDefinition = b2DefaultWorldDef();
             f_WorldDefinition.gravity = (f_Gravity);
@@ -191,22 +218,28 @@ namespace PeachCore {
 
             pm_World = b2CreateWorld(&f_WorldDefinition);
 
-            return true;
         }
 
-        void 
+        void
+            DestroyWorld()
+        {
+            b2DestroyWorld(pm_World); //in box2D 3.0 destroying the world automatically cleans up all resources linked to the world including: bodies, joints and shapes
+            pm_World = b2_nullWorldId; //what is C
+        }
+
+        void
             RegisterCollisionPolygon2D()
         {
 
         }
 
-        void 
+        void
             RegisterCollisionShape2D()
         {
 
         }
-                                                                                 //Box2D only works best with world sizes less than 2 km, so if we want a bigger world, shifiting the origin is the most ideal solution
-        bool 
+        //Box2D only works best with world sizes less than 2 km, so if we want a bigger world, shifiting the origin is the most ideal solution
+        bool
             CheckIfWorldOriginNeedsToBeShifted() //checks if the player character has moved too far outside of the physics world, and shifts the origin to adjust for weird behaviour caused by sizing mistmatch
         {
             // Example: Check player's distance from origin
@@ -235,14 +268,8 @@ namespace PeachCore {
             return fp_Meters * PIXELS_PER_METER;
         }
 
-        void
-            RequestPhysicsWorldStep()
-        {
-            pm_PhysicsSemaphore.release(); // Gives 1 ticket, wakes render thread
-        }
-
         // Step World
-        void 
+        void
             Step(const float fp_TimeStep, const int fp_VelocityIterations = 8, const int fp_PositionIterations = 3)
         {
             //pm_World->Step(fp_TimeStep, fp_VelocityIterations, fp_PositionIterations);
@@ -252,7 +279,7 @@ namespace PeachCore {
 
         //DOUBLE CHECK THIS METHOD FOR PROPER FUNCTIONING, UNTESTED!
         // Get the position of a body
-        glm::vec2 
+        glm::vec2
             GetBodyPosition(const string& fp_ID)
         {
             if (pm_Bodies.find(fp_ID) != pm_Bodies.end())
@@ -263,7 +290,7 @@ namespace PeachCore {
             return glm::vec2();
         }
 
-        unordered_map<string, b2Vec2*>& 
+        unordered_map<string, b2Vec2*>&
             GetCurrentPositionOfAllBodies()
         {
             return pm_CurrentPositionOfAllBodies;
@@ -271,8 +298,8 @@ namespace PeachCore {
 
         //DOUBLE CHECK THIS METHOD FOR PROPER FUNCTIONING, UNTESTED!
         // Delete a body
-        void 
-            DeleteBody(const string& fp_ID) 
+        void
+            DeleteBody(const string& fp_ID)
         {
             if (pm_Bodies.find(fp_ID) != pm_Bodies.end())
             {
@@ -285,11 +312,11 @@ namespace PeachCore {
 
         //THIS SHOULD WORK PROPERLY I HOPE
         // Set collision filtering for all attached shapes to a desired body
-        void 
+        void
             SetCollisionFiltering
             (
-                b2BodyId fp_Body, 
-                const CollisionLayer fp_CollisionLayer, 
+                b2BodyId fp_Body,
+                const CollisionLayer fp_CollisionLayer,
                 const CollisionLayer fp_CollisionLayerMask
             )
         {
@@ -300,20 +327,20 @@ namespace PeachCore {
             vector<b2ShapeId> f_ListOfShapeIDs;
             f_ListOfShapeIDs.reserve(f_ShapeCount);
 
-           /* vector<b2JointId> f_ListOfJointIDs;
-            f_ListOfJointIDs.reserve(f_JointCount);*/
+            /* vector<b2JointId> f_ListOfJointIDs;
+             f_ListOfJointIDs.reserve(f_JointCount);*/
 
             int f_ShapeReturnCount = b2Body_GetShapes(fp_Body, f_ListOfShapeIDs.data(), f_ShapeCount);
-           // int f_JointReturnCount = b2Body_GetJoints(fp_Body, f_ListOfJointIDs.data(), f_JointCount);
+            // int f_JointReturnCount = b2Body_GetJoints(fp_Body, f_ListOfJointIDs.data(), f_JointCount);
 
-            //CREATE NEW FILTER FOR ALL JOINTS AND SHAPES TO OBTAIN
+             //CREATE NEW FILTER FOR ALL JOINTS AND SHAPES TO OBTAIN
             b2Filter f_NewFilter = b2DefaultFilter();
 
             f_NewFilter.categoryBits = fp_CollisionLayer;
             f_NewFilter.maskBits = fp_CollisionLayerMask;
 
             //LOOP THROUGH ALL SHAPES ATTACHED TO THE BODY PASSED IN
-            for(int index = 0; index < f_ListOfShapeIDs.size() - 1; index++) //currently only handles shapes
+            for (int index = 0; index < f_ListOfShapeIDs.size() - 1; index++) //currently only handles shapes
             {
                 b2ShapeId f_CurrentShapeID = f_ListOfShapeIDs[index];
                 b2Shape_SetFilter(f_CurrentShapeID, f_NewFilter);
@@ -357,11 +384,15 @@ namespace PeachCore {
         //    return false;
         //}
     };
+}
 
-} // namespace PeachCore
+namespace PeachCore {
 
+    struct JoltWorld
+    {
 
-
+    };
+}
 
 
 

@@ -130,3 +130,24 @@ PEACH_API PEACH_STATUS_CODE
 
     return PEACH_OK;
 }
+
+PEACH_API const char*
+    PEACH_StatusCodeToString(const PEACH_STATUS_CODE fp_StatusCode)
+{
+    //const static unordered_map<int64_t, string> PEACH_STATUS_STRINGS =
+    //{
+    //    {PEACH_OK, "Working as expected"},
+    //    { PEACH_INVALID_SCENE_NAME, "invalid scene name passed, there is no scene with specified name found"}
+    //};
+
+    //constexpr static inline string
+    //    StatusCodeToString(const uint64_t fp_StatusCode)
+    //{
+    //    //auto f_FindIterator = PEACH_STATUS_STRINGS.find(fp_StatusCode);
+
+
+    //    return PEACH_STATUS_STRINGS.at(fp_StatusCode);
+    //}
+
+    return NULL;
+}

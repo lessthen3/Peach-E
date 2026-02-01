@@ -17,22 +17,6 @@
 
 namespace PeachCore {
 
-    //IMPORTANT: not really needed to cleanup here and the OS will def clear the memory block associated w the process quicker, RenderingManager Lifetime = Process Lifetime
-    RenderingManager::~RenderingManager()  
-    {
-        if (pm_VulkanRenderer)
-        {
-            pm_VulkanRenderer.reset(nullptr);
-        }
-
-        #ifndef __APPLE__
-            if (pm_OpenGLRenderer)
-            {
-                pm_OpenGLRenderer.reset(nullptr);
-            }
-        #endif
-    }
-
     void 
         RenderingManager::Shutdown()
     {
@@ -99,16 +83,16 @@ namespace PeachCore {
             if (not InitializeVulkan())
             {
                 rendering_logger->Fatal("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager");
-                exit(FAILED_TO_INITIALIZE_VULKAN);
+                exit(PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN);
             }
         }
         #ifndef __APPLE__
             else if(fp_DesiredRenderer == RendererType::OpenGL)
             {
-                if (not InitializeOpenGL())
+                if (InitializeOpenGL() != PEACH_OK)
                 {
                     rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager");
-                    exit(FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
+                    exit(PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
                 }
             }
         #endif
@@ -228,6 +212,29 @@ namespace PeachCore {
         pm_RenderSemaphore.release(); // Wake it up to exit        
     }
 
+    void
+        RenderingManager::PollUserInputEvents()
+    {
+        InputManager::get_single().PollEvents();
+
+        InputManager::get_single().GetWindowCloseRequests(pm_CloseWindowRequests);
+
+        for (const auto& lv_Window : pm_CloseWindowRequests)
+        {
+            if (SDL_GetWindowID(pm_MainWindow) == lv_Window)
+            {
+                pm_IsRunning.store(false, std::memory_order_release);
+                //pm_VulkanRenderer->CleanUp();
+            }
+
+            SDL_DestroyWindow(SDL_GetWindowFromID(lv_Window)); //WARNING DO NOT CLOSE WINDOW HERE SEND A REQUEST TO THE RENDERING MANAGER FOR THAT
+        } 
+
+        glm::vec2 f_MousePos = InputManager::get_single().GetCurrentMousePosition();
+
+        Print(format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
+    }
+
     [[nodiscard]] bool
         RenderingManager::ProcessCommands()
     {
@@ -303,7 +310,7 @@ namespace PeachCore {
             return false;
         }
 
-        uint64_t f_WindowFlags = -1;
+        uint64_t f_WindowFlags = 1;
 
         if (fp_RenderingBackend == RendererType::OpenGL)
         {
@@ -426,19 +433,19 @@ namespace PeachCore {
             pm_OpenGLRenderer.reset(nullptr);
         }
 
-        bool
+        PEACH_STATUS_CODE
             RenderingManager::InitializeOpenGL()
         {
             if (pm_IsInitialized)
             {
                 rendering_logger->Warning("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager");
-                return false;
+                return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL;
             }
 
             if (not CreateSDLWindow(&pm_MainWindow, RendererType::OpenGL, "Peach Window", 800, 600))
             {
                 rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager");
-                exit(FAILED_TO_CREATE_MAIN_WINDOW);
+                return PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW;
             }
 
             rendering_logger->Debug("main SDL window successfully created", "RenderingManager");
@@ -449,14 +456,14 @@ namespace PeachCore {
             {
                 rendering_logger->Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager");
                 SDL_DestroyWindow(pm_OpenGLRenderer->GetMainWindow());
-                return false;
+                return PEACH_ERROR_FAILED_INITIALIZE_GLEW;
             }
 
             rendering_logger->Debug("GLEW initialized properly", "RenderingManager");
 
-            rendering_logger->Debug("Peach Editor successfully initialized OpenGL", "RenderingManager");
+            rendering_logger->Info("Successfully initialized OpenGL!", "RenderingManager");
 
-            return true;
+            return PEACH_OK;
         }
 
         [[nodiscard]] OpenGL::Renderer*
@@ -503,7 +510,7 @@ namespace PeachCore {
         if (not CreateSDLWindow(&pm_MainWindow, RendererType::Vulkan, "Peach Window", 800, 600))
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager");
-            exit(FAILED_TO_CREATE_MAIN_WINDOW); //idk if i wanna exit here but it doesn really matter, i might want the "stack trace" from the false chain created by intialize failing
+            exit(PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW); //idk if i wanna exit here but it doesn really matter, i might want the "stack trace" from the false chain created by intialize failing
         }   
 
         pm_VulkanRenderer = make_unique<Vulkan::Renderer>();
@@ -531,31 +538,30 @@ namespace PeachCore {
       
     }
 
-    [[nodiscard]] unsigned int
+    [[nodiscard]] uint64_t
         RenderingManager::GetFrameRateLimit() 
-        const
+        const noexcept
     {
         return pm_FrameRateLimit;
     }
 
     [[nodiscard]] bool 
         RenderingManager::IsVSyncEnabled() 
-        const
+        const noexcept
     {
         return pm_IsVSyncEnabled;
     }
 
     void 
         RenderingManager::SetVSync(const bool fp_IsEnabled)
+        noexcept
     {
-        if (fp_IsEnabled)
-        {
-            pm_IsVSyncEnabled = fp_IsEnabled;
-        }
+        pm_IsVSyncEnabled = fp_IsEnabled;
     }
 
     void 
-        RenderingManager::SetFrameRateLimit(unsigned int fp_Limit)
+        RenderingManager::SetFrameRateLimit(uint64_t fp_Limit) 
+        noexcept
     {
         pm_FrameRateLimit = fp_Limit;
     }

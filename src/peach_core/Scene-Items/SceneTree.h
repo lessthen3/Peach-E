@@ -15,6 +15,7 @@
 ///PeachCore
 #include "PeachNode.h"
 #include "../Utils/Serializer.h"
+#include "../Utils/ChunkedPool.h"
 
 #include "UI/PeachConsole.h"
 
@@ -22,41 +23,6 @@
 #include <queue>
 
 namespace PeachCore {
-
-    constexpr uint64_t PEACH_NODE_TYPE_MASK = 0xFFull;        // lower 8 bits
-    constexpr uint64_t PEACH_NODE_INDEX_MASK = ~PEACH_NODE_TYPE_MASK;
-    constexpr uint64_t PEACH_NODE_TYPE_BITS = 8U;
-
-    constexpr uint64_t PEACH_NODE_NULL_ID = 0; //Represents no ID, or invalid ID
-
-    [[nodiscard]] static inline PeachNodeID
-        MintNewNodeID(uint64_t fp_Index, uint8_t fp_NodeType)
-        noexcept
-    {
-        return (fp_Index << PEACH_NODE_TYPE_BITS) | static_cast<uint64_t>(fp_NodeType); // index goes into the upper 56 bits, type in lower 8
-    }
-
-    [[nodiscard]] static inline uint8_t
-        GetNodeType(PeachNodeID fp_NodeID)
-        noexcept
-    {
-        return static_cast<uint8_t>(fp_NodeID & PEACH_NODE_TYPE_MASK);
-    }
-
-    [[nodiscard]] static inline uint64_t
-        GetNodeIndex(PeachNodeID fp_NodeID)
-        noexcept
-    {
-        return fp_NodeID >> PEACH_NODE_TYPE_BITS;
-    }
-
-    enum PeachNodeType : uint8_t
-    {
-        Blank = 0,
-        Render = 1 << 0,
-        Physics = 1 << 1,
-        Audio = 1 << 2
-    };
 
     struct SceneTree 
     {
@@ -91,7 +57,7 @@ namespace PeachCore {
         {
             if (not fp_Logger)
             {
-                return PEACH_STATUS_CODE::PEACH_ERROR_NULLPTR_REF_PASSED;
+                return PEACH_ERROR_NULLPTR_REF_PASSED;
             }
 
             scene_logger = fp_Logger;
@@ -111,7 +77,7 @@ namespace PeachCore {
                 }
             }
 
-            return PEACH_STATUS_CODE::PEACH_OK;
+            return PEACH_OK;
         }
 
         [[nodiscard]] PEACH_STATUS_CODE
@@ -121,14 +87,14 @@ namespace PeachCore {
 
             if (f_NodeIterator == pm_StringToNodeID.end())
             {
-                return PEACH_STATUS_CODE::PEACH_ERROR_INVALID_NODE_REMOVAL_NAME;
+                return PEACH_ERROR_INVALID_NODE_REMOVAL_NAME;
             }
             else
             {
                 pm_PeachNodesQueuedForRemoval.push(GetNodeIndex(f_NodeIterator->second));
             }
 
-            return PEACH_STATUS_CODE::PEACH_OK;
+            return PEACH_OK;
         }
 
         [[nodiscard]] PEACH_STATUS_CODE
@@ -139,7 +105,7 @@ namespace PeachCore {
             if (f_IndexBits >= pm_PeachNodes.size()) //check for bounds since the user passes this
             {
                 scene_logger->Error(format("Attempted to remove a peach node with invalid ID: {}, Node ID is out of bounds oof", fp_NodeID), "SceneTree"); //print node id for identification however the index bits are the relevant part aka the high 56 bits uwu
-                return PEACH_STATUS_CODE::PEACH_ERROR_INVALID_NODE_REMOVAL_ID;
+                return PEACH_ERROR_INVALID_NODE_REMOVAL_ID;
             }
 
             PeachNode* f_NodeReference = pm_PeachNodes[f_IndexBits].get();
@@ -147,17 +113,17 @@ namespace PeachCore {
             if (not f_NodeReference) //not sure ab this one since the recursive removal function already always checks nulls 
             {
                 scene_logger->Error(format("Attempted to remove a peach node with invalid ID: {}, Tried to reference stale node reference that is set -> NULL", fp_NodeID), "SceneTree");
-                return PEACH_STATUS_CODE::PEACH_ERROR_INVALID_NODE_REMOVAL_ID;
+                return PEACH_ERROR_INVALID_NODE_REMOVAL_ID;
             }
             else if (f_NodeReference->ID != fp_NodeID)
             {
                 scene_logger->Error(format("Attempted to remove a peach node with invalid ID: {}, Node ID was improperly indexed at creation due to internal engine error PLEASE REPORT THIS BUG", fp_NodeID), "SceneTree");
-                return PEACH_STATUS_CODE::PEACH_ERROR_INVALID_NODE_REMOVAL_ID;
+                return PEACH_ERROR_INVALID_NODE_REMOVAL_ID;
             }
 
             pm_PeachNodesQueuedForRemoval.push(f_IndexBits);
 
-            return PEACH_STATUS_CODE::PEACH_OK;
+            return PEACH_OK;
         }
 
         [[nodiscard]] PEACH_STATUS_CODE
@@ -182,9 +148,6 @@ namespace PeachCore {
         void
             PrintTree();
 
-        void
-            GetViewPort(); //?????????? why does godot have this lmfao
-
         string
             GetPathInTree();
 
@@ -201,19 +164,21 @@ namespace PeachCore {
 
         void 
             Pause()
+            noexcept
         { 
             pm_IsPaused = true;
         }
 
         void 
             Resume() 
+            noexcept
         {
             pm_IsPaused = false; 
         }
 
         [[nodiscard]] string 
             GetName() 
-            const
+            const noexcept
         { 
             return pm_SceneName;
         }

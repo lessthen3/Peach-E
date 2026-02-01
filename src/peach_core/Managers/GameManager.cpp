@@ -156,7 +156,7 @@ namespace PeachCore
         }
         if (pm_RequiredThreads & ThreadName::NetworkThread)
         {
-            //pm_NetworkThread.join();
+            NetworkManager::get_single().Stop();
         }
 
         //don't need to check for usage here since ResourceManager is ALWAYS utilized regardless of what threads are desired uwu
@@ -194,11 +194,14 @@ namespace PeachCore
     bool
         GameManager::InitializeThreads //XXX: used for kickstarting threads needed for engine execution
         (
-            const string& fp_RootPath, 
-            RendererType fp_RenderingBackend //ONLY HERE FOR TESTING SHOULD BE DEDUCED FROM PROJECT FILE
+            const string& fp_RootPath,
+            RendererType fp_RenderingBackend,
+            const bool fp_Is3D
         )
     {
         const string f_LogDir = fp_RootPath + "/logs";
+
+        ////////////////////////////////////////////// Resource Loading //////////////////////////////////////////////
 
         //IMPORTANT: resource thread needs to be initialized first so queues get created properly
         //Lazy initialization is used for everything since it isnt guaranteed that all threads will be active, only if a node is needed for a corresponding thread then the thread is started
@@ -208,40 +211,94 @@ namespace PeachCore
         pm_ResourceThread = jthread(&ResourceManager::ResourceLoop, &ResourceManager::get_single(), f_LogDir, fp_RootPath, std::ref(pm_ResourceInitializationLatch));
         pm_ResourceInitializationLatch.wait();
 
+        ////////////////////////////////////////////// Rendering //////////////////////////////////////////////
+
         if (pm_RequiredThreads & ThreadName::RenderThread and fp_RenderingBackend == RendererType::Vulkan)
         {
-            pm_RenderThread = jthread(&RenderingManager::RenderLoopVK, &RenderingManager::get_single(), f_LogDir, std::ref(pm_ThreadInitializationLatch));
+            pm_RenderThread = jthread
+            (
+                &RenderingManager::RenderLoopVK, 
+                std::ref(RenderingManager::get_single()), 
+                f_LogDir, 
+                std::ref(pm_ThreadInitializationLatch)
+            );
         }
         else if (pm_RequiredThreads & ThreadName::RenderThread and fp_RenderingBackend == RendererType::OpenGL)
         {
-            pm_RenderThread = jthread(&RenderingManager::RenderLoopGL, &RenderingManager::get_single(), f_LogDir, std::ref(pm_ThreadInitializationLatch));
+            pm_RenderThread = jthread
+            (
+                &RenderingManager::RenderLoopGL, 
+                std::ref(RenderingManager::get_single()), 
+                f_LogDir, 
+                std::ref(pm_ThreadInitializationLatch)
+            );
         }
         else
         {
             pm_ThreadInitializationLatch.count_down();
         }
+
+        ////////////////////////////////////////////// Audio //////////////////////////////////////////////
 
         if (pm_RequiredThreads & ThreadName::AudioThread)
         {
-            pm_AudioThread = jthread(&AudioManager::AudioLoop, &AudioManager::get_single(), f_LogDir, 0.0f, std::ref(pm_ThreadInitializationLatch));
+            pm_AudioThread = jthread
+            (
+                &AudioManager::AudioLoop, 
+                std::ref(AudioManager::get_single()), 
+                f_LogDir, 
+                0.0f, 
+                std::ref(pm_ThreadInitializationLatch)
+            );
         }
         else
         {
             pm_ThreadInitializationLatch.count_down();
         }
+
+        ////////////////////////////////////////////// Networking //////////////////////////////////////////////
 
         if (pm_RequiredThreads & ThreadName::NetworkThread)
         {
-            //pm_NetworkThread = jthread(&NetworkManager::NetworkLoop, &NetworkManager::get_single(), , std::ref(pm_ThreadInitializationLatch));
+            pm_NetworkThread = jthread
+            (
+                &NetworkManager::NetworkLoop,
+                std::ref(NetworkManager::get_single()), 
+                f_LogDir, 
+                std::ref(pm_ThreadInitializationLatch)
+            );
         }
         else
         {
             pm_ThreadInitializationLatch.count_down();
         }
 
+        ////////////////////////////////////////////// Physics //////////////////////////////////////////////
+
         if (pm_RequiredThreads & ThreadName::PhysicsThread)
         {
-            pm_PhysicsThread = jthread(&PhysicsManager::PhysicsLoop, &PhysicsManager::get_single(), f_LogDir, std::ref(pm_ThreadInitializationLatch));
+            if(fp_Is3D)
+            {
+                pm_PhysicsThread = jthread
+                (
+                    &PhysicsManager::PhysicsLoop3D, 
+                    std::ref(PhysicsManager::get_single()),
+                    f_LogDir, 
+                    std::ref(pm_ThreadInitializationLatch)
+                );
+            }
+            else
+            {
+                pm_PhysicsThread = jthread
+                (
+                    &PhysicsManager::PhysicsLoop2D, 
+                    std::ref(PhysicsManager::get_single()), 
+                    f_LogDir, 
+                    std::ref(pm_ThreadInitializationLatch),
+                    0.0f,    // fp_GravityX
+                    -9.8f    // fp_GravityY
+                );
+            }
         }
         else
         {
@@ -308,30 +365,30 @@ namespace PeachCore
 
         if (pm_RequiredThreads & ThreadName::NetworkThread)
         {
-            //pm_NetworkCommandQueue = NetworkManager::get_single().GetNetworkCommandQueue();
+            pm_NetworkCommandQueue = NetworkManager::get_single().GetNetworkCommandQueue(main_logger.get());
 
-            //if (not pm_NetworkCommandQueue)
-            //{
-            //    main_logger->Fatal("Failed to retrieve Resource Loading Command Queue from ResourceManager, engine cannot continue execution", "GameManager");
-            //    return false;
-            //}
+            if (not pm_NetworkCommandQueue)
+            {
+                main_logger->Fatal("Failed to retrieve Network Command Queue from ResourceManager, engine cannot continue execution", "GameManager");
+                return false;
+            }
 
-            //main_logger->Info("Successfully retrieved Resource Loading Command Queue from ResourceManager", "GameManager");
+            main_logger->Info("Successfully retrieved Resource Loading Command Queue from ResourceManager", "GameManager");
         }
 
         //////////////////// Get Resource Loading Command Queue ////////////////////
 
         if (pm_RequiredThreads & ThreadName::PhysicsThread)
         {
-            //pm_PhysicsCommandQueue = PhysicsManager::get_single().GetPhysicsCommandQueue();
+            pm_PhysicsCommandQueue = PhysicsManager::get_single().GetPhysicsCommandQueue(main_logger.get());
 
-            //if (not pm_PhysicsCommandQueue)
-            //{
-            //    main_logger->Fatal("Failed to retrieve Resource Loading Command Queue from ResourceManager, engine cannot continue execution", "GameManager");
-            //    return false;
-            //}
+            if (not pm_PhysicsCommandQueue)
+            {
+                main_logger->Fatal("Failed to retrieve Resource Loading Command Queue from ResourceManager, engine cannot continue execution", "GameManager");
+                return false;
+            }
 
-            //main_logger->Info("Successfully retrieved Resource Loading Command Queue from ResourceManager", "GameManager");
+            main_logger->Info("Successfully retrieved Resource Loading Command Queue from ResourceManager", "GameManager");
         }
 
         return true;
@@ -410,7 +467,7 @@ namespace PeachCore
 
             if (f_PhysicsAccumulator >= f_PhysicsDeltaTime)
             {
-                physics_manager->RequestPhysicsFrame();
+                physics_manager->RequestPhysicsWorldStep();
                 f_PhysicsAccumulator -= f_PhysicsDeltaTime;
             }
 
@@ -533,12 +590,12 @@ namespace PeachCore
     {
         if (pm_DictionaryOfAllScenesInCurrentProject.find(fp_DesiredSceneName) == pm_DictionaryOfAllScenesInCurrentProject.end())
         {
-            return PEACH_STATUS_CODE::PEACH_INVALID_SCENE_NAME;
+            return PEACH_ERROR_INVALID_SCENE_NAME;
         }
 
         //LoadScene(fp_DesiredSceneName);
 
-        return PEACH_STATUS_CODE::PEACH_OK;
+        return PEACH_OK;
     }
 
     [[nodiscard]] SceneTree*

@@ -31,17 +31,17 @@ namespace PeachCore {
     public:
         Transform2D()
             : pm_Position({ 0.0f, 0.0f })
-            , pm_Rotation({ 0.0f })
+            , pm_Rotation( 0.0f )
             , pm_Scale({ 1.0f, 1.0f })
             , pm_Origin({ 0.0f, 0.0f })
         {}
 
         Transform2D
         (
-            const glm::vec2& fp_Position = { 0.0f, 0.0f },
-            float fp_RotationRadians = { 0.0f },
-            const glm::vec2& fp_Scale = { 1.0f, 1.0f },
-            const glm::vec2& fp_Origin = { 0.0f, 0.0f }
+            const glm::vec2& fp_Position,
+            float fp_RotationRadians,
+            const glm::vec2& fp_Scale,
+            const glm::vec2& fp_Origin
         )
             : pm_Position(fp_Position)
             , pm_Rotation(fp_RotationRadians)
@@ -56,10 +56,37 @@ namespace PeachCore {
         const glm::vec2& GetOrigin()   const noexcept { return pm_Origin; }
 
         // --- Setters ---
-        void SetPosition(const glm::vec2& fp_Position) noexcept { pm_Position = fp_Position; }
-        void SetRotation(float fp_RotationRadians)      noexcept { pm_Rotation = fp_RotationRadians; }
-        void SetScale(const glm::vec2& fp_Scale)        noexcept { pm_Scale = fp_Scale; }
-        void SetOrigin(const glm::vec2& fp_Origin)      noexcept { pm_Origin = fp_Origin; }
+        void 
+            SetPosition(const glm::vec2& fp_Position) 
+            noexcept
+        {
+            pm_Position = fp_Position;
+            pm_IsDirty = true;
+        }
+
+        void 
+            SetRotation(float fp_Radians)
+            noexcept
+        {
+            pm_Rotation = fp_Radians;
+            pm_IsDirty = true;
+        }
+
+        void 
+            SetScale(const glm::vec2& fp_Scale) 
+            noexcept
+        {
+            pm_Scale = fp_Scale;
+            pm_IsDirty = true;
+        }
+
+        void 
+            SetOrigin(const glm::vec2& fp_Origin) 
+            noexcept
+        {
+            pm_Origin = fp_Origin;
+            pm_IsDirty = true;
+        }
 
         // --- Incremental ops ---
 
@@ -121,6 +148,7 @@ namespace PeachCore {
                 pm_LocalMatrix = glm::translate(pm_LocalMatrix, glm::vec3(pm_Position, 0.0f));
                 pm_LocalMatrix = glm::rotate(pm_LocalMatrix, pm_Rotation, glm::vec3(0.0f, 0.0f, 1.0f));
                 pm_LocalMatrix = glm::scale(pm_LocalMatrix, glm::vec3(pm_Scale, 1.0f));
+                pm_LocalMatrix = glm::translate(pm_LocalMatrix, glm::vec3(-pm_Origin, 0.0f));
 
                 pm_IsDirty = false;
             }

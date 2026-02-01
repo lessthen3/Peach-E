@@ -5,7 +5,7 @@ Peach-E is and __will always be 100% free__. No stupid licensing garbage, no roy
 
 Currently you can target Windows(x64), MacOS(ARM64) and Linux(x64). Native support for FreeBSD, Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, Windows ARM and PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
 
-Peach-E can be used headless via the peach_api static lib, the api uses a C calling convention so linking against C, C++ or rust is supported.
+Peach-E can be used headless with C++, or via the peach_api headers which utilizes a C calling convention so linking against C, Rust or whatever uses the calling convention is supported.
 
 >[!WARNING]
 >Peach-E is still in early alpha!

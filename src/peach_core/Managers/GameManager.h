@@ -191,7 +191,9 @@ namespace PeachCore {
             InitializeThreads
             (
                 const string& fp_RootPath,
-                 RendererType fp_RenderingBackend //ONLY HERE FOR TESTING SHOULD BE DEDUCED FROM PROJECT FILE
+                 RendererType fp_RenderingBackend, //o7
+                const bool fp_Is3D = false
+
             );
 
         bool

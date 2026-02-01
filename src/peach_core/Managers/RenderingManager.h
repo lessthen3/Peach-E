@@ -95,7 +95,8 @@ namespace PeachCore {
     // Private Destructor
     //////////////////////////////////////////////
     private:
-        ~RenderingManager();
+        //IMPORTANT: not really needed to cleanup here and the OS will def clear the memory block associated w the process quicker, RenderingManager Lifetime = Process Lifetime
+        ~RenderingManager() = default; 
 
     //////////////////////////////////////////////
     // Singleton Instance
@@ -153,8 +154,8 @@ namespace PeachCore {
         unique_ptr<unsigned char> pm_DefaultTexture = LoadDefaultTexture();
 
     public: 
-        atomic<bool> pm_IsRunning = true; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
-        atomic<bool> pm_IsInitialized = false;
+        atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
+        atomic<bool> pm_IsInitialized{ false };
 
         binary_semaphore pm_RenderSemaphore{ 0 }; // starts locked (zero tickets)
 
@@ -231,49 +232,28 @@ namespace PeachCore {
             return pm_IsRunning.load(std::memory_order_acquire);
         }
 
-        void
-            PollUserInputEvents()
-        {
-            InputManager::get_single().PollEvents();
+        [[nodiscard]] uint64_t
+            GetFrameRateLimit() 
+            const noexcept;
 
-            InputManager::get_single().GetWindowCloseRequests(pm_CloseWindowRequests);
-
-            if (pm_CloseWindowRequests.size() > 0)
-            {
-                for (const auto& lv_Window : pm_CloseWindowRequests)
-                {
-                    if (SDL_GetWindowID(pm_MainWindow) == lv_Window)
-                    {
-                        pm_IsRunning.store(false, std::memory_order_release);
-                        //pm_VulkanRenderer->CleanUp();
-                    }
-
-                    SDL_DestroyWindow(SDL_GetWindowFromID(lv_Window)); //WARNING DO NOT CLOSE WINDOW HERE SEND A REQUEST TO THE RENDERING MANAGER FOR THAT
-                }
-            }
-
-            glm::vec2 f_MousePos = InputManager::get_single().GetCurrentMousePosition();
-
-            Print(format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
-        }
-
-        unsigned int GetFrameRateLimit() const;
-
-        void 
-            SetFrameRateLimit(unsigned int fp_Limit);
-
-        void 
-            SetVSync(const bool fp_IsEnabled);
-
-        bool 
+        [[nodiscard]] bool 
             IsVSyncEnabled() 
-            const;
+            const noexcept;
 
-        SDL_Window*
+        [[nodiscard]] SDL_Window*
             GetMainWindow()
+            const noexcept
         {
             return pm_MainWindow;
         }
+
+        void
+            SetFrameRateLimit(uint64_t fp_Limit)
+            noexcept;
+
+        void
+            SetVSync(const bool fp_IsEnabled)
+            noexcept;
 
     //////////////////////////////////////////////
     // Private Methods
@@ -304,6 +284,9 @@ namespace PeachCore {
 
         }
 
+        void
+            PollUserInputEvents();
+
         [[nodiscard]] bool
             Initialize
             (
@@ -330,7 +313,7 @@ namespace PeachCore {
             Shutdown();
 
         //wip? future me: WORKING BITCH
-        bool
+        PEACH_STATUS_CODE
             InitializeOpenGL();
 
         bool

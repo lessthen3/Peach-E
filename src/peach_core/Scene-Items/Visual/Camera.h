@@ -10,22 +10,136 @@
 ********************************************************************/
 #pragma once
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-
-#include <memory>
+///PeachCore
+#include "../PeachNode.h"
 
 namespace PeachCore {
 
-    struct Camera2D
+    struct Camera2D : public PeachNode2D
     {
+    private:
+        glm::vec2     m_ViewportSize{ 1280.0f, 720.0f }; // pixels
+        float         m_Zoom{ 1.0f };     // 1.0 = 1 world unit = 1 pixel
 
+        glm::mat4     m_Projection{ 1.0f };
+        glm::mat4     m_View{ 1.0f };
+        glm::mat4     m_ViewProjection{ 1.0f };
+
+        bool          m_ProjDirty{ true };
+        bool          m_ViewDirty{ true };
+
+    public:
+        explicit
+            Camera2D
+        (
+            const string& fp_NodeName, 
+            const PeachNodeID fp_NodeID, 
+            const uint8_t fp_Flags, 
+            const glm::vec2& fp_ViewportSize, 
+            float fp_Zoom = 1.0f
+        ) 
+            : 
+            PeachNode2D(fp_NodeName, fp_NodeID, fp_Flags),
+            m_ViewportSize(fp_ViewportSize), 
+            m_Zoom(fp_Zoom) 
+        {}
+
+        // --- access to transform so PeachNodes / scripts can move camera ---
+        Transform2D&
+            GetTransform()       
+            noexcept
+        {
+            return m_Transform;
+        }
+
+        const Transform2D& 
+            GetTransform() 
+            const noexcept
+        { 
+            return m_Transform;
+        }
+
+        void 
+            SetViewportSize(const glm::vec2& fp_Size)
+            noexcept
+        {
+            m_ViewportSize = fp_Size;
+            m_ProjDirty = true;
+        }
+
+        void 
+            SetZoom(float fp_Zoom)
+            noexcept
+        {
+            m_Zoom = glm::max(fp_Zoom, 0.0001f); // avoid divide-by-zero zoom
+            m_ProjDirty = true;
+        }
+
+        glm::vec2 GetViewportSize() const noexcept { return m_ViewportSize; }
+        float     GetZoom()         const noexcept { return m_Zoom; }
+
+        // --- matrices ---
+
+        const glm::mat4& 
+            GetProjection() 
+            noexcept
+        {
+            if (m_ProjDirty)
+            {
+                // World units == pixels / zoom
+                // Bottom-left = (0,0), top-right = (width/zoom, height/zoom)
+                float left = 0.0f;
+                float right = m_ViewportSize.x / m_Zoom;
+                float bottom = 0.0f;
+                float top = m_ViewportSize.y / m_Zoom;
+
+                // 2D, depth not super important; just use [-1,1]
+                m_Projection = glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
+
+                m_ProjDirty = false;
+            }
+            return m_Projection;
+        }
+
+        const glm::mat4& 
+            GetView() 
+            noexcept
+        {
+            // Ask Transform2D for matrix; it will recompute if dirty.
+            // Camera view is the inverse of its world transform.
+            const glm::mat4& camWorld = m_Transform.GetLocalMatrix();
+
+            if (m_ViewDirty)
+            {
+                m_View = glm::inverse(camWorld);
+                m_ViewDirty = false;
+            }
+            return m_View;
+        }
+
+        const glm::mat4& 
+            GetViewProjection()
+            noexcept
+        {
+            // Ensure both are up to date
+            const glm::mat4& P = GetProjection();
+            const glm::mat4& V = GetView();
+
+            m_ViewProjection = P * V;
+            return m_ViewProjection;
+        }
+
+        // Optional helper: get world-space position of camera
+        glm::vec2 
+            GetWorldPosition() 
+            const noexcept
+        {
+            return m_Transform.GetPosition();
+        }
     };
 }
 
 namespace PeachCore {
-
-    using namespace std;
 
     struct Plane
     {
