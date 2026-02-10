@@ -18,6 +18,7 @@
 
 #include "Logger.h"
 #include <unordered_map>
+#include <map>
 #include <memory>
 #include <utility>
 
@@ -31,9 +32,9 @@
     #define PEACH_NEW(T, ...) ::PeachCore::DebugUtils::CreateAndRegisterRawPtr<T>(__FILE__, __LINE__, __VA_ARGS__)
     #define PEACH_DELETE(ptr) ::PeachCore::DebugUtils::DeleteAndUnregisterRawPtr(ptr)
 
-    #define PEACH_VECTOR(T) 
-    #define PEACH_MAP(Tx, Ty)
-    #define PEACH_UNMAP(Tx, Ty)
+    #define PEACH_VECTOR(T) std::vector<T>
+    #define PEACH_MAP(Tx, Ty) std::map<Tx, Ty>
+    #define PEACH_UNMAP(Tx, Ty) std::unordered_map<Tx, Ty>
 
 #else
 
@@ -72,7 +73,7 @@ namespace DebugUtils{
             size_t f_TypeSize = sizeof(T);
 
             //idk do some more stuff idec
-           return move(make_unique<T>(forward<Args>(args)...));
+           return make_unique<T>(forward<Args>(args)...);
         }
 
         template<typename T, typename... Args>
@@ -82,7 +83,7 @@ namespace DebugUtils{
             size_t f_TypeSize = sizeof(T);
 
             //idk do some more stuff idec
-            return move(make_shared<T>(forward<Args>(args)...));
+            return make_shared<T>(forward<Args>(args)...);
         }
 
         template<typename T, typename... Args>

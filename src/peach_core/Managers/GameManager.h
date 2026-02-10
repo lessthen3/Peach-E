@@ -141,19 +141,24 @@ namespace PeachCore {
     // Public Members
     //////////////////////////////////////////////
     public:
-        unique_ptr<Logger> m_UserLogger;
 
     //////////////////////////////////////////////
     // Public Methods
     //////////////////////////////////////////////
     public:
-        bool 
-            InitializePeachEngine
+        [[nodiscard]] bool
+            InitializePeachEngineCustom //used headless
             (
                 const string& fp_RootPath,
                 const uint8_t fp_RequiredThreads,
                 const RendererType fp_RenderingBackend,
                 bool fp_IsSegfaultHandled = false
+            );
+
+        bool
+            InitializePeachEngine //ran from engine uwu
+            (
+                const string& fp_RootPath
             );
 
         void

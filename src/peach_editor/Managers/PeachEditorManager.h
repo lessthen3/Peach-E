@@ -98,7 +98,7 @@ namespace PeachEditor{
 
             if 
             (
-                not PeachCore::GameManager::get_single().InitializePeachEngine
+                not PeachCore::GameManager::get_single().InitializePeachEngineCustom
                 (
                     fp_RootPath, 
                     PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread | PeachCore::ThreadName::AudioThread, 

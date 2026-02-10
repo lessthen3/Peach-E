@@ -11,40 +11,42 @@
 #ifndef PEACH_STATUS_CODES_C_H
 #define PEACH_STATUS_CODES_C_H
 
-#ifdef __cplusplus 
-
-    #include <stdint.h>
-
-    //#include <cstdint>
-    //#include <unordered_map>
-
-#else
-    #include <stdint.h>
-#endif
-
-
-typedef enum PEACH_STATUS_CODE //only C23 supports the : int64_t definition which is not great for compatibility
+#ifdef __cplusplus
+extern "C"
 {
-    PEACH_OK = 1,
-
-    PEACH_ERROR_INVALID_SCENE_NAME,
-    PEACH_ERROR_NULLPTR_REF_PASSED,
-    PEACH_ERROR_INVALID_NODE_REMOVAL_ID,
-    PEACH_ERROR_INVALID_NODE_REMOVAL_NAME,
-
-    //////////////////////// General Rendering Statuses ////////////////////////
-
-    PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW,
-
-    //////////////////////// OpenGL Specific ////////////////////////
-
-    PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL,
-    PEACH_ERROR_FAILED_INITIALIZE_GLEW,
-
-    //////////////////////// Vulkan ////////////////////////
-
-    PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN 
-
-};
-
 #endif
+    typedef enum PEACH_STATUS_CODE //only C23 supports the : int64_t definition which is not great for compatibility
+    {
+        PEACH_OK = 1,
+
+        PEACH_ERROR_NODE_NOT_FOUND,
+        PEACH_ERROR_NODE_DOES_NOT_EXIST_IN_TREE,
+
+        PEACH_ERROR_FAILED_TO_INITIALIZE,
+        PEACH_ERROR_FAILED_TO_SHUTDOWN_PROPERLY,
+
+        PEACH_ERROR_INVALID_SCENE_NAME,
+        PEACH_ERROR_NULLPTR_REF_PASSED,
+        PEACH_ERROR_INVALID_NODE_REMOVAL_ID,
+        PEACH_ERROR_INVALID_NODE_REMOVAL_NAME,
+
+        //////////////////////// General Rendering Statuses ////////////////////////
+
+        PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW,
+
+        //////////////////////// OpenGL Specific ////////////////////////
+
+        PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL,
+        PEACH_ERROR_FAILED_INITIALIZE_GLEW,
+
+        //////////////////////// Vulkan ////////////////////////
+
+        PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN
+
+    } StatusCodes;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* PEACH_STATUS_CODES_C_H */

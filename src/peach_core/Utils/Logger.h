@@ -10,6 +10,8 @@
 ********************************************************************/
 #pragma once
 
+#define PEACH_LOGGER_DEFAULT_FLAGS PEACH_ALL_LOGS | PEACH_FLUSH_ERROR | PEACH_FLUSH_FATAL
+
 #define PEACH_ARRAY_SIZE(x) sizeof(x) / sizeof(x[0]) 
 
 #define PEACH_MAX_PTR_DIFF std::numeric_limits<ptrdiff_t>::max()
@@ -43,6 +45,8 @@
 #include <optional>
 
 #include "../Utils/RingBuffer.h"
+
+#include "../peach_api/LoggerFlags.h"
 
 //#ifndef $ //Used for bookkeeping and tracking what variables are mutable inside a function
 //#define $
@@ -224,6 +228,7 @@ namespace PeachCore {
         */
         Logger(Logger&&) = default; 
 
+    protected:
         static constexpr uint32_t FLUSH_EVERY_N_LOGS = 256u;
         static constexpr uint32_t MAX_NUMBER_OF_LOGS = 1024u;
         static constexpr uintmax_t MAX_LOG_FILE_SIZE_BYTES = 10u * 1024u * 1024u; // 10 MB
@@ -235,6 +240,7 @@ namespace PeachCore {
         static constexpr uint8_t FLUSH_ERROR_BIT = 1u << 4;
         static constexpr uint8_t FLUSH_FATAL_BIT = 1u << 5;
 
+    public:
         using LogBuffer = RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>;
 
         //////////////////////////////////////////////
@@ -242,37 +248,6 @@ namespace PeachCore {
         //////////////////////////////////////////////
     protected:
         Logger() = default;
-
-        ////////////////////////////////////////////////
-        // Helper Enum For LogLevel Specification
-        ////////////////////////////////////////////////
-    public:
-        enum Flags : uint32_t
-        {
-            // low byte is active mask
-            TRACE_LOG = 1u << 0,
-            DEBUG_LOG = 1u << 1,
-            INFO_LOG = 1u << 2,
-            WARNING_LOG = 1u << 3,
-            ERROR_LOG = 1u << 4,
-            FATAL_LOG = 1u << 5,
-
-            ALL_LOGS = TRACE_LOG | DEBUG_LOG | INFO_LOG | WARNING_LOG | ERROR_LOG | FATAL_LOG,
-
-            //middle byte is flush mask
-            FLUSH_TRACE =  1u << 8,
-            FLUSH_DEBUG = 1u << 9,
-            FLUSH_INFO = 1u << 10,
-            FLUSH_WARNING = 1u << 11,
-            FLUSH_ERROR = 1u << 12,
-            FLUSH_FATAL = 1u << 13,
-
-            FLUSH_ALL = FLUSH_TRACE | FLUSH_DEBUG | FLUSH_INFO | FLUSH_WARNING | FLUSH_ERROR | FLUSH_FATAL,
-
-            //high byte is aux flags
-            DONT_CREATE_DIRECTORY = 1u << 16,
-            LOG_TO_ONLY_SNAPSHOT_BUFFER = 1u << 17
-        };
 
         //////////////////////////////////////////////
         // Protected Class Members
@@ -303,7 +278,7 @@ namespace PeachCore {
             Create
             (
                 const string& fp_DesiredLoggerName,
-                const uint32_t fp_Flags,
+                const PEACH_LOGGER_FLAGS fp_Flags,
                 const string& fp_DesiredOutputDirectory = ""
             )
         {
@@ -322,7 +297,7 @@ namespace PeachCore {
             CreateUnique
             (
                 const string& fp_DesiredLoggerName,
-                const uint32_t fp_Flags,
+                const PEACH_LOGGER_FLAGS fp_Flags,
                 const string& fp_DesiredOutputDirectory = ""
             )
         {
@@ -334,14 +309,14 @@ namespace PeachCore {
                 return nullptr;
             }
 
-            return move(f_CreatedLogger);
+            return f_CreatedLogger;
         }
 
         [[nodiscard]] static shared_ptr<Logger>
             CreateShared
             (
                 const string& fp_DesiredLoggerName,
-                const uint32_t fp_Flags,
+                const PEACH_LOGGER_FLAGS fp_Flags,
                 const string& fp_DesiredOutputDirectory = ""
             )
         {
@@ -404,12 +379,12 @@ namespace PeachCore {
 
             static const unordered_map<uint8_t, const string> f_LogLevels = //this is fine being static since its not mutable so reading from multiple threads is kosher
             {
-                {TRACE_LOG, "trace.log"},
-                {DEBUG_LOG, "debug.log"},
-                {INFO_LOG, "info.log"},
-                {WARNING_LOG, "warning.log"},
-                {ERROR_LOG, "error.log"},
-                {FATAL_LOG, "fatal.log"}
+                {PEACH_TRACE_LOG, "trace.log"},
+                {PEACH_DEBUG_LOG, "debug.log"},
+                {PEACH_INFO_LOG, "info.log"},
+                {PEACH_WARNING_LOG, "warning.log"},
+                {PEACH_ERROR_LOG, "error.log"},
+                {PEACH_FATAL_LOG, "fatal.log"}
             };
 
             for (const auto& [lv_LogEnum, lv_LogStringName] : f_LogLevels)
@@ -477,12 +452,12 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(static_cast<uint8_t>(Flags::TRACE_LOG))) //IMPORTANT: don't need to check if the log file was created since activelogmask tracks that as well >w< and the activemask can't be modified directly since its private
+            if (ValidateLogMsg(PEACH_TRACE_LOG)) //IMPORTANT: don't need to check if the log file was created since activelogmask tracks that as well >w< and the activemask can't be modified directly since its private
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
                 const string f_LogEntry = "[" + f_TimeStamp + "][trace][" + fp_Sender + "]: " + fp_Message;
 
-                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::TRACE_LOG));
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_TRACE_LOG);
 
                 if (pm_LogToFile)
                 {
@@ -516,12 +491,12 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(static_cast<uint8_t>(Flags::DEBUG_LOG)))
+            if (ValidateLogMsg(PEACH_DEBUG_LOG))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
                 const string f_LogEntry = "[" + f_TimeStamp + "][debug][" + fp_Sender + "]: " + fp_Message;
 
-                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::DEBUG_LOG));
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_DEBUG_LOG);
 
                 if (pm_LogToFile)
                 {
@@ -555,12 +530,12 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(static_cast<uint8_t>(Flags::INFO_LOG)))
+            if (ValidateLogMsg(PEACH_INFO_LOG))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
                 const string f_LogEntry = "[" + f_TimeStamp + "][info][" + fp_Sender + "]: " + fp_Message;
 
-                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::INFO_LOG));
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_INFO_LOG);
 
                 if (pm_LogToFile)
                 {
@@ -594,12 +569,12 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(static_cast<uint8_t>(Flags::WARNING_LOG)))
+            if (ValidateLogMsg(PEACH_WARNING_LOG))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
                 const string f_LogEntry = "[" + f_TimeStamp + "][warning][" + fp_Sender + "]: " + fp_Message;
 
-                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::WARNING_LOG));
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_WARNING_LOG);
 
                 if (pm_LogToFile)
                 {
@@ -633,12 +608,12 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(static_cast<uint8_t>(Flags::ERROR_LOG)))
+            if (ValidateLogMsg(PEACH_ERROR_LOG))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
                 const string f_LogEntry = "[" + f_TimeStamp + "][error][" + fp_Sender + "]: " + fp_Message;
 
-                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::ERROR_LOG));
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_ERROR_LOG);
 
                 if (pm_LogToFile)
                 {
@@ -672,12 +647,12 @@ namespace PeachCore {
                 const string& fp_Sender
             )
         {
-            if (ValidateLogMsg(static_cast<uint8_t>(Flags::FATAL_LOG)))
+            if (ValidateLogMsg(PEACH_FATAL_LOG))
             {
                 const string f_TimeStamp = GetCurrentTimestamp();
                 const string f_LogEntry = "[" + f_TimeStamp + "][fatal][" + fp_Sender + "]: " + fp_Message;
 
-                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, static_cast<uint8_t>(Flags::FATAL_LOG));
+                pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_FATAL_LOG);
 
                 if (pm_LogToFile)
                 {
@@ -713,7 +688,7 @@ namespace PeachCore {
             (
                 const string& fp_DesiredLoggerName,
                 const string& fp_DesiredOutputDirectory,
-                const uint32_t fp_Flags
+                const PEACH_LOGGER_FLAGS fp_Flags
             )
         {
 #ifdef PEACH_DEBUG
@@ -732,7 +707,7 @@ namespace PeachCore {
             pm_LoggerName = fp_DesiredLoggerName;
             pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + pm_LoggerName;
 
-            if (fp_Flags & Flags::LOG_TO_ONLY_SNAPSHOT_BUFFER)
+            if (fp_Flags & PEACH_LOG_TO_ONLY_SNAPSHOT_BUFFER)
             {
                 pm_LogToFile = false;
             }
@@ -749,7 +724,7 @@ namespace PeachCore {
 
             if (not filesystem::exists(pm_CurrentWorkingDirectory))
             {
-                if(fp_Flags & Flags::DONT_CREATE_DIRECTORY)
+                if(fp_Flags & PEACH_DONT_CREATE_DIRECTORY)
                 {
                     PrintError("[CRITICAL_LOGGING_ERROR]: Failed to find valid log output directory");
                     return false;

@@ -16,7 +16,7 @@ namespace PeachCore{
 
     using namespace std;
 
-    struct AudioPlayer
+    struct AudioStreamPlayer
     {
         void PlaySoundOnce(const string& soundFile); //SUSUSUSUSUSUSUSUSSSYYYY FUNCTION (is PlaySound a predefined funciton in openal?)
         string GetCurrentTrack() const;

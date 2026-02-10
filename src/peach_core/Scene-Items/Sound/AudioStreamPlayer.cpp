@@ -8,12 +8,12 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#include "AudioPlayer.h"
+#include "AudioStreamPlayer.h"
 
 namespace PeachCore
 {
     void
-        AudioPlayer::PlaySoundOnce(const string& fp_SoundFile)
+        AudioStreamPlayer::PlaySoundOnce(const string& fp_SoundFile)
     {
         //unique_lock<shared_mutex> lock(mutex_);
         //ALuint f_Buffer, f_Source;
@@ -35,7 +35,7 @@ namespace PeachCore
     }
 
     string
-        AudioPlayer::GetCurrentTrack()
+        AudioStreamPlayer::GetCurrentTrack()
         const
     {
         //shared_lock<shared_mutex> lock(mutex_);
@@ -44,7 +44,7 @@ namespace PeachCore
     }
 
     void
-        AudioPlayer::SetCurrentTrack(const string& track) //this doesnt need a lock since the command queue tells audiomanager to do this
+        AudioStreamPlayer::SetCurrentTrack(const string& track) //this doesnt need a lock since the command queue tells audiomanager to do this
     {
         //pm_CurrentTrack = track;
     }

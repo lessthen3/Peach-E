@@ -24,8 +24,9 @@ namespace PeachCore
     //////////////////////////////////////////////
     // Initialization, Startup, and Shutdown/Cleanup OwO
     //////////////////////////////////////////////
+
     bool 
-        GameManager::InitializePeachEngine
+        GameManager::InitializePeachEngineCustom
         (
             const string& fp_RootPath,
             const uint8_t fp_RequiredThreads,
@@ -52,7 +53,7 @@ namespace PeachCore
 
         ////////////////////////////////////////////// Initialize Main Thread Logger //////////////////////////////////////////////
 
-        main_logger = Logger::CreateUnique("GameManager", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_RootPath + "/logs");
+        main_logger = Logger::CreateUnique("GameManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_RootPath + "/logs");
 
         if (not main_logger)
         {
@@ -61,18 +62,6 @@ namespace PeachCore
         }
 
         main_logger->Debug("main_thread logger successfully initialized", "GameManager");
-
-        ////////////////////////////////////////////// Initialize User Logger //////////////////////////////////////////////
-
-        m_UserLogger = Logger::CreateUnique("UserLogger", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_RootPath + "/logs");
-
-        if(not m_UserLogger)
-        {
-            PrintError("[CRITICAL_LOGGING_ERROR]: GameManager failed to initialize the user_logger >w<");
-            return false;
-        }
-
-        m_UserLogger->Debug("UserLogger successfully initialized", "GameManager");
 
         //////////////////// Initialize Subsystems ////////////////////
 
@@ -129,6 +118,19 @@ namespace PeachCore
         //////////////////////////////////////////////
 
         LoadGameStartupConfigs(); //used for telling peach engine which scene should be booted first, along with any other relevant startup routine instructions
+
+        return true;
+    }
+
+    bool
+        GameManager::InitializePeachEngine
+        (
+            const string& fp_RootPath
+        )
+    {
+        //////////////////// Use Peach-E default Segfault Handler ////////////////////
+
+        signal(SIGSEGV, GameManager::SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
 
         return true;
     }
@@ -208,8 +210,16 @@ namespace PeachCore
         //otherwise we just leave it be
 
         //always going to require resource thread for loading peachey
-        pm_ResourceThread = jthread(&ResourceManager::ResourceLoop, &ResourceManager::get_single(), f_LogDir, fp_RootPath, std::ref(pm_ResourceInitializationLatch));
-        pm_ResourceInitializationLatch.wait();
+        pm_ResourceThread = jthread
+        (
+            &ResourceManager::ResourceLoop, 
+            std::ref(ResourceManager::get_single()), 
+            f_LogDir, 
+            fp_RootPath, 
+            std::ref(pm_ResourceInitializationLatch)
+        );
+
+        pm_ResourceInitializationLatch.wait(); //wait for resource thread to initialize before going further w any other threads uwu
 
         ////////////////////////////////////////////// Rendering //////////////////////////////////////////////
 

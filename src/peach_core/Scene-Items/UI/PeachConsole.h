@@ -67,6 +67,9 @@ namespace PeachCore::PUI {
         //    return true;
         //}
 
+        [[nodiscard]] Logger*
+            CreateLogger(const string& fp_LoggerName, PEACH_LOGGER_FLAGS fp_LoggerFlags); //should create logger flags as a typedef extern C enum to interop uwu
+
         void 
             ClearConsole
             (

@@ -43,7 +43,7 @@ namespace PeachCore {
     {
         //////////////////// Initialize Logger ////////////////////
 
-        rendering_logger = Logger::CreateShared("RenderingManager", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
+        rendering_logger = Logger::CreateShared("RenderingManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
 
         if (not rendering_logger)
         {
@@ -55,7 +55,7 @@ namespace PeachCore {
 
         //////////////////// Intialize InputManager ////////////////////
 
-        if (not InputManager::get_single().Initialize(fp_LogOutputDirectory, Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL))
+        if (not InputManager::get_single().Initialize(fp_LogOutputDirectory, PEACH_LOGGER_DEFAULT_FLAGS))
         {
 
             return false;

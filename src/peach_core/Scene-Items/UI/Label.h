@@ -14,20 +14,16 @@
 #include "../PeachNode.h"
 #include "ShapePrimitives.h"
 
-///font stuff
-#include <msdfgen/msdfgen.h>
-#include <msdfgen/msdfgen-ext.h>
-
 namespace PeachCore::PUI {
 
     struct Label : public Node //Just a generic text label
     {
         Rectangle m_Shape;
 
-        Label(const string& fp_NodeName, uint64_t fp_NodeID, const uint8_t fp_Flags, const ShapeType fp_ButtonShape) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::Label)
-        {
-            //UwU!
-        }
+        //Label(const string& fp_NodeName, uint64_t fp_NodeID, const uint8_t fp_Flags, const ShapeType fp_ButtonShape) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::Label)
+        //{
+        //    //UwU!
+        //}
 
     };
 

@@ -21,7 +21,7 @@ namespace PeachCore {
     {
         //////////////////// Resource Logger Initialization ////////////////////
 
-        resource_logger = Logger::CreateUnique("ResourceThread", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
+        resource_logger = Logger::CreateUnique("ResourceThread", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
 
         if(not resource_logger)
         {

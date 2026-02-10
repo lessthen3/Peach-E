@@ -145,11 +145,14 @@ namespace PeachCore {
 
         }
 
-        void
-            PrintTree();
+        PEACH_STATUS_CODE
+            GetTreeString(PeachNodeID fp_DesiredNode, string& fp_StringContainer); //returns entire tree from parent node as a string
 
-        string
-            GetPathInTree();
+        PEACH_STATUS_CODE
+            GetPathInTreeString(PeachNodeID fp_DesiredNode, string& fp_StringContainer); //returns the path string relative scene root/
+
+        PEACH_STATUS_CODE
+            GetRelativePathString(PeachNodeID fp_ParentNode, PeachNodeID fp_DesiredNode, string& fp_StringContainer); //returns the path string relative to a specific node
 
         bool
             RenameNode

@@ -22,9 +22,22 @@ int
 
         f_RootPath = f_RootPath.substr(0, f_EnginePos);
 
-        engine_manager->InitializePeachEngine(f_RootPath, PeachCore::ThreadName::ALL_THREADS ^ PeachCore::ThreadName::PhysicsThread, PeachCore::RendererType::Vulkan);
-        engine_manager->StartMainGameLoop();
-        engine_manager->ShutdownPeachEngine();
+        //WARNING: this should not be the custom init but for now it is for testing before peach editor can generate peach binaries dam thats cool i didnt fully realize what that meant until now thats how its supposed to work
+        //the editor is a settings factory but i was thinking ab it in the hacky ad hoc get it there fashion but no that sthe final design goal LMFAO dam we gettin it done owo
+
+        if (not engine_manager->InitializePeachEngineCustom(f_RootPath, PeachCore::ThreadName::ALL_THREADS ^ PeachCore::ThreadName::PhysicsThread, PeachCore::RendererType::Vulkan))
+        {
+
+            return PEACH_ERROR_FAILED_TO_INITIALIZE;
+        }
+
+        engine_manager->StartMainGameLoop(); //should always work and only throw on exception uwu, or segfault onto the handler owo
+
+        if (not engine_manager->ShutdownPeachEngine())
+        {
+
+            return PEACH_ERROR_FAILED_TO_SHUTDOWN_PROPERLY;
+        }
 
         return EXIT_SUCCESS;
     }

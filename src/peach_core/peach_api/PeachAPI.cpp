@@ -24,7 +24,7 @@
 PEACH_API PEACH_STATUS_CODE
     PEACH_LogInfo(const char* fp_LogMessage, const char* fp_Sender)
 {
-    PeachCore::GameManager::get_single().m_UserLogger->Info(fp_LogMessage, fp_Sender);
+    //PeachCore::GameManager::get_single().m_UserLogger->Info(fp_LogMessage, fp_Sender);
 
     return PEACH_OK;
 }

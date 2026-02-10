@@ -77,7 +77,7 @@ namespace PeachCore {
     {
         //////////////////// Initialize Logger ////////////////////
 
-        audio_logger = Logger::CreateUnique("AudioManager", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
+        audio_logger = Logger::CreateUnique("AudioManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
 
         if (not audio_logger)
         {

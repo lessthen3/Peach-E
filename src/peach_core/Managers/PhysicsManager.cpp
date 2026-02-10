@@ -15,7 +15,7 @@ namespace PeachCore {
     [[nodiscard]] bool
         PhysicsManager::Initialize(const string& fp_LogOutputDirectory)
     {
-        physics_logger = Logger::CreateUnique("PhysicsManager", Logger::Flags::ALL_LOGS | Logger::Flags::FLUSH_ERROR | Logger::Flags::FLUSH_FATAL, fp_LogOutputDirectory);
+        physics_logger = Logger::CreateUnique("PhysicsManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
 
         if (not physics_logger)
         {
