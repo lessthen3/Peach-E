@@ -18,6 +18,7 @@ extern "C"
     typedef enum PEACH_STATUS_CODE //only C23 supports the : int64_t definition which is not great for compatibility
     {
         PEACH_OK = 1,
+        PEACH_ERROR_INTERNAL_API_FAILURE,
 
         PEACH_ERROR_NODE_NOT_FOUND,
         PEACH_ERROR_NODE_DOES_NOT_EXIST_IN_TREE,

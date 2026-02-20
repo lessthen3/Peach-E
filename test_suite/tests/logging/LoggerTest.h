@@ -23,7 +23,6 @@
 namespace PeachTests
 {
     using PeachCore::Logger;
-    using LoggerFlags = PeachCore::Logger::Flags;
     namespace fs = std::filesystem;
 
     // --------------------------------------------
@@ -82,7 +81,7 @@ namespace PeachTests
         auto dir  = MakeTestDir(root, "Create_AllLogs_BasicWrite");
         auto logs = dir / "logs";
 
-        auto loggerOpt = Logger::Create("basic_logger", LoggerFlags::ALL_LOGS, logs.string());
+        auto loggerOpt = Logger::Create("basic_logger", PEACH_ALL_LOGS, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
 
         auto logger = std::move(*loggerOpt);
@@ -116,7 +115,7 @@ namespace PeachTests
         auto dir  = MakeTestDir(root, "SnapshotOnly_NoFiles");
         auto logs = dir / "logs";
 
-        uint32_t flags = LoggerFlags::ALL_LOGS | LoggerFlags::LOG_TO_ONLY_SNAPSHOT_BUFFER;
+        uint32_t flags = PEACH_ALL_LOGS | PEACH_LOG_TO_ONLY_SNAPSHOT_BUFFER;
 
         auto loggerOpt = Logger::Create("mem_only_logger", flags, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed (snapshot only)");
@@ -143,7 +142,7 @@ namespace PeachTests
         auto dir = MakeTestDir(root, "DontCreateDirectory_Fails");
         auto nonExisting = dir / "does_not_exist_yet"; // do NOT create this
 
-        uint32_t flags = LoggerFlags::ALL_LOGS | LoggerFlags::DONT_CREATE_DIRECTORY;
+        uint32_t flags = PEACH_ALL_LOGS | PEACH_DONT_CREATE_DIRECTORY;
 
         auto loggerOpt = Logger::Create("no_dir_logger", flags, nonExisting.string());
         PEACH_LOGGER_TEST_ASSERT(
@@ -163,7 +162,7 @@ namespace PeachTests
         auto dir  = MakeTestDir(root, "ActiveMask_InfoAndErrorOnly");
         auto logs = dir / "logs";
 
-        uint32_t flags = LoggerFlags::INFO_LOG | LoggerFlags::ERROR_LOG;
+        uint32_t flags = PEACH_INFO_LOG | PEACH_ERROR_LOG;
 
         auto loggerOpt = Logger::Create("mask_logger", flags, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
@@ -201,7 +200,7 @@ namespace PeachTests
         auto dir  = MakeTestDir(root, "UpdateActiveMask_AllToErrorOnly");
         auto logs = dir / "logs";
 
-        auto loggerOpt = Logger::Create("update_mask_logger", LoggerFlags::ALL_LOGS, logs.string());
+        auto loggerOpt = Logger::Create("update_mask_logger", PEACH_ALL_LOGS, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
         auto logger = std::move(*loggerOpt);
 
@@ -213,7 +212,7 @@ namespace PeachTests
         PEACH_LOGGER_TEST_ASSERT(testLogger, fs::exists(base / "info.log"),  "info.log should exist pre-change");
         PEACH_LOGGER_TEST_ASSERT(testLogger, fs::exists(base / "error.log"), "error.log should exist pre-change");
 
-        bool ok = logger.UpdateActiveMask(LoggerFlags::ERROR_LOG);
+        bool ok = logger.UpdateActiveMask(PEACH_ERROR_LOG);
         PEACH_LOGGER_TEST_ASSERT(testLogger, ok, "UpdateActiveMask(ERROR_LOG) should succeed");
 
         logger.Info("after mask change", "update");
@@ -237,7 +236,7 @@ namespace PeachTests
         auto dir  = MakeTestDir(root, "FlushFlags_ErrorAndFatal");
         auto logs = dir / "logs";
 
-        uint32_t flags = LoggerFlags::ALL_LOGS | LoggerFlags::FLUSH_ERROR | LoggerFlags::FLUSH_FATAL;
+        uint32_t flags = PEACH_ALL_LOGS | PEACH_FLUSH_ERROR | PEACH_FLUSH_FATAL;
 
         auto loggerOpt = Logger::Create("flush_logger", flags, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
@@ -286,7 +285,7 @@ namespace PeachTests
         auto dir  = MakeTestDir(root, "FlushEveryNLogs_Stress");
         auto logs = dir / "logs";
 
-        auto loggerOpt = Logger::Create("stress_logger", LoggerFlags::ALL_LOGS, logs.string());
+        auto loggerOpt = Logger::Create("stress_logger", PEACH_ALL_LOGS, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
         auto logger = std::move(*loggerOpt);
 
@@ -322,7 +321,7 @@ namespace PeachTests
         auto dir  = MakeTestDir(root, "ThreadOwnership_WrongThreadRejected");
         auto logs = dir / "logs";
 
-        auto loggerPtr = Logger::CreateShared("thread_logger", LoggerFlags::ALL_LOGS, logs.string());
+        auto loggerPtr = Logger::CreateShared("thread_logger", PEACH_ALL_LOGS, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerPtr != nullptr, "Logger::CreateShared should succeed");
 
         loggerPtr->Info("from owner", "thread_test_owner");
@@ -356,7 +355,7 @@ namespace PeachTests
         auto dir  = MakeTestDir(root, "SnapshotCapacity_RingBufferWraps");
         auto logs = dir / "logs";
 
-        auto loggerOpt = Logger::Create("snapshot_logger", LoggerFlags::ALL_LOGS, logs.string());
+        auto loggerOpt = Logger::Create("snapshot_logger", PEACH_ALL_LOGS, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
         auto logger = std::move(*loggerOpt);
 
@@ -407,7 +406,7 @@ namespace PeachTests
             "info.log should initially be larger than MAX_LOG_FILE_SIZE_BYTES"
         );
 
-        auto loggerOpt = Logger::Create("truncate_logger", LoggerFlags::ALL_LOGS, logs.string());
+        auto loggerOpt = Logger::Create("truncate_logger", PEACH_ALL_LOGS, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
         auto logger = std::move(*loggerOpt);
 
@@ -441,7 +440,7 @@ namespace PeachTests
         fs::path infoPath;
 
         {
-            auto loggerOpt = Logger::Create("destructor_logger", LoggerFlags::ALL_LOGS, logs.string());
+            auto loggerOpt = Logger::Create("destructor_logger", PEACH_ALL_LOGS, logs.string());
             PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
 
             auto logger = std::move(*loggerOpt);
@@ -475,13 +474,13 @@ namespace PeachTests
         auto dir  = MakeTestDir(root, "SnapshotOnly_UpdateActiveMask_NoFiles");
         auto logs = dir / "logs";
 
-        uint32_t flags = LoggerFlags::ALL_LOGS | LoggerFlags::LOG_TO_ONLY_SNAPSHOT_BUFFER;
+        uint32_t flags = PEACH_ALL_LOGS | PEACH_LOG_TO_ONLY_SNAPSHOT_BUFFER;
 
         auto loggerOpt = Logger::Create("snapshot_only_logger", flags, logs.string());
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
         auto logger = std::move(*loggerOpt);
 
-        bool ok = logger.UpdateActiveMask(LoggerFlags::INFO_LOG | LoggerFlags::ERROR_LOG);
+        bool ok = logger.UpdateActiveMask(PEACH_INFO_LOG | PEACH_ERROR_LOG);
         PEACH_LOGGER_TEST_ASSERT(testLogger, ok, "UpdateActiveMask should succeed for snapshot-only logger");
 
         logger.Info("snapshot only info", "snap_only");

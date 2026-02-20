@@ -83,7 +83,7 @@ namespace PeachEditor{
 
             const string f_LogDir = fp_RootPath + "/logs";
 
-            main_editor_logger = PeachCore::Logger::CreateUnique("PeachEditorManager", PeachCore::Logger::Flags::ALL_LOGS | PeachCore::Logger::Flags::FLUSH_ERROR | PeachCore::Logger::Flags::FLUSH_FATAL, f_LogDir);
+            main_editor_logger = PeachCore::Logger::CreateUnique("PeachEditorManager", PEACH_LOGGER_DEFAULT_FLAGS, f_LogDir);
 
             if (not main_editor_logger)
             {

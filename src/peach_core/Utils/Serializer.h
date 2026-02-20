@@ -19,6 +19,9 @@
 #include <memory>
 #include <cstdint>
 
+#include <type_traits>
+#include <utility>
+
 ///Peach-E
 #include "Logger.h"
 
@@ -334,7 +337,8 @@ namespace PeachCore {
         //////////////////////////////////////////////
         // Decoding Functions
         //////////////////////////////////////////////
-        inline uint8_t
+
+        [[nodiscard]] inline uint8_t
             DecodeUint8
             (
                 const vector<uint8_t>& fp_Bytecode,
@@ -353,7 +357,7 @@ namespace PeachCore {
             return fp_Bytecode[fp_Offset++];
         }
 
-        inline uint16_t
+        [[nodiscard]] inline uint16_t
             DecodeUint16
             (
                 const vector<uint8_t>& fp_ByteCode,
@@ -382,7 +386,7 @@ namespace PeachCore {
             return f_Value;
         }
 
-        inline uint32_t
+        [[nodiscard]] inline uint32_t
             DecodeUint32
             (
                 const vector<uint8_t>& fp_ByteCode,
@@ -413,7 +417,7 @@ namespace PeachCore {
             return f_Value;
         }
 
-        inline uint64_t
+        [[nodiscard]] inline uint64_t
             DecodeUint64
             (
                 const vector<uint8_t>& fp_ByteCode,
@@ -448,7 +452,7 @@ namespace PeachCore {
             return f_Value;
         }
 
-        inline int8_t
+        [[nodiscard]] inline int8_t
             DecodeInt8
             (
                 const vector<uint8_t>& fp_ByteCode,
@@ -458,7 +462,7 @@ namespace PeachCore {
             return static_cast<int8_t>(DecodeUint8(fp_ByteCode, fp_Offset));
         }
 
-        inline int16_t
+        [[nodiscard]] inline int16_t
             DecodeInt16
             (
                 const vector<uint8_t>& fp_ByteCode,
@@ -468,7 +472,7 @@ namespace PeachCore {
             return static_cast<int16_t>(DecodeUint16(fp_ByteCode, fp_Offset));
         }
 
-        inline int32_t
+        [[nodiscard]] inline int32_t
             DecodeInt32
             (
                 const vector<uint8_t>& fp_ByteCode,
@@ -478,7 +482,7 @@ namespace PeachCore {
             return static_cast<int32_t>(DecodeUint32(fp_ByteCode, fp_Offset));
         }
 
-        inline int64_t
+        [[nodiscard]] inline int64_t
             DecodeInt64
             (
                 const vector<uint8_t>& fp_ByteCode,
@@ -489,7 +493,7 @@ namespace PeachCore {
         }
 
         template <typename T>
-        inline T 
+        [[nodiscard]] inline T
             DecodeInt
             (
                 const vector<uint8_t>& fp_Bytecode, 
@@ -525,7 +529,7 @@ namespace PeachCore {
             }
         }
 
-        inline bool
+        [[nodiscard]] inline bool
             DecodeBool
             (
                 const vector<uint8_t>& fp_Bytecode,
@@ -545,7 +549,7 @@ namespace PeachCore {
         }
 
         template<typename LengthT>
-        inline string
+        [[nodiscard]] inline string
             DecodeStringWithoutEscapeCharacters
             (
                 const vector<uint8_t>& fp_Bytecode, 
@@ -593,7 +597,7 @@ namespace PeachCore {
         }
 
         template<typename LengthT>
-        string
+        [[nodiscard]] string
             DecodeStringUTF8
             (
                 const vector<uint8_t>& fp_Bytecode,
@@ -670,7 +674,7 @@ namespace PeachCore {
             return f_DecodedString;
         }
 
-        inline float
+        [[nodiscard]] inline float
             DecodeFloat
             (
                 const vector<uint8_t>& fp_ByteCode, 
@@ -684,7 +688,7 @@ namespace PeachCore {
             return f_Val;
         }
 
-        inline double
+        [[nodiscard]] inline double
             DecodeDouble
             (
                 const vector<uint8_t>& fp_ByteCode, 
@@ -998,7 +1002,7 @@ namespace PeachCore {
 
     public:
         template<typename T>
-        bool
+        [[nodiscard]] bool
             FromJSON
             (
                 T& fp_DesiredObject,
@@ -1039,7 +1043,7 @@ namespace PeachCore {
         }
 
         template<typename T>
-        bool
+        [[nodiscard]] bool
             ToJSON
             (
                 const T& fp_DesiredObject,
@@ -1061,6 +1065,30 @@ namespace PeachCore {
             }
 
             return true;
+        }
+
+        template<typename T>
+        bool
+            PackIntoBinaryVector
+            (
+                const T& fp_DesiredObject,
+                vector<uint8_t>& fp_BinaryVector
+            )
+        {
+            return ToBinary(fp_DesiredObject, fp_BinaryVector); //i'm a fucking genius >O<
+        }
+
+        template<typename T>
+        bool
+            UnpackFromBinaryVector
+            (
+                T& fp_EmptyObject,
+                const vector<uint8_t>& fp_BinaryVector,
+                Logger* logger,
+                size_t& fp_StartReadOffset = 0 //start at beginning of vector by default owo
+            )
+        {
+            return FromBinary(fp_EmptyObject, fp_BinaryVector, fp_StartReadOffset, logger);
         }
 
     private:
@@ -1739,6 +1767,26 @@ namespace PeachCore {
         */
 
         template<typename T, typename = void>
+        struct has_reserve : false_type{};
+
+        template<typename T>
+        struct has_reserve <T, void_t<decltype(declval<T&>().reserve(declval<typename T::size_type()>))>> : true_type {};
+
+        template<typename T>
+        static inline constexpr bool has_reserve_v = has_reserve<T>::value;
+
+        template<typename T, typename = void>
+        struct is_queue : false_type {};
+
+        template<typename T>
+        struct is_queue<T, 
+            void_t<
+                typename T::value_type,
+                decltype(declval<T>().pop())
+            >
+        > : true_type {};
+
+        template<typename T, typename = void>
         struct is_map : false_type {};
 
         template<typename T>
@@ -1769,7 +1817,27 @@ namespace PeachCore {
         struct is_serializable_struct : false_type {};
 
         template<typename T>
-        struct is_serializable_struct<T, void_t<typename T::peach_serializable_tag>> : true_type {};
+        struct is_serializable_struct<T, void_t<typename T::peach_serializable_tag>> : std::bool_constant<std::is_default_constructible_v<T>> {};
+
+        template <class T>
+        struct is_unique_ptr : std::false_type {}; //stds here make it easier to read uwu!
+
+        template <class T, class D>
+        struct is_unique_ptr<std::unique_ptr<T, D>> : std::true_type {};
+
+        template <class T>
+        static inline constexpr bool is_unique_ptr_v = is_unique_ptr<std::remove_cvref_t<T>>::value;
+
+        template <class T>
+        struct unique_ptr_pointee;
+
+        template <class T, class D>
+        struct unique_ptr_pointee<std::unique_ptr<T, D>> { using type = T; };
+
+        template <class T>
+        using unique_ptr_pointee_t = typename unique_ptr_pointee<std::remove_cvref_t<T>>::type;
+
+        using BINARY_STRING_LENGTH_V = uint64_t; //to make things standard 
 
         //////////////////////////////////////////////
         // Main (De)Serialization Functions
@@ -1783,6 +1851,12 @@ namespace PeachCore {
 
         This is the case since JSON expects and does things just fine using basic types + strings + lists/POD structs.
         */
+
+        //==================================================================================================================================================================//
+        
+        //////////////////////////////////////////////
+        // JSON Serialization
+        //////////////////////////////////////////////
 
         template<typename T>
         enable_if_t<is_serializable_struct<T>::value, JSONValue>
@@ -1883,8 +1957,10 @@ namespace PeachCore {
             }
         }
 
+        //==================================================================================================================================================================//
+
         template<typename T>
-        enable_if_t<is_serializable_struct<T>::value, bool> //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
+        [[nodiscard]] enable_if_t<is_serializable_struct<T>::value, bool> //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
             FromJSON
             (
                 const JSONValue& fp_JSON, 
@@ -2097,6 +2173,548 @@ namespace PeachCore {
             }
 
             return true; //success! JSONArray was deserialized >W<
+        }
+
+        //==================================================================================================================================================================//
+
+        //////////////////////////////////////////////
+        // Binary Serialization
+        //////////////////////////////////////////////
+
+        //In general, the To functions don't need explicit error handling because it's all done at compile time, however reading can throw because ppl are dumb or files can corrupt
+
+        template<typename T>
+        [[nodiscard]] enable_if_t<is_serializable_struct<T>::value, bool>
+            ToBinary
+            (
+                const T& fp_ObjectToSerialize,
+                vector<uint8_t>& fp_BinaryWriteVector
+            ) 
+        {
+            auto f_Visitor = [this, &fp_BinaryWriteVector](const char* fp_Name, auto&& fp_Value)
+            {
+                using FieldType = decay_t<decltype(fp_Value)>; //makes things look prettier
+
+                if constexpr (is_serializable_struct<FieldType>::value)
+                {
+                    ToBinary(fp_Value, fp_BinaryWriteVector);
+                }
+                else if constexpr (is_map<FieldType>::value) //WARNING: oof never use unordered_map here UNLESS u know what ur doing owo
+                {
+                    MapToBinary(fp_Value, fp_BinaryWriteVector);
+                }
+                else if constexpr (is_vector<FieldType>::value)
+                {
+                    VectorToBinary(fp_Value, fp_BinaryWriteVector);
+                }
+                else
+                {
+                    ValueToBinary(fp_Value, fp_BinaryWriteVector);
+                }
+            };
+
+            fp_ObjectToSerialize.PEACH_VISIT(f_Visitor);
+
+            return true;
+        }
+
+        template<typename T_VectorObject>
+        void
+            VectorToBinary
+            (
+                const T_VectorObject& fp_SerializableObjectField,
+                vector<uint8_t>& fp_BinaryWriteVector
+            )
+        {
+            static_assert(is_vector<T_VectorObject>::value, "[INTERNAL ERROR]: attempted to pass non vector object into VectorToBinary()");
+
+            BinaryCodec::EncodeInt<size_t>(fp_BinaryWriteVector, fp_SerializableObjectField.size()); //since it's a vector we push the size first uwu
+
+            using VectorElem = typename decay_t<decltype(fp_SerializableObjectField)>::value_type;
+
+            for (const auto& lv_VectorVal : fp_SerializableObjectField)
+            {
+                if constexpr (is_serializable_struct<VectorElem>::value)
+                {
+                    ToBinary(lv_VectorVal, fp_BinaryWriteVector); //this handles custom structs 
+                }
+                else if constexpr (is_vector<VectorElem>::value)
+                {
+                    VectorToBinary(lv_VectorVal, fp_BinaryWriteVector);
+                }
+                else if constexpr (is_map<VectorElem>::value)
+                {
+                    MapToBinary(lv_VectorVal, fp_BinaryWriteVector);
+                }
+                else
+                {
+                    ValueToBinary(lv_VectorVal, fp_BinaryWriteVector);
+                }
+            }
+        }
+
+        template<typename T_MapObject>
+        void
+            MapToBinary
+            (
+                const T_MapObject& fp_SerializableObjectField,
+                vector<uint8_t>& fp_BinaryWriteVector
+            )
+        {
+            static_assert(is_map<T_MapObject>::value, "[INTERNAL ERROR]: attempted to pass non map object into MapToBinary()");
+
+            BinaryCodec::EncodeInt<size_t>(fp_BinaryWriteVector, fp_SerializableObjectField.size()); //since it's a map we push the size first uwu
+
+            using MapValType = typename T_MapObject::mapped_type;
+            using MapKeyType = typename T_MapObject::key_type;
+
+            for (const auto& [lv_MapKey, lv_MapVal] : fp_SerializableObjectField)
+            {
+                ////////////////////////////////////////////// Map Keys //////////////////////////////////////////////
+
+                if constexpr (is_serializable_struct<MapKeyType>::value)
+                {
+                    ToBinary(lv_MapKey, fp_BinaryWriteVector);
+                }
+                //XXX: this is used for vector keys
+                else if constexpr (is_vector<MapKeyType>::value) //is constexpr here kosher idk, future me: yeah it is
+                {
+                    VectorToBinary(lv_MapKey, fp_BinaryWriteVector);
+                }
+                else if constexpr (is_map<MapKeyType>::value)
+                {
+                    MapToBinary(lv_MapKey, fp_BinaryWriteVector);
+                }
+                else
+                {
+                    ValueToBinary(lv_MapKey, fp_BinaryWriteVector);
+                }
+
+                ////////////////////////////////////////////// Map Values //////////////////////////////////////////////
+
+                if constexpr (is_serializable_struct<MapValType>::value)
+                {
+                    ToBinary(lv_MapVal, fp_BinaryWriteVector);
+                }
+                //XXX: this is used for vector keys
+                else if constexpr (is_vector<MapValType>::value) //is constexpr here kosher idk, future me: yeah it is
+                {
+                    VectorToBinary(lv_MapVal, fp_BinaryWriteVector);
+                }
+                else if constexpr (is_map<MapValType>::value)
+                {
+                    MapToBinary(lv_MapVal, fp_BinaryWriteVector);
+                }
+                else
+                {
+                    ValueToBinary(lv_MapVal, fp_BinaryWriteVector);
+                }
+            }
+        }
+
+        template<typename T>
+        void
+            ValueToBinary
+            (
+                const T& fp_Value,
+                vector<uint8_t>& fp_BinaryWriteVector
+            )
+        {
+            using ValType = remove_cvref_t<T>;
+
+            if constexpr (is_same_v<ValType, float>)
+            {
+                BinaryCodec::EncodeFloat(fp_BinaryWriteVector, fp_Value);
+            }
+            else if constexpr (is_same_v<ValType, double>)
+            {
+                BinaryCodec::EncodeDouble(fp_BinaryWriteVector, fp_Value);
+            }
+            else if constexpr (is_same_v<ValType, bool>)
+            {
+                BinaryCodec::EncodeBool(fp_BinaryWriteVector, fp_Value);
+            }
+            else if constexpr (is_arithmetic_v<ValType>)
+            {
+                BinaryCodec::EncodeInt<ValType>(fp_BinaryWriteVector, fp_Value);
+            }
+            else if constexpr (is_basic_string<ValType>::value)
+            {
+                BinaryCodec::EncodeStringUTF8<BINARY_STRING_LENGTH_V>(fp_BinaryWriteVector, fp_Value);
+            }
+            else if constexpr (is_unique_ptr_v<ValType>)
+            {
+                bool f_IsNotNull = static_cast<bool>(fp_Value); //convert ptr address -> bool
+                BinaryCodec::EncodeBool(fp_BinaryWriteVector, f_IsNotNull);
+
+                if (f_IsNotNull) //encode only if not null >w<
+                {
+                    using Pointee = unique_ptr_pointee_t<ValType>;
+
+                    if constexpr (is_serializable_struct<Pointee>::value)
+                    {
+                        ToBinary(*fp_Value, fp_BinaryWriteVector);
+                    }
+                    else if constexpr (is_vector<Pointee>::value)
+                    {
+                        VectorToBinary(*fp_Value, fp_BinaryWriteVector);
+                    }
+                    else if constexpr (is_map<Pointee>::value)
+                    {
+                        MapToBinary(*fp_Value, fp_BinaryWriteVector);
+                    }
+                    else
+                    {
+                        ValueToBinary(*fp_Value, fp_BinaryWriteVector);
+                    }
+                }
+            }
+            else if constexpr (is_pointer_v<ValType>)
+            {
+                static_assert(always_false_v<T>, "Only unique_ptr is supported for serialization, shared_ptr, weak_ptr and raw pointers are not supported!");
+            }
+            else
+            {
+                static_assert(always_false_v<decltype(fp_Value)>, "Unsupported value type in ValueToBinary()");
+            }
+        }
+
+        template<typename T>
+        [[nodiscard]] enable_if_t<is_serializable_struct<T>::value, bool> //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
+            FromBinary
+            (
+                T& fp_OutObject,
+                const vector<uint8_t>& fp_BinaryReadVector,
+                size_t& fp_CurrentOffset,
+                Logger* logger
+            )
+        {
+            if (fp_CurrentOffset >= fp_BinaryReadVector.size())
+            {
+                logger->Error("Offset exceeded binary size oooop uwu *pats head", "FromBinary()");
+                return false;
+            }
+
+            bool f_IsSuccessful = true; //XXX: used to track state of lambda execution
+
+            auto f_Visitor = [this, &fp_BinaryReadVector, &fp_CurrentOffset, &f_IsSuccessful, logger](const char* fp_Name, auto& fp_Value)
+            {
+                if (not f_IsSuccessful) //immediately return since something failed along the way >///< >w<!
+                {
+                    return;
+                }
+
+                using FieldType = decay_t<decltype(fp_Value)>;
+
+                try
+                {
+                    if constexpr (is_serializable_struct<FieldType>::value)
+                    {
+                        if (not FromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        {
+                            logger->Error(format("Failed to deserialize non primitive struct from binary for field named: '{}'", fp_Name), "FromBinary");
+                            f_IsSuccessful = false;
+                            return; //exit early UwU!
+                        }
+                    }
+                    else if constexpr (is_map<FieldType>::value)
+                    {
+                        if (not MapFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        {
+                            logger->Error(format("Failed to deserialize map for field named: '{}'", fp_Name), "FromBinary");
+                            f_IsSuccessful = false;
+                            return;
+                        }
+                    }
+                    else if constexpr (is_vector<FieldType>::value) //XXX: don't need to check for string types here since we already do so at the first branch
+                    {
+                        if (not VectorFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        {
+                            logger->Error(format("Failed to deserialize vector for field named: '{}'", fp_Name), "FromBinary");
+                            f_IsSuccessful = false;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        if (not ValueFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        {
+                            logger->Error(format("Failed to deserialize value for field named: '{}'", fp_Name), "FromBinary");
+                            f_IsSuccessful = false; //tell outer function thatis false uwu
+                            return; //return from lambda
+                        }
+                    }
+                    
+                }
+                catch (const exception& fp_Exception)
+                {
+                    logger->Error(format("Deserialization failed for field '{}' (type: {}): {}", fp_Name, typeid(decltype(fp_Value)).name(), fp_Exception.what()), "FromBinary");
+                    f_IsSuccessful = false;
+                    return;
+                }
+            };
+
+            fp_OutObject.PEACH_VISIT(f_Visitor);
+
+            return f_IsSuccessful;
+        }
+
+        template<typename T>
+        bool
+            ValueFromBinary
+            (
+                T& fp_OutValue,
+                const vector<uint8_t>& fp_BinaryReadVector,
+                size_t& fp_CurrentOffset,
+                Logger* logger
+            ) 
+        {
+            using ValType = remove_cvref_t<T>;
+
+            if constexpr (is_same_v<ValType, float>)
+            {
+                fp_OutValue = BinaryCodec::DecodeFloat(fp_BinaryReadVector, fp_CurrentOffset);
+            }
+            else if constexpr (is_same_v<ValType, double>)
+            {
+                fp_OutValue = BinaryCodec::DecodeDouble(fp_BinaryReadVector, fp_CurrentOffset);
+            }
+            else if constexpr (is_same_v<ValType, bool>)
+            {
+                fp_OutValue = BinaryCodec::DecodeBool(fp_BinaryReadVector, fp_CurrentOffset);
+            }
+            else if constexpr (is_arithmetic_v<ValType>)
+            {
+                fp_OutValue = BinaryCodec::DecodeInt<ValType>(fp_BinaryReadVector, fp_CurrentOffset);
+            }
+            else if constexpr (is_basic_string<ValType>::value)
+            {
+                fp_OutValue = BinaryCodec::DecodeStringUTF8<BINARY_STRING_LENGTH_V>(fp_BinaryReadVector, fp_CurrentOffset);
+            }
+            else if constexpr (is_unique_ptr_v<ValType>)
+            {
+                bool f_HasValue = BinaryCodec::DecodeBool(fp_BinaryReadVector, fp_CurrentOffset);
+
+                if (f_HasValue) //decode only if not null >w<
+                {
+                    using Pointee = unique_ptr_pointee_t<ValType>;
+
+                    fp_OutValue = make_unique<Pointee>(); //REQUIRES DEFAULT CONSTRUCTION, integral types works, basic_string/vec/map works, and serializable_struct works since we check uwu
+
+                    if constexpr (is_serializable_struct<Pointee>::value)
+                    {
+                        FromBinary(*fp_OutValue, fp_BinaryReadVector);
+                    }
+                    else if constexpr (is_vector<Pointee>::value)
+                    {
+                        VectorFromBinary(*fp_OutValue, fp_BinaryReadVector, fp_CurrentOffset, logger);
+                    }
+                    else if constexpr (is_map<Pointee>::value)
+                    {
+                        MapFromBinary(*fp_OutValue, fp_BinaryReadVector, fp_CurrentOffset, logger);
+                    }
+                    else
+                    {
+                        ValueFromBinary(*fp_OutValue, fp_BinaryReadVector, fp_CurrentOffset, logger);
+                    }
+                }
+            }
+            else if constexpr (is_pointer_v<ValType>)
+            {
+                static_assert(always_false_v<T>, "Only unique_ptr is supported for serialization, shared_ptr, weak_ptr and raw pointers are not supported!");
+            }
+            else
+            {
+                // Static error w/ full type sig
+#if defined(_MSC_VER)
+                static_assert(always_false_v<T>, "Unsupported type in Extract. Check __FUNCSIG__ for details: " __FUNCSIG__);
+#else
+                static_assert(always_false_v<T>, "Unsupported type in Extract. Check __func__ for details: " __func__);
+                //static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
+#endif
+            }
+
+            return true;
+        }
+
+        template<typename T_VectorObject>
+        bool
+            VectorFromBinary
+            (
+                T_VectorObject& fp_OutVector,
+                const vector<uint8_t>& fp_BinaryReadVector,
+                size_t& fp_CurrentOffset,
+                Logger* logger
+            )
+        {
+            static_assert(is_vector<T_VectorObject>::value, "[INTERNAL ERROR]: attempted to pass non vector object into VectorFromBinary()");
+
+            size_t f_AmountOfVectorElements = BinaryCodec::DecodeInt<size_t>(fp_BinaryReadVector, fp_CurrentOffset);
+
+            fp_OutVector.clear(); //clear the vector in case the user passes a vector filled with values
+
+            fp_OutVector.reserve(f_AmountOfVectorElements); //allocate memory to avoid realloc overhead
+
+            using Elem = typename decay_t<decltype(fp_OutVector)>::value_type;
+
+            for (size_t lv_CurrentIndex = 0; lv_CurrentIndex < f_AmountOfVectorElements; lv_CurrentIndex++) //uwu
+            {
+                fp_OutVector.emplace_back(); // constructs Elem in place
+                Elem& fv_CurrentItem = fp_OutVector.back(); //grab a reference and fill it uwu!
+
+                try
+                {
+                    if constexpr (is_serializable_struct<Elem>::value)
+                    {
+                        if (not FromBinary(fv_CurrentItem, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        {
+                            logger->Error("failed to deserialize non primitive struct", "VectorFromBinary");
+                            return false;
+                        }
+                    }
+                    else if constexpr (is_vector<Elem>::value) //XXX: used for nested vectors, needa check for strings since they're just char vectors
+                    {
+                        //call again assuming Elem reduces to a vector type and at the lowest level it will fill item with primitives or serializable structs
+                        if (not VectorFromBinary(fv_CurrentItem, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        {
+                            logger->Error("Failed to deserialize nested vector element", "VectorFromBinary");
+                            return false;
+                        }
+                    }
+                    else if constexpr (is_map<Elem>::value)
+                    {
+                        if (not MapFromBinary(fv_CurrentItem, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        {
+                            logger->Error("Failed to deserialize nested map element", "VectorFromBinary");
+                            return false;
+                        }
+                    }
+                    else if(not ValueFromBinary(fv_CurrentItem, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                    {
+                        logger->Error("Failed to deserialize value element", "VectorFromBinary");
+                        return false;
+                    }
+                }
+                catch (const exception& fp_Exception)
+                {
+                    logger->Error(format("Deserialization failed in VectorFromBinary() (type: '{}'): {}", typeid(Elem).name(), fp_Exception.what()), "VectorFromBinary");
+                    return false;
+                }
+            }
+
+            return true; //success! Vector was deserialized >W<
+        }
+
+        template<typename T_MapObject>
+        bool
+            MapFromBinary
+            (
+                T_MapObject& fp_OutMap,
+                const vector<uint8_t>& fp_BinaryReadVector,
+                size_t& fp_CurrentOffset,
+                Logger* logger
+            )
+        {
+            static_assert(is_map<T_MapObject>::value, "[INTERNAL ERROR]: attempted to pass non map object into MapToBinary()");
+
+            using MapValType = typename T_MapObject::mapped_type; //can do this since T_MapObject is guaranteed a map uwu, holy shit nostradamus is AHHHHH record of ragnarock mang
+            using MapKeyType = typename T_MapObject::key_type;
+
+            size_t f_AmountOfMapElements = BinaryCodec::DecodeInt<size_t>(fp_BinaryReadVector, fp_CurrentOffset);
+
+            fp_OutMap.clear(); //clear the map in case the user passes a map filled with values
+
+            if constexpr (has_reserve_v<T_MapObject>) //reserve when applicable uwu
+            {
+                fp_OutMap.reserve(f_AmountOfMapElements);
+            }
+
+            for (size_t lv_CurrentIndex = 0; lv_CurrentIndex < f_AmountOfMapElements; lv_CurrentIndex++) //OwO        
+            {
+                ////////////////////////////////////////////// Map Keys //////////////////////////////////////////////
+
+                MapKeyType fv_CurrentMapKeyItem{};
+
+                if constexpr (is_serializable_struct<MapKeyType>::value)
+                {
+                    if (not FromBinary(fv_CurrentMapKeyItem, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                    {
+                        logger->Error("failed to deserialize map key from binary for a given serializable struct", "MapFromBinary");
+                        return false; //exit early uwu
+                    }
+                }
+                //XXX: this is used for nested vectors
+                else if constexpr (is_vector<MapKeyType>::value) //is constexpr here kosher idk, future me: yeah it is
+                {
+                    if (not VectorFromBinary(fv_CurrentMapKeyItem, fp_BinaryReadVector, fp_CurrentOffset, logger)) //OwO!
+                    {
+                        logger->Error("failed to deserialize nested map key from binary for a given vector", "MapFromBinary");
+                        return false;
+                    }
+                }
+                else if constexpr (is_map<MapKeyType>::value)
+                {
+                    if (not MapFromBinary(fv_CurrentMapKeyItem, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                    {
+                        logger->Error("failed to deserialize nested map key from binary for a given map", "MapFromBinary");
+                        return false;
+                    }
+                }
+                else 
+                {
+                    if (not ValueFromBinary(fv_CurrentMapKeyItem, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                    {
+                        logger->Error("Failed to deserialize map key element!", "MapFromBinary");
+                        return false;
+                    }
+                }
+
+                ////////////////////////////////////////////// Map Values //////////////////////////////////////////////
+
+                auto [fv_KeyIt, fv_IsInserted] = fp_OutMap.try_emplace(move(fv_CurrentMapKeyItem));
+
+                if (not fv_IsInserted) //THIS WILL NOT WORK FOR DUPLICATED KEYS UWU
+                {
+                    logger->Error("Duplicate key in binary map", "MapFromBinary");
+                    return false;
+                }
+
+                if constexpr (is_serializable_struct<MapValType>::value)
+                {
+                    if (not FromBinary(fv_KeyIt->second, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                    {
+                        logger->Error("failed to deserialize map value from binary for a given serializable struct", "MapFromBinary");
+                        return false; //exit early uwu
+                    }
+                }
+                //XXX: this is used for nested vectors
+                else if constexpr (is_vector<MapValType>::value) //is constexpr here kosher idk, future me: yeah it is
+                {
+                    if (not VectorFromBinary(fv_KeyIt->second, fp_BinaryReadVector, fp_CurrentOffset, logger)) //OwO!
+                    {
+                        logger->Error("failed to deserialize vector value from binary for a given vector", "MapFromBinary");
+                        return false;
+                    }
+                }
+                else if constexpr (is_map<MapValType>::value)
+                {
+                    if (not MapFromBinary(fv_KeyIt->second, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                    {
+                        logger->Error("failed to deserialize nested map value from binary for a given map", "MapFromBinary");
+                        return false;
+                    }
+                }
+                else
+                {
+                    if((not ValueFromBinary(fv_KeyIt->second, fp_BinaryReadVector, fp_CurrentOffset, logger)))
+                    {
+                        logger->Error("Failed to deserialize map value element!", "MapFromBinary");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
         }
 
     private:

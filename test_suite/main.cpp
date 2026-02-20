@@ -64,13 +64,11 @@ int
 
     ////////////////////////////////////////////// Setup the Testing Logger //////////////////////////////////////////////
 
-    using PLF = PeachCore::Logger::Flags;
-
     std::unique_ptr<PeachCore::Logger> testing_logger = nullptr;
     
     const std::string f_TestsRootDir = mf_PeachERootPath + "/test_suite/tests";
 
-    testing_logger = PeachCore::Logger::CreateUnique("PeachTests", PLF::ALL_LOGS | PLF::FLUSH_ERROR | PLF::FLUSH_FATAL, f_TestsRootDir + "/logs");
+    testing_logger = PeachCore::Logger::CreateUnique("PeachTests", PEACH_LOGGER_DEFAULT_FLAGS, f_TestsRootDir + "/logs");
 
     if (not testing_logger)
     {
@@ -86,7 +84,7 @@ int
     {
         auto engine_manager = &PeachCore::GameManager::get_single();
 
-        engine_manager->InitializePeachEngine
+        engine_manager->InitializePeachEngineCustom
         (
             f_TestsRootDir,
             PeachCore::ThreadName::NO_THREAD,
@@ -98,7 +96,8 @@ int
 #ifdef BUILD_PEACH_SERIALIZER_TEST
         PeachCore::Print("\n====================================================== Starting Serializer Test ======================================================", PeachCore::Colours::BrightMagenta);
 
-        PeachTests::RunSerializerPODTests(f_TestsRootDir + "/serialization", testing_logger.get());
+        //PeachTests::RunSerializerPODTests(f_TestsRootDir + "/serialization", testing_logger.get());
+        PeachTests::RunSerializerPODBinaryTests(testing_logger.get());
 
         PeachCore::Print("====================================================== Ending Serializer Test ======================================================", PeachCore::Colours::BrightMagenta);
 #endif

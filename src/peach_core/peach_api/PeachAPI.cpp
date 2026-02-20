@@ -11,6 +11,8 @@
 #include "PeachAPI.h"
 #include "../Managers/GameManager.h"
 
+using namespace std; //can do this here since it's not included anywhere uwu
+
 #define PEACH_ASSERT_NODE_EXISTS(x) PeachCore::GameManager::get_single().GetCurrentScene()->
 
 /*
@@ -131,23 +133,39 @@ PEACH_API PEACH_STATUS_CODE
     return PEACH_OK;
 }
 
-PEACH_API const char*
-    PEACH_StatusCodeToString(const PEACH_STATUS_CODE fp_StatusCode)
+//////////////////////////////////////////////////////////////////////////////////////////// Error Handling ////////////////////////////////////////////////////////////////////////////////////////////
+
+PEACH_API C23_CONSTEXPR PEACH_STATUS_CODE
+    PEACH_StatusCodeToString(const PEACH_STATUS_CODE fp_StatusCode, size_t fp_BufferSize, char* fp_CharBuffer)
 {
-    //const static unordered_map<int64_t, string> PEACH_STATUS_STRINGS =
-    //{
-    //    {PEACH_OK, "Working as expected"},
-    //    { PEACH_INVALID_SCENE_NAME, "invalid scene name passed, there is no scene with specified name found"}
-    //};
+    if (not fp_CharBuffer)
+    {
+        return PEACH_ERROR_NULLPTR_REF_PASSED;
+    }
 
-    //constexpr static inline string
-    //    StatusCodeToString(const uint64_t fp_StatusCode)
-    //{
-    //    //auto f_FindIterator = PEACH_STATUS_STRINGS.find(fp_StatusCode);
+    string f_ErrorString;
+
+    switch (fp_StatusCode)
+    {
+
+    default:
+
+        break;
+    }
+
+    if (f_ErrorString.size() > fp_BufferSize)
+    {
+
+        return PEACH_ERROR_INTERNAL_API_FAILURE; //this should be mentioned in an issue with a detailed description of how to reproduce uwu
+    }
 
 
-    //    return PEACH_STATUS_STRINGS.at(fp_StatusCode);
-    //}
+    return PEACH_OK;
+}
 
-    return NULL;
+PEACH_API PEACH_STATUS_CODE
+    PEACH_GetLastErrorAsString(size_t fp_BufferSize, char* fp_CharBuffer)
+{
+
+    return PEACH_OK;
 }

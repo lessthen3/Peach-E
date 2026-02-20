@@ -154,6 +154,13 @@ namespace PeachCore {
         PEACH_STATUS_CODE
             GetRelativePathString(PeachNodeID fp_ParentNode, PeachNodeID fp_DesiredNode, string& fp_StringContainer); //returns the path string relative to a specific node
 
+        PEACH_STATUS_CODE
+            IsNodeInTree(PeachNodeID fp_DesiredNode)
+        {
+
+            return PEACH_OK;
+        }
+
         bool
             RenameNode
             (

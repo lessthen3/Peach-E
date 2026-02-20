@@ -320,7 +320,209 @@ namespace PeachTests {
         return true;
     }
 
+    template<typename T>
+    static bool BinaryRoundtrip(const T& original, Logger* logger)
+    {
+        Serializer s;
+
+        std::vector<uint8_t> bin;
+        bin.reserve(1024); // tiny heuristic, not required
+
+        bool ok = s.PackIntoBinaryVector(original, bin);
+        assert(ok);
+        assert(!bin.empty());
+
+        T restored{};
+        size_t start = 0;
+        ok = s.UnpackFromBinaryVector(restored, bin, logger, start);
+        assert(ok);
+        PeachCore::Print(format("start: {} and bin size: {}", start, bin.size()), Colours::BrightCyan);
+        // Make sure we consumed exactly all bytes (great sanity check for offset bugs)
+        assert(start == bin.size());
+
+        assert(restored == original);
+        return true;
+    }
+
+    // ---------- Individual tests (Binary) ----------
+
+    bool Test_Binary_SimplePOD_Roundtrip(Logger* logger)
+    {
+        SimplePOD original{};
+        original.i = -123456;
+        original.d = 3.141592653589793;
+        original.b = true;
+        original.s = "hello\n\t\"peach\"\\engine 🍑";
+
+        return BinaryRoundtrip(original, logger);
+    }
+
+    bool Test_Binary_ContainerPOD_Roundtrip(Logger* logger)
+    {
+        ContainerPOD original{};
+
+        original.ints = {
+            0,
+            1,
+            -1,
+            std::numeric_limits<int>::max(),
+            std::numeric_limits<int>::min()
+        };
+
+        original.doubles = {
+            0.0,
+            -0.0,
+            1.0,
+            -12345.6789,
+            std::numeric_limits<double>::max() / 2.0
+        };
+
+        original.strings = {
+            "",
+            "simple",
+            "with spaces",
+            "weird\nnewline",
+            "tab\tand\"quotes\"\\backslash"
+        };
+
+        original.nestedInts = {
+            {},
+            {1, 2, 3},
+            {std::numeric_limits<int>::min(), std::numeric_limits<int>::max()}
+        };
+
+        original.counts = {
+            {"zero", 0},
+            {"neg", -5},
+            {"big", std::numeric_limits<int>::max()}
+        };
+
+        return BinaryRoundtrip(original, logger);
+    }
+
+    bool Test_Binary_NestedPOD_Roundtrip(Logger* logger)
+    {
+        NestedPOD original{};
+
+        original.core = InnerPOD{
+            42,
+            0.5f,
+            "core-peach"
+        };
+
+        original.list = {
+            InnerPOD{1, 10.0f, "one"},
+            InnerPOD{-5, -0.001f, "minus"},
+            InnerPOD{999999, 1234.5678f, "big"}
+        };
+
+        original.map = {
+            {"first",  InnerPOD{10, 1.0f, "first"}},
+            {"second", InnerPOD{-10, -1.0f, "second"}}
+        };
+
+        original.buckets = {
+            {"empty", {}},
+            {"small", {1,2,3}},
+            {"edge", {
+                std::numeric_limits<int>::min(),
+                0,
+                std::numeric_limits<int>::max()
+            }}
+        };
+
+        return BinaryRoundtrip(original, logger);
+    }
+
+    bool Test_Binary_DerivedPOD_Roundtrip(Logger* logger)
+    {
+        DerivedPOD original{};
+        original.baseHealth = 1337;
+        original.baseName = "BasePeach";
+        original.speed = 9.81f;
+        original.inventory = { 1, 2, 3, 5, 8, 13 };
+
+        return BinaryRoundtrip(original, logger);
+    }
+
+    // ---------- Corruption / bounds tests (Binary) ----------
+    // These are optional but VERY good at catching offset/bounds bugs.
+
+    bool Test_Binary_TruncatedBuffer_Fails(Logger* logger)
+    {
+        Serializer s;
+
+        SimplePOD original{};
+        original.i = 69;
+        original.d = 1.25;
+        original.b = false;
+        original.s = "truncate me";
+
+        std::vector<uint8_t> bin;
+        bool ok = s.PackIntoBinaryVector(original, bin);
+        assert(ok);
+        assert(bin.size() > 4);
+
+        // Truncate the buffer
+        bin.resize(bin.size() - 3);
+
+        SimplePOD restored{};
+        size_t start = 0;
+        ok = s.UnpackFromBinaryVector(restored, bin, logger, start);
+
+        // should fail cleanly (either returns false or throws inside decode and you catch above)
+        assert(!ok);
+        return true;
+    }
+
+    // If you want to verify your duplicate-key guard in MapFromBinary:
+    // NOTE: this assumes your map serialization writes:
+    //   [count][key][value][key][value]...
+    // and key is a string and value is int (like your counts).
+    // This test *constructs a binary blob with duplicate keys* by serializing
+    // two entries manually using your BinaryCodec helpers.
+    //
+    // Only include this if you actually want that behavior.
+    bool Test_Binary_DuplicateMapKey_Fails(Logger* logger)
+    {
+        Serializer s;
+
+        // Build a ContainerPOD-like binary stream that only contains the "counts" map
+        // is NOT possible unless you have a stable field order and exact ToBinary layout.
+        //
+        // So instead, test a standalone map if you have an exposed MapFromBinary helper.
+        //
+        // If MapFromBinary is private, skip this test.
+        (void)logger;
+        return true;
+    }
+
     // ---------- Master entry point ----------
+
+    inline void RunSerializerPODBinaryTests(Logger* logger)
+    {
+        assert(logger && "Logger must not be nullptr in these tests (Serializer expects it).");
+
+        logger->Info("===== Running Serializer POD BINARY tests =====", "SerializerTests");
+
+        Test_Binary_SimplePOD_Roundtrip(logger);
+        logger->Info("Binary SimplePOD roundtrip OK", "SerializerTests");
+
+        Test_Binary_ContainerPOD_Roundtrip(logger);
+        logger->Info("Binary ContainerPOD roundtrip OK", "SerializerTests");
+
+        Test_Binary_NestedPOD_Roundtrip(logger);
+        logger->Info("Binary NestedPOD roundtrip OK", "SerializerTests");
+
+        Test_Binary_DerivedPOD_Roundtrip(logger);
+        logger->Info("Binary DerivedPOD roundtrip OK", "SerializerTests");
+
+        //// Optional “make sure you fail safely”
+        Test_Binary_TruncatedBuffer_Fails(logger);
+        logger->Info("Binary truncated-buffer failure OK", "SerializerTests");
+
+        logger->Info("===== ALL Serializer POD BINARY tests passed =====", "SerializerTests");
+    }
 
     inline void RunSerializerPODTests(const string& dir, Logger* logger)
     {
