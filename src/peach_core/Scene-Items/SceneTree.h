@@ -38,6 +38,10 @@ namespace PeachCore {
 
         // Node Name : Node
         vector<unique_ptr<PeachNode>> pm_PeachNodes; //use raw pointers for local function bound operations on PeachNodes via SceneTreeManager
+
+        //vector<unique_ptr<PeachNode>>
+
+
         unordered_map<string, PeachNodeID> pm_StringToNodeID; //used for when node names are changed by user, to help between the engine ID tracking and the user identifying the node
 
         queue<uint64_t> pm_PeachNodesQueuedForRemoval; //this holds the lower 56 bits only since the index is all we care ab in the vector uwu

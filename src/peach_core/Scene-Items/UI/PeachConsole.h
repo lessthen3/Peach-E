@@ -21,8 +21,36 @@
 namespace PeachCore::PUI {
 
     using ArgType = variant<string, int64_t, uint64_t, double>;
+    using ParsedArgument = pair<string, string>;
 
     constexpr int64_t INVALID_COMMAND = 0;
+    constexpr size_t STRING_DISPLAY_BUFFER_MAX_SIZE = 1024; //MAYBE: idk might make peach console templated but thats annoying so I can add an argument for the page size ig uwu
+
+    struct PeachConsoleCommand
+    {
+        const string Symbol; //-G, --debug
+        const string MetaVariable; //[generator], [help idk]
+        const string HelpMessage;
+
+        explicit
+            PeachConsoleCommand
+            (
+                const string& fp_Symbol, 
+                const string& fp_MetaVariable,
+                const string& fp_HelpMessage = ""
+            ) 
+            : 
+                Symbol(fp_Symbol), 
+                MetaVariable(fp_MetaVariable),
+                HelpMessage(fp_HelpMessage)
+        {}
+    };
+
+    struct PeachConsoleTab
+    {
+        string Name;
+        RingBuffer<string, STRING_DISPLAY_BUFFER_MAX_SIZE> pm_StringDisplayBuffer;
+    };
 
     //////////////////////////////////////////////
     // Console Struct
@@ -30,6 +58,16 @@ namespace PeachCore::PUI {
 
     struct PeachConsole : public Node
     {
+    private:
+        bool pm_IsScrollToBottom{ false }; //scroll to bottom whenever new log appears or command is input
+        bool pm_ShouldEchoCommand{ true }; //echos command input when true uwu
+
+        unordered_map<string, Logger> pm_Loggers;
+
+        unordered_map<string, PeachConsoleCommand> pm_CommandList;
+
+        PeachConsoleTab pm_MainConsoleScreen;
+
     public:
         virtual ~PeachConsole() = default;
 
@@ -68,7 +106,7 @@ namespace PeachCore::PUI {
         //}
 
         [[nodiscard]] Logger*
-            CreateLogger(const string& fp_LoggerName, PEACH_LOGGER_FLAGS fp_LoggerFlags); //should create logger flags as a typedef extern C enum to interop uwu
+            CreateLogger(const string& fp_LoggerName, PEACH_LOGGER_FLAGS fp_LoggerFlags); //should create logger flags as a typedef extern C enum to interop uwu future ryan: ye did it uwu
 
         void 
             ClearConsole
@@ -76,33 +114,28 @@ namespace PeachCore::PUI {
                 const string& fp_DesiredTab
             );
 
-        void 
-            Draw
-            (
-                const string& title, 
-                bool& p_open
-            );
+        void
+            GetFormattedHelpString();
 
         [[nodiscard]] bool
-            ParseArguments(const string& fp_Args);
+            ParseArguments
+            (
+                const string& fp_CommandString,
+                vector<ParsedArgument>& fp_ParsedArguments
+            );
 
         void
-            HookLogBuffer(shared_ptr<Logger::LogBuffer> fp_SnapshotBuffer);
-
-        void
-            SetCommandList(vector<string>&& fp_CommandList);
+            AddCommand
+            (
+                const string& fp_Symbol,
+                const string& fp_MetaVariable,
+                const string& fp_HelpMessage = ""
+            );
 
         void 
             SetScrollToBottom() 
         { 
             pm_IsScrollToBottom = true;
         }
-
-    private:
-        bool pm_IsScrollToBottom{ false }; //scroll to bottom whenever new log appears
-
-        unordered_map<uint64_t, shared_ptr<Logger::LogBuffer>> pm_HookedBuffers;
-
-        vector<string> pm_CommandList;
     };
 }

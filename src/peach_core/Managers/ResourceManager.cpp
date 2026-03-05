@@ -43,7 +43,7 @@ namespace PeachCore {
 
         pm_RootDirectory = fp_RootPhysfsDirectory;
 
-        resource_logger->Info("ResourceManager successfully initialized the all queues", "ResourceManager");
+        resource_logger->Info("ResourceManager successfully initialized all queues", "ResourceManager");
 
         pm_IsInitialized = true;
 
