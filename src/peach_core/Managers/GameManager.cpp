@@ -19,6 +19,8 @@
 
 #include "GameManager.h"
 
+#include <csignal>
+
 namespace PeachCore
 {
     //////////////////////////////////////////////

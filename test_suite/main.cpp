@@ -16,7 +16,7 @@
 #define BUILD_PEACH_SERIALIZER_TEST ////////////////////////////////////////////// Here just for a bit for testing the testing suite UwU
 
 #ifdef BUILD_PEACH_SERIALIZER_TEST
-#include "tests/serialization/cereal.h"
+#include "tests/serialization/Cereal.h"
 #endif
 
 #include "tests/logging/LoggerTest.h"

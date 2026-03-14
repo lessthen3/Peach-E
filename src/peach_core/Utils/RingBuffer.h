@@ -54,7 +54,7 @@ namespace PeachCore {
                 return false;
             }
 
-            PushOverwrite(move(fp_Val)); // Move into buffer
+            PushOverwrite(std::move(fp_Val)); // Move into buffer
 
             return true;
         }
@@ -68,7 +68,7 @@ namespace PeachCore {
                 return false;
             }
 
-            EmplaceOverwrite(forward<Args>(fp_Args)...);
+            EmplaceOverwrite(std::forward<Args>(fp_Args)...);
 
             return true;
         }
@@ -82,14 +82,14 @@ namespace PeachCore {
         constexpr void 
             Push(T&& fp_Val)
         {
-            PushOverwrite(move(fp_Val));
+            PushOverwrite(std::move(fp_Val));
         }
 
         template<typename... Args>
         constexpr void 
             Emplace(Args&&... fp_Args)
         {
-            EmplaceOverwrite(forward<Args>(fp_Args)...);
+            EmplaceOverwrite(std::forward<Args>(fp_Args)...);
         }
 
         void 
@@ -244,7 +244,7 @@ namespace PeachCore {
         void
             PushOverwrite(T&& fp_Val)
         {
-            pm_Buffer[pm_Head] = move(fp_Val);
+            pm_Buffer[pm_Head] = std::move(fp_Val);
             AdvanceHead();
         }
 
@@ -252,7 +252,7 @@ namespace PeachCore {
         void
             EmplaceOverwrite(Args&&... fp_Args)
         {
-            pm_Buffer[pm_Head] = T(forward<Args>(fp_Args)...);
+            pm_Buffer[pm_Head] = T(std::forward<Args>(fp_Args)...);
             AdvanceHead();
         }
     };

@@ -18,6 +18,7 @@
 #include <vector>
 #include <memory>
 #include <cstdint>
+#include <cstring>
 
 #include <type_traits>
 #include <utility>
@@ -1023,12 +1024,12 @@ namespace PeachCore {
 
             f_TokenizedJson.reserve(static_cast<size_t>(f_CharBuffer.size() / 4)); //heurisitic to avoid dynamic resizing overhead
 
-            if (not Tokenize(VectorStream<char>(move(f_CharBuffer)), f_TokenizedJson,  logger)) //convert JSON string into a vector of tokens
+            if (not Tokenize(VectorStream<char>(std::move(f_CharBuffer)), f_TokenizedJson,  logger)) //convert JSON string into a vector of tokens
             {
                 logger->Error("Failed to Lex JSON", "FromJSON");
                 return false;
             }
-            if (not ParseJSON(VectorStream<Token>(move(f_TokenizedJson)), f_TempJSON, logger)) //parse the tokens into a valid JSONValue object
+            if (not ParseJSON(VectorStream<Token>(std::move(f_TokenizedJson)), f_TempJSON, logger)) //parse the tokens into a valid JSONValue object
             {
                 logger->Error("Failed to Parse JSON", "FromJSON");
                 return false;
@@ -1085,10 +1086,23 @@ namespace PeachCore {
                 T& fp_EmptyObject,
                 const vector<uint8_t>& fp_BinaryVector,
                 Logger* logger,
-                size_t& fp_StartReadOffset = 0 //start at beginning of vector by default owo
+                size_t& fp_StartReadOffset //start at beginning of vector by default owo
             )
         {
             return FromBinary(fp_EmptyObject, fp_BinaryVector, fp_StartReadOffset, logger);
+        }
+
+        template<typename T>
+        bool
+            UnpackFromBinaryVector
+            (
+                T& fp_EmptyObject,
+                const vector<uint8_t>& fp_BinaryVector,
+                Logger* logger
+            )
+        {
+            size_t f_StartReadOffset = 0;
+            return FromBinary(fp_EmptyObject, fp_BinaryVector, f_StartReadOffset, logger);
         }
 
     private:
@@ -1547,10 +1561,10 @@ namespace PeachCore {
 
             JSONValue() : JSONType(Type::Null), m_Value(false) {}
 
-            explicit JSONValue(JSONObject __obj) : JSONType(Type::Object), m_Value(move(__obj)) {}
-            explicit JSONValue(JSONArray __arr) : JSONType(Type::Array), m_Value(move(__arr)) {}
+            explicit JSONValue(JSONObject __obj) : JSONType(Type::Object), m_Value(std::move(__obj)) {}
+            explicit JSONValue(JSONArray __arr) : JSONType(Type::Array), m_Value(std::move(__arr)) {}
 
-            explicit JSONValue(string __str) : JSONType(Type::String), m_Value(move(__str)) {}
+            explicit JSONValue(string __str) : JSONType(Type::String), m_Value(std::move(__str)) {}
             explicit JSONValue(bool __b) : JSONType(Type::Boolean), m_Value(__b) {}
 
             template<typename I, enable_if_t<is_integral_v<I>&& is_signed_v<I>, int> = 0>
@@ -1918,7 +1932,7 @@ namespace PeachCore {
 
             fp_ObjectToSerialize.PEACH_VISIT(f_Visitor);
 
-            return JSONValue(move(f_Object));
+            return JSONValue(std::move(f_Object));
         }
 
         /*
@@ -2115,7 +2129,7 @@ namespace PeachCore {
                 #if defined(_MSC_VER)
                     static_assert(always_false_v<T>, "Unsupported type in Extract. Check __FUNCSIG__ for details: " __FUNCSIG__);
                 #else
-                    static_assert(always_false_v<T>, "Unsupported type in Extract. Check __func__ for details: " __func__);
+                    static_assert(always_false_v<T>, "Unsupported type in Extract. Check __func__ for details: " +  __func__);
                     //static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
                 #endif
             }
@@ -2529,7 +2543,7 @@ namespace PeachCore {
 #if defined(_MSC_VER)
                 static_assert(always_false_v<T>, "Unsupported type in Extract. Check __FUNCSIG__ for details: " __FUNCSIG__);
 #else
-                static_assert(always_false_v<T>, "Unsupported type in Extract. Check __func__ for details: " __func__);
+                static_assert(always_false_v<T>, format("Unsupported type in Extract. Check __func__ for details: {}", __func__));
                 //static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
 #endif
             }
@@ -2743,7 +2757,7 @@ namespace PeachCore {
                     return false;
                 }
 
-                f_CurrentKey = move(f_CurrentToken.m_Value);
+                f_CurrentKey = std::move(f_CurrentToken.m_Value);
                 fp_Tokens.ShiftForward(f_CurrentToken); //look for ':'
 
                 if (f_CurrentToken.m_Type != TokenType::DoubleDot)
@@ -2965,14 +2979,14 @@ namespace PeachCore {
                 {
                     JSONObject f_Object;
                     ParseObject(fp_Tokens, f_Object, logger);
-                    fp_JSON = move(JSONValue(f_Object));
+                    fp_JSON = std::move(JSONValue(f_Object));
                 }
                 break;
                 case TokenType::OpenSquareBracket:
                 {
                     JSONArray f_Array;
                     ParseArray(fp_Tokens, f_Array, logger);
-                    fp_JSON = move(JSONValue(f_Array));
+                    fp_JSON = std::move(JSONValue(f_Array));
                 }
                 break;
                 default:

@@ -96,7 +96,7 @@ namespace PeachCore
 
             for(f_BlockNum; f_BlockNum > 1; --f_BlockNum)
             {
-                if(not f_CurrentBlock = f_CurrentBlock->NextBlock)
+                if(not (f_CurrentBlock = f_CurrentBlock->NextBlock))
                 {
                     throw overflow_error("Tried to access index out of bounds on ChunkedPool!");
                 }
@@ -121,7 +121,7 @@ namespace PeachCore
 
             for(f_BlockNum; f_BlockNum > 1; --f_BlockNum)
             {
-                if(not f_CurrentBlock = f_CurrentBlock->NextBlock)
+                if(not (f_CurrentBlock = f_CurrentBlock->NextBlock))
                 {
                     throw overflow_error("Tried to access index out of bounds on ChunkedPool!");
                 }

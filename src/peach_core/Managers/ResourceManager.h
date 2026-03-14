@@ -11,7 +11,6 @@
 #pragma once
 
 ///STL
-#include <mutex>
 #include <semaphore>
 #include <latch>
 
@@ -57,6 +56,8 @@ namespace PeachCore {
     using AnimationID = uint64_t;
 
     using VulkanShaderBytecode = vector<uint32_t>;
+
+    using MaxCountingSemaphore = std::counting_semaphore<std::counting_semaphore<>::max()>;
 
     enum class RESOURCE_OP : uint16_t
     {
@@ -127,7 +128,7 @@ namespace PeachCore {
             }
 
             ResPath = fp_ResPath;
-            BinaryData = move(fp_BinaryData);
+            BinaryData = std::move(fp_BinaryData);
             ChunkSize = BinaryData.size();
             NameSize = static_cast<uint16_t>(fp_ResPath.size());
         }
@@ -206,7 +207,7 @@ namespace PeachCore {
         ResourceTransfer(const uint64_t fp_NodeDestination, ResourcePayload&& fp_ResourcePayload)
         {
             NodeID = fp_NodeDestination;
-            Payload = move(fp_ResourcePayload);
+            Payload = std::move(fp_ResourcePayload);
         }
     };
 
@@ -277,7 +278,8 @@ namespace PeachCore {
 
         //////////////////// Semaphore Control ////////////////////
 
-        counting_semaphore<PEACH_MAX_PTR_DIFF> pm_ResourceSemaphore{ 0 }; // starts locked (zero tickets)
+        MaxCountingSemaphore pm_ResourceSemaphore{ 0 }; // starts locked (zero tickets)
+
         atomic<bool> pm_IsRunning = true;
 
         //////////////////// Binary Data ////////////////////

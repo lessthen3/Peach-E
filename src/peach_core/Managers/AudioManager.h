@@ -12,7 +12,6 @@
 
 ///PeachCore
 #include "ResourceManager.h"
-#include <limits>
 
 ///STL
 
@@ -91,7 +90,7 @@ namespace PeachCore {
 
         unique_ptr<Logger> audio_logger = nullptr;
 
-        counting_semaphore<PEACH_MAX_PTR_DIFF> pm_AudioSemaphore{ 0 }; // starts locked (zero tickets)
+        MaxCountingSemaphore pm_AudioSemaphore{ 0 }; // starts locked (zero tickets)
 
     //////////////////////////////////////////////
     // Public Members

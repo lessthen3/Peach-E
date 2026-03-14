@@ -235,11 +235,6 @@ if(BUILD_PEACH_TESTS)
         peach_core
     )
 
-    target_compile_options(Peach_Tests PRIVATE
-    $<$<CONFIG:Debug>:/MTd>
-    $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
-    ) 
-
 endif()
 
 ####################################### Static Imports
@@ -1094,6 +1089,10 @@ if(WIN32)
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
         target_compile_options(Peach_Editor PRIVATE
+            $<$<CONFIG:Debug>:/MTd>
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+        ) 
+        target_compile_options(Peach_Tests PRIVATE
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
