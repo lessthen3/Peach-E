@@ -18,7 +18,7 @@
 #include <vector>
 #include <memory>
 #include <cstdint>
-#include <cstring>
+#include <cstring> //for memcpy uwu
 
 #include <type_traits>
 #include <utility>
@@ -918,7 +918,7 @@ namespace PeachCore {
 
             if (not logger)
             {
-                PrintError("Serialization Error: Tried to pass nullptr reference to logger during ReadJSONIntoString()");
+                PrintError("Serialization Error: Tried to pass nullptr reference to logger during ReadFileIntoCharBuffer()");
                 return false;
             }
 
@@ -926,7 +926,7 @@ namespace PeachCore {
 
             if (not filesystem::exists(fp_ScriptFilePath))
             {
-                logger->Error("Serialization Error: Tried to pass invalid filepath to ReadJSONIntoString", "Serializer");
+                logger->Error("Serialization Error: Tried to pass invalid filepath to ReadFileIntoCharBuffer()", "Serializer");
                 return false;
             }
 
@@ -963,7 +963,7 @@ namespace PeachCore {
 
             if (not f_FileStream)
             {
-                logger->Error("Serialization Error: Failed to open JSON for reading.", "Serializer");
+                logger->Error(format("Serialization Error: Failed to open '{}' for reading.", fp_ScriptFilePath), "Serializer");
                 return false;
             }
 
