@@ -171,8 +171,6 @@ namespace PeachTests {
             Logger* logger
         )
     {
-        Serializer f_Serializer;
-
         SimplePOD original{};
         original.i = -123456;
         original.d = 3.141592653589793;
@@ -182,11 +180,12 @@ namespace PeachTests {
         const string fileName = "test_simple_pod";
         const string jsonFile = JoinPath(dir, fileName + ".json");
 
-        bool ok = f_Serializer.ToJSON(original, fileName, dir, logger);
+        bool ok = PEACH_TO_JSON(original, fileName, dir, logger);
+
         assert(ok);
 
         SimplePOD restored{};
-        ok = f_Serializer.FromJSON(restored, jsonFile, logger);
+        ok = Serializer::FromJSON(restored, jsonFile, logger);
         assert(ok);
 
         assert(restored == original);
@@ -195,8 +194,6 @@ namespace PeachTests {
 
     bool Test_ContainerPOD_Roundtrip(const string& dir, Logger* logger)
     {
-        Serializer s;
-
         ContainerPOD original{};
 
         original.ints = {
@@ -238,11 +235,11 @@ namespace PeachTests {
         const string fileName = "test_container_pod";
         const string jsonFile = JoinPath(dir, fileName + ".json");
 
-        bool ok = s.ToJSON(original, fileName, dir, logger);
+        bool ok = Serializer::ToJSON(original, fileName, dir, logger);
         assert(ok);
 
         ContainerPOD restored{};
-        ok = s.FromJSON(restored, jsonFile, logger);
+        ok = Serializer::FromJSON(restored, jsonFile, logger);
         assert(ok);
 
         assert(restored == original);
@@ -251,8 +248,6 @@ namespace PeachTests {
 
     bool Test_NestedPOD_Roundtrip(const string& dir, Logger* logger)
     {
-        Serializer s;
-
         NestedPOD original{};
 
         original.core = InnerPOD{
@@ -285,11 +280,11 @@ namespace PeachTests {
         const string fileName = "test_nested_pod";
         const string jsonFile = JoinPath(dir, fileName + ".json");
 
-        bool ok = s.ToJSON(original, fileName, dir, logger);
+        bool ok = Serializer::ToJSON(original, fileName, dir, logger);
         assert(ok);
 
         NestedPOD restored{};
-        ok = s.FromJSON(restored, jsonFile, logger);
+        ok = Serializer::FromJSON(restored, jsonFile, logger);
         assert(ok);
 
         assert(restored == original);
@@ -298,8 +293,6 @@ namespace PeachTests {
 
     bool Test_DerivedPOD_Roundtrip(const string& dir, Logger* logger)
     {
-        Serializer s;
-
         DerivedPOD original{};
         original.baseHealth = 1337;
         original.baseName   = "BasePeach";
@@ -309,11 +302,11 @@ namespace PeachTests {
         const string fileName = "test_derived_pod";
         const string jsonFile = JoinPath(dir, fileName + ".json");
 
-        bool ok = s.ToJSON(original, fileName, dir, logger);
+        bool ok = Serializer::ToJSON(original, fileName, dir, logger);
         assert(ok);
 
         DerivedPOD restored{};
-        ok = s.FromJSON(restored, jsonFile, logger);
+        ok = Serializer::FromJSON(restored, jsonFile, logger);
         assert(ok);
 
         assert(restored == original);
@@ -323,18 +316,16 @@ namespace PeachTests {
     template<typename T>
     static bool BinaryRoundtrip(const T& original, Logger* logger)
     {
-        Serializer s;
-
         std::vector<uint8_t> bin;
         bin.reserve(1024); // tiny heuristic, not required
 
-        bool ok = s.PackIntoBinaryVector(original, bin);
+        bool ok = PEACH_PACK_BINARY(original, bin);
         assert(ok);
         assert(!bin.empty());
 
         T restored{};
         size_t start = 0;
-        ok = s.UnpackFromBinaryVector(restored, bin, logger, start);
+        ok = PEACH_UNPACK_BINARY_OFFSET(restored, bin, logger, start);
         assert(ok);
         PeachCore::Print(format("start: {} and bin size: {}", start, bin.size()), Colours::BrightCyan);
         // Make sure we consumed exactly all bytes (great sanity check for offset bugs)
@@ -450,8 +441,6 @@ namespace PeachTests {
 
     bool Test_Binary_TruncatedBuffer_Fails(Logger* logger)
     {
-        Serializer s;
-
         SimplePOD original{};
         original.i = 69;
         original.d = 1.25;
@@ -459,7 +448,7 @@ namespace PeachTests {
         original.s = "truncate me";
 
         std::vector<uint8_t> bin;
-        bool ok = s.PackIntoBinaryVector(original, bin);
+        bool ok = Serializer::PackIntoBinaryVector(original, bin);
         assert(ok);
         assert(bin.size() > 4);
 
@@ -468,34 +457,34 @@ namespace PeachTests {
 
         SimplePOD restored{};
         size_t start = 0;
-        ok = s.UnpackFromBinaryVector(restored, bin, logger, start);
+        ok = Serializer::UnpackFromBinaryVector(restored, bin, logger, start);
 
         // should fail cleanly (either returns false or throws inside decode and you catch above)
         assert(!ok);
         return true;
     }
 
-    // If you want to verify your duplicate-key guard in MapFromBinary:
-    // NOTE: this assumes your map serialization writes:
-    //   [count][key][value][key][value]...
-    // and key is a string and value is int (like your counts).
-    // This test *constructs a binary blob with duplicate keys* by serializing
-    // two entries manually using your BinaryCodec helpers.
-    //
-    // Only include this if you actually want that behavior.
-    bool Test_Binary_DuplicateMapKey_Fails(Logger* logger)
-    {
-        Serializer s;
+    //// If you want to verify your duplicate-key guard in MapFromBinary:
+    //// NOTE: this assumes your map serialization writes:
+    ////   [count][key][value][key][value]...
+    //// and key is a string and value is int (like your counts).
+    //// This test *constructs a binary blob with duplicate keys* by serializing
+    //// two entries manually using your BinaryCodec helpers.
+    ////
+    //// Only include this if you actually want that behavior.
+    //bool Test_Binary_DuplicateMapKey_Fails(Logger* logger)
+    //{
+    //    //Serializer s;
 
-        // Build a ContainerPOD-like binary stream that only contains the "counts" map
-        // is NOT possible unless you have a stable field order and exact ToBinary layout.
-        //
-        // So instead, test a standalone map if you have an exposed MapFromBinary helper.
-        //
-        // If MapFromBinary is private, skip this test.
-        (void)logger;
-        return true;
-    }
+    //    // Build a ContainerPOD-like binary stream that only contains the "counts" map
+    //    // is NOT possible unless you have a stable field order and exact ToBinary layout.
+    //    //
+    //    // So instead, test a standalone map if you have an exposed MapFromBinary helper.
+    //    //
+    //    // If MapFromBinary is private, skip this test.
+    //    (void)logger;
+    //    return true;
+    //}
 
     // ---------- Master entry point ----------
 

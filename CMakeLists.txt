@@ -1096,6 +1096,11 @@ if(WIN32)
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
+
+        target_link_options(peach_core PRIVATE /NODEFAULTLIB:LIBCMTD)
+        target_link_options(Peach_Editor PRIVATE /NODEFAULTLIB:LIBCMTD)
+        target_link_options(Peach_Engine PRIVATE /NODEFAULTLIB:LIBCMTD)
+        target_link_options(Peach_Tests PRIVATE /NODEFAULTLIB:LIBCMTD)
     endif()
 
 endif()

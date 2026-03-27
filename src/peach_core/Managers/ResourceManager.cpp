@@ -277,7 +277,7 @@ namespace PeachCore {
     {
         //////////////////// Load hostfxr ////////////////////
 
-        DYNLIB_HANDLE f_HostExr = pm_DynamicLoader.LoadDynamicLibrary(fp_HostFxrPath, resource_logger.get());
+        DYNLIB_HANDLE f_HostExr = DynamicLoader::LoadDynamicLibrary(fp_HostFxrPath, resource_logger.get());
 
         if (not f_HostExr)
         {
@@ -291,7 +291,7 @@ namespace PeachCore {
 
         //////////////////// Find hostfxr_initialize_for_runtime_config_fn ////////////////////
 
-        fp_DotnetContext.RuntimeInit = (hostfxr_initialize_for_runtime_config_fn)pm_DynamicLoader.GetSymbol
+        fp_DotnetContext.RuntimeInit = (hostfxr_initialize_for_runtime_config_fn)DynamicLoader::GetSymbol
         (
             "hostfxr_initialize_for_runtime_config",
             f_HostExr,
@@ -306,7 +306,7 @@ namespace PeachCore {
 
         //////////////////// Find hostfxr_get_runtime_delegate_fn ////////////////////
 
-        fp_DotnetContext.GetDelegate = (hostfxr_get_runtime_delegate_fn)pm_DynamicLoader.GetSymbol
+        fp_DotnetContext.GetDelegate = (hostfxr_get_runtime_delegate_fn)DynamicLoader::GetSymbol
         (
             "hostfxr_get_runtime_delegate",
             f_HostExr,
@@ -336,7 +336,7 @@ namespace PeachCore {
 
         //////////////////// Find hostfxr_close_fn ////////////////////
 
-        fp_DotnetContext.Close = (hostfxr_close_fn)pm_DynamicLoader.GetSymbol
+        fp_DotnetContext.Close = (hostfxr_close_fn)DynamicLoader::GetSymbol
         (
             "hostfxr_close",
             f_HostExr,

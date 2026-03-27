@@ -34,13 +34,13 @@ namespace PeachCore {
 
 #if defined(_WIN32) || defined(_WIN64)
     #define DYNLIB_HANDLE HINSTANCE //XXX: pretty much just a typedef -> void* but windows is a special boy >:(
-    #define DYNLIB_LOAD(__path) PeachCore::LoadLibraryUTF8(__path)
+    #define DYNLIB_LOAD(fp_Path) PeachCore::LoadLibraryUTF8(fp_Path)
     #define DYNLIB_GETSYM GetProcAddress
     #define DYNLIB_UNLOAD FreeLibrary
 #else
     #include <dlfcn.h>
     #define DYNLIB_HANDLE void*
-    #define DYNLIB_LOAD(__path) dlopen(__path, RTLD_LAZY)
+    #define DYNLIB_LOAD(fp_Path) dlopen(fp_Path, RTLD_LAZY)
     #define DYNLIB_GETSYM dlsym
     #define DYNLIB_UNLOAD dlclose
 #endif
@@ -53,10 +53,10 @@ namespace PeachCore {
     struct DynamicLoader
     {
     public:
-        DynamicLoader() = default;
+        DynamicLoader() = delete;
         ~DynamicLoader() = default;
 
-        DYNLIB_HANDLE
+        static DYNLIB_HANDLE
             LoadDynamicLibrary
             (
                 const string& fp_DylibPath,
@@ -82,7 +82,7 @@ namespace PeachCore {
             return f_LibraryHandle;
         }
 
-        bool
+        static bool
             UnloadLibrary
             (
                 DYNLIB_HANDLE fp_LibraryHandle,
@@ -107,7 +107,7 @@ namespace PeachCore {
         }
 
         // Function to retrieve symbols (functions/variables) from the library
-        void* 
+        static void* 
             GetSymbol
             (
                 const string& fp_SymbolName, 
@@ -138,7 +138,7 @@ namespace PeachCore {
 
     private:
         // Helper function to get the error message string
-        string 
+        static string 
             GetLastErrorAsString()
         {
             #if defined(_WIN32) or defined(_WIN64) //wtf windows are u okay

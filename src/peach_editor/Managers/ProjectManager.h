@@ -43,13 +43,15 @@ namespace PeachEditor {
 
         GlobalPeachEditorData m_PeachEditorMetaData;
 
+        unique_ptr<PeachCore::Logger> project_logger = nullptr;
+
     private:
 
 
 
     public:
 
-        void 
+        void
             Initialize(const string& logDirectory);
 
         bool
@@ -65,10 +67,10 @@ namespace PeachEditor {
         /*XXX : used for keeping track of every project currently identified on the system, this is where default OS paths are handled
         * and we store persistent data relevant to the installed instance of the Peach Editor and Project Manager stuff. so we can keep track of
         * all currently created projects on the system,
-        * 
+        *
         * this is loaded at the very beginning of each time the peach editor is opened, if it cant be found it will generate a new one for first time installation
         * or reinstallation. similiar to the .conan2 or whatever folders ull find in the home/appdata folders
-        * 
+        *
         * Peach editor is built for use only on desktop OS' since  idk if ipadOS would be chill w development stuff
         */
         bool
@@ -84,14 +86,14 @@ namespace PeachEditor {
                 const string& fp_ProjectName,
                 const string& fp_DesiredProjectPath,
                 const bool fp_ShouldCreateDirectory,
-                PeachProject* fp_PeachProject //IDK HOW to indicate side effects better
+                PeachProject& fp_PeachProject //IDK HOW to indicate side effects better
             )
         {
-            if (not fp_PeachProject)
-            {
+            //if (not fp_PeachProject)
+            //{
 
-                return false;
-            }
+            //    return false;
+            //}
             //fp_PeachProject.
             const string f_FullProjectPath = fp_DesiredProjectPath + "/" + fp_ProjectName;
 
@@ -115,15 +117,7 @@ namespace PeachEditor {
             }
 
             //write peach project settings -> JSON inside desired dir
-            //scope declaration since serializer shouldnt live past here
-            {
-                PeachCore::Serializer f_Serializer;
-
-                //f_Serializer.ToJSON(fp_PeachProject);
-
-            }
+            PEACH_TO_JSON(fp_PeachProject, fp_ProjectName, fp_DesiredProjectPath, project_logger.get());
         }
-
     };
-
 }

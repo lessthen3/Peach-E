@@ -266,12 +266,6 @@ namespace PeachCore {
         //Resource Logger owned by ResourceManager only
         unique_ptr<Logger> resource_logger = nullptr;
 
-        //////////////////// Utility Types ////////////////////
-
-        //1 byte bois UwU
-        Serializer pm_Serializer; 
-        DynamicLoader pm_DynamicLoader;
-
         //////////////////// Thread Initialization Safeguards ////////////////////
 
         bool pm_IsInitialized = false;

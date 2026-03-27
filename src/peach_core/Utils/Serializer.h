@@ -60,6 +60,79 @@
         __VA_ARGS__;                               \
     }
 
+#define PEACH_STRINGIFY(fp_X) #fp_X
+#define PEACH_TOSTRING(fp_X) PEACH_STRINGIFY(fp_X)
+
+#define PEACH_TO_JSON(fp_DesiredObject, fp_DesiredFileName, fp_DesiredOutputDirectory, fp_Logger) \
+    ( \
+        []() consteval \
+         { \
+            static_assert \
+            ( \
+                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_DesiredObject)>>::value, \
+                "PEACH_TO_JSON at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
+            ); \
+                return 0; \
+        }(), \
+        ::PeachCore::Serializer::ToJSON(fp_DesiredObject, fp_DesiredFileName, fp_DesiredOutputDirectory, fp_Logger) \
+    )
+
+#define PEACH_FROM_JSON(fp_DesiredObject, fp_FilePath, fp_Logger) \
+    ( \
+        []() consteval \
+         { \
+            static_assert \
+            ( \
+                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_DesiredObject)>>::value, \
+                "PEACH_FROM_JSON at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
+            ); \
+                return 0; \
+        }(), \
+        ::PeachCore::Serializer::FromJSON(fp_DesiredObject, fp_FilePath, fp_Logger) \
+    )
+
+#define PEACH_PACK_BINARY(fp_DesiredObject, fp_BinaryVector) \
+    ( \
+        []() consteval \
+         { \
+            static_assert \
+            ( \
+                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_DesiredObject)>>::value, \
+                "PEACH_PACK_BINARY at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
+            ); \
+                return 0; \
+        }(), \
+        ::PeachCore::Serializer::PackIntoBinaryVector(fp_DesiredObject, fp_BinaryVector) \
+    )
+
+#define PEACH_UNPACK_BINARY(fp_EmptyObject, fp_BinaryVector, fp_Logger) \
+    ( \
+        []() consteval \
+         { \
+            static_assert \
+            ( \
+                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_EmptyObject)>>::value, \
+                "PEACH_UNPACK_BINARY at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
+            ); \
+                return 0; \
+        }(), \
+        ::PeachCore::Serializer::UnpackFromBinaryVector(fp_EmptyObject, fp_BinaryVector, fp_Logger) \
+    )
+
+#define PEACH_UNPACK_BINARY_OFFSET(fp_EmptyObject, fp_BinaryVector, fp_Logger, fp_StartReadOffset) \
+    ( \
+        []() consteval \
+         { \
+            static_assert \
+            ( \
+                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_EmptyObject)>>::value, \
+                "PEACH_UNPACK_BINARY_OFFSET at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
+            ); \
+                return 0; \
+        }(), \
+        ::PeachCore::Serializer::UnpackFromBinaryVector(fp_EmptyObject, fp_BinaryVector, fp_Logger, fp_StartReadOffset) \
+    )
+
 
 template<typename>
 inline constexpr bool always_false_v = false;
@@ -998,12 +1071,19 @@ namespace PeachCore {
     struct Serializer
     {
     public:
-        Serializer() = default;
+        Serializer() = delete;
         ~Serializer() = default;
 
     public:
+
+        template<typename T, typename = void>
+        struct is_serializable_struct : false_type {};
+
         template<typename T>
-        [[nodiscard]] bool
+        struct is_serializable_struct<T, void_t<typename T::peach_serializable_tag>> : std::bool_constant<std::is_default_constructible_v<T>> {};
+
+        template<typename T>
+        [[nodiscard]] static bool
             FromJSON
             (
                 T& fp_DesiredObject,
@@ -1044,7 +1124,7 @@ namespace PeachCore {
         }
 
         template<typename T>
-        [[nodiscard]] bool
+        [[nodiscard]] static bool
             ToJSON
             (
                 const T& fp_DesiredObject,
@@ -1052,7 +1132,7 @@ namespace PeachCore {
                 const string& fp_DesiredOutputDirectory,
                 Logger* logger
             )
-        {
+        {         
             JSONValue f_TempJSON = ToJSON(fp_DesiredObject);
 
             string f_JsonString;
@@ -1069,7 +1149,7 @@ namespace PeachCore {
         }
 
         template<typename T>
-        bool
+        static bool
             PackIntoBinaryVector
             (
                 const T& fp_DesiredObject,
@@ -1080,7 +1160,7 @@ namespace PeachCore {
         }
 
         template<typename T>
-        bool
+        static bool
             UnpackFromBinaryVector
             (
                 T& fp_EmptyObject,
@@ -1093,7 +1173,7 @@ namespace PeachCore {
         }
 
         template<typename T>
-        bool
+        static bool
             UnpackFromBinaryVector
             (
                 T& fp_EmptyObject,
@@ -1222,7 +1302,7 @@ namespace PeachCore {
         {
             string m_Value;
             TokenType m_Type;
-            int m_SourceCodeLineNumber;
+            size_t m_SourceCodeLineNumber;
 
             explicit 
                 Token(const string& fp_Value, const TokenType fp_Type, const int fp_SourceCodeLineNumber) : m_Value(fp_Value), m_Type(fp_Type), m_SourceCodeLineNumber(fp_SourceCodeLineNumber) {}
@@ -1231,14 +1311,14 @@ namespace PeachCore {
                 Token(const char fp_Value, const TokenType fp_Type, const int fp_SourceCodeLineNumber) : m_Value(1, fp_Value), m_Type(fp_Type), m_SourceCodeLineNumber(fp_SourceCodeLineNumber) {}
 
             explicit 
-                Token() : m_Value(""), m_Type(TokenType::NO_TOKEN_VALUE), m_SourceCodeLineNumber(-1) {}
+                Token() : m_Value(""), m_Type(TokenType::NO_TOKEN_VALUE), m_SourceCodeLineNumber(0) {}
         };
 
         //////////////////////////////////////////////
         // Tokenize Function
         //////////////////////////////////////////////
 
-        bool
+        static bool
             Tokenize
             (
                 VectorStream<char>&& fp_SourceCode,
@@ -1580,13 +1660,12 @@ namespace PeachCore {
         // JSON Utility Functions
         //////////////////////////////////////////////
 
-        bool
+        static bool
             ToString
             (
                 string* fp_JSONString, 
                 const JSONValue& fp_JSON
             ) //kicks off recursive creation of JSON string
-            const
         {
             if (not fp_JSONString)
             {
@@ -1606,13 +1685,12 @@ namespace PeachCore {
             return true;
         }
 
-        void
+        static void
             EscapeJSONString
             (
                 const string& fp_In, 
                 stringstream& fp_Out
             )
-            const
         {
             fp_Out << '"';
 
@@ -1662,14 +1740,13 @@ namespace PeachCore {
             fp_Out << '"';
         }
 
-        bool
+        static bool
             ToStringStream
             (
                 const JSONValue& fp_JSONValue,
                 stringstream& fp_JSONString,
                 const uint32_t fp_Spacing = 0
             )
-            const
         {
             string f_IndentLevel(fp_Spacing, ' ');
 
@@ -1760,9 +1837,8 @@ namespace PeachCore {
             return true;
         }
 
-        void
+        static void
             PrintToConsole(JSONValue& fp_JSON)
-            const
         {
             string f_StringJSON;
             ToString(&f_StringJSON, fp_JSON);
@@ -1827,12 +1903,6 @@ namespace PeachCore {
             decltype(declval<T>().end())
             >> : bool_constant<not is_basic_string<T>::value> {};
 
-        template<typename T, typename = void>
-        struct is_serializable_struct : false_type {};
-
-        template<typename T>
-        struct is_serializable_struct<T, void_t<typename T::peach_serializable_tag>> : std::bool_constant<std::is_default_constructible_v<T>> {};
-
         template <class T>
         struct is_unique_ptr : std::false_type {}; //stds here make it easier to read uwu!
 
@@ -1872,13 +1942,13 @@ namespace PeachCore {
         // JSON Serialization
         //////////////////////////////////////////////
 
-        template<typename T>
-        enable_if_t<is_serializable_struct<T>::value, JSONValue>
+        template<typename T>        
+        static JSONValue
             ToJSON(const T& fp_ObjectToSerialize) //IT WORKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKSSS IM SO TIRED >w< ;w; i sleep like a champion tn
         {
             JSONObject f_Object; // ✅ this is what i was missin UwU
 
-            auto f_Visitor = [this, &f_Object](const char* fp_Name, auto&& fp_Value)
+            auto f_Visitor = [&f_Object](const char* fp_Name, auto&& fp_Value)
             {
                 using FieldType = decay_t<decltype(fp_Value)>; //makes things look prettier
 
@@ -1889,7 +1959,7 @@ namespace PeachCore {
                 }
                 else if constexpr (is_serializable_struct<FieldType>::value)
                 {
-                    f_Object.emplace(fp_Name, ToJSON(fp_Value));
+                    f_Object.emplace(fp_Name, Serializer::ToJSON(fp_Value));
                 }
                 else if constexpr (is_map<FieldType>::value)
                 {
@@ -1901,13 +1971,13 @@ namespace PeachCore {
                     {
                         if constexpr (is_serializable_struct<MapValType>::value)
                         {
-                            f_MapObj.emplace(lv_MapKey, ToJSON(lv_MapVal));
+                            f_MapObj.emplace(lv_MapKey, Serializer::ToJSON(lv_MapVal));
                         }
                         //XXX: this is used for vector keys
                         else if constexpr (is_vector<MapValType>::value) //is constexpr here kosher idk, future me: yeah it is
                         {
                             JSONArray f_TempArray;
-                            ToJSONArray(f_TempArray, lv_MapVal);
+                            Serializer::ToJSONArray(f_TempArray, lv_MapVal);
                             f_MapObj.emplace(lv_MapKey, f_TempArray);
                         }
                         else
@@ -1921,12 +1991,12 @@ namespace PeachCore {
                 else if constexpr (is_vector<FieldType>::value)
                 {
                     JSONArray arr;
-                    ToJSONArray(arr, fp_Value);
+                    Serializer::ToJSONArray(arr, fp_Value);
                     f_Object.emplace(fp_Name, arr);
                 }
                 else
                 {
-                    static_assert(always_false_v<decltype(fp_Value)>, "Unsupported field type in ToJSON");
+                    static_assert(always_false_v<FieldType>, "Unsupported field type in ToJSON, did you forget a macro definition?");
                 }
             };
 
@@ -1939,7 +2009,7 @@ namespace PeachCore {
         used for parsing vectors -> JSONArrays and deals with nested vectors since ToJSON requires SERIALIZABLE_FIELDS structs by default
         */
         template<typename T_VectorObject>
-        void
+        static void
             ToJSONArray
             (
                 JSONArray& fp_ArrayObject, 
@@ -1973,8 +2043,8 @@ namespace PeachCore {
 
         //==================================================================================================================================================================//
 
-        template<typename T>
-        [[nodiscard]] enable_if_t<is_serializable_struct<T>::value, bool> //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
+        template<typename T> 
+        [[nodiscard]] static bool //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
             FromJSON
             (
                 const JSONValue& fp_JSON, 
@@ -1991,7 +2061,7 @@ namespace PeachCore {
             const JSONObject& f_JSONObject = get<JSONObject>(fp_JSON.m_Value);
             bool f_IsSuccessful = true; //XXX: used to track state of lambda execution
 
-            auto f_Visitor = [this, &f_JSONObject, &f_IsSuccessful, logger](const char* fp_Name, auto& fp_Value)
+            auto f_Visitor = [&f_JSONObject, &f_IsSuccessful, logger](const char* fp_Name, auto& fp_Value)
             {
                 if (not f_IsSuccessful) //immediately return since something failed along the way >///< >w<!
                 {
@@ -2015,11 +2085,11 @@ namespace PeachCore {
 
                     if constexpr (is_basic_string<FieldType>::value or is_arithmetic_v<FieldType>)
                     {
-                        fp_Value = Extract<FieldType>(f_JsonValue);
+                        fp_Value = Serializer::Extract<FieldType>(f_JsonValue);
                     }
                     else if constexpr (is_serializable_struct<FieldType>::value)
                     {
-                        if (not FromJSON(f_JsonValue, fp_Value, logger))
+                        if (not Serializer::FromJSON(f_JsonValue, fp_Value, logger))
                         {
                             logger->Error("failed to deserialize non primitive struct inside JSON Object", "FromJSON");
                             f_IsSuccessful = false;
@@ -2039,7 +2109,7 @@ namespace PeachCore {
 
                             if constexpr (is_serializable_struct<ValType>::value)
                             {
-                                if (not FromJSON(lv_Val, f_Item, logger))
+                                if (not Serializer::FromJSON(lv_Val, f_Item, logger))
                                 {
                                     logger->Error("failed to deserialize non primitive struct inside JSON Object", "FromJSON");
                                     f_IsSuccessful = false;
@@ -2051,7 +2121,7 @@ namespace PeachCore {
                             {
                                 const JSONArray& arr = get<JSONArray>(lv_Val.m_Value);
 
-                                if (not FromJSONArray(arr, f_Item, logger)) //OwO!
+                                if (not Serializer::FromJSONArray(arr, f_Item, logger)) //OwO!
                                 {
                                     f_IsSuccessful = false;
                                     return;
@@ -2059,7 +2129,7 @@ namespace PeachCore {
                             }
                             else
                             {
-                                f_Item = Extract<ValType>(lv_Val);
+                                f_Item = Serializer::Extract<ValType>(lv_Val);
                             }
 
                             fp_Value.emplace(lv_MapKey, move(f_Item));
@@ -2069,7 +2139,7 @@ namespace PeachCore {
                     {
                         const JSONArray& arr = get<JSONArray>(f_JsonValue.m_Value);
 
-                        if (not FromJSONArray(arr, fp_Value, logger))
+                        if (not Serializer::FromJSONArray(arr, fp_Value, logger))
                         {
                             logger->Error(format("Failed to deserialize vector for field '{}'", fp_Name), "FromJSON");
                             f_IsSuccessful = false;
@@ -2090,7 +2160,7 @@ namespace PeachCore {
         }
 
         template<typename T>
-        T 
+        static T 
             Extract(const JSONValue& fp_JSON) //we extract and recast anything like doubles and 64 bit ints -> whatever the user defined eg vector<int>
         {
             using FieldType = decay_t<T>;
@@ -2136,7 +2206,7 @@ namespace PeachCore {
         }
 
         template<typename T_VectorObject>
-        bool
+        static bool
             FromJSONArray
             (
                 const JSONArray& fp_ArrayObject, 
@@ -2198,32 +2268,32 @@ namespace PeachCore {
         //In general, the To functions don't need explicit error handling because it's all done at compile time, however reading can throw because ppl are dumb or files can corrupt
 
         template<typename T>
-        [[nodiscard]] enable_if_t<is_serializable_struct<T>::value, bool>
+        [[nodiscard]] static bool
             ToBinary
             (
                 const T& fp_ObjectToSerialize,
                 vector<uint8_t>& fp_BinaryWriteVector
             ) 
         {
-            auto f_Visitor = [this, &fp_BinaryWriteVector](const char* fp_Name, auto&& fp_Value)
+            auto f_Visitor = [&fp_BinaryWriteVector](const char* fp_Name, auto&& fp_Value)
             {
                 using FieldType = decay_t<decltype(fp_Value)>; //makes things look prettier
 
                 if constexpr (is_serializable_struct<FieldType>::value)
                 {
-                    ToBinary(fp_Value, fp_BinaryWriteVector);
+                    Serializer::ToBinary(fp_Value, fp_BinaryWriteVector);
                 }
                 else if constexpr (is_map<FieldType>::value) //WARNING: oof never use unordered_map here UNLESS u know what ur doing owo
                 {
-                    MapToBinary(fp_Value, fp_BinaryWriteVector);
+                    Serializer::MapToBinary(fp_Value, fp_BinaryWriteVector);
                 }
                 else if constexpr (is_vector<FieldType>::value)
                 {
-                    VectorToBinary(fp_Value, fp_BinaryWriteVector);
+                    Serializer::VectorToBinary(fp_Value, fp_BinaryWriteVector);
                 }
                 else
                 {
-                    ValueToBinary(fp_Value, fp_BinaryWriteVector);
+                    Serializer::ValueToBinary(fp_Value, fp_BinaryWriteVector);
                 }
             };
 
@@ -2233,7 +2303,7 @@ namespace PeachCore {
         }
 
         template<typename T_VectorObject>
-        void
+        static void
             VectorToBinary
             (
                 const T_VectorObject& fp_SerializableObjectField,
@@ -2268,7 +2338,7 @@ namespace PeachCore {
         }
 
         template<typename T_MapObject>
-        void
+        static void
             MapToBinary
             (
                 const T_MapObject& fp_SerializableObjectField,
@@ -2327,7 +2397,7 @@ namespace PeachCore {
         }
 
         template<typename T>
-        void
+        static void
             ValueToBinary
             (
                 const T& fp_Value,
@@ -2394,7 +2464,7 @@ namespace PeachCore {
         }
 
         template<typename T>
-        [[nodiscard]] enable_if_t<is_serializable_struct<T>::value, bool> //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
+        [[nodiscard]] static bool //leverages SERIALIZE_FIELD function defs to assign values to a default constructed data struct
             FromBinary
             (
                 T& fp_OutObject,
@@ -2411,7 +2481,7 @@ namespace PeachCore {
 
             bool f_IsSuccessful = true; //XXX: used to track state of lambda execution
 
-            auto f_Visitor = [this, &fp_BinaryReadVector, &fp_CurrentOffset, &f_IsSuccessful, logger](const char* fp_Name, auto& fp_Value)
+            auto f_Visitor = [&fp_BinaryReadVector, &fp_CurrentOffset, &f_IsSuccessful, logger](const char* fp_Name, auto& fp_Value)
             {
                 if (not f_IsSuccessful) //immediately return since something failed along the way >///< >w<!
                 {
@@ -2424,7 +2494,7 @@ namespace PeachCore {
                 {
                     if constexpr (is_serializable_struct<FieldType>::value)
                     {
-                        if (not FromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        if (not Serializer::FromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
                         {
                             logger->Error(format("Failed to deserialize non primitive struct from binary for field named: '{}'", fp_Name), "FromBinary");
                             f_IsSuccessful = false;
@@ -2433,7 +2503,7 @@ namespace PeachCore {
                     }
                     else if constexpr (is_map<FieldType>::value)
                     {
-                        if (not MapFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        if (not Serializer::MapFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
                         {
                             logger->Error(format("Failed to deserialize map for field named: '{}'", fp_Name), "FromBinary");
                             f_IsSuccessful = false;
@@ -2442,7 +2512,7 @@ namespace PeachCore {
                     }
                     else if constexpr (is_vector<FieldType>::value) //XXX: don't need to check for string types here since we already do so at the first branch
                     {
-                        if (not VectorFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        if (not Serializer::VectorFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
                         {
                             logger->Error(format("Failed to deserialize vector for field named: '{}'", fp_Name), "FromBinary");
                             f_IsSuccessful = false;
@@ -2451,7 +2521,7 @@ namespace PeachCore {
                     }
                     else
                     {
-                        if (not ValueFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
+                        if (not Serializer::ValueFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
                         {
                             logger->Error(format("Failed to deserialize value for field named: '{}'", fp_Name), "FromBinary");
                             f_IsSuccessful = false; //tell outer function thatis false uwu
@@ -2474,7 +2544,7 @@ namespace PeachCore {
         }
 
         template<typename T>
-        bool
+        static bool
             ValueFromBinary
             (
                 T& fp_OutValue,
@@ -2552,7 +2622,7 @@ namespace PeachCore {
         }
 
         template<typename T_VectorObject>
-        bool
+        static bool
             VectorFromBinary
             (
                 T_VectorObject& fp_OutVector,
@@ -2620,7 +2690,7 @@ namespace PeachCore {
         }
 
         template<typename T_MapObject>
-        bool
+        static bool
             MapFromBinary
             (
                 T_MapObject& fp_OutMap,
@@ -2736,7 +2806,7 @@ namespace PeachCore {
         // Parsing Functions
         //////////////////////////////////////////////
 
-        bool
+        static bool
             ParseObject //assuming that this is only called when '{' is found uwu
             (
                 VectorStream<Token>& fp_Tokens,
@@ -2799,7 +2869,7 @@ namespace PeachCore {
             return true;
         }
 
-        bool
+        static bool
             ParseArray //assuming the most recent token was '[' called from ParseJSON
             (
                 VectorStream<Token>& fp_Tokens,
@@ -2844,7 +2914,7 @@ namespace PeachCore {
             return true;
         }
 
-        bool
+        static bool
             ParseValue //used for parsing values inside an array
             (
                 VectorStream<Token>& fp_Tokens,
@@ -2900,7 +2970,7 @@ namespace PeachCore {
             return true;
         }
 
-        bool
+        static bool
             ParseValue //used for parsing values inside a regular JSON object
             (
                 VectorStream<Token>& fp_Tokens,
@@ -2957,7 +3027,7 @@ namespace PeachCore {
             return true;
         }
 
-        bool //XXX: this function assumes that the JSON is structured such that it has one top level object denoted by a "{ . . . . }"
+        static bool //XXX: this function assumes that the JSON is structured such that it has one top level object denoted by a "{ . . . . }"
             ParseJSON //function call that kicks off the recursive parse chain
             (
                 VectorStream<Token>&& fp_Tokens,

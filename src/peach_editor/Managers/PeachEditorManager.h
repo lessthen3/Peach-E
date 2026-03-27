@@ -17,15 +17,15 @@
 #include "../Editor/ShaderCompilerUtils.h"
 #include "../Editor/LangUtils.h"
 
-namespace PeachEditor{
+namespace PeachEditor {
 
     using namespace std;
 
     class PeachEditorManager
     {
-    //////////////////////////////////////////////
-    // Private Constructor & Destructor
-    //////////////////////////////////////////////
+        //////////////////////////////////////////////
+        // Private Constructor & Destructor
+        //////////////////////////////////////////////
     private:
         ~PeachEditorManager() = default;
         PeachEditorManager() = default;
@@ -36,19 +36,19 @@ namespace PeachEditor{
         PeachEditorManager(PeachEditorManager&&) = delete;
         PeachEditorManager& operator=(PeachEditorManager&&) = delete;
 
-    //////////////////////////////////////////////
-    // Private Members
-    //////////////////////////////////////////////
+        //////////////////////////////////////////////
+        // Private Members
+        //////////////////////////////////////////////
     private:
         unique_ptr<PeachCore::Logger> main_editor_logger = nullptr;
 
         Dotnet::Configs pm_DotnetConfiguration;
 
-    //////////////////////////////////////////////
-    // Public Members
-    //////////////////////////////////////////////
+        //////////////////////////////////////////////
+        // Public Members
+        //////////////////////////////////////////////
     public:
-        static PeachEditorManager& get_single() 
+        static PeachEditorManager& get_single()
         {
             static PeachEditorManager peach_editor;
             return peach_editor;
@@ -56,9 +56,9 @@ namespace PeachEditor{
 
         atomic<bool> m_IsRunning;
 
-    //////////////////////////////////////////////
-    // Public Methods
-    //////////////////////////////////////////////
+        //////////////////////////////////////////////
+        // Public Methods
+        //////////////////////////////////////////////
 
     public:
         ////////////////////////////////////////////////
@@ -96,15 +96,15 @@ namespace PeachEditor{
             //////////////////// Main Initialization Calls //////////////////// 
             // //NEEDA: figure out a better way to handle dotnet projects, maybe feed a string like "NUHUH" to signal the InitializePeachEngine call that this aint a dotnet game
 
-            if 
-            (
-                not PeachCore::GameManager::get_single().InitializePeachEngineCustom
+            if
                 (
-                    fp_RootPath, 
-                    PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread | PeachCore::ThreadName::AudioThread, 
-                    PeachCore::RendererType::Vulkan
-                )
-            )
+                    not PeachCore::GameManager::get_single().InitializePeachEngineCustom
+                    (
+                        fp_RootPath,
+                        PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread | PeachCore::ThreadName::AudioThread,
+                        PeachCore::RendererType::Vulkan
+                    )
+                    )
             {
 
                 return false;
@@ -115,9 +115,9 @@ namespace PeachEditor{
             return true;
         }
 
-    //////////////////////////////////////////////
-    // Private Methods
-    //////////////////////////////////////////////
+        //////////////////////////////////////////////
+        // Private Methods
+        //////////////////////////////////////////////
     private:
         //////////////////// Project File Handling Methods ////////////////////
 
@@ -161,6 +161,8 @@ namespace PeachEditor{
             //DotnetUtils::GenerateDefaultScript("FirstGeneratedScript", "Sprite2D", fp_RootPath + "/local_tests", main_logger.get());
             //DotnetUtils::GenerateProjectFiles(pm_DotnetConfiguration, "PeachGame", fp_RootPath + "/local_tests", fp_RootPath + "res/script_runtimes/win64/dotnet/PeachScriptCore.dll", "", main_editor_logger.get());
             //DotnetUtils::BuildDotnetProject(pm_DotnetConfiguration.SolutionPath, main_editor_logger.get());
+
+            return true;
         }
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

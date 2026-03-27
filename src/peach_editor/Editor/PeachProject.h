@@ -69,9 +69,10 @@ namespace PeachEditor{
             return true;
         }
 
-    private:
-        //SERIALIZABLE_FIELDS(ProjectName, RuntimeType, ScriptPaths, ScenePaths, TexturePaths, AudioPaths, ProjectSettings)
-
+        PEACH_SERIALIZABLE
+        (
+            PEACH_FIELD(ProjectName) //, RuntimeType, ScriptPaths, ScenePaths, TexturePaths, AudioPaths, ProjectSettings
+        )
     };
 
 }
