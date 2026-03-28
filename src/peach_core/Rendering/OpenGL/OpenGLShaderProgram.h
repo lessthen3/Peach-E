@@ -13,17 +13,16 @@
 #ifndef __APPLE__
 
 ///PeachCore
-#include "../Utils/Logger.h"
-#include "../Scene-Items/Visual/Fog.h"
-#include "PeachMaterial.h"
+#include "../../Utils/Logger.h"
+#include "../../Scene-Items/Visual/Fog.h"
+#include "../PeachMaterial.h"
 
 ///External
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-namespace PeachCore {
-namespace OpenGL{
+namespace PeachCore::OpenGL {
 
     class ShaderProgram 
     {
@@ -573,7 +572,6 @@ namespace OpenGL{
             return true;
         }
     };
-}//namespace OpenGL
-}//namespace PeachCore
+}//namespace PeachCore::OpenGL
 
 #endif

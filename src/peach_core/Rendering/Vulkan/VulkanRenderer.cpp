@@ -10,8 +10,7 @@
 ********************************************************************/
 #include "VulkanRenderer.h"
 
-namespace PeachCore {
-namespace Vulkan {
+namespace PeachCore::Vulkan {
 
     bool
         Renderer::Initialize //used for lazy initialization and for default constructor support without needing to define an explicit move constructor UwU
@@ -787,5 +786,4 @@ namespace Vulkan {
 
         return true;
     }
-}//namespace Vulkan
-}//namespace PeachCore
+}//namespace PeachCore::Vulkan

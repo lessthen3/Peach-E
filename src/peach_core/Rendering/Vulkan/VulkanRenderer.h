@@ -14,9 +14,7 @@
 #include "VulkanShaderProgram.h"
 
 ///Vulkan
-#include <volk.h>
 #include <vma/vk_mem_alloc.h>
-#include "vk-bootstrap/VkBootstrap.h"
 
 ///SDL
 #include <SDL3/SDL.h>
@@ -28,14 +26,13 @@
 #include <unordered_map>
 
 ///PUI
-#include "../Scene-Items/UI/Button.h"
+#include "../../Scene-Items/UI/Button.h"
 
 #include <physfs.h> //this shouldnt be her but is for testing UWU
 
 constexpr uint32_t MINIMUM_SWAPCHAIN_SIZE = 2;
 
-namespace PeachCore{
-namespace Vulkan{
+namespace PeachCore::Vulkan{
 
     struct Renderer 
     {
@@ -220,5 +217,4 @@ namespace Vulkan{
         bool
             RecreateSwapChain();
     };
-}//namespace Vulkan
-}//namespace PeachCore
+}//namespace PeachCore::Vulkan

@@ -149,6 +149,14 @@ target_include_directories(peach_core PUBLIC
     ${PROJECT_SOURCE_DIR}/src/peach_core
 )
 
+target_sources(peach_core PRIVATE
+    third_party/peach_core/vk-bootstrap/VkBootstrap.cpp
+)
+
+target_include_directories(peach_core PUBLIC
+    third_party/peach_core/vk-bootstrap/include
+)
+
 set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach_core PIC friendly UwU
 
 ####################################### Executable Targets
@@ -214,6 +222,14 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
 # Link Peach_Editor to Peach Core
 target_link_libraries(Peach_Editor PRIVATE 
     peach_core
+)
+
+target_sources(Peach_Editor PRIVATE
+    third_party/peach_editor/tinyxml2/tinyxml2.cpp
+)
+
+target_include_directories(Peach_Editor PRIVATE
+    third_party/peach_editor/tinyxml2
 )
 
 if(BUILD_PEACH_TESTS)
@@ -967,15 +983,6 @@ target_link_libraries(peach_core PUBLIC
 
     #SDL
     SDL3
-
-    #font stuff
-    msdfgen_ext
-    msdfgen_core
-    msdfgen_freetype
-    msdfgen_libpng
-
-    #compression
-    zlib 
     
     #lua
     Lua_Runtime
@@ -1050,6 +1057,13 @@ target_link_libraries(Peach_Editor PUBLIC
     #asset importing, we'll just write an importer for the internal assimp format for modders since assimp isnt fully portable across all targetted platforms
     assimp
     assimp_draco
+
+    #font stuff
+    msdfgen_ext
+    msdfgen_core
+    msdfgen_freetype
+    msdfgen_libpng
+    zlib 
 )
 
 ####################################### Compiler Options and Definitions

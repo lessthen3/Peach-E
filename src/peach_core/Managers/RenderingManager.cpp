@@ -111,26 +111,26 @@ namespace PeachCore {
     {
         int f_Width = 0, f_Height = 0, f_Channels = 0;
 
-        unique_ptr<unsigned char> f_Pixels
-        (
-            stbi_load_from_memory
-            (
-                NullResources::PEACH_NULL_TEXTURE,
-                static_cast<int>(NullResources::GetDefaultTextureSize()),
-                &f_Width,
-                &f_Height,
-                &f_Channels,
-                4 // force RGBA
-            )
-        );
+        unique_ptr<unsigned char> f_Pixels = nullptr;
+        //(
+        //    //stbi_load_from_memory
+        //    //(
+        //    //    NullResources::PEACH_NULL_TEXTURE,
+        //    //    static_cast<int>(NullResources::GetDefaultTextureSize()),
+        //    //    &f_Width,
+        //    //    &f_Height,
+        //    //    &f_Channels,
+        //    //    4 // force RGBA
+        //    //)
+        //);
 
         if (not f_Pixels)
         {
-            PrintError(format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
+            //PrintError(format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
             return nullptr;
         }
 
-        return move(f_Pixels);
+        return f_Pixels;
     }
 
     void

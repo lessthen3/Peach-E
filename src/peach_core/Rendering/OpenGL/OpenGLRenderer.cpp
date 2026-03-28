@@ -12,8 +12,7 @@
 
 #ifndef __APPLE__
 
-namespace PeachCore {
-namespace OpenGL{
+namespace PeachCore::OpenGL {
 
     void
         Viewport::SetupViewport
@@ -250,7 +249,6 @@ namespace OpenGL{
 
         return true;
     }
-}//namespace OpenGL
-}//namespace PeachCore
+}//namespace PeachCore::OpenGL
 
 #endif

@@ -15,7 +15,7 @@
 #include <latch>
 
 ///PeachCore
-#include "../Rendering/VulkanShaderProgram.h"
+//#include "../Rendering/VulkanShaderProgram.h"
 #include "../Utils/Serializer.h"
 #include "../Utils/DynamicLoader.h"
 #include "../Utils/NullResources.h"
@@ -30,7 +30,6 @@
 
 ///External
 #include <physfs.h>
-#include <stb/stb_image.h>
 #include <miniaudio/miniaudio.h>
 #include <moody_camel/readerwriterqueue.h>
 
@@ -155,7 +154,7 @@ namespace PeachCore {
     {
         int Width, Height, Channels;
         // owns data via unique_ptr + custom deleter
-        unique_ptr<unsigned char, void(*)(void*)> PixelData{ nullptr, stbi_image_free };
+        unique_ptr<unsigned char, void(*)(void*)> PixelData{ nullptr, free };
 
         explicit
             TextureData
@@ -169,7 +168,7 @@ namespace PeachCore {
             Width = fp_Width;
             Height = fp_Height;
             Channels = fp_Channels;
-            PixelData = { fp_RawData, stbi_image_free };
+            PixelData = { fp_RawData, free };
         }
     };
 

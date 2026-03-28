@@ -26,9 +26,6 @@
 ///Peach-E
 #include "Logger.h"
 
-///External
-#include <zlib.h>
-
 /// Magic World
 
 // One field: expands to v.field("a", a) inside peachVisit

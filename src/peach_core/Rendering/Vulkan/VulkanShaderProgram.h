@@ -12,14 +12,13 @@
 
 ///External
 #include <volk.h>
-#include "vk-bootstrap/VkBootstrap.h"
+#include <vk-bootstrap/VkBootstrap.h>
 
 ///PeachCore
-#include "../Utils/Logger.h"
-#include "../Utils/Serializer.h"
+#include "../../Utils/Logger.h"
+#include "../../Utils/Serializer.h"
 
-namespace PeachCore {
-namespace Vulkan { //namespacing this because it doesnt need to be a class, just a file w shader utilization tools
+namespace PeachCore::Vulkan { //namespacing this because it doesnt need to be a class, just a file w shader utilization tools
 
     struct CompiledShader 
     {
@@ -85,6 +84,4 @@ namespace Vulkan { //namespacing this because it doesnt need to be a class, just
             );
 
     };
-
-} //namespace Vulkan
-} //namespace PeachCore
+} //namespace PeachCore::Vulkan

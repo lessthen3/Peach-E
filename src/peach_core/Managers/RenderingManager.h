@@ -14,20 +14,24 @@
 #include "ResourceManager.h"
 
 //////// Rendering Backends ////////
+
 #ifndef __APPLE__
-#include "../Rendering/OpenGLRenderer.h"
+#include "../Rendering/OpenGL/OpenGLRenderer.h"
 #endif
-#include "../Rendering/VulkanRenderer.h"
+
+#include "../Rendering/Vulkan/VulkanRenderer.h"
+
+#ifdef __APPLE__
+#include "../Rendering/Metal/MetalRenderer.h"
+#endif
 
 //////// Rendering Primitives ////////
+
 #include "../Rendering/PeachMaterial.h"
 #include "../Rendering/PeachTexture.h"
 
-///font stuff
-#include <msdfgen/msdfgen.h>
-#include <msdfgen/msdfgen-ext.h>
-
 //////// Input ////////
+
 #include "InputManager.h"
 
 #include "../Scene-Items/PeachNode.h"
@@ -44,7 +48,8 @@ namespace PeachCore {
     enum class RendererType : int
     {
         OpenGL,
-        Vulkan
+        Vulkan,
+        Metal
     };
 
     //////////////////////////////////////////////
@@ -71,16 +76,16 @@ namespace PeachCore {
     //{
     //    constexpr uint8_t RENDER_NOP = 0x00;
     //    constexpr uint8_t RENDER_CREATE_NODE_OP = 0x01;//| pointer to shape def |
-    //    constexpr uint8_t RENDER_DESTROY_NODE_OP = 0x02; // | — |
+    //    constexpr uint8_t RENDER_DESTROY_NODE_OP = 0x02; // | ï¿½ |
     //    constexpr uint8_t RENDER_UPDATE_POSITION_OP = 0x03; // | packed vec2 |
     //    constexpr uint8_t RENDER_UPDATE_SCALE_OP = 0x04;// | packed vec2 |
     //    constexpr uint8_t RENDER_SET_COLOR_OP = 0x05;// | 32 - bit RGBA |
-    //    constexpr uint8_t RENDER_DONT_DRAW_OP = 0x06;// | — |
+    //    constexpr uint8_t RENDER_DONT_DRAW_OP = 0x06;// | ï¿½ |
     //    constexpr uint8_t RENDER_SET_TEXTURE_OP = 0x07;// | texture handle |
     //    constexpr uint8_t RENDER_LERP_POSITION_OP = 0x08;// | pointer to lerp config |
     //    constexpr uint8_t RENDER_SET_TRANSFORM_OP = 0x09;// | pointer to mat4 |
-    //    constexpr uint8_t RENDER_PUSH_STATE_OP = 0x0A;// | — |
-    //    constexpr uint8_t RENDER_POP_STATE_OP = 0x0B;// | — |
+    //    constexpr uint8_t RENDER_PUSH_STATE_OP = 0x0A;// | ï¿½ |
+    //    constexpr uint8_t RENDER_POP_STATE_OP = 0x0B;// | ï¿½ |
 
     //    constexpr uint8_t RENDER_OP_FRAME_END = 0x0C; // | Used for render thread to figure out when to sleep
 
@@ -138,6 +143,10 @@ namespace PeachCore {
         unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr;
     #endif
 
+    #ifdef __APPLE__
+        unique_ptr<Metal::Renderer> pm_MetalRenderer = nullptr;
+    #endif
+
         uint64_t pm_FrameRateLimit = 60;
         uint64_t pm_CurrentFrame = 0;
 
@@ -188,6 +197,13 @@ namespace PeachCore {
 
         void
             RenderLoopGL
+            (
+                const string& fp_LogOutputDirectory,
+                latch& fp_InitLatch
+            );
+
+        void
+            RenderLoopMetal
             (
                 const string& fp_LogOutputDirectory,
                 latch& fp_InitLatch

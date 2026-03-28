@@ -384,7 +384,7 @@ namespace PeachCore {
 
         try //This will be wrapped as a unique_ptr with a custom deletor tied to the ptr that just calls stbi_image_free UwU!
         {
-            f_RawTextureDataPtr = stbi_load(fp_FilePath.c_str(), &f_Width, &f_Height, &f_Channels, 0);
+            //f_RawTextureDataPtr = stbi_load(fp_FilePath.c_str(), &f_Width, &f_Height, &f_Channels, 0);
         }
         catch (const exception& fp_Exception)
         {
@@ -394,7 +394,7 @@ namespace PeachCore {
 
         if (not f_RawTextureDataPtr)
         {
-            resource_logger->Error(format("Failed to load texture! path: {}, reason: {}", fp_FilePath, stbi_failure_reason()), "ResourceManager");
+            //resource_logger->Error(format("Failed to load texture! path: {}, reason: {}", fp_FilePath, stbi_failure_reason()), "ResourceManager");
             return false;
         }
 

@@ -17,9 +17,8 @@
 #include "OpenGLShaderProgram.h"
 //#include "../Scene-Items/2D/PeachCamera2D.h"
 
-namespace PeachCore {
-namespace OpenGL
-{
+namespace PeachCore::OpenGL {
+
     enum class TextureFiltering
     {
         Nearest,
@@ -430,12 +429,11 @@ namespace OpenGL
             return true;
         }
     };
-}//namespace OpenGL
-}//namespace PeachCore
+}//namespace PeachCore::OpenGL
 
 
-namespace PeachCore{
-namespace OpenGL{
+namespace PeachCore::OpenGL {
+
     //////////////////////////////////////////////
     // Viewport Struct
     //////////////////////////////////////////////
@@ -493,7 +491,6 @@ namespace OpenGL{
                 const unsigned int fp_Height
             );
     };
+}//namespace PeachCore::OpenGL
 
-}//namespace OpenGL
-}//namespace PeachCore
 #endif

@@ -10,8 +10,7 @@
 ********************************************************************/
 #include "VulkanShaderProgram.h"
 
-namespace PeachCore {
-namespace Vulkan {
+namespace PeachCore::Vulkan {
 
     bool
         ShaderProgram::BakePipelineData
@@ -98,5 +97,4 @@ namespace Vulkan {
 
         return true;
     }
-} //namespace ShaderUtils
-} //namespace PeachCore
+} //namespace PeachCore::Vulkan

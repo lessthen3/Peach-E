@@ -10,6 +10,10 @@
 ********************************************************************/
 #include "Managers/PeachEditorManager.h"
 
+///font stuff
+#include <msdfgen/msdfgen.h>
+#include <msdfgen/msdfgen-ext.h>
+
 static inline constexpr void 
     ReplaceChar(std::string* fp_String, char fp_OldChar, char fp_NewChar)
 {

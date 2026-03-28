@@ -11,10 +11,8 @@
 #include "OpenGLShaderProgram.h"
 
 
-namespace PeachCore {
-namespace OpenGL {
+namespace PeachCore::OpenGL {
 
 
 
-}//namespace OpenGL
-}//namespace PeachCore
+}//namespace PeachCore::OpenGL
