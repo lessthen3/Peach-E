@@ -16,6 +16,15 @@ project(Peach_Engine VERSION 0.0.1 DESCRIPTION "Peach Engine" LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+####################################### Enforce C99 Standard
+
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
+####################################### Random Globals
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON) #dunno where else to put this owo
+
 ####################################### Check For No Config Set
 
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
@@ -176,16 +185,28 @@ file(GLOB LUA_SOURCES
     third_party/peach_core/source_include/lua/*.c
 )
 
+file(GLOB LZ4_SOURCES
+    third_party/peach_core/source_include/lz4/*.c
+)
+
 target_sources(peach_core PRIVATE
     ${PHYSFS_SOURCES}
     ${VKBOOTSTRAP_SOURCES}
     ${VOLK_SOURCES}
     ${LUA_SOURCES}
+    ${LZ4_SOURCES}
 )
 
 target_include_directories(peach_core PUBLIC
     third_party/peach_core/source_include
 )
+
+source_group("third_party/physfs" FILES ${PHYSFS_SOURCES})
+source_group("third_party/lua" FILES ${LUA_SOURCES})
+source_group("third_party/volk" FILES ${VOLK_SOURCES})
+source_group("third_party/vkbootstrap" FILES ${VKBOOTSTRAP_SOURCES})
+source_group("third_party/lz4" FILES ${LZ4_SOURCES})
+
 
 ####################################### Executable Targets
 
@@ -258,6 +279,52 @@ target_sources(Peach_Editor PRIVATE
 
 target_include_directories(Peach_Editor PRIVATE
     third_party/peach_editor/tinyxml2
+)
+
+source_group("third_party/tinyxml2" FILES 
+    third_party/peach_editor/tinyxml2/tinyxml2.cpp
+)
+
+####################################### pseudo source cmake include owo
+
+add_subdirectory(third_party/peach_editor/bc7enc_rdo)
+
+# tell astcenc which ISA to build for based on our platform
+if(TARGET_PLATFORM STREQUAL "windows" OR TARGET_PLATFORM STREQUAL "linux")
+    set(ASTCENC_ISA_SSE41 ON CACHE BOOL "" FORCE)
+elseif(TARGET_PLATFORM STREQUAL "macos")
+    set(ASTCENC_UNIVERSAL_BUILD ON CACHE BOOL "" FORCE) # gives u SSE41+AVX2+NEON fat binary
+endif()
+
+set(ASTCENC_CLI OFF CACHE BOOL "" FORCE) # dont build the command line tool
+set(ASTCENC_SHAREDLIB OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(third_party/peach_editor/astcenc)
+
+set_target_properties(bc7enc_rdo PROPERTIES FOLDER "third_party")
+set_target_properties(astcenc-sse4.1-static PROPERTIES FOLDER "third_party")
+
+if(MSVC)
+    foreach(f_AstcTarget 
+        astcenc-sse4.1-static 
+        astcenc-avx2-static 
+        astcenc-sse2-static
+        astcenc-none-static
+    )
+        if(TARGET ${f_AstcTarget})
+            set_property(TARGET ${f_AstcTarget} PROPERTY MSVC_RUNTIME_LIBRARY
+                MultiThreaded$<$<CONFIG:Debug>:Debug>
+            )
+            
+            set_target_properties(${f_AstcTarget} PROPERTIES FOLDER "third_party")
+
+        endif()
+    endforeach()
+endif()
+
+target_link_libraries(Peach_Editor PRIVATE
+    bc7enc_rdo
+    $<IF:$<STREQUAL:${TARGET_PLATFORM},macos>,astcenc-neon-static,astcenc-sse4.1-static>
 )
 
 if(BUILD_PEACH_TESTS)

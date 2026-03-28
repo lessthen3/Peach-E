@@ -10,6 +10,10 @@
 ********************************************************************/
 #pragma once
 
+/*
+    Borrowed the triangle.cpp template from https://github.com/charles-lunarg/vk-bootstrap/blob/main/example/triangle.cpp
+*/
+
 ///PeachCore
 #include "VulkanShaderProgram.h"
 
