@@ -10,9 +10,6 @@
 ********************************************************************/
 #define SDL_MAIN_HANDLED
 
-#define STB_IMAGE_IMPLEMENTATION
-
-#define VOLK_IMPLEMENTATION
 #define VMA_IMPLEMENTATION
 
 #define MINIAUDIO_IMPLEMENTATION

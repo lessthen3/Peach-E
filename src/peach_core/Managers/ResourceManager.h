@@ -29,7 +29,7 @@
 #include "../Language-Support/LuaScriptRuntime.h"
 
 ///External
-#include <physfs.h>
+#include <physfs/physfs.h>
 #include <miniaudio/miniaudio.h>
 #include <moody_camel/readerwriterqueue.h>
 

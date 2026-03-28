@@ -126,7 +126,7 @@ namespace PeachCore {
 
         if (not f_Pixels)
         {
-            //PrintError(format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
+            //rendering_logger->Error(format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
             return nullptr;
         }
 

@@ -9,7 +9,7 @@ cmake_minimum_required(VERSION 4.2.0) #need this for vs2026
 
 ####################################### Project definition
 
-project(Peach_Engine VERSION 0.0.1 DESCRIPTION "Peach Engine" LANGUAGES CXX)
+project(Peach_Engine VERSION 0.0.1 DESCRIPTION "Peach Engine" LANGUAGES CXX C)
 
 ####################################### Enforcing C++20 standard
 
@@ -149,15 +149,43 @@ target_include_directories(peach_core PUBLIC
     ${PROJECT_SOURCE_DIR}/src/peach_core
 )
 
+set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach_core PIC friendly UwU
+
+####################################### peach_core src includes
+
+if(APPLE)
+    file(GLOB PHYSFS_SOURCES 
+        third_party/peach_core/source_include/physfs/*.c
+        third_party/peach_core/source_include/physfs/*.m
+    )
+else()
+    file(GLOB PHYSFS_SOURCES 
+        third_party/peach_core/source_include/physfs/*.c
+    )
+endif()
+
+file(GLOB VKBOOTSTRAP_SOURCES
+    third_party/peach_core/source_include/vk-bootstrap/VkBootstrap.cpp
+)
+
+file(GLOB VOLK_SOURCES
+    third_party/peach_core/source_include/volk/volk.c
+)
+
+file(GLOB LUA_SOURCES 
+    third_party/peach_core/source_include/lua/*.c
+)
+
 target_sources(peach_core PRIVATE
-    third_party/peach_core/vk-bootstrap/VkBootstrap.cpp
+    ${PHYSFS_SOURCES}
+    ${VKBOOTSTRAP_SOURCES}
+    ${VOLK_SOURCES}
+    ${LUA_SOURCES}
 )
 
 target_include_directories(peach_core PUBLIC
-    third_party/peach_core/vk-bootstrap/include
+    third_party/peach_core/source_include
 )
-
-set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach_core PIC friendly UwU
 
 ####################################### Executable Targets
 
@@ -290,35 +318,33 @@ if(TARGET_PLATFORM STREQUAL "windows")
     ############ Pretty Fonts
 
     STATIC_IMPORT(msdfgen_libpng 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/release/libpng16_static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/debug/libpng16_staticd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/release/libpng16_static.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/debug/libpng16_staticd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_freetype 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/release/freetype.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/debug/freetyped.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/release/freetype.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/debug/freetyped.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_core 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/release/msdfgen-core.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/debug/msdfgen-core.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/release/msdfgen-core.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/debug/msdfgen-core.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_ext 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/release/msdfgen-ext.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/win64/debug/msdfgen-ext.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/release/msdfgen-ext.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/debug/msdfgen-ext.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
-    ############ Geometry Manipulation Operations
-
     STATIC_IMPORT(zlib 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/win64/release/zlibstatic.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/win64/debug/zlibstaticd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/win64/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/win64/release/zlibstatic.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/win64/debug/zlibstaticd.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/win64/include"
     )
 
     ############ Geometry Manipulation Operations
@@ -335,14 +361,6 @@ if(TARGET_PLATFORM STREQUAL "windows")
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/win64/release/Jolt.lib"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/win64/debug/Jolt.lib"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/include"
-    )
-
-    ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
-
-    STATIC_IMPORT(physfs 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/win64/release/physfs-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/win64/debug/physfs-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/include"
     )
 
     # ############ Asset Importing
@@ -375,14 +393,6 @@ if(TARGET_PLATFORM STREQUAL "windows")
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/include"
     )
 
-    ############ Lua Stuff
-
-    STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/win64/release/lua_runtime.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/win64/debug/lua_runtime.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/include"
-    )
-
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
@@ -397,12 +407,6 @@ if(TARGET_PLATFORM STREQUAL "windows")
         "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release/shaderc.lib"
         "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v1.4.313.1/shadercd.lib"
         "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
-    )
-
-    STATIC_IMPORT(volk 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/win64/release/volk.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/win64/debug/volkd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/include/Volk"
     )
 
     ############ SPIRV Tools
@@ -506,35 +510,33 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
     ############ Pretty Fonts
 
     STATIC_IMPORT(msdfgen_libpng 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_freetype 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_core 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_ext 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/steveARM64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
-    ############ Geometry Manipulation Operations
-
     STATIC_IMPORT(zlib 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/steveARM64/libz.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/steveARM64/libz.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/steveARM64/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/steveARM64/libz.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/steveARM64/libz.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/steveARM64/include"
     )
 
     ############ Geometry Manipulation Operations
@@ -551,14 +553,6 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/steveARM64/libJolt.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/steveARM64/libJolt.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/include"
-    )
-
-    ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
-
-    STATIC_IMPORT(physfs 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/steveARM64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/steveARM64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/include"
     )
 
     # ############ Asset Importing
@@ -591,14 +585,6 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/include"
     )
 
-    ############ Lua Stuff
-
-    STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/steveARM64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/steveARM64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/include"
-    )
-
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
@@ -613,12 +599,6 @@ elseif(TARGET_PLATFORM STREQUAL "macos")
         "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libshaderc.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libshaderc.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
-    )
-
-    STATIC_IMPORT(volk 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/include/Volk"
     )
 
     ############ SPIRV Tools
@@ -731,35 +711,33 @@ elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile 
     ############ Pretty Fonts
 
     STATIC_IMPORT(msdfgen_libpng 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libpng16.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libpng16.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_freetype 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libfreetype.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libfreetype.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_core 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libmsdfgen-core.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-core.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
     STATIC_IMPORT(msdfgen_ext 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/tux64/libmsdfgen-ext.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/msdfgen/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-ext.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
     )
 
-    ############ Geometry Manipulation Operations
-
     STATIC_IMPORT(zlib 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/tux64/libz.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/tux64/libz.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/zlib/tux64/include"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/tux64/libz.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/tux64/include"
     )
 
     ############ Geometry Manipulation Operations
@@ -776,14 +754,6 @@ elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/tux64/libJolt.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/tux64/libJolt.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/include"
-    )
-
-    ############ Virtual File System (hand built since the conan recipe breaks for more recent versions of cmake so this'll make things easier)
-
-    STATIC_IMPORT(physfs 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/tux64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/tux64/libphysfs.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/physfs/include"
     )
 
     # ############ Asset Importing
@@ -816,14 +786,6 @@ elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/include"
     )
 
-    ############ Lua Stuff
-
-    STATIC_IMPORT(Lua_Runtime 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/tux64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/tux64/liblua_runtime.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/lua/include"
-    )
-
     ############ dotnet stuff
 
     STATIC_IMPORT(nethost 
@@ -838,12 +800,6 @@ elseif(TARGET_PLATFORM STREQUAL "linux") #XXX: doing these later when i compile 
         "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
-    )
-
-    STATIC_IMPORT(volk 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/tux64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/tux64/libvolk.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/include/Volk"
     )
 
     ############ SPIRV Tools
@@ -965,8 +921,6 @@ endif()
 
 # Peach Core
 target_link_libraries(peach_core PUBLIC
-    #file system
-    physfs
 
     #geometry manipulation
     clipper2
@@ -978,14 +932,8 @@ target_link_libraries(peach_core PUBLIC
     #cryptography
     libsodium
 
-    #Vulkan
-    volk
-
     #SDL
     SDL3
-    
-    #lua
-    Lua_Runtime
 )
 
 if(TARGET_PLATFORM STREQUAL "macos") #TODO fix iokit and other frameworks that dont exist on ios ipados or tvos and watchos
@@ -1070,6 +1018,7 @@ target_link_libraries(Peach_Editor PUBLIC
 
 target_compile_definitions(peach_core PRIVATE 
     $<$<CONFIG:Debug>:PEACH_DEBUG>
+    VK_NO_PROTOTYPES # IMPORTANT: tells volk to not use the default vulkan loader
 )
 
 target_compile_definitions(Peach_Editor PRIVATE
@@ -1087,7 +1036,6 @@ if(WIN32)
         $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:NETHOST_USE_AS_STATIC> #need this for nethost to be used statically
     )
     target_compile_definitions(peach_core PUBLIC
-        PHYSFS_STATIC
         SODIUM_STATIC #needed for statically linking libsodium
         GLEW_STATIC #needed for statically linking glew
 
