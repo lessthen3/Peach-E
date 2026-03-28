@@ -1,6 +1,5 @@
 // File: utils.cpp
 #include "utils.h"
-#include "lodepng.h"
 #include "miniz.h"
 
 namespace utils 
@@ -162,48 +161,6 @@ void image_u8::rasterize_line(int xs, int ys, int xe, int ye, int pred, int inc_
 			}
 		}
 	}
-}
-
-bool load_png(const char* pFilename, image_u8& img)
-{
-	img.clear();
-
-	std::vector<unsigned char> pixels;
-	unsigned int w = 0, h = 0;
-	unsigned int e = lodepng::decode(pixels, w, h, pFilename);
-	if (e != 0)
-	{
-		fprintf(stderr, "Failed loading PNG file %s\n", pFilename);
-		return false;
-	}
-
-	img.init(w, h);
-	memcpy(&img.get_pixels()[0], &pixels[0], w * h * sizeof(uint32_t));
-
-	return true;
-}
-
-bool save_png(const char* pFilename, const image_u8& img, bool save_alpha)
-{
-	const uint32_t w = img.width();
-	const uint32_t h = img.height();
-
-	std::vector<unsigned char> pixels;
-	if (save_alpha)
-	{
-		pixels.resize(w * h * sizeof(color_quad_u8));
-		memcpy(&pixels[0], &img.get_pixels()[0], w * h * sizeof(color_quad_u8));
-	}
-	else
-	{
-		pixels.resize(w * h * 3);
-		unsigned char* pDst = &pixels[0];
-		for (uint32_t y = 0; y < h; y++)
-			for (uint32_t x = 0; x < w; x++, pDst += 3)
-				pDst[0] = img(x, y)[0], pDst[1] = img(x, y)[1], pDst[2] = img(x, y)[2];
-	}
-
-	return lodepng::encode(pFilename, pixels, w, h, save_alpha ? LCT_RGBA : LCT_RGB) == 0;
 }
 
 static float gauss(int x, int y, float sigma_sqr)

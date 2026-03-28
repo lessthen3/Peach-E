@@ -224,11 +224,11 @@ if(TARGET_PLATFORM STREQUAL "macos") #create a bundle instead of a regular exe f
     )
 
     # Paths to MoltenVK runtime stuff
-    set(MOLTENVK_LIB "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libMoltenVK.dylib")
-    set(VULKAN_LIB "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libvulkan.1.dylib")
-    set(VALIDATION_LAYER "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/libVkLayer_khronos_validation.dylib")
+    set(MOLTENVK_LIB "${PROJECT_SOURCE_DIR}/third_party/peach_core/MoltenVK/libMoltenVK.dylib")
+    set(VULKAN_LIB "${PROJECT_SOURCE_DIR}/third_party/peach_core/MoltenVK/libvulkan.1.dylib")
+    set(VALIDATION_LAYER "${PROJECT_SOURCE_DIR}/third_party/peach_core/MoltenVK/libVkLayer_khronos_validation.dylib")
 
-    set(JSON_CONFIGS "${PROJECT_SOURCE_DIR}/third_party/peach_core/vulkan/steveARM64/vulkan")
+    set(JSON_CONFIGS "${PROJECT_SOURCE_DIR}/third_party/peach_core/MoltenVK/vulkan")
 
     # Where to copy them in the app bundle
     set(APP_CONTENTS_DIR "$<TARGET_BUNDLE_CONTENT_DIR:Peach_Editor>")
