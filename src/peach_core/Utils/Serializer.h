@@ -2312,7 +2312,7 @@ namespace PeachCore {
         {
             static_assert(is_vector<T_VectorObject>::value, "[INTERNAL ERROR]: attempted to pass non vector object into VectorToBinary()");
 
-            BinaryCodec::EncodeInt<size_t>(fp_BinaryWriteVector, fp_SerializableObjectField.size()); //since it's a vector we push the size first uwu
+            BinaryCodec::EncodeInt<uint64_t>(fp_BinaryWriteVector,static_cast<uint64_t>(fp_SerializableObjectField.size())); //since it's a vector we push the size first uwu
 
             using VectorElem = typename decay_t<decltype(fp_SerializableObjectField)>::value_type;
 
@@ -2347,7 +2347,7 @@ namespace PeachCore {
         {
             static_assert(is_map<T_MapObject>::value, "[INTERNAL ERROR]: attempted to pass non map object into MapToBinary()");
 
-            BinaryCodec::EncodeInt<size_t>(fp_BinaryWriteVector, fp_SerializableObjectField.size()); //since it's a map we push the size first uwu
+            BinaryCodec::EncodeInt<uint64_t>(fp_BinaryWriteVector, static_cast<uint64_t>(fp_SerializableObjectField.size())); //since it's a map we push the size first uwu
 
             using MapValType = typename T_MapObject::mapped_type;
             using MapKeyType = typename T_MapObject::key_type;
@@ -2633,7 +2633,7 @@ namespace PeachCore {
         {
             static_assert(is_vector<T_VectorObject>::value, "[INTERNAL ERROR]: attempted to pass non vector object into VectorFromBinary()");
 
-            size_t f_AmountOfVectorElements = BinaryCodec::DecodeInt<size_t>(fp_BinaryReadVector, fp_CurrentOffset);
+            size_t f_AmountOfVectorElements = static_cast<size_t>(BinaryCodec::DecodeInt<uint64_t>(fp_BinaryReadVector, fp_CurrentOffset));
 
             fp_OutVector.clear(); //clear the vector in case the user passes a vector filled with values
 
@@ -2704,7 +2704,7 @@ namespace PeachCore {
             using MapValType = typename T_MapObject::mapped_type; //can do this since T_MapObject is guaranteed a map uwu, holy shit nostradamus is AHHHHH record of ragnarock mang
             using MapKeyType = typename T_MapObject::key_type;
 
-            size_t f_AmountOfMapElements = BinaryCodec::DecodeInt<size_t>(fp_BinaryReadVector, fp_CurrentOffset);
+            size_t f_AmountOfMapElements = static_cast<size_t>(BinaryCodec::DecodeInt<uint64_t>(fp_BinaryReadVector, fp_CurrentOffset));
 
             fp_OutMap.clear(); //clear the map in case the user passes a map filled with values
 

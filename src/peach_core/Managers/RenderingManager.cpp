@@ -65,7 +65,7 @@ namespace PeachCore {
 
         if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop
         {
-            rendering_logger->Fatal(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", string(SDL_GetError())), "GameManager");
+            rendering_logger->Fatal(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", SDL_GetError()), "GameManager");
             return false;
         }
         else if (not InitializeLoadingQueue())
@@ -483,7 +483,7 @@ namespace PeachCore {
 
             if (not f_VulkanDylib) 
             {
-                rendering_logger->PEACH_LOG(format("Couldn't load libvulkan.1.dylib with Error: {}", dlerror()), "RenderingManager");
+                rendering_logger->Error(format("Couldn't load libvulkan.1.dylib with Error: {}", dlerror()), "RenderingManager");
                 return false;
             }
 
@@ -491,7 +491,7 @@ namespace PeachCore {
             
             if (not f_GetProcAddress)
             {
-                rendering_logger->PEACH_LOG(format("Couldn't find symbol: 'vkGetInstanceProcAddr' with Error: {}", dlerror()), "RenderingManager");
+                rendering_logger->Error(format("Couldn't find symbol: 'vkGetInstanceProcAddr' with Error: {}", dlerror()), "RenderingManager");
                 return false;
             }
             

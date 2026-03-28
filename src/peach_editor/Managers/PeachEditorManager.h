@@ -104,7 +104,7 @@ namespace PeachEditor {
                         PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread | PeachCore::ThreadName::AudioThread,
                         PeachCore::RendererType::Vulkan
                     )
-                    )
+                )
             {
 
                 return false;

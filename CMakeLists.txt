@@ -990,6 +990,7 @@ if(TARGET_PLATFORM STREQUAL "macos") #TODO fix iokit and other frameworks that d
         "-framework CoreHaptics"
         "-framework CoreVideo"
         "-framework Metal"
+        "-framework MetalKit"
         "-framework QuartzCore"
         "-framework CoreGraphics"
         "-framework Foundation"

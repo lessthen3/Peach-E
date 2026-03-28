@@ -185,7 +185,7 @@ namespace PeachTests {
         assert(ok);
 
         SimplePOD restored{};
-        ok = Serializer::FromJSON(restored, jsonFile, logger);
+        ok = PEACH_FROM_JSON(restored, jsonFile, logger);
         assert(ok);
 
         assert(restored == original);
@@ -448,7 +448,7 @@ namespace PeachTests {
         original.s = "truncate me";
 
         std::vector<uint8_t> bin;
-        bool ok = Serializer::PackIntoBinaryVector(original, bin);
+        bool ok = PEACH_PACK_BINARY(original, bin);
         assert(ok);
         assert(bin.size() > 4);
 
@@ -457,7 +457,7 @@ namespace PeachTests {
 
         SimplePOD restored{};
         size_t start = 0;
-        ok = Serializer::UnpackFromBinaryVector(restored, bin, logger, start);
+        ok = PEACH_UNPACK_BINARY_OFFSET(restored, bin, logger, start);
 
         // should fail cleanly (either returns false or throws inside decode and you catch above)
         assert(!ok);
