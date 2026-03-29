@@ -83,7 +83,7 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
 
 ############# Main CMake Function #############
 
-def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
+def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> bool:
 
     f_GeneratorMap = {
         "vs2026": "Visual Studio 18 2026",
@@ -128,6 +128,14 @@ def run_cmake(fp_BuildType: str, fp_Generator: str) -> bool:
         
         else:
             f_CMakeConfigCommand += ['-DCMAKE_BUILD_TYPE=' + fp_BuildType.capitalize()]
+
+    ############# Set Target Platform #############
+
+    if fp_TargetPlatform != "":
+        f_CMakeConfigCommand += [
+            "-DCMAKE_TOOLCHAIN_FILE=peach.toolchain.cmake",
+            f"-DPEACH_TARGET_PLATFORM={fp_TargetPlatform}"
+        ]
 
     ############# Generate CMake Project #############
 
@@ -305,7 +313,40 @@ def main() -> bool:
                 "\t" + CreateColouredText('-G nmake-jom ', 'blue') + CreateColouredText('Generates JOM Makefiles', 'cyan')
     )   
     
+    parser.add_argument(
+        '-T',
+        nargs=1,
+        metavar="[target]",
+        help=CreateColouredText("ios, android, wasm, psvita, or leave empty for native", 'cyan')
+    )
+
     args = parser.parse_args()
+
+    ############# Target Platform Config #############
+
+    f_ToolchainKey = ""
+
+    if args.T:
+        f_ToolchainKey = args.T[0].lower()
+    else:
+        f_SystemPlatform = platform.system()
+        f_MachineArch = platform.machine().lower()
+
+        if f_SystemPlatform == "Windows":
+            f_ToolchainKey = "windows-arm64" if "arm" in f_MachineArch else "windows" #python is weird mang
+        elif f_SystemPlatform == "Darwin":
+            f_ToolchainKey = "macos"
+        elif f_SystemPlatform == "Linux":
+            f_ToolchainKey = "linux"
+        elif f_SystemPlatform == "FreeBSD":
+            f_ToolchainKey = "freebsd"
+        elif f_SystemPlatform == "Haiku":
+            f_ToolchainKey = "haiku"
+        else:
+            print(CreateColouredText(f"[ERROR]: Could not auto-detect platform: {f_SystemPlatform}, please specify with -T uwu", "red"))
+            return False
+
+        print(CreateColouredText(f"[INFO]: Auto-detected platform: {f_ToolchainKey} ~ nya~", "bright cyan"))
     
     ############# Validate Build Config #############
 
@@ -365,8 +406,8 @@ def main() -> bool:
 
     ############# Run Build Fingers Crossed >w< #############
 
-    if not run_cmake(f_BuildType, f_DesiredGenerator):
-            return False
+    if not run_cmake(f_BuildType, f_DesiredGenerator, f_ToolchainKey):
+        return False
     
     ############# Report Build Stats #############
 
