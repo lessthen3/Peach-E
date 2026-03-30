@@ -215,7 +215,7 @@ def unpack_versioned_dep(fp_WorkingDirectory: str, fp_ArchivePatternName: str) -
         
         os.chdir(fp_WorkingDirectory)
 
-        # Step 1: Find the zip
+        # Find the zip
         zipped_dep_file = [f for f in os.listdir(fp_WorkingDirectory) if f.startswith(fp_ArchivePatternName) and f.endswith(".zip")]
 
         if not zipped_dep_file:
@@ -226,13 +226,13 @@ def unpack_versioned_dep(fp_WorkingDirectory: str, fp_ArchivePatternName: str) -
         latest_zip = zipped_dep_file[0]
         expected_folder = latest_zip.replace(".zip", "")  # e.g., "debug_v144"
 
-        # Step 2: Remove any folder that doesn't match the zip version
+        # Remove any folder that doesn't match the zip version
         for item in os.listdir(fp_WorkingDirectory):
             if item.startswith(fp_ArchivePatternName) and os.path.isdir(item) and item != expected_folder:
                 print(CreateColouredText(f"[INFO]: Removing stale folder: {item}", "bright yellow"))
                 shutil.rmtree(os.path.join(fp_WorkingDirectory, item))
 
-        # Step 3: Extract the zip if and only if the extracted dep doesn't already exist
+        # Extract the zip if and only if the extracted dep doesn't already exist
         if not os.path.isdir(expected_folder): 
             print(CreateColouredText(f"[INFO]: Unzipping {latest_zip}", "bright green"))
             with zipfile.ZipFile(latest_zip, "r") as zip_ref:
@@ -396,6 +396,14 @@ def main() -> bool:
             return False
         if not unpack_versioned_dep(assimp_dir, "release_v"):
             return False
+        
+        f_ShadercDir = f_BaseDir + "/third_party/peach_editor/vulkan/win64"
+
+        if not unpack_versioned_dep(f_ShadercDir, "debug_v"): #the compressed deps are always named using debug_v* or release_v*
+            return False
+        if not unpack_versioned_dep(f_ShadercDir, "release_v"):
+            return False
+
 
     ############# Run Build Fingers Crossed >w< #############
 

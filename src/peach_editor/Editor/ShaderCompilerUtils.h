@@ -11,12 +11,10 @@
 #pragma once
 
 ///Vulkan
-#ifndef PEACH_PLATFORM_WINDOWS //windows w vulkan sdk and MD stuff is annoying owo
-    #include <shaderc.hpp>
-    #include <libspirv.hpp>
-    #include <spirv_cross.hpp>
-    #include <spirv_glsl.hpp>
-#endif
+#include <shaderc/shaderc.hpp>
+#include <spirv-tools/libspirv.hpp>
+#include <spirv_cross.hpp>
+#include <spirv_glsl.hpp>
 
 #include <vulkan/vulkan_core.h>
 

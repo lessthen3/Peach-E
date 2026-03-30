@@ -545,17 +545,25 @@ if(BUILD_PEACH_EDITOR)
         third_party/peach_editor/source_include/lodepng/lodepng.cpp
     )
 
+    file(GLOB SPIRV_CROSS_SOURCES
+        third_party/peach_editor/weird_source_include/spirv_cross/*.cpp
+    )
+
     target_sources(Peach_Editor PRIVATE
         ${TINYXML2_SOURCES}
         ${LODEPNG_SOURCES}
+        ${SPIRV_CROSS_SOURCES}
     )
 
     target_include_directories(Peach_Editor PRIVATE
         third_party/peach_editor/source_include
+        third_party/peach_editor/weird_source_include/spirv_cross        # root hpp files
+        third_party/peach_editor/weird_source_include/spirv_cross/include # vendored spirv-headers
     )
 
     source_group("third_party/tinyxml2" FILES ${TINYXML2_SOURCES})
     source_group("third_party/lodepng" FILES ${LODEPNG_SOURCES})
+    source_group("third_party/spirv_cross" FILES ${SPIRV_CROSS_SOURCES})
 
     add_subdirectory(third_party/peach_editor/source_include/bc7enc_rdo)
 
@@ -643,6 +651,14 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
         )
 
+        ############ shaderc
+
+        STATIC_IMPORT(shaderc 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release_v20260330/shaderc_combined.lib" 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v20260330/shaderc_combined.lib" 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include"
+        )
+
     elseif(PEACH_MACOS)
 
         ############ Pretty Fonts
@@ -689,7 +705,7 @@ if(BUILD_PEACH_EDITOR)
 
         ############ Vulkan Specific Imports
 
-        STATIC_IMPORT(shaderC 
+        STATIC_IMPORT(shaderc 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libshaderc.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libshaderc.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
@@ -737,50 +753,6 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPVRemapper.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPVRemapper.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        ############ SPIRV Cross
-
-        STATIC_IMPORT(SPIRV_Cross_Core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_CPP 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-cpp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-cpp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_GLSL 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-glsl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-glsl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_HLSL 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-hlsl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-hlsl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_MSL 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-msl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-msl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_Reflect 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-reflect.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-reflect.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_Util 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-util.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libspirv-cross-util.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
         )
 
     elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
@@ -830,7 +802,7 @@ if(BUILD_PEACH_EDITOR)
 
         ############ Vulkan Specific Imports
 
-        STATIC_IMPORT(shaderC 
+        STATIC_IMPORT(shaderc 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
@@ -880,50 +852,6 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
         )
 
-        ############ SPIRV Cross
-
-        STATIC_IMPORT(SPIRV_Cross_Core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_CPP 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-cpp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-cpp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_GLSL 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-glsl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-glsl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_HLSL 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-hlsl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-hlsl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_MSL 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-msl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-msl.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_Reflect 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-reflect.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-reflect.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
-        STATIC_IMPORT(SPIRV_Cross_Util 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-util.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libspirv-cross-util.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv_cross"
-        )
-
     else()
         message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
     endif()
@@ -952,7 +880,7 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### Linking deps + peach_core
 
-    if(NOT PEACH_WINDOWS)
+    if(NOT PEACH_WINDOWS) #shaderc_combined handles this for windows ^w^
         target_link_libraries(Peach_Editor PRIVATE
             #Tools for compiling, and debuggin SPIRV, not needed for game runtime uwu
             #spirv-tools
@@ -963,18 +891,6 @@ if(BUILD_PEACH_EDITOR)
             SPIRV_Tools_Opt
             SPIRV_Tools_Reduce
             SPIRV_Tools_Remapper
-
-            #spirv-cross
-            SPIRV_Cross_Core
-            SPIRV_Cross_CPP
-            SPIRV_Cross_GLSL
-            SPIRV_Cross_HLSL
-            SPIRV_Cross_MSL
-            SPIRV_Cross_Reflect
-            SPIRV_Cross_Util
-            
-            #compilers
-            shaderC
         )
     endif(NOT PEACH_WINDOWS)
 
@@ -1005,6 +921,9 @@ if(BUILD_PEACH_EDITOR)
         msdfgen_ext
         msdfgen_core
         freetype
+
+        #vulkan owo
+        shaderc
     )
 
 endif(BUILD_PEACH_EDITOR)
