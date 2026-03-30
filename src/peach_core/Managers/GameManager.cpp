@@ -46,7 +46,7 @@ namespace PeachCore
 
         //////////////////// Enable ANSI colour codes for windows console grumble grumble ////////////////////
 
-        #if (defined(_WIN32) || defined(_WIN64)) && defined(PEACH_USING_OS_TERMINAL)
+        #if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
             EnableWindowsConsoleColours();
         #endif
 
@@ -94,7 +94,7 @@ namespace PeachCore
 
         vector<string> f_ListOfPluginsToLoad;
 
-        #if defined(_WIN32) || defined(_WIN64) //hard coded for now, will be dynamically loaded using a project file encoded in JSON or binary in the future
+        #ifdef PEACH_PLATFORM_WINDOWS //hard coded for now, will be dynamically loaded using a project file encoded in JSON or binary in the future
             //DLL's
             f_ListOfPluginsToLoad =
             {

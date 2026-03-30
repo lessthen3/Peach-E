@@ -25,7 +25,7 @@ Features:
 
 🍑 __Bundled editor__ so you can hit the ground running _(WIP)_
 
-🍑 __Vulkan, OpenGL, OpenGL ES, and WebGL__ backends _(support varies depending on which platform is being targetted)_
+🍑 __Vulkan, Metal, OpenGL, OpenGL ES, and WebGL__ backends _(support varies depending on which platform is being targetted)_
 
 🍑 __Visual scripting + shader graph__ _(WIP)_
 

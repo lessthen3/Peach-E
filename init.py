@@ -396,13 +396,6 @@ def main() -> bool:
             return False
         if not unpack_versioned_dep(assimp_dir, "release_v"):
             return False
-        
-        ############# Change dir for vulkan lib deps
-
-        vulkan_dir = f_BaseDir + "/third_party/peach_editor/vulkan/win64"
-        
-        if not unpack_versioned_dep(vulkan_dir, "debug_v"):
-            return False
 
     ############# Run Build Fingers Crossed >w< #############
 

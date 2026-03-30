@@ -2,7 +2,7 @@
 
 option(BUILD_PEACH_CORE_SHARED "Builds peach_core as a shared library" OFF) #build peach_core shared by default uwu
 
-option(BUILD_PEACH_TESTS "build test suite" ON)
+option(BUILD_PEACH_TESTS "build test suite" OFF)
 option(BUILD_PEACH_EDITOR "turns on build output for peach editor" ON)
 option(BUILD_PEACH_ENGINE "turns on build output for the executable peach engine, doesn't relate to peach_core" ON)
 
@@ -21,7 +21,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ####################################### Enforce C99 Standard
 
-set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD 17) #needed for box2d owo
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
 ####################################### Random Globals
@@ -91,6 +91,14 @@ file(GLOB CLIPPER2_SOURCES
     third_party/peach_core/source_include/clipper2/*.cpp
 )
 
+file(GLOB BOX2D_SOURCES
+    third_party/peach_core/source_include/box2d/*.c
+)
+
+file(GLOB_RECURSE  JOLT_SOURCES
+    third_party/peach_core/source_include/Jolt/*.cpp #need caps since jolt does the target include thing in its cmake owo
+)
+
 if(PEACH_PLATFORM_IS_APPLE)
     file(GLOB PHYSFS_SOURCES 
         third_party/peach_core/source_include/physfs/*.c
@@ -131,6 +139,8 @@ target_sources(peach_core PRIVATE
     ${LUA_SOURCES}
     ${LZ4_SOURCES}
     ${CLIPPER2_SOURCES}
+    ${BOX2D_SOURCES}
+    ${JOLT_SOURCES}
 )
 
 target_include_directories(peach_core PUBLIC
@@ -141,6 +151,9 @@ source_group("third_party/physfs" FILES ${PHYSFS_SOURCES})
 source_group("third_party/lua" FILES ${LUA_SOURCES})
 source_group("third_party/lz4" FILES ${LZ4_SOURCES})
 source_group("third_party/clipper2" FILES ${CLIPPER2_SOURCES})
+source_group("third_party/box2d" FILES ${BOX2D_SOURCES})
+source_group("third_party/Jolt" FILES ${JOLT_SOURCES})
+
 
 ####################################### helper macro for reducing repeated boiler plate for static linking uwu
 
@@ -176,28 +189,12 @@ if(PEACH_WINDOWS)
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/include"
     )
 
-    ############ Jolt Physics 3D
-
-    STATIC_IMPORT(jolt_physics 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/win64/release/Jolt.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/win64/debug/Jolt.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/include"
-    )
-
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64/release/SDL3-static.lib"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64/debug/SDL3-static.lib"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-    ############ 2D physics
-
-    STATIC_IMPORT(box2d 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/win64/release/box2d.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/win64/debug/box2dd.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/include"
     )
 
 elseif(PEACH_MACOS)
@@ -210,28 +207,12 @@ elseif(PEACH_MACOS)
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/include"
     )
 
-    ############ Jolt Physics 3D
-
-    STATIC_IMPORT(jolt_physics 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/steveARM64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/steveARM64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/include"
-    )
-
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steveARM64/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steveARM64/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-    ############ 2D physics
-
-    STATIC_IMPORT(box2d 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/steveARM64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/steveARM64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/include"
     )
 
 elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
@@ -253,14 +234,6 @@ elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/include"
     )
 
-    ############ Jolt Physics 3D
-
-    STATIC_IMPORT(jolt_physics 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/tux64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/tux64/libJolt.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/jolt_physics/include"
-    )
-
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
@@ -269,17 +242,8 @@ elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
-    ############ 2D physics
-
-    STATIC_IMPORT(box2d 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/tux64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/tux64/libbox2d.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/box2d/include"
-    )
-
 else()
     message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
-
 endif()
 
 ####################################### Dependency Linking
@@ -308,8 +272,6 @@ elseif(PEACH_PLATFORM_IS_WINDOWS)
         imm32 
         winmm 
         kernel32
-
-        $<$<CONFIG:Debug>:msvcrtd> #needed for MTd builds using box2d, physfs and SDL
     )
 
 elseif(PEACH_MACOS) #TODO fix iokit and other frameworks that dont exist on ios ipados or tvos and watchos
@@ -363,11 +325,6 @@ endif()
 
 # Peach Core
 target_link_libraries(peach_core PUBLIC
-
-    #physics
-    jolt_physics #3D
-    box2d #2D   
-
     #cryptography
     libsodium
 
@@ -489,7 +446,6 @@ elseif(PEACH_SWITCH)
 elseif(PEACH_MACOS OR PEACH_IOS OR PEACH_TVOS)
     target_compile_definitions(peach_core PUBLIC
         PEACH_RENDERER_METAL
-        PEACH_RENDERER_VULKAN # via MoltenVK
     )
 
 elseif(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU)
@@ -510,14 +466,17 @@ endif()
 
 target_compile_definitions(peach_core PUBLIC 
     $<$<CONFIG:Debug>:PEACH_DEBUG>
-    VK_NO_PROTOTYPES # IMPORTANT: tells volk to not use the default vulkan loader
 )
 
-if(BUILD_PEACH_CORE_SHARED)
-    target_compile_definitions(peach_core PRIVATE
-        PEACH_BUILD_DYNAMIC
-    ) 
-endif()
+if(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
+
+    target_compile_definitions(peach_core PUBLIC VK_NO_PROTOTYPES) # IMPORTANT: tells volk to not use the default vulkan loader
+
+endif(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
+
+if(PEACH_VITA)
+    target_compile_definitions(peach_core PUBLIC BOX2D_DISABLE_SIMD)
+endif(PEACH_VITA)
 
 if(PEACH_PLATFORM_IS_WINDOWS)
 
@@ -538,6 +497,12 @@ if(PEACH_PLATFORM_IS_WINDOWS)
     endif(MSVC)
 
 endif(PEACH_PLATFORM_IS_WINDOWS)
+
+if(BUILD_PEACH_CORE_SHARED)
+    target_compile_definitions(peach_core PRIVATE
+        PEACH_BUILD_DYNAMIC
+    ) 
+endif(BUILD_PEACH_CORE_SHARED)
 
 ####################################### Executable Targets
 
@@ -572,19 +537,27 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### pseudo source cmake include owo
 
+    file(GLOB TINYXML2_SOURCES
+        third_party/peach_editor/source_include/tinyxml2/tinyxml2.cpp
+    )
+
+    file(GLOB LODEPNG_SOURCES
+        third_party/peach_editor/source_include/lodepng/lodepng.cpp
+    )
+
     target_sources(Peach_Editor PRIVATE
-        third_party/peach_editor/tinyxml2/tinyxml2.cpp
+        ${TINYXML2_SOURCES}
+        ${LODEPNG_SOURCES}
     )
 
     target_include_directories(Peach_Editor PRIVATE
-        third_party/peach_editor/tinyxml2
+        third_party/peach_editor/source_include
     )
 
-    source_group("third_party/tinyxml2" FILES 
-        third_party/peach_editor/tinyxml2/tinyxml2.cpp
-    )
+    source_group("third_party/tinyxml2" FILES ${TINYXML2_SOURCES})
+    source_group("third_party/lodepng" FILES ${LODEPNG_SOURCES})
 
-    add_subdirectory(third_party/peach_editor/bc7enc_rdo)
+    add_subdirectory(third_party/peach_editor/source_include/bc7enc_rdo)
 
     # tell astcenc which ISA to build for based on our platform
     if(PEACH_WINDOWS OR PEACH_LINUX)
@@ -596,7 +569,7 @@ if(BUILD_PEACH_EDITOR)
     set(ASTCENC_CLI OFF CACHE BOOL "" FORCE) # dont build the command line tool
     set(ASTCENC_SHAREDLIB OFF CACHE BOOL "" FORCE)
 
-    add_subdirectory(third_party/peach_editor/astcenc)
+    add_subdirectory(third_party/peach_editor/source_include/astcenc)
 
     set_target_properties(bc7enc_rdo PROPERTIES FOLDER "third_party")
     set_target_properties(astcenc-sse4.1-static PROPERTIES FOLDER "third_party")
@@ -627,20 +600,13 @@ if(BUILD_PEACH_EDITOR)
     ####################################### Import static libs
 
     if(PEACH_WINDOWS)
-    # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64"
 
         ############ Pretty Fonts
 
-        STATIC_IMPORT(msdfgen_libpng 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/release/libpng16_static.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/debug/libpng16_staticd.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/release/freetype.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/debug/freetyped.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
+        STATIC_IMPORT(freetype 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/release/freetype.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/debug/freetyped.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
         )
 
         STATIC_IMPORT(msdfgen_core 
@@ -655,13 +621,7 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
         )
 
-        STATIC_IMPORT(zlib 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/win64/release/zlibstatic.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/win64/debug/zlibstaticd.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/win64/include"
-        )
-
-        # ############ Asset Importing
+        ############# Asset Importing
 
         STATIC_IMPORT(assimp 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/release_v143/assimp-vc143-mt.lib"
@@ -687,16 +647,10 @@ if(BUILD_PEACH_EDITOR)
 
         ############ Pretty Fonts
 
-        STATIC_IMPORT(msdfgen_libpng 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libpng16.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libpng16.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
+        STATIC_IMPORT(freetype 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/release/freetype.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/debug/freetyped.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
         )
 
         STATIC_IMPORT(msdfgen_core 
@@ -709,12 +663,6 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-ext.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-ext.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(zlib 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/steveARM64/libz.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/steveARM64/libz.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/steveARM64/include"
         )
 
         # ############ Asset Importing
@@ -840,16 +788,10 @@ if(BUILD_PEACH_EDITOR)
 
         ############ Pretty Fonts
 
-        STATIC_IMPORT(msdfgen_libpng 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libpng16.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libpng16.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
+        STATIC_IMPORT(freetype 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/release/freetype.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/debug/freetyped.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
         )
 
         STATIC_IMPORT(msdfgen_core 
@@ -862,12 +804,6 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-ext.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-ext.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(zlib 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/tux64/libz.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/tux64/libz.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/zlib/tux64/include"
         )
 
         # ############ Asset Importing
@@ -1005,7 +941,11 @@ if(BUILD_PEACH_EDITOR)
                 $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
             ) 
 
-            target_link_options(Peach_Editor PRIVATE /NODEFAULTLIB:LIBCMTD)
+            target_link_options(Peach_Editor PRIVATE 
+                /NODEFAULTLIB:LIBCMTD
+                /NODEFAULTLIB:LIBCMT
+                $<$<NOT:$<CONFIG:Debug>>:/LTCG> #because nethost was compiled w /GL w/e ig its gonna happen anyways owo
+            )
         endif()
 
     endif()
@@ -1044,6 +984,10 @@ if(BUILD_PEACH_EDITOR)
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:msvcrt>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:advapi32>
         ) #needed for statically linking nethost for peach_editor
+
+        # target_include_directories(Peach_Editor PRIVATE #needa still have the includes so symbols can be resolved via ipc ig
+        #     third_party/peach_editor/vulkan/include
+        # )
     endif(PEACH_PLATFORM_IS_WINDOWS)
 
     target_link_libraries(Peach_Editor PRIVATE
@@ -1060,9 +1004,7 @@ if(BUILD_PEACH_EDITOR)
         #font stuff
         msdfgen_ext
         msdfgen_core
-        msdfgen_freetype
-        msdfgen_libpng
-        zlib 
+        freetype
     )
 
 endif(BUILD_PEACH_EDITOR)

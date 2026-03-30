@@ -20,21 +20,10 @@ namespace PeachCore {
     void 
         RenderingManager::Shutdown()
     {
-#ifndef __APPLE__
-        if (pm_OpenGLRenderer)
-        {
-            //SDL_DestroyWindow(pm_MainWindow);
-
-            ////delete pm_MainWindow; //WARNING: DO NOT UNCOMMENT THIS, IT WILL CAUSE A HEAP MEMORY VIOLATION
-            //pm_MainWindow = nullptr;
-        }
-#endif
-
-
-        SDL_Quit(); //Render thread controls everything SDL related so if the render loop is exiting SDL should quit since no other thread touches or relies on SDL related functionality
+        //SDL_Quit(); //Render thread controls everything SDL related so if the render loop is exiting SDL should quit since no other thread touches or relies on SDL related functionality
     }
 
-    [[nodiscard]] bool 
+    bool 
         RenderingManager::Initialize
         (
             const RendererType fp_DesiredRenderer,
@@ -105,100 +94,7 @@ namespace PeachCore {
 
         return true;
     }
-
-    [[nodiscard]] unique_ptr<unsigned char>
-        RenderingManager::LoadDefaultTexture()
-    {
-        int f_Width = 0, f_Height = 0, f_Channels = 0;
-
-        unique_ptr<unsigned char> f_Pixels = nullptr;
-        //(
-        //    //stbi_load_from_memory
-        //    //(
-        //    //    NullResources::PEACH_NULL_TEXTURE,
-        //    //    static_cast<int>(NullResources::GetDefaultTextureSize()),
-        //    //    &f_Width,
-        //    //    &f_Height,
-        //    //    &f_Channels,
-        //    //    4 // force RGBA
-        //    //)
-        //);
-
-        if (not f_Pixels)
-        {
-            //rendering_logger->Error(format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
-            return nullptr;
-        }
-
-        return f_Pixels;
-    }
-
-    void
-        RenderingManager::RenderLoopVK
-        (
-            const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch
-        )
-    {
-        if (not Initialize(RendererType::Vulkan, fp_LogOutputDirectory))
-        {
-
-            return;
-        }
-
-        fp_InitLatch.count_down();
-
-        while (pm_IsRunning.load(std::memory_order_acquire))
-        {
-            // Block until main thread wakes us
-            pm_RenderSemaphore.acquire();
-
-            if (not pm_IsRunning.load(std::memory_order_acquire))
-            {
-                break; // Double check after wake
-            }
-
-            ProcessCommands();
-            PresentFrameVK(); // swap buffers etc.
-            PollUserInputEvents();
-        }
-
-        Shutdown();
-    }
-
-    void
-        RenderingManager::RenderLoopGL
-        (
-            const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch
-        )
-    {
-        if (not Initialize(RendererType::OpenGL, fp_LogOutputDirectory))
-        {
-
-            return;
-        }
-
-        fp_InitLatch.count_down();
-
-        while (pm_IsRunning.load(std::memory_order_acquire))
-        {
-            // Block until main thread wakes us
-            pm_RenderSemaphore.acquire();
-
-            if (not pm_IsRunning.load(std::memory_order_acquire))
-            {
-                break; // Double check after wake
-            }
-
-            ProcessCommands();
-            PresentFrameGL(); // swap buffers etc.
-            PollUserInputEvents();
-        }
-
-        Shutdown();
-    }
-
+   
     void
         RenderingManager::RequestRender()
     {
@@ -207,6 +103,7 @@ namespace PeachCore {
 
     void
         RenderingManager::Stop()
+        noexcept
     {
         pm_IsRunning.store(false, std::memory_order_release);
         pm_RenderSemaphore.release(); // Wake it up to exit        
@@ -235,7 +132,7 @@ namespace PeachCore {
         Print(format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
     }
 
-    [[nodiscard]] bool
+   bool
         RenderingManager::ProcessCommands()
     {
         bool f_ContainsCommands = false;
@@ -258,43 +155,7 @@ namespace PeachCore {
         return f_ContainsCommands;
     }
 
-    [[nodiscard]] bool
-        RenderingManager::PresentFrameVK() //just assuming vulkan for now but this is where the backend magic happens
-    {
-        //////////////////// Submit Draw Calls ////////////////////
-
-        uint32_t f_StatusCode = pm_VulkanRenderer->BeginFrame();
-        if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
-        {
-            PrintError(format("BeginFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
-            return false;
-        }
-
-        f_StatusCode = pm_VulkanRenderer->DrawFrame();
-        if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
-        {
-            PrintError(format("DrawFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
-            return false;
-        }
-
-        f_StatusCode = pm_VulkanRenderer->EndFrame();
-        if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
-        {
-            PrintError(format("EndFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
-            return false;
-        }
-
-        return true;
-    }
-
-    [[nodiscard]] bool
-        RenderingManager::PresentFrameGL()
-    {
-
-        return true;
-    }
-
-    [[nodiscard]] bool
+   bool
         RenderingManager::CreateSDLWindow
         (
             SDL_Window** fp_SDLWindow,
@@ -319,6 +180,10 @@ namespace PeachCore {
         else if (fp_RenderingBackend == RendererType::Vulkan)
         {
             f_WindowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE;
+        }
+        else if (fp_RenderingBackend == RendererType::Metal)
+        {
+            f_WindowFlags = SDL_WINDOW_METAL | SDL_WINDOW_RESIZABLE;
         }
         else
         {
@@ -385,7 +250,7 @@ namespace PeachCore {
         return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
     }
 
-    [[nodiscard]] shared_ptr<RenderCommandPipe>
+    shared_ptr<RenderCommandPipe>
         RenderingManager::GetDrawCommandQueue
         (
             Logger* const logger
@@ -405,8 +270,49 @@ namespace PeachCore {
         return pm_RenderCommandQueue;
     }
 
-    #ifndef __APPLE__
-        bool
+#ifdef PEACH_RENDERER_OPENGL
+
+    void
+        RenderingManager::RenderLoopGL
+        (
+            const string& fp_LogOutputDirectory,
+            latch& fp_InitLatch
+        )
+    {
+        if (not Initialize(RendererType::OpenGL, fp_LogOutputDirectory))
+        {
+
+            return;
+        }
+
+        fp_InitLatch.count_down();
+
+        while (pm_IsRunning.load(std::memory_order_acquire))
+        {
+            // Block until main thread wakes us
+            pm_RenderSemaphore.acquire();
+
+            if (not pm_IsRunning.load(std::memory_order_acquire))
+            {
+                break; // Double check after wake
+            }
+
+            ProcessCommands();
+            PresentFrameGL(); // swap buffers etc.
+            PollUserInputEvents();
+        }
+
+        Shutdown();
+    }
+
+    bool
+        RenderingManager::PresentFrameGL()
+    {
+
+        return true;
+    }
+
+    bool
             RenderingManager::CreateOpenGLRenderer
             (
                 SDL_Window* fp_Window
@@ -466,46 +372,57 @@ namespace PeachCore {
             return PEACH_OK;
         }
 
-        [[nodiscard]] OpenGL::Renderer*
+        [[nodiscard]] OpenGL::Renderer*const
             RenderingManager::GetOpenGLRenderer()
         {
             return pm_OpenGLRenderer.get();
         }
-    #endif
+
+#endif
+
+#ifdef PEACH_RENDERER_VULKAN
+
+    void
+        RenderingManager::RenderLoopVK
+        (
+            const string& fp_LogOutputDirectory,
+            latch& fp_InitLatch
+        )
+    {
+        if (not Initialize(RendererType::Vulkan, fp_LogOutputDirectory))
+        {
+
+            return;
+        }
+
+        fp_InitLatch.count_down();
+
+        while (pm_IsRunning.load(std::memory_order_acquire))
+        {
+            // Block until main thread wakes us
+            pm_RenderSemaphore.acquire();
+
+            if (not pm_IsRunning.load(std::memory_order_acquire))
+            {
+                break; // Double check after wake
+            }
+
+            ProcessCommands();
+            PresentFrameVK(); // swap buffers etc.
+            PollUserInputEvents();
+        }
+
+        Shutdown();
+    }
 
     bool
         RenderingManager::InitializeVulkan()
     {
-        //Manually load libvulkan.1.dylib since volk cant find it w the regular init method, and run volkInitializeCustom and pass the proc pointer
-        #ifdef __APPLE__ //fuck u tim apple we won REST IN PISS BOZO
-
-            void* f_VulkanDylib = dlopen("@executable_path/../Frameworks/libvulkan.1.dylib", RTLD_NOW | RTLD_LOCAL);
-
-            if (not f_VulkanDylib) 
-            {
-                rendering_logger->Error(format("Couldn't load libvulkan.1.dylib with Error: {}", dlerror()), "RenderingManager");
-                return false;
-            }
-
-            auto f_GetProcAddress = reinterpret_cast<PFN_vkGetInstanceProcAddr>(dlsym(f_VulkanDylib, "vkGetInstanceProcAddr"));
-            
-            if (not f_GetProcAddress)
-            {
-                rendering_logger->Error(format("Couldn't find symbol: 'vkGetInstanceProcAddr' with Error: {}", dlerror()), "RenderingManager");
-                return false;
-            }
-            
-            volkInitializeCustom(f_GetProcAddress);  //custom initialize since volk cant find the libvulkan inside the Frameworks part of the bundle
-
-        #else ///Used for everything that isnt dumb fuck tim apple
-
-            if (volkInitialize() != VK_SUCCESS)
-            {
-                rendering_logger->Fatal("Volk failed to initialize! ending program execution immediately", "RenderingManager");
-                return false;
-            }
-        
-        #endif
+        if (volkInitialize() != VK_SUCCESS)
+        {
+            rendering_logger->Fatal("Volk failed to initialize! ending program execution immediately", "RenderingManager");
+            return false;
+        }
 
         if (not CreateSDLWindow(&pm_MainWindow, RendererType::Vulkan, "Peach Window", 800, 600))
         {
@@ -526,6 +443,58 @@ namespace PeachCore {
         return true; // >w<
     }
 
+    bool
+        RenderingManager::PresentFrameVK() //just assuming vulkan for now but this is where the backend magic happens
+    {
+        //////////////////// Submit Draw Calls ////////////////////
+
+        uint32_t f_StatusCode = pm_VulkanRenderer->BeginFrame();
+        if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
+        {
+            PrintError(format("BeginFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            return false;
+        }
+
+        f_StatusCode = pm_VulkanRenderer->DrawFrame();
+        if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
+        {
+            PrintError(format("DrawFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            return false;
+        }
+
+        f_StatusCode = pm_VulkanRenderer->EndFrame();
+        if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
+        {
+            PrintError(format("EndFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            return false;
+        }
+
+        return true;
+    }
+
+#endif
+
+#ifdef PEACH_RENDERER_METAL
+
+    void
+        RenderingManager::RenderLoopMetal
+        (
+            const string& fp_LogOutputDirectory,
+            latch& fp_InitLatch
+        )
+    {
+
+    }
+
+    bool
+        RenderingManager::PresentFrameMetal()
+    {
+
+        return true;
+    }
+
+#endif
+
     void 
         RenderingManager::ResizeWindow()
     {
@@ -538,14 +507,14 @@ namespace PeachCore {
       
     }
 
-    [[nodiscard]] uint64_t
+    uint64_t
         RenderingManager::GetFrameRateLimit() 
         const noexcept
     {
         return pm_FrameRateLimit;
     }
 
-    [[nodiscard]] bool 
+   bool 
         RenderingManager::IsVSyncEnabled() 
         const noexcept
     {
@@ -565,4 +534,38 @@ namespace PeachCore {
     {
         pm_FrameRateLimit = fp_Limit;
     }
+}
+
+namespace PeachCore {
+
+    //////////////////// Grab and Load Default Texture into Memory UwU ////////////////////
+
+    [[nodiscard]] static unique_ptr<unsigned char>
+        LoadDefaultTexture()
+    {
+        int f_Width = 0, f_Height = 0, f_Channels = 0;
+
+        unique_ptr<unsigned char> f_Pixels = nullptr;
+
+        //(
+        //    //stbi_load_from_memory
+        //    //(
+        //    //    NullResources::PEACH_NULL_TEXTURE,
+        //    //    static_cast<int>(NullResources::GetDefaultTextureSize()),
+        //    //    &f_Width,
+        //    //    &f_Height,
+        //    //    &f_Channels,
+        //    //    4 // force RGBA
+        //    //)
+        //);
+
+        if (not f_Pixels)
+        {
+            //rendering_logger->Error(format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
+            return nullptr;
+        }
+
+        return f_Pixels;
+    }
+
 }

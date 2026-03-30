@@ -18,7 +18,7 @@
 
 namespace PeachCore {
     //Imagine if windows was posix compliant, what a world that'd be >O<
-    #if defined(_WIN32) || defined(_WIN64)
+    #ifdef PEACH_PLATFORM_WINDOWS
         //XXX: we do this to avoid weird stuff w unicode and ansi strings, LoadLibrary is just a macro and since its a preprocessor thing it can cause runtime trouble
         // UTF8 -> wide string helper for LoadLibraryW
         inline HINSTANCE
@@ -32,7 +32,7 @@ namespace PeachCore {
     #endif
 }//namespace PeachCore
 
-#if defined(_WIN32) || defined(_WIN64)
+#ifdef PEACH_PLATFORM_WINDOWS
     #define DYNLIB_HANDLE HINSTANCE //XXX: pretty much just a typedef -> void* but windows is a special boy >:(
     #define DYNLIB_LOAD(fp_Path) PeachCore::LoadLibraryUTF8(fp_Path)
     #define DYNLIB_GETSYM GetProcAddress

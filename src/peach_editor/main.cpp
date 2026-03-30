@@ -10,6 +10,16 @@
 ********************************************************************/
 #include "Managers/PeachEditorManager.h"
 
+//#include <Jolt/Jolt.h>
+//#include <Jolt/RegisterTypes.h>
+//#include <Jolt/Core/Factory.h>
+//#include <box2d/box2d.h>
+
+#include <ft2build.h>
+#include FT_FREETYPE_H
+#include <msdfgen.h>
+#include <msdfgen-ext.h>
+
 static inline constexpr void 
     ReplaceChar(std::string* fp_String, char fp_OldChar, char fp_NewChar)
 {
@@ -28,6 +38,63 @@ static inline constexpr void
 int 
     main(int fp_ArgCount, const char* fp_ArgVector[])
 {
+    // freetype smoke test
+    {
+        FT_Library f_FtLibrary;
+        FT_Error f_FtError = FT_Init_FreeType(&f_FtLibrary);
+
+        if (f_FtError)
+        {
+            PeachCore::PrintError("FreeType init FAILED");
+        }
+        else
+        {
+            PeachCore::Print("FreeType init OK", PeachCore::Colours::BrightGreen);
+            FT_Done_FreeType(f_FtLibrary);
+        }
+    }
+
+    // msdfgen-core smoke test
+    {
+        msdfgen::Shape f_Shape;
+        msdfgen::Contour& f_Contour = f_Shape.addContour();
+        f_Contour.addEdge(msdfgen::EdgeHolder(msdfgen::Point2(0, 0), msdfgen::Point2(1, 0)));
+        PeachCore::Print("msdfgen-core OK", PeachCore::Colours::BrightGreen);
+    }
+
+    // msdfgen-ext smoke test
+    {
+        msdfgen::FreetypeHandle* f_Ft = msdfgen::initializeFreetype();
+
+        if (not f_Ft)
+        {
+            PeachCore::PrintError("msdfgen-ext FreeType init FAILED");
+        }
+        else
+        {
+            PeachCore::Print("msdfgen-ext init OK", PeachCore::Colours::BrightGreen);
+            msdfgen::deinitializeFreetype(f_Ft);
+        }
+    }
+    //// jolt smoke test — if this links and runs ur golden nyaa~
+    //{
+    //    JPH::RegisterDefaultAllocator();
+    //    JPH::Factory::sInstance = new JPH::Factory();
+    //    JPH::RegisterTypes();
+    //    PeachCore::Print("Jolt init OK", PeachCore::Colours::BrightGreen);
+    //    JPH::UnregisterTypes();
+    //    delete JPH::Factory::sInstance;
+    //    JPH::Factory::sInstance = nullptr;
+    //}
+
+    //// box2d smoke test
+    //{
+    //    b2WorldDef f_WorldDef = b2DefaultWorldDef();
+    //    b2WorldId f_WorldId = b2CreateWorld(&f_WorldDef);
+    //    PeachCore::Print("box2d init OK", PeachCore::Colours::BrightGreen);
+    //    b2DestroyWorld(f_WorldId);
+    //}
+
     PeachCore::Print(std::to_string(PeachCore::NullResources::GetDefaultFontSize()));
 
     std::cout << fp_ArgVector[0] << "\n"; //COOL AF

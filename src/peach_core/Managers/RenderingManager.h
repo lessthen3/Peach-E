@@ -137,15 +137,15 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
-        unique_ptr<Vulkan::Renderer> pm_VulkanRenderer = nullptr;
-
-    #ifndef __APPLE__ //OpenGL not supported on mac anymore fuck you tim apple
-        unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr;
-    #endif
-
-    #ifdef __APPLE__
+#ifdef PEACH_RENDERER_METAL 
         unique_ptr<Metal::Renderer> pm_MetalRenderer = nullptr;
-    #endif
+#endif
+#ifdef PEACH_RENDERER_VULKAN
+        unique_ptr<Vulkan::Renderer> pm_VulkanRenderer = nullptr;
+#endif
+#ifdef PEACH_RENDERER_OPENGL
+        unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr; //OpenGL not supported on mac anymore fuck you tim apple
+#endif
 
         uint64_t pm_FrameRateLimit = 60;
         uint64_t pm_CurrentFrame = 0;
@@ -170,7 +170,7 @@ namespace PeachCore {
 
         shared_ptr<Logger> rendering_logger = nullptr;
 
-        unique_ptr<unsigned char> pm_DefaultTexture = LoadDefaultTexture();
+        unique_ptr<unsigned char> pm_DefaultTexture = nullptr;
 
     public: 
         atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
@@ -183,11 +183,7 @@ namespace PeachCore {
     //////////////////////////////////////////////
     public:
 
-        //////////////////// Grab and Load Default Texture into Memory UwU ////////////////////
-
-        [[nodiscard]] unique_ptr<unsigned char> //Note: this should be analyzed as a consteval but i can just do that by hand later on since its like it's ~1kb owo
-            LoadDefaultTexture();
-
+#ifdef PEACH_RENDERER_VULKAN
         void
             RenderLoopVK
             (
@@ -195,6 +191,16 @@ namespace PeachCore {
                 latch& fp_InitLatch
             );
 
+    private:
+        [[nodiscard]] bool
+            InitializeVulkan();
+
+        [[nodiscard]] bool
+            PresentFrameVK();
+    public:
+#endif
+
+#ifdef PEACH_RENDERER_OPENGL
         void
             RenderLoopGL
             (
@@ -202,6 +208,30 @@ namespace PeachCore {
                 latch& fp_InitLatch
             );
 
+        bool
+            CreateOpenGLRenderer
+            (
+                SDL_Window* fp_Window
+            );
+
+        void
+            DestroyOpenGLRenderer();
+
+        [[nodiscard]] OpenGL::Renderer*const
+            GetOpenGLRenderer();
+
+    private:
+        //wip? future me: WORKING BITCH
+        [[nodiscard]] PEACH_STATUS_CODE
+            InitializeOpenGL();
+
+        [[nodiscard]] bool
+            PresentFrameGL();
+    public:
+
+#endif
+
+#ifdef PEACH_RENDERER_METAL 
         void
             RenderLoopMetal
             (
@@ -209,11 +239,16 @@ namespace PeachCore {
                 latch& fp_InitLatch
             );
 
+        [[nodiscard]] bool
+            PresentFrameMetal();
+#endif
+
         void
             RequestRender();
 
         void
-            Stop();
+            Stop()
+            noexcept;
 
         [[nodiscard]] shared_ptr<RenderCommandPipe>
             GetDrawCommandQueue
@@ -230,20 +265,6 @@ namespace PeachCore {
                 const unsigned int fp_WindowWidth,
                 const unsigned int fp_WindowHeight
             );
-        
-        #ifndef __APPLE__ //OpenGL stuff again fuck u tim apple dumb ahh mfer
-            bool
-                CreateOpenGLRenderer
-                (
-                    SDL_Window* fp_Window
-                );
-
-            void
-                DestroyOpenGLRenderer();
-
-            [[nodiscard]] OpenGL::Renderer*
-                GetOpenGLRenderer();
-        #endif
 
         void 
             ResizeWindow();
@@ -329,20 +350,7 @@ namespace PeachCore {
         [[nodiscard]] bool
             ProcessCommands();
 
-        [[nodiscard]] bool
-            PresentFrameVK();
-
-        [[nodiscard]] bool
-            PresentFrameGL();
-
         void
             Shutdown();
-
-        //wip? future me: WORKING BITCH
-        PEACH_STATUS_CODE
-            InitializeOpenGL();
-
-        bool
-            InitializeVulkan();
     };
 }
