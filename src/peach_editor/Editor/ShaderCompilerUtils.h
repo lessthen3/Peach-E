@@ -24,8 +24,9 @@
 ///STL
 #include <unordered_map>
 #include <optional>
+#include <string>
 
-namespace PeachEditor
+namespace PeachEditor::ShaderCompilerUtils
 {
     using namespace std;
 
@@ -69,99 +70,92 @@ namespace PeachEditor
         VkShaderStageFlags StageFlags;
     };
 
-    class ShaderCompilerUtils
-    {
-    public:
-        // compile GLSL source -> raw SPIRV .spv
-        [[nodiscard]] static bool
-            CompileGLSLToSPIRV
-            (
-                const string& fp_ShaderSourcePath,
-                const string& fp_OutputPath,
-                ShaderStage fp_ShaderStage,
-                PeachCore::Logger* logger
-            );
+    [[nodiscard]] static bool
+        CompileGLSLToSPIRV
+        (
+            const string& fp_ShaderSourcePath,
+            const string& fp_OutputPath,
+            ShaderStage fp_ShaderStage,
+            PeachCore::Logger* logger
+        );
 
-        // optimize SPIRV using spirv-opt
-        [[nodiscard]] static bool
-            OptimizeSPIRV
-            (
-                const string& fp_InputSpvPath,
-                const string& fp_OutputSpvPath,
-                PeachCore::Logger* logger
-            );
+    [[nodiscard]] static bool
+        OptimizeSPIRV
+        (
+            const string& fp_InputSpvPath,
+            const string& fp_OutputSpvPath,
+            PeachCore::Logger* logger
+        );
 
-        // validate SPIRV using spirv-val
-        [[nodiscard]] static bool
-            ValidateSPIRV
-            (
-                const string& fp_SpvPath,
-                PeachCore::Logger* logger
-            );
+    // validate SPIRV using spirv-val
+    [[nodiscard]] static bool
+        ValidateSPIRV
+        (
+            const string& fp_SpvPath,
+            PeachCore::Logger* logger
+        );
 
-        // cross compile SPIRV -> MSL for Metal
-        [[nodiscard]] static bool
-            CrossCompileToMSL
-            (
-                const string& fp_SpvPath,
-                const string& fp_OutputPath,
-                PeachCore::Logger* logger
-            );
+    [[nodiscard]] static bool
+        CrossCompileToMSL
+        (
+            const string& fp_SpvPath,
+            const string& fp_OutputPath,
+            PeachCore::Logger* logger
+        );
 
-        // cross compile SPIRV -> HLSL
-        [[nodiscard]] static bool
-            CrossCompileToHLSL
-            (
-                const string& fp_SpvPath,
-                const string& fp_OutputPath,
-                PeachCore::Logger* logger
-            );
+    [[nodiscard]] static bool
+        CrossCompileToHLSL
+        (
+            const string& fp_SpvPath,
+            const string& fp_OutputPath,
+            PeachCore::Logger* logger
+        );
 
-        // runs the full pipeline: compile -> validate -> optimize
-        [[nodiscard]] static bool
-            CompileFullShaderPipeline
-            (
-                const string& fp_ShaderSourcePath,
-                const string& fp_OutputDirectory,
-                ShaderStage fp_ShaderStage,
-                PeachCore::Logger* logger
-            );
+    // runs the full pipeline, compile -> validate -> optimize
+    [[nodiscard]] static bool
+        CompileFullShaderPipeline
+        (
+            const string& fp_ShaderSourcePath,
+            const string& fp_OutputDirectory,
+            ShaderStage fp_ShaderStage,
+            PeachCore::Logger* logger
+        );
 
-    public:
-        static CompilationResult
-            CompileShaderFromSource
-            (
-                const string& fp_RawSource,
-                const ShaderStage fp_ShaderStage,
-                const string& fp_OutputFileName,
-                const vector<string>& fp_MacroDefinitions,
-                const string& fp_EntryPoint = "main",
-                const bool fp_IsOptimized = true
-            );
+    [[nodiscard]] static CompilationResult
+        CompileShaderFromSource
+        (
+            const string& fp_RawSource,
+            const ShaderStage fp_ShaderStage,
+            const string& fp_OutputFileName,
+            const vector<string>& fp_MacroDefinitions,
+            const string& fp_EntryPoint = "main",
+            const bool fp_IsOptimized = true
+        );
 
-        static void
-            DisassembleSPIRV
-            (
-                const vector<uint32_t>& fp_SpirvBytecode
-            );
+    [[nodiscard]] static bool
+        DisassembleSPIRV
+        (
+            const vector<uint32_t>& fp_SpirvBytecode,
+            string& fp_DisassembledSPIRV,
+            PeachCore::Logger* logger
+        );
 
-        static ShaderReflectionInfo
-            ReflectInputsOutputs(const vector<uint32_t>& fp_SpirvBytecode);
+    static ShaderReflectionInfo
+        ReflectInputsOutputs(const vector<uint32_t>& fp_SpirvBytecode);
 
-        static bool
-            ReflectDescriptorBindings
-            (
-                vector<DescriptorBindingInfo>* fp_BindingInfo,
-                const vector<uint32_t>& fp_SpirvBytecode,
-                PeachCore::Logger* logger
-            );
+    static bool
+        ReflectDescriptorBindings
+        (
+            vector<DescriptorBindingInfo>* fp_BindingInfo,
+            const vector<uint32_t>& fp_SpirvBytecode,
+            PeachCore::Logger* logger
+        );
 
-        static bool
-            ReflectPushConstants
-            (
-                vector<PushConstantInfo>* fp_PushConstants,
-                const vector<uint32_t>& fp_SpirvBytecode,
-                PeachCore::Logger* logger
-            );
-    };
+    static bool
+        ReflectPushConstants
+        (
+            vector<PushConstantInfo>* fp_PushConstants,
+            const vector<uint32_t>& fp_SpirvBytecode,
+            PeachCore::Logger* logger
+        );
 }

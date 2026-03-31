@@ -10,7 +10,7 @@
 ********************************************************************/
 #include "ShaderCompilerUtils.h"
 
-namespace PeachEditor { //static TU isolated functions
+namespace PeachEditor::ShaderCompilerUtils { //static TU isolated functions
 
     [[nodiscard]] static shaderc_shader_kind
         GetShaderType(ShaderStage fp_ShaderType)
@@ -28,14 +28,10 @@ namespace PeachEditor { //static TU isolated functions
     }
 }
 
-namespace PeachEditor {
-
-        //////////////////////////////////////////////
-       // Unix/Mac static linking path
-       //////////////////////////////////////////////
+namespace PeachEditor::ShaderCompilerUtils {
 
     bool
-        ShaderCompilerUtils::CompileGLSLToSPIRV
+        CompileGLSLToSPIRV
         (
             const string& fp_ShaderSourcePath,
             const string& fp_OutputPath,
@@ -43,64 +39,59 @@ namespace PeachEditor {
             PeachCore::Logger* logger
         )
     {
-        // TODO: implement using shaderc static lib on Linux/Mac
         logger->Error("CompileGLSLToSPIRV not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
 
     bool
-        ShaderCompilerUtils::OptimizeSPIRV
+        OptimizeSPIRV
         (
             const string& fp_InputSpvPath,
             const string& fp_OutputSpvPath,
             PeachCore::Logger* logger
         )
     {
-        // TODO: implement using spirv-opt static lib on Linux/Mac
         logger->Error("OptimizeSPIRV not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
 
     bool
-       ShaderCompilerUtils::ValidateSPIRV
+       ValidateSPIRV
         (
             const string& fp_SpvPath,
             PeachCore::Logger* logger
         )
     {
-        // TODO: implement using spirv-val static lib on Linux/Mac
         logger->Error("ValidateSPIRV not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
 
     bool
-      ShaderCompilerUtils::CrossCompileToMSL
+      CrossCompileToMSL
         (
             const string& fp_SpvPath,
             const string& fp_OutputPath,
             PeachCore::Logger* logger
         )
     {
-        // TODO: implement using spirv-cross static lib on Linux/Mac
         logger->Error("CrossCompileToMSL not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
 
     bool
-       ShaderCompilerUtils::CrossCompileToHLSL
+       CrossCompileToHLSL
     (
         const string& fp_SpvPath,
         const string& fp_OutputPath,
         PeachCore::Logger* logger
     )
     {
-        // TODO: implement using spirv-cross static lib on Linux/Mac
         logger->Error("CrossCompileToHLSL not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
 
     bool
-      ShaderCompilerUtils::CompileFullShaderPipeline
+      CompileFullShaderPipeline
     (
         const string& fp_ShaderSourcePath,
         const string& fp_OutputDirectory,
@@ -108,13 +99,12 @@ namespace PeachEditor {
         PeachCore::Logger* logger
     )
     {
-        // TODO: implement on Linux/Mac
         logger->Error("CompileFullShaderPipeline not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
 
     CompilationResult
-        ShaderCompilerUtils::CompileShaderFromSource
+        CompileShaderFromSource
         (
             const string& fp_RawSource,
             const ShaderStage fp_ShaderStage,
@@ -169,12 +159,20 @@ namespace PeachEditor {
         };
     }
 
-    void
-        ShaderCompilerUtils::DisassembleSPIRV
+    bool
+        DisassembleSPIRV
         (
-            const vector<uint32_t>& fp_SpirvBytecode
+            const vector<uint32_t>& fp_SpirvBytecode,
+            string& fp_DisassembledSPIRV,
+            PeachCore::Logger* logger
         )
     {
+        if (fp_DisassembledSPIRV.size() > 0)
+        {
+            logger->Warning("Tried to pass non empty string, continuing disassembly and clearing string but please be aware this might cause unintended side affects owo", "ShaderCompilerUtils");
+            fp_DisassembledSPIRV.clear();
+        }
+
         spvtools::SpirvTools tools(SPV_ENV_VULKAN_1_2);
 
         tools.SetMessageConsumer
@@ -185,20 +183,22 @@ namespace PeachEditor {
             }
         );
 
-        string disassembled;
+        string f_;
 
-        if (tools.Disassemble(fp_SpirvBytecode, &disassembled))
+        if (not tools.Disassemble(fp_SpirvBytecode, &fp_DisassembledSPIRV))
         {
-            printf("--- SPIR-V Disassembly ---\n%s\n", disassembled.c_str());
+            logger->Error("[SPIRV-Tools] Failed to disassemble SPIR-V", "ShaderCompilerUtils");
+            return false;
         }
-        else
-        {
-            fprintf(stderr, "[SPIRV-Tools] Failed to disassemble SPIR-V\n");
-        }
+
+        return true;
     }
 
     ShaderReflectionInfo
-        ShaderCompilerUtils::ReflectInputsOutputs(const vector<uint32_t>& fp_SpirvBytecode)
+        ReflectInputsOutputs
+        (
+            const vector<uint32_t>& fp_SpirvBytecode
+        )
     {
         auto compiler = make_unique<spirv_cross::CompilerGLSL>(fp_SpirvBytecode); //needa heap alloc these because they're chonky boyz
         auto resources = make_unique<spirv_cross::ShaderResources>(compiler->get_shader_resources());
@@ -224,7 +224,7 @@ namespace PeachEditor {
     }
 
     bool
-        ShaderCompilerUtils::ReflectDescriptorBindings
+        ReflectDescriptorBindings
         (
             vector<DescriptorBindingInfo>* fp_BindingInfo,
             const vector<uint32_t>& fp_SpirvBytecode,
@@ -279,7 +279,7 @@ namespace PeachEditor {
     }
 
     bool
-        ShaderCompilerUtils::ReflectPushConstants
+        ReflectPushConstants
         (
             vector<PushConstantInfo>* fp_PushConstants,
             const vector<uint32_t>& fp_SpirvBytecode,
@@ -324,112 +324,4 @@ namespace PeachEditor {
 
         return true;
     }
-
-    [[nodiscard]] static bool
-        WriteSPIRVToFile
-        (
-            const vector<uint32_t>& fp_SpirvBytecode,
-            const string& fp_DesiredOutputDirectory,
-            const string& fp_DesiredName,
-            PeachCore::Logger* logger
-        )
-    {
-        //always check for nullptrs kids >O<
-        if (not logger)
-        {
-            PeachCore::PrintError("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during WriteSPIRVToFile()");
-            return false;
-        }
-        // Ensure directory exists
-        else if (not filesystem::exists(fp_DesiredOutputDirectory))
-        {
-            logger->Error(format("ShaderCompilerUtils Error: Tried to pass invalid write directory: '{}' to WriteSPIRVToFile()", fp_DesiredOutputDirectory), "ShaderCompilerUtils");
-            return false;
-        }
-        else if (fp_SpirvBytecode.empty()) //check if the byte vector is empty uwu
-        {
-            logger->Error(format("ShaderCompilerUtils Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "ShaderCompilerUtils");
-            return false;
-        }
-
-        const string f_FileName = fp_DesiredOutputDirectory + "/" + fp_DesiredName + ".spv";
-
-        ofstream file(f_FileName, ios::binary);  // Open in binary mode
-
-        if (not file.is_open())
-        {
-            logger->Error(format("ShaderCompilerUtils Error: Failed to open file: '{}' for writing.", f_FileName), "ShaderCompilerUtils");
-            return false;
-        }
-
-        //now we can confidently write the bytecode into a file knowing its open, the vector is filled and the directory exists
-        file.write(reinterpret_cast<const char*>(fp_SpirvBytecode.data()), fp_SpirvBytecode.size() * sizeof(uint32_t));
-
-        return true;
-    }
-
-    [[nodiscard]] static bool
-        LoadRawShaderSource
-        (
-            string* fp_SourceCode,
-            const string& fp_ShaderSourcePath,
-            PeachCore::Logger* logger
-        )
-    {
-        //check for nullptr for logger ref
-        if (not logger)
-        {
-            PeachCore::PrintError("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during LoadRawShaderSource()");
-            return false;
-        }
-        //more nullptr checking
-        else if (not fp_SourceCode)
-        {
-            logger->Error("ShaderCompilerUtils Error: Nullptr string reference passed to LoadRawShaderSource()", "ShaderCompilerUtils");
-            return false;
-        }
-        // Ensure directory exists
-        else if (not filesystem::exists(fp_ShaderSourcePath))
-        {
-            logger->Error("ShaderCompilerUtils Error: Tried to pass invalid filepath to LoadRawShaderSource()", "ShaderCompilerUtils");
-            return false;
-        }
-
-        // Extract file extension assuming format "filename.ext"
-        size_t lastDotIndex = fp_ShaderSourcePath.rfind('.');
-
-        if (lastDotIndex == string::npos)
-        {
-            logger->Error(format("ShaderCompilerUtils Error: No file extension found at filepath: '{}'", fp_ShaderSourcePath), "ShaderCompilerUtils");
-            return false;
-        }
-
-        string f_FileExtension = fp_ShaderSourcePath.substr(lastDotIndex);
-
-        if (
-            f_FileExtension != ".fs" and
-            f_FileExtension != ".vs" and
-            f_FileExtension != ".glsl" and
-            f_FileExtension != ".vert" and
-            f_FileExtension != ".frag"
-            )
-        {
-            logger->Error(format("Found file extension: '{}', when GLSL Shader was expected at specified filepath: '{}'", f_FileExtension, fp_ShaderSourcePath), "ShaderCompilerUtils");
-            return false;
-        }
-
-        ifstream f_ShaderFile(fp_ShaderSourcePath, ios::in);
-
-        if (not f_ShaderFile.is_open())
-        {
-            logger->Error(format("ShaderCompilerUtils Error: Failed to open shader at filepath: '{}', for reading.", fp_ShaderSourcePath), "ShaderCompilerUtils");
-            return false;
-        }
-
-        stringstream f_TempStringBuffer;
-        f_TempStringBuffer << f_ShaderFile.rdbuf();
-        *fp_SourceCode = f_TempStringBuffer.str();
-
-         return true;
-     }
- }
+}
