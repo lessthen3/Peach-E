@@ -69,11 +69,6 @@ namespace PeachCore
             main_logger->Fatal("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "GameManager");
             return false;
         }
-        else if (sodium_init() < 0)
-        {
-            main_logger->Fatal("Sodium library couldn't be initialized, it is not safe to use.", "GameManager");
-            return false;
-        }
         else if (not InitializeThreads(fp_RootPath, fp_RenderingBackend))
         {
             main_logger->Fatal("Failed to initialize Peach Engine managers, ending engine program execution immediately", "GameManager");

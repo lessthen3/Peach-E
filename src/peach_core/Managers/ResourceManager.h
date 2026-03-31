@@ -33,8 +33,6 @@
 #include <miniaudio/miniaudio.h>
 #include <moody_camel/readerwriterqueue.h>
 
-#include <sodium.h>
-
 typedef NativeScript* (*CreateNativeScriptFunc)();
 typedef void (*DestroyNativeScriptFunc)(NativeScript*);
 

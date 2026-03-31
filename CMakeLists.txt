@@ -103,6 +103,10 @@ file(GLOB FMT_SOURCES
     third_party/peach_core/source_include/fmt/*.cc
 )
 
+file(GLOB MONOCYPHER_SOURCES
+    third_party/peach_core/source_include/monocypher/*.c
+)
+
 if(PEACH_PLATFORM_IS_APPLE)
     file(GLOB PHYSFS_SOURCES 
         third_party/peach_core/source_include/physfs/*.c
@@ -146,6 +150,7 @@ target_sources(peach_core PRIVATE
     ${BOX2D_SOURCES}
     ${JOLT_SOURCES}
     ${FMT_SOURCES}
+    ${MONOCYPHER_SOURCES}
 )
 
 target_include_directories(peach_core PUBLIC
@@ -159,6 +164,7 @@ source_group("third_party/clipper2" FILES ${CLIPPER2_SOURCES})
 source_group("third_party/box2d" FILES ${BOX2D_SOURCES})
 source_group("third_party/Jolt" FILES ${JOLT_SOURCES})
 source_group("third_party/fmt" FILES ${FMT_SOURCES})
+source_group("third_party/monocypher" FILES ${MONOCYPHER_SOURCES})
 
 ####################################### helper macro for reducing repeated boiler plate for static linking uwu
 
@@ -186,14 +192,6 @@ if(PEACH_WINDOWS)
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
     )
 
-    ############ Crypto
-
-    STATIC_IMPORT(libsodium 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/win64/release/libsodium.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/win64/debug/libsodium.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/include"
-    )
-
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
@@ -203,14 +201,6 @@ if(PEACH_WINDOWS)
     )
 
 elseif(PEACH_MACOS)
-
-    ############ Crypto
-
-    STATIC_IMPORT(libsodium 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/steveARM64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/steveARM64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/include"
-    )
 
     ############ Windowing and Input
 
@@ -228,14 +218,6 @@ elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64/libGLEW.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64/libGLEW.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
-    )
-
-    ############ Crypto
-
-    STATIC_IMPORT(libsodium 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/tux64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/tux64/libsodium.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/libsodium/include"
     )
 
     ############ Windowing and Input
@@ -329,9 +311,6 @@ endif()
 
 # Peach Core
 target_link_libraries(peach_core PUBLIC
-    #cryptography
-    libsodium
-
     #SDL
     SDL3
 )
@@ -496,6 +475,10 @@ if(PEACH_PLATFORM_IS_WINDOWS)
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
+
+        target_compile_options(peach_core PUBLIC 
+            /utf-8
+        )
 
         target_link_options(peach_core PRIVATE /NODEFAULTLIB:LIBCMTD)
     endif(MSVC)
@@ -668,8 +651,8 @@ if(BUILD_PEACH_EDITOR)
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/libnethost.lib" #juicy static linkage UwU
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/libnethost.lib" #debug dll, fuq that static for both
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/release/libnethost.lib" #juicy static linkage UwU
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/debug/nethost.lib" #debug dll
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
         )
 
@@ -847,6 +830,8 @@ if(BUILD_PEACH_EDITOR)
                 $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
             ) 
 
+            set_target_properties(Peach_Editor PROPERTIES ENABLE_EXPORTS OFF)
+
             target_link_options(Peach_Editor PRIVATE 
                 /NODEFAULTLIB:LIBCMTD
                 /NODEFAULTLIB:LIBCMT
@@ -858,7 +843,7 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### Linking deps + peach_core
 
-    if(NOT PEACH_WINDOWS OR NOT PEACH_MACOS) #shaderc_combined handles this for windows ^w^
+    if(NOT PEACH_WINDOWS AND NOT PEACH_MACOS) #shaderc_combined handles this for windows ^w^
         target_link_libraries(Peach_Editor PRIVATE
             #Tools for compiling, and debuggin SPIRV, not needed for game runtime uwu
             #spirv-tools
@@ -872,16 +857,10 @@ if(BUILD_PEACH_EDITOR)
         )
     endif(NOT PEACH_WINDOWS OR NOT PEACH_MACOS)
 
-    if(PEACH_PLATFORM_IS_WINDOWS)
-        target_link_libraries(Peach_Editor PRIVATE
-            #dont change these, the build breaks for debug otherwise
-            $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:msvcrt>
+    if(PEACH_PLATFORM_IS_WINDOWS) #needed for statically linking nethost for peach_editor
+        target_link_libraries(Peach_Editor PRIVATE 
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:advapi32>
-        ) #needed for statically linking nethost for peach_editor
-
-        # target_include_directories(Peach_Editor PRIVATE #needa still have the includes so symbols can be resolved via ipc ig
-        #     third_party/peach_editor/vulkan/include
-        # )
+        ) 
     endif(PEACH_PLATFORM_IS_WINDOWS)
 
     target_link_libraries(Peach_Editor PRIVATE
@@ -938,7 +917,9 @@ if(BUILD_PEACH_ENGINE)
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
 
-        target_link_options(Peach_Engine PRIVATE /NODEFAULTLIB:LIBCMTD)
+        set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS OFF)
+
+        target_link_options(${PROJECT_NAME} PRIVATE /NODEFAULTLIB:LIBCMTD)
     endif(MSVC)
 
     ####################################### Link Peach Engine to Peach Core
