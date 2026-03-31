@@ -2196,7 +2196,7 @@ namespace PeachCore {
                 #if defined(_MSC_VER)
                     static_assert(always_false_v<T>, "Unsupported type in Extract. Check __FUNCSIG__ for details: " __FUNCSIG__);
                 #else
-                    static_assert(always_false_v<T>, "Unsupported type in Extract. Check __func__ for details: " +  __func__);
+                    static_assert(always_false_v<T>, "Unsupported type in Extract. Check __func__ for details: " );
                     //static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
                 #endif
             }

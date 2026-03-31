@@ -42,15 +42,26 @@ def ensure_tool_installed(fp_ToolName: str) -> bool:
     else:
         return True
 
+############# Build Session Accumulators #############
+
+# populated during the build loop, dumped at the end if flags are set
+g_ErrorLog:   dict[str, list[str]] = {}  # dep_name -> [error lines]
+g_WarningLog: dict[str, list[str]] = {}  # dep_name -> [warning lines]
+g_CurrentDep: str = "Peach-E"            # this is more for build_deps.py but w/e
+
+
 ############# Run command for live console feed #############
 
 """
     Runs a subprocess command and streams stdout live.
-    Raises CalledProcessError if the command fails,
-    attaching the full output to the exception.
+    Errors  → printed red  in real time, collected into g_ErrorLog
+    Warnings → printed yellow in real time, collected into g_WarningLog
+    Raises CalledProcessError if the command fails.
 """
 
 def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
+
+    global g_ErrorLog, g_WarningLog, g_CurrentDep
 
     f_Process = subprocess.Popen(
         fp_Command,
@@ -58,15 +69,34 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         universal_newlines=True,
-        encoding="utf-8", 
-        errors="replace"  
+        encoding="utf-8",
+        errors="replace"
     )
 
     f_OutputLines = []
 
+    # keywords that indicate an error line — lowercase check
+    f_ErrorKeywords   = ("error:", "fatal error:", "linker error", "lnk", "c2", "c3")
+    f_WarningKeywords = ("warning:",)
+
     try:
         for line in f_Process.stdout:
-            sys.stdout.write(line)
+
+            f_Lower = line.lower()
+
+            if any(kw in f_Lower for kw in f_ErrorKeywords):
+                sys.stdout.write(CreateColouredText(line.rstrip('\n'), "bright red") + '\n')
+                if g_CurrentDep:
+                    g_ErrorLog.setdefault(g_CurrentDep, []).append(line.rstrip('\n'))
+
+            elif any(kw in f_Lower for kw in f_WarningKeywords):
+                sys.stdout.write(CreateColouredText(line.rstrip('\n'), "yellow") + '\n')
+                if g_CurrentDep:
+                    g_WarningLog.setdefault(g_CurrentDep, []).append(line.rstrip('\n'))
+
+            else:
+                sys.stdout.write(line)
+
             f_OutputLines.append(line)
 
         f_Process.wait()
@@ -80,6 +110,43 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
 
     finally:
         f_Process.stdout.close()
+
+
+############# Markdown Summary Dump #############
+
+def WriteBuildSummaryMarkdown(fp_BaseDir: str, fp_PrintErrors: bool, fp_PrintWarnings: bool) -> None:
+
+    if fp_PrintErrors and g_ErrorLog:
+
+        f_ErrorPath = os.path.join(fp_BaseDir, "build_errors.md")
+
+        with open(f_ErrorPath, "w", encoding="utf-8") as f_File:
+            f_File.write("# Peach-E Build Error Summary\n\n")
+
+            for lv_Dep, lv_Lines in g_ErrorLog.items():
+                f_File.write(f"## `{lv_Dep}`\n\n")
+                f_File.write("```\n")
+                for lv_Line in lv_Lines:
+                    f_File.write(lv_Line + "\n")
+                f_File.write("```\n\n")
+
+        print(CreateColouredText(f"\n[INFO]: Error summary written to {f_ErrorPath}", "bright cyan"))
+
+    if fp_PrintWarnings and g_WarningLog:
+
+        f_WarnPath = os.path.join(fp_BaseDir, "build_warnings.md")
+
+        with open(f_WarnPath, "w", encoding="utf-8") as f_File:
+            f_File.write("# Peach-E Build Warning Summary\n\n")
+
+            for lv_Dep, lv_Lines in g_WarningLog.items():
+                f_File.write(f"## `{lv_Dep}`\n\n")
+                f_File.write("```\n")
+                for lv_Line in lv_Lines:
+                    f_File.write(lv_Line + "\n")
+                f_File.write("```\n\n")
+
+        print(CreateColouredText(f"[INFO]: Warning summary written to {f_WarnPath}", "bright cyan"))
 
 ############# Main CMake Function #############
 
@@ -146,7 +213,6 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> b
 
     except subprocess.CalledProcessError as err:
         print(CreateColouredText("[ERROR]: CMake project generation failed!", "red"))
-        print(CreateColouredText(err.output, "yellow"))
         return False
 
     print(CreateColouredText("[SUCCESS]: CMake project generation completed!", "cyan"))
@@ -161,8 +227,6 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> b
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText(f"[ERROR]: CMake single config {fp_BuildType} build process failed!", "red"))
-            print(CreateColouredText(err.output, "yellow"))
-
             return False
 
         print(CreateColouredText(f"\n[SUCCESS]: {fp_BuildType} build completed!", "cyan"))
@@ -179,8 +243,6 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> b
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake debug build process failed!", "red"))
-            print(CreateColouredText(err.output, "yellow"))
-
             return False
 
         print(CreateColouredText("[SUCCESS]: Debug build completed!", "cyan"))
@@ -195,8 +257,6 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> b
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake release build process failed!", "red"))
-            print(CreateColouredText(err.output, "yellow"))
-
             return False
 
         print(CreateColouredText("[SUCCESS]: Release build completed!", "cyan"))
@@ -320,6 +380,24 @@ def main() -> bool:
         help=CreateColouredText("ios, android, wasm, psvita, or leave empty for native", 'cyan')
     )
 
+    parser.add_argument(
+        '--dump_errors',
+        action='store_true',
+        help=CreateColouredText('Dump all build errors to build_errors.md', 'bright magenta')
+    )
+
+    parser.add_argument(
+        '--dump_warnings',
+        action='store_true',
+        help=CreateColouredText('Dump all build warnings to build_warnings.md', 'bright magenta')
+    )
+
+    parser.add_argument(
+        '--dump_output',
+        action='store_true',
+        help=CreateColouredText('Dump all build warnings + errors', 'bright magenta')
+    )
+
     args = parser.parse_args()
 
     ############# Target Platform Config #############
@@ -416,6 +494,15 @@ def main() -> bool:
     print(CreateColouredText(f"Generator: {f_DesiredGenerator}", "bright magenta"))
     print(CreateColouredText(f"Build Type: {f_BuildType}", "bright magenta"))
     print(CreateColouredText(f"Platform: {f_CurrentPlatform}\n", "bright magenta"))
+
+    ############# Provide Printout #############
+
+    if args.dump_output:
+        WriteBuildSummaryMarkdown(True, True);
+    elif args.dump_warnings:
+        WriteBuildSummaryMarkdown(False, True);
+    elif args.dump_errors:
+        WriteBuildSummaryMarkdown(True, False);
 
     return True
 

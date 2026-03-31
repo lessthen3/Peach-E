@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                        Peach-E v0.0.1
  *              Created by Ranyodh Mandur - 🍑 2024
  *
@@ -51,8 +51,8 @@ namespace PeachCore {
                 // No need to explicitly delete the texture since sf::Texture manages its own memory
 
                 // Transfer object based resources 
-                pm_TileUVs = move(other.pm_TileUVs);
-                m_Name = move(other.m_Name);
+                pm_TileUVs = std::move(other.pm_TileUVs);
+                m_Name = std::move(other.m_Name);
 
                 //Create new copies of primitive types
                 m_Width = other.m_Width;

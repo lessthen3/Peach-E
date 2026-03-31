@@ -1,6 +1,6 @@
 /*
   Simple DirectMedia Layer
-  Copyright (C) 1997-2025 Sam Lantinga <slouken@libsdl.org>
+  Copyright (C) 1997-2026 Sam Lantinga <slouken@libsdl.org>
 
   This software is provided 'as-is', without any express or implied
   warranty.  In no event will the authors be held liable for any damages
@@ -29,8 +29,8 @@
  * instead.
  *
  * The term "instance_id" is the current instantiation of a joystick device in
- * the system, if the joystick is removed and then re-inserted then it will
- * get a new instance_id, instance_id's are monotonically increasing
+ * the system. If the joystick is removed and then re-inserted then it will
+ * get a new instance_id. instance_id's are monotonically increasing
  * identifiers of a joystick plugged in.
  *
  * The term "player_index" is the number assigned to a player on a specific
@@ -46,8 +46,16 @@
  * and load appropriate drivers.
  *
  * If you would like to receive joystick updates while the application is in
- * the background, you should set the following hint before calling
- * SDL_Init(): SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS
+ * the background, you should set the
+ * SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS hint.
+ *
+ * SDL can provide virtual joysticks as well: the app defines an imaginary
+ * controller with SDL_AttachVirtualJoystick(), and then can provide inputs
+ * for it via SDL_SetJoystickVirtualAxis(), SDL_SetJoystickVirtualButton(),
+ * etc. As this data is supplied, it will look like a normal joystick to SDL,
+ * just not backed by a hardware driver. This has been used to make unusual
+ * devices, like VR headset controllers, look like normal joysticks, or
+ * provide recording/playback of game inputs, etc.
  */
 
 #ifndef SDL_joystick_h_
@@ -174,12 +182,32 @@ typedef enum SDL_JoystickConnectionState
  * joysticks while processing to guarantee that the joystick list won't change
  * and joystick and gamepad events will not be delivered.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  */
 extern SDL_DECLSPEC void SDLCALL SDL_LockJoysticks(void) SDL_ACQUIRE(SDL_joystick_lock);
 
 /**
+ * Locking for atomic access to the joystick API.
+ *
+ * The SDL joystick functions are thread-safe, however you can lock the
+ * joysticks while processing to guarantee that the joystick list won't change
+ * and joystick and gamepad events will not be delivered.
+ *
+ * \returns true if the joysticks were successfully locked, false otherwise.
+ *
+ * \threadsafety It is safe to call this function from any thread.
+ *
+ * \since This function is available since SDL 3.6.0.
+ */
+extern SDL_DECLSPEC bool SDLCALL SDL_TryLockJoysticks(void) SDL_ACQUIRE(SDL_joystick_lock);
+
+/**
  * Unlocking for atomic access to the joystick API.
+ *
+ * \threadsafety This should be called from the same thread that called
+ *               SDL_LockJoysticks().
  *
  * \since This function is available since SDL 3.2.0.
  */
@@ -189,6 +217,8 @@ extern SDL_DECLSPEC void SDLCALL SDL_UnlockJoysticks(void) SDL_RELEASE(SDL_joyst
  * Return whether a joystick is currently connected.
  *
  * \returns true if a joystick is connected, false otherwise.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -204,6 +234,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_HasJoystick(void);
  * \returns a 0 terminated array of joystick instance IDs or NULL on failure;
  *          call SDL_GetError() for more information. This should be freed
  *          with SDL_free() when it is no longer needed.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -221,6 +253,8 @@ extern SDL_DECLSPEC SDL_JoystickID * SDLCALL SDL_GetJoysticks(int *count);
  * \returns the name of the selected joystick. If no name can be found, this
  *          function returns NULL; call SDL_GetError() for more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickName
@@ -237,6 +271,8 @@ extern SDL_DECLSPEC const char * SDLCALL SDL_GetJoystickNameForID(SDL_JoystickID
  * \returns the path of the selected joystick. If no path can be found, this
  *          function returns NULL; call SDL_GetError() for more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickPath
@@ -251,6 +287,8 @@ extern SDL_DECLSPEC const char * SDLCALL SDL_GetJoystickPathForID(SDL_JoystickID
  *
  * \param instance_id the joystick instance ID.
  * \returns the player index of a joystick, or -1 if it's not available.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -267,6 +305,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetJoystickPlayerIndexForID(SDL_JoystickID i
  * \param instance_id the joystick instance ID.
  * \returns the GUID of the selected joystick. If called with an invalid
  *          instance_id, this function returns a zero GUID.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -285,6 +325,8 @@ extern SDL_DECLSPEC SDL_GUID SDLCALL SDL_GetJoystickGUIDForID(SDL_JoystickID ins
  * \returns the USB vendor ID of the selected joystick. If called with an
  *          invalid instance_id, this function returns 0.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickVendor
@@ -301,6 +343,8 @@ extern SDL_DECLSPEC Uint16 SDLCALL SDL_GetJoystickVendorForID(SDL_JoystickID ins
  * \param instance_id the joystick instance ID.
  * \returns the USB product ID of the selected joystick. If called with an
  *          invalid instance_id, this function returns 0.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -319,6 +363,8 @@ extern SDL_DECLSPEC Uint16 SDLCALL SDL_GetJoystickProductForID(SDL_JoystickID in
  * \returns the product version of the selected joystick. If called with an
  *          invalid instance_id, this function returns 0.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickProductVersion
@@ -335,6 +381,8 @@ extern SDL_DECLSPEC Uint16 SDLCALL SDL_GetJoystickProductVersionForID(SDL_Joysti
  * \returns the SDL_JoystickType of the selected joystick. If called with an
  *          invalid instance_id, this function returns
  *          `SDL_JOYSTICK_TYPE_UNKNOWN`.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -353,6 +401,8 @@ extern SDL_DECLSPEC SDL_JoystickType SDLCALL SDL_GetJoystickTypeForID(SDL_Joysti
  * \returns a joystick identifier or NULL on failure; call SDL_GetError() for
  *          more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_CloseJoystick
@@ -366,6 +416,8 @@ extern SDL_DECLSPEC SDL_Joystick * SDLCALL SDL_OpenJoystick(SDL_JoystickID insta
  * \returns an SDL_Joystick on success or NULL on failure or if it hasn't been
  *          opened yet; call SDL_GetError() for more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  */
 extern SDL_DECLSPEC SDL_Joystick * SDLCALL SDL_GetJoystickFromID(SDL_JoystickID instance_id);
@@ -376,6 +428,8 @@ extern SDL_DECLSPEC SDL_Joystick * SDLCALL SDL_GetJoystickFromID(SDL_JoystickID 
  * \param player_index the player index to get the SDL_Joystick for.
  * \returns an SDL_Joystick on success or NULL on failure; call SDL_GetError()
  *          for more information.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -469,13 +523,33 @@ SDL_COMPILE_TIME_ASSERT(SDL_VirtualJoystickDesc_SIZE,
 /**
  * Attach a new virtual joystick.
  *
+ * Apps can create virtual joysticks, that exist without hardware directly
+ * backing them, and have program-supplied inputs. Once attached, a virtual
+ * joystick looks like any other joystick that SDL can access. These can be
+ * used to make other things look like joysticks, or provide pre-recorded
+ * input, etc.
+ *
+ * Once attached, the app can send joystick inputs to the new virtual joystick
+ * using SDL_SetJoystickVirtualAxis(), etc.
+ *
+ * When no longer needed, the virtual joystick can be removed by calling
+ * SDL_DetachVirtualJoystick().
+ *
  * \param desc joystick description, initialized using SDL_INIT_INTERFACE().
  * \returns the joystick instance ID, or 0 on failure; call SDL_GetError() for
  *          more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_DetachVirtualJoystick
+ * \sa SDL_SetJoystickVirtualAxis
+ * \sa SDL_SetJoystickVirtualButton
+ * \sa SDL_SetJoystickVirtualBall
+ * \sa SDL_SetJoystickVirtualHat
+ * \sa SDL_SetJoystickVirtualTouchpad
+ * \sa SDL_SetJoystickVirtualSensorData
  */
 extern SDL_DECLSPEC SDL_JoystickID SDLCALL SDL_AttachVirtualJoystick(const SDL_VirtualJoystickDesc *desc);
 
@@ -486,6 +560,8 @@ extern SDL_DECLSPEC SDL_JoystickID SDLCALL SDL_AttachVirtualJoystick(const SDL_V
  *                    SDL_AttachVirtualJoystick().
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -498,6 +574,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_DetachVirtualJoystick(SDL_JoystickID instan
  *
  * \param instance_id the joystick instance ID.
  * \returns true if the joystick is virtual, false otherwise.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  */
@@ -522,7 +600,15 @@ extern SDL_DECLSPEC bool SDLCALL SDL_IsJoystickVirtual(SDL_JoystickID instance_i
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
+ *
+ * \sa SDL_SetJoystickVirtualButton
+ * \sa SDL_SetJoystickVirtualBall
+ * \sa SDL_SetJoystickVirtualHat
+ * \sa SDL_SetJoystickVirtualTouchpad
+ * \sa SDL_SetJoystickVirtualSensorData
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualAxis(SDL_Joystick *joystick, int axis, Sint16 value);
 
@@ -542,7 +628,15 @@ extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualAxis(SDL_Joystick *joysti
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
+ *
+ * \sa SDL_SetJoystickVirtualAxis
+ * \sa SDL_SetJoystickVirtualButton
+ * \sa SDL_SetJoystickVirtualHat
+ * \sa SDL_SetJoystickVirtualTouchpad
+ * \sa SDL_SetJoystickVirtualSensorData
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualBall(SDL_Joystick *joystick, int ball, Sint16 xrel, Sint16 yrel);
 
@@ -561,7 +655,15 @@ extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualBall(SDL_Joystick *joysti
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
+ *
+ * \sa SDL_SetJoystickVirtualAxis
+ * \sa SDL_SetJoystickVirtualBall
+ * \sa SDL_SetJoystickVirtualHat
+ * \sa SDL_SetJoystickVirtualTouchpad
+ * \sa SDL_SetJoystickVirtualSensorData
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualButton(SDL_Joystick *joystick, int button, bool down);
 
@@ -580,7 +682,15 @@ extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualButton(SDL_Joystick *joys
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
+ *
+ * \sa SDL_SetJoystickVirtualAxis
+ * \sa SDL_SetJoystickVirtualButton
+ * \sa SDL_SetJoystickVirtualBall
+ * \sa SDL_SetJoystickVirtualTouchpad
+ * \sa SDL_SetJoystickVirtualSensorData
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualHat(SDL_Joystick *joystick, int hat, Uint8 value);
 
@@ -606,7 +716,15 @@ extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualHat(SDL_Joystick *joystic
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
+ *
+ * \sa SDL_SetJoystickVirtualAxis
+ * \sa SDL_SetJoystickVirtualButton
+ * \sa SDL_SetJoystickVirtualBall
+ * \sa SDL_SetJoystickVirtualHat
+ * \sa SDL_SetJoystickVirtualSensorData
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualTouchpad(SDL_Joystick *joystick, int touchpad, int finger, bool down, float x, float y, float pressure);
 
@@ -628,7 +746,15 @@ extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickVirtualTouchpad(SDL_Joystick *jo
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
+ *
+ * \sa SDL_SetJoystickVirtualAxis
+ * \sa SDL_SetJoystickVirtualButton
+ * \sa SDL_SetJoystickVirtualBall
+ * \sa SDL_SetJoystickVirtualHat
+ * \sa SDL_SetJoystickVirtualTouchpad
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_SendJoystickVirtualSensorData(SDL_Joystick *joystick, SDL_SensorType type, Uint64 sensor_timestamp, const float *data, int num_values);
 
@@ -652,6 +778,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_SendJoystickVirtualSensorData(SDL_Joystick 
  * \returns a valid property ID on success or 0 on failure; call
  *          SDL_GetError() for more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  */
 extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetJoystickProperties(SDL_Joystick *joystick);
@@ -669,6 +797,8 @@ extern SDL_DECLSPEC SDL_PropertiesID SDLCALL SDL_GetJoystickProperties(SDL_Joyst
  * \returns the name of the selected joystick. If no name can be found, this
  *          function returns NULL; call SDL_GetError() for more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickNameForID
@@ -681,6 +811,8 @@ extern SDL_DECLSPEC const char * SDLCALL SDL_GetJoystickName(SDL_Joystick *joyst
  * \param joystick the SDL_Joystick obtained from SDL_OpenJoystick().
  * \returns the path of the selected joystick. If no path can be found, this
  *          function returns NULL; call SDL_GetError() for more information.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -697,6 +829,8 @@ extern SDL_DECLSPEC const char * SDLCALL SDL_GetJoystickPath(SDL_Joystick *joyst
  * \param joystick the SDL_Joystick obtained from SDL_OpenJoystick().
  * \returns the player index, or -1 if it's not available.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_SetJoystickPlayerIndex
@@ -711,6 +845,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetJoystickPlayerIndex(SDL_Joystick *joystic
  *                     the player index and turn off player LEDs.
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -728,6 +864,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickPlayerIndex(SDL_Joystick *joysti
  *          this function returns a zero GUID; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickGUIDForID
@@ -743,6 +881,8 @@ extern SDL_DECLSPEC SDL_GUID SDLCALL SDL_GetJoystickGUID(SDL_Joystick *joystick)
  * \param joystick the SDL_Joystick obtained from SDL_OpenJoystick().
  * \returns the USB vendor ID of the selected joystick, or 0 if unavailable.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickVendorForID
@@ -757,6 +897,8 @@ extern SDL_DECLSPEC Uint16 SDLCALL SDL_GetJoystickVendor(SDL_Joystick *joystick)
  * \param joystick the SDL_Joystick obtained from SDL_OpenJoystick().
  * \returns the USB product ID of the selected joystick, or 0 if unavailable.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickProductForID
@@ -770,6 +912,8 @@ extern SDL_DECLSPEC Uint16 SDLCALL SDL_GetJoystickProduct(SDL_Joystick *joystick
  *
  * \param joystick the SDL_Joystick obtained from SDL_OpenJoystick().
  * \returns the product version of the selected joystick, or 0 if unavailable.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -786,6 +930,8 @@ extern SDL_DECLSPEC Uint16 SDLCALL SDL_GetJoystickProductVersion(SDL_Joystick *j
  * \returns the firmware version of the selected joystick, or 0 if
  *          unavailable.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  */
 extern SDL_DECLSPEC Uint16 SDLCALL SDL_GetJoystickFirmwareVersion(SDL_Joystick *joystick);
@@ -799,6 +945,8 @@ extern SDL_DECLSPEC Uint16 SDLCALL SDL_GetJoystickFirmwareVersion(SDL_Joystick *
  * \returns the serial number of the selected joystick, or NULL if
  *          unavailable.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  */
 extern SDL_DECLSPEC const char * SDLCALL SDL_GetJoystickSerial(SDL_Joystick *joystick);
@@ -808,6 +956,8 @@ extern SDL_DECLSPEC const char * SDLCALL SDL_GetJoystickSerial(SDL_Joystick *joy
  *
  * \param joystick the SDL_Joystick obtained from SDL_OpenJoystick().
  * \returns the SDL_JoystickType of the selected joystick.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -828,6 +978,8 @@ extern SDL_DECLSPEC SDL_JoystickType SDLCALL SDL_GetJoystickType(SDL_Joystick *j
  * \param crc16 a pointer filled in with a CRC used to distinguish different
  *              products with the same VID/PID, or 0 if not available.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickGUIDForID
@@ -841,6 +993,8 @@ extern SDL_DECLSPEC void SDLCALL SDL_GetJoystickGUIDInfo(SDL_GUID guid, Uint16 *
  * \returns true if the joystick has been opened, false if it has not; call
  *          SDL_GetError() for more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_JoystickConnected(SDL_Joystick *joystick);
@@ -851,6 +1005,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_JoystickConnected(SDL_Joystick *joystick);
  * \param joystick an SDL_Joystick structure containing joystick information.
  * \returns the instance ID of the specified joystick on success or 0 on
  *          failure; call SDL_GetError() for more information.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  */
@@ -866,6 +1022,8 @@ extern SDL_DECLSPEC SDL_JoystickID SDLCALL SDL_GetJoystickID(SDL_Joystick *joyst
  * \param joystick an SDL_Joystick structure containing joystick information.
  * \returns the number of axis controls/number of axes on success or -1 on
  *          failure; call SDL_GetError() for more information.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -888,6 +1046,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetNumJoystickAxes(SDL_Joystick *joystick);
  * \returns the number of trackballs on success or -1 on failure; call
  *          SDL_GetError() for more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickBall
@@ -904,6 +1064,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetNumJoystickBalls(SDL_Joystick *joystick);
  * \returns the number of POV hats on success or -1 on failure; call
  *          SDL_GetError() for more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetJoystickHat
@@ -919,6 +1081,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetNumJoystickHats(SDL_Joystick *joystick);
  * \param joystick an SDL_Joystick structure containing joystick information.
  * \returns the number of buttons on success or -1 on failure; call
  *          SDL_GetError() for more information.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -938,6 +1102,8 @@ extern SDL_DECLSPEC int SDLCALL SDL_GetNumJoystickButtons(SDL_Joystick *joystick
  *
  * \param enabled whether to process joystick events or not.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_JoystickEventsEnabled
@@ -954,6 +1120,8 @@ extern SDL_DECLSPEC void SDLCALL SDL_SetJoystickEventsEnabled(bool enabled);
  *
  * \returns true if joystick events are being processed, false otherwise.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_SetJoystickEventsEnabled
@@ -964,7 +1132,9 @@ extern SDL_DECLSPEC bool SDLCALL SDL_JoystickEventsEnabled(void);
  * Update the current state of the open joysticks.
  *
  * This is called automatically by the event loop if any joystick events are
- * enabled.
+ * enabled and SDL_HINT_AUTO_UPDATE_JOYSTICKS hasn't been set to "0".
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  */
@@ -988,6 +1158,8 @@ extern SDL_DECLSPEC void SDLCALL SDL_UpdateJoysticks(void);
  * \returns a 16-bit signed integer representing the current position of the
  *          axis or 0 on failure; call SDL_GetError() for more information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetNumJoystickAxes
@@ -1005,6 +1177,8 @@ extern SDL_DECLSPEC Sint16 SDLCALL SDL_GetJoystickAxis(SDL_Joystick *joystick, i
  * \param axis the axis to query; the axis indices start at index 0.
  * \param state upon return, the initial value is supplied here.
  * \returns true if this axis has any initial value, or false if not.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  */
@@ -1025,6 +1199,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_GetJoystickAxisInitialState(SDL_Joystick *j
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetNumJoystickBalls
@@ -1039,6 +1215,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_GetJoystickBall(SDL_Joystick *joystick, int
  * \param joystick an SDL_Joystick structure containing joystick information.
  * \param hat the hat index to get the state from; indices start at index 0.
  * \returns the current hat position.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -1064,6 +1242,8 @@ extern SDL_DECLSPEC Uint8 SDLCALL SDL_GetJoystickHat(SDL_Joystick *joystick, int
  *               index 0.
  * \returns true if the button is pressed, false otherwise.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_GetNumJoystickButtons
@@ -1086,6 +1266,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_GetJoystickButton(SDL_Joystick *joystick, i
  *                              rumble motor, from 0 to 0xFFFF.
  * \param duration_ms the duration of the rumble effect, in milliseconds.
  * \returns true, or false if rumble isn't supported on this joystick.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  */
@@ -1114,6 +1296,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_RumbleJoystick(SDL_Joystick *joystick, Uint
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  *
  * \sa SDL_RumbleJoystick
@@ -1136,6 +1320,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_RumbleJoystickTriggers(SDL_Joystick *joysti
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickLED(SDL_Joystick *joystick, Uint8 red, Uint8 green, Uint8 blue);
@@ -1149,6 +1335,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_SetJoystickLED(SDL_Joystick *joystick, Uint
  * \returns true on success or false on failure; call SDL_GetError() for more
  *          information.
  *
+ * \threadsafety It is safe to call this function from any thread.
+ *
  * \since This function is available since SDL 3.2.0.
  */
 extern SDL_DECLSPEC bool SDLCALL SDL_SendJoystickEffect(SDL_Joystick *joystick, const void *data, int size);
@@ -1157,6 +1345,8 @@ extern SDL_DECLSPEC bool SDLCALL SDL_SendJoystickEffect(SDL_Joystick *joystick, 
  * Close a joystick previously opened with SDL_OpenJoystick().
  *
  * \param joystick the joystick device to close.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  *
@@ -1171,6 +1361,8 @@ extern SDL_DECLSPEC void SDLCALL SDL_CloseJoystick(SDL_Joystick *joystick);
  * \returns the connection state on success or
  *          `SDL_JOYSTICK_CONNECTION_INVALID` on failure; call SDL_GetError()
  *          for more information.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  */
@@ -1192,6 +1384,8 @@ extern SDL_DECLSPEC SDL_JoystickConnectionState SDLCALL SDL_GetJoystickConnectio
  *                battery.
  * \returns the current battery state or `SDL_POWERSTATE_ERROR` on failure;
  *          call SDL_GetError() for more information.
+ *
+ * \threadsafety It is safe to call this function from any thread.
  *
  * \since This function is available since SDL 3.2.0.
  */

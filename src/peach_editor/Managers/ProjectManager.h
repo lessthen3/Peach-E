@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                     Peach Editor v0.0.7
  *             Created by Ranyodh Mandur - 🍑 2024
  *
@@ -117,7 +117,7 @@ namespace PeachEditor {
             }
 
             //write peach project settings -> JSON inside desired dir
-            bool result = PEACH_TO_JSON(fp_PeachProject, fp_ProjectName, fp_DesiredProjectPath, project_logger.get());
+            return PEACH_TO_JSON(fp_PeachProject, fp_ProjectName, fp_DesiredProjectPath, project_logger.get());
         }
     };
 }

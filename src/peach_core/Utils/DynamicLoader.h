@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                        Peach-E v0.0.1
  *              Created by Ranyodh Mandur - 🍑 2024
  *
@@ -77,7 +77,7 @@ namespace PeachCore {
                 return nullptr;
             }
 
-            logger->Info(("Library loaded successfully: '{}'", fp_DylibPath), "DynamicLoader");
+            logger->Info(format("Library loaded successfully: '{}'", fp_DylibPath), "DynamicLoader");
 
             return f_LibraryHandle;
         }

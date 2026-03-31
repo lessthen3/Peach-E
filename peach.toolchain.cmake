@@ -76,6 +76,11 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "windows-arm64")
 elseif(PEACH_TARGET_PLATFORM STREQUAL "macos")
     set(CMAKE_SYSTEM_NAME Darwin)
     set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64") # universal binary
+
+    # xcode being naughty w archs
+    set(CMAKE_XCODE_ATTRIBUTE_ARCHS "arm64 x86_64" CACHE STRING "" FORCE)
+    set(CMAKE_XCODE_ATTRIBUTE_VALID_ARCHS "arm64 x86_64" CACHE STRING "" FORCE)
+    
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
 
     set(PEACH_MACOS               ON CACHE BOOL "" FORCE)

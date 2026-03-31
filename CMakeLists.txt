@@ -95,8 +95,12 @@ file(GLOB BOX2D_SOURCES
     third_party/peach_core/source_include/box2d/*.c
 )
 
-file(GLOB_RECURSE  JOLT_SOURCES
+file(GLOB_RECURSE JOLT_SOURCES
     third_party/peach_core/source_include/Jolt/*.cpp #need caps since jolt does the target include thing in its cmake owo
+)
+
+file(GLOB FMT_SOURCES
+    third_party/peach_core/source_include/fmt/*.cc
 )
 
 if(PEACH_PLATFORM_IS_APPLE)
@@ -141,6 +145,7 @@ target_sources(peach_core PRIVATE
     ${CLIPPER2_SOURCES}
     ${BOX2D_SOURCES}
     ${JOLT_SOURCES}
+    ${FMT_SOURCES}
 )
 
 target_include_directories(peach_core PUBLIC
@@ -153,7 +158,7 @@ source_group("third_party/lz4" FILES ${LZ4_SOURCES})
 source_group("third_party/clipper2" FILES ${CLIPPER2_SOURCES})
 source_group("third_party/box2d" FILES ${BOX2D_SOURCES})
 source_group("third_party/Jolt" FILES ${JOLT_SOURCES})
-
+source_group("third_party/fmt" FILES ${FMT_SOURCES})
 
 ####################################### helper macro for reducing repeated boiler plate for static linking uwu
 
@@ -210,13 +215,12 @@ elseif(PEACH_MACOS)
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steveARM64/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steveARM64/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steve64/release/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steve64/debug/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
 elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
-    # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"
 
     ############ GL extensions for legacy systems
 
@@ -549,10 +553,15 @@ if(BUILD_PEACH_EDITOR)
         third_party/peach_editor/weird_source_include/spirv_cross/*.cpp
     )
 
+    file(GLOB BC7ENC_RDO_SOURCES
+        third_party/peach_editor/source_include/bc7enc_rdo
+    )
+
     target_sources(Peach_Editor PRIVATE
         ${TINYXML2_SOURCES}
         ${LODEPNG_SOURCES}
         ${SPIRV_CROSS_SOURCES}
+        ${BC7ENC_RDO_SOURCES}
     )
 
     target_include_directories(Peach_Editor PRIVATE
@@ -564,8 +573,8 @@ if(BUILD_PEACH_EDITOR)
     source_group("third_party/tinyxml2" FILES ${TINYXML2_SOURCES})
     source_group("third_party/lodepng" FILES ${LODEPNG_SOURCES})
     source_group("third_party/spirv_cross" FILES ${SPIRV_CROSS_SOURCES})
+    source_group("third_party/bc7enc_rdo" FILES ${BC7ENC_RDO_SOURCES})
 
-    add_subdirectory(third_party/peach_editor/source_include/bc7enc_rdo)
 
     # tell astcenc which ISA to build for based on our platform
     if(PEACH_WINDOWS OR PEACH_LINUX)
@@ -579,7 +588,6 @@ if(BUILD_PEACH_EDITOR)
 
     add_subdirectory(third_party/peach_editor/source_include/astcenc)
 
-    set_target_properties(bc7enc_rdo PROPERTIES FOLDER "third_party")
     set_target_properties(astcenc-sse4.1-static PROPERTIES FOLDER "third_party")
 
     if(MSVC)
@@ -601,7 +609,6 @@ if(BUILD_PEACH_EDITOR)
     endif()
 
     target_link_libraries(Peach_Editor PRIVATE
-        bc7enc_rdo
         $<IF:$<STREQUAL:${PEACH_TARGET_PLATFORM},macos>,astcenc-neon-static,astcenc-sse4.1-static>
     )
 
@@ -646,8 +653,8 @@ if(BUILD_PEACH_EDITOR)
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/release/libnethost.lib" #juicy static linkage UwU
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/debug/nethost.lib" #debug dll
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/libnethost.lib" #juicy static linkage UwU
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/libnethost.lib" #debug dll, fuq that static for both
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
         )
 
@@ -664,20 +671,20 @@ if(BUILD_PEACH_EDITOR)
         ############ Pretty Fonts
 
         STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/release/freetype.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/debug/freetyped.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/steve64/freetype.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/steve64/freetyped.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
         )
 
         STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-core.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steve64/release/libmsdfgen-core.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steve64/debug/libmsdfgen-core.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
         )
 
         STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steveARM64/libmsdfgen-ext.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steve64/release/libmsdfgen-ext.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steve64/debug/libmsdfgen-ext.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
         )
 
@@ -698,61 +705,17 @@ if(BUILD_PEACH_EDITOR)
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steveARM64/libnethost.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steveARM64/libnethost.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steve64/libnethost_universal.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steve64/libnethost_universal.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
         )
 
         ############ Vulkan Specific Imports
 
         STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libshaderc.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libshaderc.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steve64/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steve64/libshaderc_combined.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
-        )
-
-        ############ SPIRV Tools
-
-        STATIC_IMPORT(SPIRV_Tools 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Diff 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-diff.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-diff.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Link 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-link.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-link.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Lint 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-lint.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-lint.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Opt 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-opt.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-opt.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Reduce 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-reduce.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPIRV-Tools-reduce.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Remapper 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPVRemapper.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steveARM64/libSPVRemapper.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
         )
 
     elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
@@ -880,7 +843,7 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### Linking deps + peach_core
 
-    if(NOT PEACH_WINDOWS) #shaderc_combined handles this for windows ^w^
+    if(NOT PEACH_WINDOWS OR NOT PEACH_MACOS) #shaderc_combined handles this for windows ^w^
         target_link_libraries(Peach_Editor PRIVATE
             #Tools for compiling, and debuggin SPIRV, not needed for game runtime uwu
             #spirv-tools
@@ -892,7 +855,7 @@ if(BUILD_PEACH_EDITOR)
             SPIRV_Tools_Reduce
             SPIRV_Tools_Remapper
         )
-    endif(NOT PEACH_WINDOWS)
+    endif(NOT PEACH_WINDOWS OR NOT PEACH_MACOS)
 
     if(PEACH_PLATFORM_IS_WINDOWS)
         target_link_libraries(Peach_Editor PRIVATE

@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                        Peach-E v0.0.1
  *              Created by Ranyodh Mandur - 🍑 2024
  *
@@ -10,6 +10,7 @@
 ********************************************************************/
 #pragma once
 
+#ifdef PEACH_RENDERER_VULKAN
 ///External
 #include <volk/volk.h>
 #include <vk-bootstrap/VkBootstrap.h>
@@ -85,3 +86,5 @@ namespace PeachCore::Vulkan { //namespacing this because it doesnt need to be a 
 
     };
 } //namespace PeachCore::Vulkan
+
+#endif

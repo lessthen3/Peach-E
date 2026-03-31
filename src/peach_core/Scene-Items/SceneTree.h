@@ -205,7 +205,7 @@ namespace PeachCore {
                 PeachNodeID f_NodeID = pm_PeachNodesQueuedForRemoval.front(); //Only index bits are pushed into the removal queue uwu
                 pm_PeachNodesQueuedForRemoval.pop();
 
-                RemoveEntireTree(move(pm_PeachNodes[f_NodeID]));
+                RemoveEntireTree(std::move(pm_PeachNodes[f_NodeID]));
             }
         }
 
@@ -231,7 +231,7 @@ namespace PeachCore {
 
             for (const PeachNodeID lv_ChildNodeID : fp_ParentNode->GetChildren()) //dont need to perform bounds checks since the nodeid can only be added if it satisfies the vector bounds at creation uwu
             {
-                RemoveEntireTree(move(pm_PeachNodes[GetNodeIndex(lv_ChildNodeID)]));//needa get index bits again since the child nodes are full ID's and not the lower 56 bits uwu
+                RemoveEntireTree(std::move(pm_PeachNodes[GetNodeIndex(lv_ChildNodeID)]));//needa get index bits again since the child nodes are full ID's and not the lower 56 bits uwu
             }
 
             pm_StringToNodeID.erase(fp_ParentNode->m_PeachName); //remove node from string lookup
