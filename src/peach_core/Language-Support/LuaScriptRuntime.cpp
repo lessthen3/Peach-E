@@ -10,9 +10,8 @@
 ********************************************************************/
 #include "LuaScriptRuntime.h"
 
-namespace PeachCore {
-namespace Lua
-{
+namespace PeachCore::Lua {
+
     // --- C wrapper that Lua can call ---
     static int
         Lua_PEACH_LogInfo(lua_State* fp_L)
@@ -35,7 +34,7 @@ namespace Lua
     {
         if (not fp_Logger)
         {
-            PrintError("Tried to pass nullptr ref for Logger -> Lua::ScriptRuntime UwU");
+            PRINT_ERROR("Tried to pass nullptr ref for Logger -> Lua::ScriptRuntime UwU");
             return false;
         }
 
@@ -234,5 +233,4 @@ namespace Lua
         return true;
     }
 
-}//namespace Lua
-}//namespace PeachCore
+}//namespace PeachCore::Lua

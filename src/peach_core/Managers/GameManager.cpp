@@ -56,7 +56,7 @@ namespace PeachCore
 
         if (not main_logger)
         {
-            PrintError("[CRITICAL_LOGGING_ERROR]: GameManager failed to initialize the main_thread logger >w<");
+            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: GameManager failed to initialize the main_thread logger >w<");
             return false;
         }
 
@@ -309,9 +309,7 @@ namespace PeachCore
             pm_ThreadInitializationLatch.count_down();
         }
 
-        //NetworkManager::get_single().InitializeNetworking(f_LogDir, peach_engine_console.GetConsoleLogger()); //stole get_single from godot style uwu
-
-        cout << "Hello World!\n"; //>w<
+        PRINT("Hello World!\n", Colours::Blue); //>w<
         main_logger->Warning("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
         main_logger->Trace("Success! This Built Correctly", "Peach-E");
 

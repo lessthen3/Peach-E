@@ -22,7 +22,7 @@ namespace PeachCore {
 
         if (not network_logger)
         {
-            PrintError("[CRITICAL_LOGGING_ERROR]: NetworkManager failed to initialize the network_thread logger >w<");
+            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: NetworkManager failed to initialize the network_thread logger >w<");
             return false;
         }
         
@@ -44,7 +44,7 @@ namespace PeachCore {
     {
         if (not InitializeNetworking(fp_LogOutputDirectory))
         {
-            PrintError("Failed to Initialize Network Thread!");
+            PRINT_ERROR("Failed to Initialize Network Thread!");
             return;
         }
 
@@ -82,7 +82,7 @@ namespace PeachCore {
     {
         if (not logger)
         {
-            PrintError("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
+            PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
             return nullptr;
         }
         else if (not pm_IsInitialized)

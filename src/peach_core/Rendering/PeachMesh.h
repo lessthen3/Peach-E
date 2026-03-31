@@ -95,7 +95,7 @@ namespace PeachCore::OpenGL {
             }
             catch (const exception& fp_Exception)
             {
-                PeachCore::PrintError(format("Unhandled exception: {}", fp_Exception.what()));
+                PeachCore::PRINT_ERROR(fmt::format("Unhandled exception: {}", fp_Exception.what()));
 
             }
         }

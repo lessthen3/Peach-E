@@ -23,6 +23,9 @@
 #include <type_traits>
 #include <utility>
 
+/// fmt
+#include <fmt/format.h>
+
 ///Peach-E
 #include "Logger.h"
 
@@ -793,7 +796,7 @@ namespace PeachCore {
 
             if (not logger)
             {
-                PrintError("Serialization Error: Tried to pass nullptr reference to logger during WriteToBinary()");
+                PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during WriteToBinary()");
                 return false;
             }
 
@@ -801,7 +804,7 @@ namespace PeachCore {
 
             if (not filesystem::exists(fp_DesiredOutputDirectory))
             {
-                logger->Error(format("Serialization Error: Tried to pass invalid write directory: '{}' to WriteToBinary", fp_DesiredOutputDirectory), "Serializer");
+                logger->Error(fmt::format("Serialization Error: Tried to pass invalid write directory: '{}' to WriteToBinary", fp_DesiredOutputDirectory), "Serializer");
                 return false;
             }
 
@@ -809,7 +812,7 @@ namespace PeachCore {
 
             if (fp_Binary.empty()) //check if the byte vector is empty uwu
             {
-                logger->Error(format("Serialization Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "Serializer");
+                logger->Error(fmt::format("Serialization Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "Serializer");
                 return false;
             }
 
@@ -828,7 +831,7 @@ namespace PeachCore {
 
             if (not file)
             {
-                logger->Error(format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer");
+                logger->Error(fmt::format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer");
                 return false;
             }
 
@@ -853,7 +856,7 @@ namespace PeachCore {
 
             if (not logger) //check for nullptr ref passed to ReadBinaryIntoVector
             {
-                PrintError("Serialization Error: Tried to pass nullptr reference to logger during ReadBinaryIntoVector()");
+                PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during ReadBinaryIntoVector()");
                 return false;
             }
 
@@ -866,11 +869,11 @@ namespace PeachCore {
 
             if (not fp_Binary.empty()) //check if the byte vector is empty before reading data into it OwO
             {
-                logger->Error(format("Serialization Error: Tried passing non-empty byte vector for reading to file name: '{}', nothing was done.", fp_ScriptFilePath), "Serializer");
+                logger->Error(fmt::format("Serialization Error: Tried passing non-empty byte vector for reading to file name: '{}', nothing was done.", fp_ScriptFilePath), "Serializer");
                 return false;
             }
 
-            // Extract file extension assuming format "filename.ext"
+            // Extract file extension assuming fmt::format "filename.ext"
             size_t f_LastDotIndex = fp_ScriptFilePath.rfind('.');
 
             if (f_LastDotIndex == string::npos)
@@ -894,7 +897,7 @@ namespace PeachCore {
 
             if (not f_IsValidExtension)
             {
-                logger->Error(format("Serialization Error: Attempted to read from an unknown binary extension: '{}'", f_FileExtension), "Serializer");
+                logger->Error(fmt::format("Serialization Error: Attempted to read from an unknown binary extension: '{}'", f_FileExtension), "Serializer");
                 return false;
             }
 
@@ -902,7 +905,7 @@ namespace PeachCore {
 
             if (not f_BinaryStream) //check if the file opened properly
             {
-                logger->Error(format("Serialization Error: Failed to open binary for reading: '{}'", fp_ScriptFilePath), "Serializer");
+                logger->Error(fmt::format("Serialization Error: Failed to open binary for reading: '{}'", fp_ScriptFilePath), "Serializer");
                 return false;
             }
 
@@ -937,7 +940,7 @@ namespace PeachCore {
         {
             if (not logger)
             {
-                PrintError("Serialization Error: Tried to pass nullptr reference to logger during WriteToJSON()");
+                PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during WriteToJSON()");
                 return false;
             }
 
@@ -963,7 +966,7 @@ namespace PeachCore {
 
             if (not f_OpenedFile)
             {
-                logger->Error(format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer");
+                logger->Error(fmt::format("Serialization Error: Failed to open file: '{}' for writing.", f_FileName), "Serializer");
                 return false;
             }
 
@@ -988,7 +991,7 @@ namespace PeachCore {
 
             if (not logger)
             {
-                PrintError("Serialization Error: Tried to pass nullptr reference to logger during ReadFileIntoCharBuffer()");
+                PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during ReadFileIntoCharBuffer()");
                 return false;
             }
 
@@ -1000,7 +1003,7 @@ namespace PeachCore {
                 return false;
             }
 
-            ////////////////////////////////////////////// Extract file extension assuming format "filename.ext" //////////////////////////////////////////////
+            ////////////////////////////////////////////// Extract file extension assuming fmt::format "filename.ext" //////////////////////////////////////////////
 
             size_t lastDotIndex = fp_ScriptFilePath.rfind('.');
 
@@ -1025,7 +1028,7 @@ namespace PeachCore {
 
             if (not f_IsValidExtension)
             {
-                logger->Error(format("Serialization Error: Attempted to read from an unknown text file extension: '{}'", f_FileExtension), "Serializer");
+                logger->Error(fmt::format("Serialization Error: Attempted to read from an unknown text file extension: '{}'", f_FileExtension), "Serializer");
                 return false;
             }
 
@@ -1033,7 +1036,7 @@ namespace PeachCore {
 
             if (not f_FileStream)
             {
-                logger->Error(format("Serialization Error: Failed to open '{}' for reading.", fp_ScriptFilePath), "Serializer");
+                logger->Error(fmt::format("Serialization Error: Failed to open '{}' for reading.", fp_ScriptFilePath), "Serializer");
                 return false;
             }
 
@@ -1113,7 +1116,7 @@ namespace PeachCore {
             }
             if (not FromJSON(f_TempJSON, fp_DesiredObject, logger)) //retrieve values and insert into fp_DesiredObject
             {
-                logger->Error(format("Failed to retrieve data values from desired JSON file: {}", fp_FilePath), "FromJSON");
+                logger->Error(fmt::format("Failed to retrieve data values from desired JSON file: {}", fp_FilePath), "FromJSON");
                 return false;
             }
 
@@ -1138,7 +1141,7 @@ namespace PeachCore {
 
             if (not FileIO::WriteStringToFile(fp_DesiredOutputDirectory, fp_DesiredFileName + ".json", f_JsonString, logger))
             {
-                logger->Error(format("Failed writing to JSON file: {}, nothing was done", fp_DesiredFileName), "ToJSON");
+                logger->Error(fmt::format("Failed writing to JSON file: {}, nothing was done", fp_DesiredFileName), "ToJSON");
                 return false;
             }
 
@@ -1355,7 +1358,7 @@ namespace PeachCore {
 
                     if (not fp_SourceCode.Peek(f_CurrentChar)) //Peek to see if a number is after, if so, shiftforward will just give the same number
                     {
-                        logger->Error(format("Found END__OF__FILE after a random '-' brother! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                        logger->Error(fmt::format("Found END__OF__FILE after a random '-' brother! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                         return false;
                     }
 
@@ -1367,7 +1370,7 @@ namespace PeachCore {
 
                         if (not fp_SourceCode.Peek(f_CurrentChar))
                         {
-                            logger->Error(format("Expected a number but found END__OF__FILE! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                            logger->Error(fmt::format("Expected a number but found END__OF__FILE! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                             return false;
                         }
                     }
@@ -1385,13 +1388,13 @@ namespace PeachCore {
 
                         if (not fp_SourceCode.Peek(f_CurrentChar)) //object wasn't properly closed, unterminated UwU!
                         {
-                            logger->Error(format("Expected a number but found END__OF__FILE! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                            logger->Error(fmt::format("Expected a number but found END__OF__FILE! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                             return false;
                         }
 
                         if (not isdigit(f_CurrentChar))
                         {
-                            logger->Error(format("Unexpected symbol following a '.' brother!, looks like you've input a non-numeric symbol: '{}' while defining a decimal number at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
+                            logger->Error(fmt::format("Unexpected symbol following a '.' brother!, looks like you've input a non-numeric symbol: '{}' while defining a decimal number at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
                             return false;
                         }
 
@@ -1403,7 +1406,7 @@ namespace PeachCore {
 
                             if (not fp_SourceCode.Peek(f_CurrentChar))
                             {
-                                logger->Error(format("Expected a number but found END__OF__FILE! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                                logger->Error(fmt::format("Expected a number but found END__OF__FILE! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                                 return false;
                             }
                         }
@@ -1419,13 +1422,13 @@ namespace PeachCore {
 
                         if (not fp_SourceCode.Peek(f_CurrentChar))
                         {
-                            logger->Error(format("Expected a number but found END__OF__FILE! Did you forget to finish your scientific notation number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                            logger->Error(fmt::format("Expected a number but found END__OF__FILE! Did you forget to finish your scientific notation number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                             return false;
                         }
 
                         if (f_CurrentChar != '+' and f_CurrentChar != '-')
                         {
-                            logger->Error(format("Expected '+' or '-' following scientific-notation but found: '{}' instead! Did you forget to finish your number? Error occured at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
+                            logger->Error(fmt::format("Expected '+' or '-' following scientific-notation but found: '{}' instead! Did you forget to finish your number? Error occured at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
                             return false;
                         }
 
@@ -1434,13 +1437,13 @@ namespace PeachCore {
 
                         if (not fp_SourceCode.Peek(f_CurrentChar))
                         {
-                            logger->Error(format("Expected a number but found END__OF__FILE! Did you forget to finish your scientific notation number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                            logger->Error(fmt::format("Expected a number but found END__OF__FILE! Did you forget to finish your scientific notation number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                             return false;
                         }
 
                         if (not isdigit(f_CurrentChar))
                         {
-                            logger->Error(format("Unexpected symbol following a 'e' brother!, looks like you've input a non-numeric symbol: '{}' while defining a scientific notation number at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
+                            logger->Error(fmt::format("Unexpected symbol following a 'e' brother!, looks like you've input a non-numeric symbol: '{}' while defining a scientific notation number at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
                             return false;
                         }
 
@@ -1452,7 +1455,7 @@ namespace PeachCore {
 
                             if (not fp_SourceCode.Peek(f_CurrentChar))
                             {
-                                logger->Error(format("Expected a number but found END__OF__FILE! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                                logger->Error(fmt::format("Expected a number but found END__OF__FILE! Did you forget to finish your number? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                                 return false;
                             }
                         }
@@ -1475,7 +1478,7 @@ namespace PeachCore {
 
                     if (not fp_SourceCode.Peek(f_CurrentChar))
                     {
-                        logger->Error(format("Expected a alphabetic character but found END__OF__FILE! Did you misspell false, true or null? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                        logger->Error(fmt::format("Expected a alphabetic character but found END__OF__FILE! Did you misspell false, true or null? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                         return false;
                     }
 
@@ -1487,7 +1490,7 @@ namespace PeachCore {
 
                         if (not fp_SourceCode.Peek(f_CurrentChar))
                         {
-                            logger->Error(format("Expected a alphabetic character but found END__OF__FILE! Did you misspell false, true or null? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                            logger->Error(fmt::format("Expected a alphabetic character but found END__OF__FILE! Did you misspell false, true or null? Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                             return false;
                         }
                     }
@@ -1502,7 +1505,7 @@ namespace PeachCore {
                     }
                     else
                     {
-                        logger->Error(format("Lexing Error: Invalid JSON identifier: '{}', found at line number: {}", f_Identifier, f_CurrentLineNumber), "Lexer");
+                        logger->Error(fmt::format("Lexing Error: Invalid JSON identifier: '{}', found at line number: {}", f_Identifier, f_CurrentLineNumber), "Lexer");
                         return false;
                     }
 
@@ -1575,7 +1578,7 @@ namespace PeachCore {
 
                         if (not fp_SourceCode.ShiftForward(f_CurrentChar)) //invalid string, unterminated UwU!
                         {
-                            logger->Error(format("Unterminated string literal, brother! Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
+                            logger->Error(fmt::format("Unterminated string literal, brother! Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                             return false;
                         }
                     }
@@ -1583,7 +1586,7 @@ namespace PeachCore {
                     // Check if we've ended on the closing quotation mark
                     if (f_CurrentChar != '"')
                     {
-                        logger->Error(format("Unterminated string literal, brother! Error occured at line number: {}", f_CurrentLineNumber), "Lexer"); // Handle error: Unterminated string literal, and exit program execution
+                        logger->Error(fmt::format("Unterminated string literal, brother! Error occured at line number: {}", f_CurrentLineNumber), "Lexer"); // Handle error: Unterminated string literal, and exit program execution
                         return false;
                     }
 
@@ -1592,7 +1595,7 @@ namespace PeachCore {
                 }
                 break;
                 default:
-                    logger->Error(format("Lexing Error: Unrecognized character found: [{}], found at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
+                    logger->Error(fmt::format("Lexing Error: Unrecognized character found: [{}], found at line number: {}", f_CurrentChar, f_CurrentLineNumber), "Lexer");
                     return false;
                 }
             }
@@ -1666,7 +1669,7 @@ namespace PeachCore {
         {
             if (not fp_JSONString)
             {
-                PrintError("Passed nullptr reference to string, ToString() is not possible exiting function call immediately");
+                PRINT_ERROR("Passed nullptr reference to string, ToString() is not possible exiting function call immediately");
                 return false;
             }
 
@@ -1674,7 +1677,7 @@ namespace PeachCore {
 
             if (not ToStringStream(fp_JSON, f_TempString))
             {
-                PrintError("Unable to stringify JSON");
+                PRINT_ERROR("Unable to stringify JSON");
                 return false;
             }
 
@@ -1839,7 +1842,7 @@ namespace PeachCore {
         {
             string f_StringJSON;
             ToString(&f_StringJSON, fp_JSON);
-            Print(f_StringJSON);
+            PRINT(f_StringJSON, Colours::BrightWhite);
         }
 
         //////////////////////////////////////////////
@@ -2069,7 +2072,7 @@ namespace PeachCore {
 
                 if (f_It == f_JSONObject.end()) //SOMETHING BAD HAPPENED WTF, someone hand editied a json or i fucked the dog on this one
                 {
-                    logger->Error(format("Missing JSON field '{}', WHAT DID YOU DO, WHAT DID I DO WTF???", fp_Name), "FromJSON");
+                    logger->Error(fmt::format("Missing JSON field '{}', WHAT DID YOU DO, WHAT DID I DO WTF???", fp_Name), "FromJSON");
                     f_IsSuccessful = false;
                     return;
                 }
@@ -2138,7 +2141,7 @@ namespace PeachCore {
 
                         if (not Serializer::FromJSONArray(arr, fp_Value, logger))
                         {
-                            logger->Error(format("Failed to deserialize vector for field '{}'", fp_Name), "FromJSON");
+                            logger->Error(fmt::format("Failed to deserialize vector for field '{}'", fp_Name), "FromJSON");
                             f_IsSuccessful = false;
                             return;
                         }
@@ -2146,7 +2149,7 @@ namespace PeachCore {
                 }
                 catch (const exception& fp_Exception)
                 {
-                    logger->Error(format("Deserialization failed for field '{}' (type: {}): {}", fp_Name, typeid(decltype(fp_Value)).name(), fp_Exception.what()), "FromJSON");
+                    logger->Error(fmt::format("Deserialization failed for field '{}' (type: {}): {}", fp_Name, typeid(decltype(fp_Value)).name(), fp_Exception.what()), "FromJSON");
                     f_IsSuccessful = false;
                 }
             };
@@ -2246,7 +2249,7 @@ namespace PeachCore {
                 }
                 catch (const exception& e)
                 {
-                    logger->Error(format("Deserialization failed in FromJSONArray (type: '{}'): {}", typeid(Elem).name(), e.what()), "FromJSONArray");
+                    logger->Error(fmt::format("Deserialization failed in FromJSONArray (type: '{}'): {}", typeid(Elem).name(), e.what()), "FromJSONArray");
                     return false;
                 }
 
@@ -2493,7 +2496,7 @@ namespace PeachCore {
                     {
                         if (not Serializer::FromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
                         {
-                            logger->Error(format("Failed to deserialize non primitive struct from binary for field named: '{}'", fp_Name), "FromBinary");
+                            logger->Error(fmt::format("Failed to deserialize non primitive struct from binary for field named: '{}'", fp_Name), "FromBinary");
                             f_IsSuccessful = false;
                             return; //exit early UwU!
                         }
@@ -2502,7 +2505,7 @@ namespace PeachCore {
                     {
                         if (not Serializer::MapFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
                         {
-                            logger->Error(format("Failed to deserialize map for field named: '{}'", fp_Name), "FromBinary");
+                            logger->Error(fmt::format("Failed to deserialize map for field named: '{}'", fp_Name), "FromBinary");
                             f_IsSuccessful = false;
                             return;
                         }
@@ -2511,7 +2514,7 @@ namespace PeachCore {
                     {
                         if (not Serializer::VectorFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
                         {
-                            logger->Error(format("Failed to deserialize vector for field named: '{}'", fp_Name), "FromBinary");
+                            logger->Error(fmt::format("Failed to deserialize vector for field named: '{}'", fp_Name), "FromBinary");
                             f_IsSuccessful = false;
                             return;
                         }
@@ -2520,7 +2523,7 @@ namespace PeachCore {
                     {
                         if (not Serializer::ValueFromBinary(fp_Value, fp_BinaryReadVector, fp_CurrentOffset, logger))
                         {
-                            logger->Error(format("Failed to deserialize value for field named: '{}'", fp_Name), "FromBinary");
+                            logger->Error(fmt::format("Failed to deserialize value for field named: '{}'", fp_Name), "FromBinary");
                             f_IsSuccessful = false; //tell outer function thatis false uwu
                             return; //return from lambda
                         }
@@ -2529,7 +2532,7 @@ namespace PeachCore {
                 }
                 catch (const exception& fp_Exception)
                 {
-                    logger->Error(format("Deserialization failed for field '{}' (type: {}): {}", fp_Name, typeid(decltype(fp_Value)).name(), fp_Exception.what()), "FromBinary");
+                    logger->Error(fmt::format("Deserialization failed for field '{}' (type: {}): {}", fp_Name, typeid(decltype(fp_Value)).name(), fp_Exception.what()), "FromBinary");
                     f_IsSuccessful = false;
                     return;
                 }
@@ -2610,7 +2613,7 @@ namespace PeachCore {
 #if defined(_MSC_VER)
                 static_assert(always_false_v<T>, "Unsupported type in Extract. Check __FUNCSIG__ for details: " __FUNCSIG__);
 #else
-                static_assert(always_false_v<T>, format("Unsupported type in Extract. Check __func__ for details: {}", __func__));
+                static_assert(always_false_v<T>, fmt::format("Unsupported type in Extract. Check __func__ for details: {}", __func__));
                 //static_assert(always_false_v<T>, "Unsupported type in Extract. Check __PRETTY_FUNCTION__ for details: " __PRETTY_FUNCTION__);
 #endif
             }
@@ -2678,7 +2681,7 @@ namespace PeachCore {
                 }
                 catch (const exception& fp_Exception)
                 {
-                    logger->Error(format("Deserialization failed in VectorFromBinary() (type: '{}'): {}", typeid(Elem).name(), fp_Exception.what()), "VectorFromBinary");
+                    logger->Error(fmt::format("Deserialization failed in VectorFromBinary() (type: '{}'): {}", typeid(Elem).name(), fp_Exception.what()), "VectorFromBinary");
                     return false;
                 }
             }
@@ -2820,7 +2823,7 @@ namespace PeachCore {
             {
                 if (f_CurrentToken.m_Type != TokenType::StringLiteral)
                 {
-                    logger->Error(format("Parsing Error: found '{}', when string literal was expected as JSON key inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
+                    logger->Error(fmt::format("Parsing Error: found '{}', when string literal was expected as JSON key inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                     return false;
                 }
 
@@ -2829,7 +2832,7 @@ namespace PeachCore {
 
                 if (f_CurrentToken.m_Type != TokenType::DoubleDot)
                 {
-                    logger->Error(format("Parsing Error: found '{}', when ':' was expected after JSON key inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
+                    logger->Error(fmt::format("Parsing Error: found '{}', when ':' was expected after JSON key inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                     return false;
                 }
 
@@ -2837,7 +2840,7 @@ namespace PeachCore {
 
                 if (not ParseValue(fp_Tokens, f_CurrentToken, fp_JSONObject, f_CurrentKey, logger))
                 {
-                    logger->Error(format("Parsing Error: Invalid JSON object: '{}', at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
+                    logger->Error(fmt::format("Parsing Error: Invalid JSON object: '{}', at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                     return false;
                 }
 
@@ -2850,7 +2853,7 @@ namespace PeachCore {
 
                 if (f_CurrentToken.m_Type != TokenType::Comma)
                 {
-                    logger->Error(format("Parsing Error: found '{}', when ',' was expected after JSON value inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
+                    logger->Error(fmt::format("Parsing Error: found '{}', when ',' was expected after JSON value inside object at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                     return false;
                 }
 
@@ -2859,7 +2862,7 @@ namespace PeachCore {
 
             if (f_CurrentToken.m_Type != TokenType::CloseBracket)
             {
-                logger->Error(format("Parsing Error: Unexpected token: [{}], found inside array definition at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
+                logger->Error(fmt::format("Parsing Error: Unexpected token: [{}], found inside array definition at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseObject");
                 return false;
             }
 
@@ -2895,7 +2898,7 @@ namespace PeachCore {
 
                 if (f_CurrentToken.m_Type != TokenType::Comma) //throw error if a separating comma is not found between array elements
                 {
-                    logger->Error(format("Parsing Error: expected ',' after value inside JSON array but found '{}' instead at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseArray");
+                    logger->Error(fmt::format("Parsing Error: expected ',' after value inside JSON array but found '{}' instead at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseArray");
                     return false;
                 }
 
@@ -2904,7 +2907,7 @@ namespace PeachCore {
 
             if (f_CurrentToken.m_Type != TokenType::CloseSquareBracket)
             {
-                logger->Error(format("Parsing Error: Expected ']' but found '{}' instead, found inside array definition at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseArray");
+                logger->Error(fmt::format("Parsing Error: Expected ']' but found '{}' instead, found inside array definition at line number: {}", f_CurrentToken.m_Value, f_CurrentToken.m_SourceCodeLineNumber), "ParseArray");
                 return false;
             }
 
@@ -2960,7 +2963,7 @@ namespace PeachCore {
                 }
                 break;
                 default:
-                    logger->Error(format("Parsing Error: found '{}' inside array, when integral type was expected at line number: {}", fp_CurrentToken.m_Value, fp_CurrentToken.m_SourceCodeLineNumber), "ParseValue");
+                    logger->Error(fmt::format("Parsing Error: found '{}' inside array, when integral type was expected at line number: {}", fp_CurrentToken.m_Value, fp_CurrentToken.m_SourceCodeLineNumber), "ParseValue");
                     return false;
             }
 
@@ -3017,7 +3020,7 @@ namespace PeachCore {
                 }
                 break;
                 default:
-                    logger->Error(format("Parsing Error: found '{}' inside object, when integral type was expected at line number: {}", fp_CurrentToken.m_Value, fp_CurrentToken.m_SourceCodeLineNumber), "ParseValue");
+                    logger->Error(fmt::format("Parsing Error: found '{}' inside object, when integral type was expected at line number: {}", fp_CurrentToken.m_Value, fp_CurrentToken.m_SourceCodeLineNumber), "ParseValue");
                     return false;
             }
 

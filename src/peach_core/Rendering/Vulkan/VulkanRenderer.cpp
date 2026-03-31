@@ -23,7 +23,7 @@ namespace PeachCore::Vulkan {
     {
         if (not fp_RenderingLogger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
         {
-            PrintError("Tried to initialize VulkanRenderer with a nullptr for the Rendering Logger doofus, Ending program execution immediately since no valid logger was found");
+            PRINT_ERROR("Tried to initialize VulkanRenderer with a nullptr for the Rendering Logger doofus, Ending program execution immediately since no valid logger was found");
             return false;
         }
 
@@ -85,27 +85,10 @@ namespace PeachCore::Vulkan {
         return true; //rawr UwU forgot this return path zzzzzzzzzzzz
     }
 
-    static void 
-        PrintPhysicalDeviceInfo(VkPhysicalDevice device) 
-    {
-        VkPhysicalDeviceProperties deviceProperties;
-        vkGetPhysicalDeviceProperties(device, &deviceProperties);
-
-        VkPhysicalDeviceFeatures deviceFeatures;
-        vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-
-        cout << "Device Name: " << deviceProperties.deviceName << endl;
-        cout << "Device Type: " << deviceProperties.deviceType << endl;
-        cout << "Vulkan API Version: " << deviceProperties.apiVersion << endl;
-        cout << "Features: " << endl;
-        cout << "  Geometry Shader: " << deviceFeatures.geometryShader << endl;
-        cout << "  Tessellation Shader: " << deviceFeatures.tessellationShader << endl;
-    }
-
     bool
         Renderer::InitializePeachUI()
     {
-        PrintPhysicalDeviceInfo(pm_Init.Device.physical_device.physical_device);
+        m_DeviceInfo.ReadDevice(pm_Init.Device.physical_device.physical_device);
 
         return true;
     }
@@ -146,11 +129,11 @@ namespace PeachCore::Vulkan {
             &pm_RenderData.CurrentSwapchainImageIndex
         );
 
-        Print("acquired image index: " + std::to_string(pm_RenderData.CurrentSwapchainImageIndex) + " currentframe: " + to_string(pm_RenderData.CurrentFrameCycle), Colours::Magenta);
+        PRINT("acquired image index: " + std::to_string(pm_RenderData.CurrentSwapchainImageIndex) + " currentframe: " + to_string(pm_RenderData.CurrentFrameCycle), Colours::Magenta);
 
         if (result != VK_SUCCESS and result != VK_SUBOPTIMAL_KHR)
         {
-            rendering_logger->Error(format("failed to acquire swapchain image. Error: {} ", static_cast<int>(result)), "VulkanRenderer");
+            rendering_logger->Error(fmt::format("failed to acquire swapchain image. Error: {} ", static_cast<int>(result)), "VulkanRenderer");
             return Renderer::StatusCode::FAILED_TO_ACQUIRE_NEXT_SWAPCHAIN_IMAGE_ERROR;
         }
 
@@ -518,7 +501,7 @@ namespace PeachCore::Vulkan {
 
         if (not swap_ret)
         {
-            rendering_logger->Fatal(format("SwapChain builder error: {}, with result: {}", swap_ret.error().message(), static_cast<int>(swap_ret.vk_result())), "VulkanRenderer");
+            rendering_logger->Fatal(fmt::format("SwapChain builder error: {}, with result: {}", swap_ret.error().message(), static_cast<int>(swap_ret.vk_result())), "VulkanRenderer");
             return false;
         }
 
@@ -535,7 +518,7 @@ namespace PeachCore::Vulkan {
 
         if (not graphics_queue.has_value())
         {
-            rendering_logger->Fatal(format("failed to get graphics queue: {}", graphics_queue.error().message()), "VulkanRenderer");
+            rendering_logger->Fatal(fmt::format("failed to get graphics queue: {}", graphics_queue.error().message()), "VulkanRenderer");
             return false;
         }
 
@@ -545,7 +528,7 @@ namespace PeachCore::Vulkan {
 
         if (not present_queue.has_value())
         {
-            rendering_logger->Fatal(format("failed to get present queue: {}", present_queue.error().message()), "VulkanRenderer");
+            rendering_logger->Fatal(fmt::format("failed to get present queue: {}", present_queue.error().message()), "VulkanRenderer");
             return false;
         }
 

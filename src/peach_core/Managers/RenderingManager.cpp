@@ -36,7 +36,7 @@ namespace PeachCore {
 
         if (not rendering_logger)
         {
-            PrintError("[CRITICAL_LOGGING_ERROR]: RenderingManager failed to initialize the render_thread logger >w<");
+            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: RenderingManager failed to initialize the render_thread logger >w<");
             return false;
         }
 
@@ -54,7 +54,7 @@ namespace PeachCore {
 
         if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop
         {
-            rendering_logger->Fatal(format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", SDL_GetError()), "GameManager");
+            rendering_logger->Fatal(fmt::format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", SDL_GetError()), "GameManager");
             return false;
         }
         else if (not InitializeLoadingQueue())
@@ -129,7 +129,7 @@ namespace PeachCore {
 
         glm::vec2 f_MousePos = InputManager::get_single().GetCurrentMousePosition();
 
-        Print(format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
+        PRINT(fmt::format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
     }
 
    bool
@@ -148,7 +148,7 @@ namespace PeachCore {
             //case RENDER_UPDATE_POSITION_OP: /*UpdatePos(cmd.node_id, UnpackVec2(cmd.operand));*/ break;
             //case RENDER_DONT_DRAW_OP: /*DrawNode(cmd.node_id);*/ break;
             default:
-                PrintError("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!", Colours::BrightRed);
+                PRINT_ERROR("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!", Colours::BrightRed);
             }
         }
 
@@ -451,21 +451,21 @@ namespace PeachCore {
         uint32_t f_StatusCode = pm_VulkanRenderer->BeginFrame();
         if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
         {
-            PrintError(format("BeginFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            PRINT_ERROR(fmt::format("BeginFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
             return false;
         }
 
         f_StatusCode = pm_VulkanRenderer->DrawFrame();
         if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
         {
-            PrintError(format("DrawFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            PRINT_ERROR(fmt::format("DrawFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
             return false;
         }
 
         f_StatusCode = pm_VulkanRenderer->EndFrame();
         if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
         {
-            PrintError(format("EndFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            PRINT_ERROR(fmt::format("EndFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
             return false;
         }
 
@@ -561,7 +561,7 @@ namespace PeachCore {
 
         if (not f_Pixels)
         {
-            //rendering_logger->Error(format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
+            //rendering_logger->Error(fmt::format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
             return nullptr;
         }
 

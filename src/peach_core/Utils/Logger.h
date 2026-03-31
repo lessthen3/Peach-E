@@ -48,7 +48,6 @@
 #include <fstream>
 
 #include <unordered_map>
-#include <format>
 #include <memory>
 
 #include <thread>
@@ -91,53 +90,7 @@ namespace PeachCore {
 
 #endif
 
-    constexpr const char*
-        PeachExtractFilename(const char* fp_Path)
-    {
-        const char* f_LastSlash = fp_Path;
-
-        for (const char* lv_Cur = fp_Path; *lv_Cur != '\0'; ++lv_Cur)
-        {
-            if (*lv_Cur == '/' || *lv_Cur == '\\')
-            {
-                f_LastSlash = lv_Cur + 1;
-            }
-        }
-
-        return f_LastSlash;
-    }
-
-    constexpr std::string_view 
-        PeachExtractSignature(const char* fp_FunctionSignature) 
-    {
-        std::string_view f_StringView(fp_FunctionSignature);
-
-        // 1. Find the start of the arguments '('
-        size_t f_EndIndex = f_StringView.find('(');
-
-        if (f_EndIndex == std::string_view::npos)
-        {
-            return f_StringView;
-        }
-
-        // 2. Look backwards from '(' to find the first space (skipping return type)
-        // We want the part between the last space and the '('
-        size_t f_StartIndex = 0;
-
-        for (size_t lv_Index = f_EndIndex; lv_Index > 0; --lv_Index)
-        {
-            if (f_StringView[lv_Index - 1] == ' ')
-            {
-                f_StartIndex = lv_Index;
-                break;
-            }
-        }
-
-        // 3. Slice it: "void __cdecl Namespace::Class::Func(int)" -> "Namespace::Class::Func"
-        return f_StringView.substr(f_StartIndex, f_EndIndex - f_StartIndex);
-    }
-
-// #ifdef PEACH_USING_OS_TERMINAL
+ #ifdef PEACH_USING_OS_TERMINAL
 
     enum class Colours : int
     {
@@ -212,27 +165,62 @@ namespace PeachCore {
         }
     }
 
-    static void
-        Print
-        (
-            const string& fp_Message,
-            const Colours fp_DesiredColour = Colours::White
-        )
+
+    #define PRINT(fp_Message, fp_DesiredColour) std::cout << ::PeachCore::CreateColouredText(fp_Message, fp_DesiredColour) << "\n"
+    #define PRINT_ERROR(fp_Message) std::cerr << ::PeachCore::CreateColouredText(fp_Message, ::PeachCore::Colours::Red) << "\n"
+
+#else
+
+    #define PRINT(fp_Message, fp_DesiredColour)
+    #define PRINT_ERROR(fp_Message)
+
+ #endif
+
+    constexpr const char*
+        PeachExtractFilename(const char* fp_Path)
     {
-        cout << CreateColouredText(fp_Message, fp_DesiredColour) << "\n";
+        const char* f_LastSlash = fp_Path;
+
+        for (const char* lv_Cur = fp_Path; *lv_Cur != '\0'; ++lv_Cur)
+        {
+            if (*lv_Cur == '/' || *lv_Cur == '\\')
+            {
+                f_LastSlash = lv_Cur + 1;
+            }
+        }
+
+        return f_LastSlash;
     }
 
-    static void
-        PrintError
-        (
-            const string& fp_Message,
-            const Colours fp_DesiredColour = Colours::Red
-        )
+    constexpr std::string_view
+        PeachExtractSignature(const char* fp_FunctionSignature)
     {
-        cerr << CreateColouredText(fp_Message, fp_DesiredColour) << "\n";
+        std::string_view f_StringView(fp_FunctionSignature);
+
+        // 1. Find the start of the arguments '('
+        size_t f_EndIndex = f_StringView.find('(');
+
+        if (f_EndIndex == std::string_view::npos)
+        {
+            return f_StringView;
+        }
+
+        // 2. Look backwards from '(' to find the first space (skipping return type)
+        // We want the part between the last space and the '('
+        size_t f_StartIndex = 0;
+
+        for (size_t lv_Index = f_EndIndex; lv_Index > 0; --lv_Index)
+        {
+            if (f_StringView[lv_Index - 1] == ' ')
+            {
+                f_StartIndex = lv_Index;
+                break;
+            }
+        }
+
+        // 3. Slice it: "void __cdecl Namespace::Class::Func(int)" -> "Namespace::Class::Func"
+        return f_StringView.substr(f_StartIndex, f_EndIndex - f_StartIndex);
     }
-    
-// #endif
 
     //////////////////////////////////////////////
     // LogMessage Struct
@@ -323,7 +311,7 @@ namespace PeachCore {
 
             if (not f_CreatedLogger.Initialize(fp_DesiredLoggerName, fp_DesiredOutputDirectory, fp_Flags))
             {
-                PrintError("Unable to initialize logger named: " + fp_DesiredLoggerName);
+                PRINT_ERROR("Unable to initialize logger named: " + fp_DesiredLoggerName);
                 return nullopt;
             }
 
@@ -342,7 +330,7 @@ namespace PeachCore {
 
             if (not f_CreatedLogger->Initialize(fp_DesiredLoggerName, fp_DesiredOutputDirectory, fp_Flags))
             {
-                PrintError("Unable to initialize logger named: " + fp_DesiredLoggerName);
+                PRINT_ERROR("Unable to initialize logger named: " + fp_DesiredLoggerName);
                 return nullptr;
             }
 
@@ -361,30 +349,18 @@ namespace PeachCore {
 
             if (not f_CreatedLogger->Initialize(fp_DesiredLoggerName, fp_DesiredOutputDirectory, fp_Flags))
             {
-                PrintError("Unable to initialize logger named: " + fp_DesiredLoggerName);
+                PRINT_ERROR("Unable to initialize logger named: " + fp_DesiredLoggerName);
                 return nullptr;
             }
 
             return f_CreatedLogger;
         }
 
-        bool
+        [[nodiscard]] bool
             UpdateThreadOwner //the owning thread must update and pass off the logger to be considered valid otherwise it wont uwu
             (
                 const thread::id& fp_NewThreadID
-            )
-        {
-            if (not AssertThreadAccess("UpdateThreadOwner"))
-            {
-                //can't log here since it's only triggered by improper thread usage which will trigger asserthreadacess again
-                PrintError(format("Tried to call UpdateThreadOwner from a thread that didn't own logger named: {}", pm_LoggerName));
-                return false;
-            }
-
-            pm_ThreadOwnerID = fp_NewThreadID;
-
-            return true;
-        }
+            );
 
         [[nodiscard]] bool
             UpdateActiveMask(const uint32_t fp_NewLogMask);

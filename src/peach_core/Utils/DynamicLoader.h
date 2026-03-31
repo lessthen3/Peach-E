@@ -65,7 +65,7 @@ namespace PeachCore {
         {
             if (not filesystem::exists(fp_DylibPath))
             {
-                logger->Error(format("Library path does not exist: '{}'", fp_DylibPath), "DynamicLoader");
+                logger->Error(fmt::format("Library path does not exist: '{}'", fp_DylibPath), "DynamicLoader");
                 return nullptr;
             }
 
@@ -73,11 +73,11 @@ namespace PeachCore {
 
             if (not f_LibraryHandle)
             {
-                logger->Error(format("Failed to load library: '{}',  Error: '{}'", fp_DylibPath, GetLastErrorAsString()), "DynamicLoader");
+                logger->Error(fmt::format("Failed to load library: '{}',  Error: '{}'", fp_DylibPath, GetLastErrorAsString()), "DynamicLoader");
                 return nullptr;
             }
 
-            logger->Info(format("Library loaded successfully: '{}'", fp_DylibPath), "DynamicLoader");
+            logger->Info(fmt::format("Library loaded successfully: '{}'", fp_DylibPath), "DynamicLoader");
 
             return f_LibraryHandle;
         }
@@ -97,7 +97,7 @@ namespace PeachCore {
 
             if (not DYNLIB_UNLOAD(fp_LibraryHandle))
             {
-                logger->Error(format("Failed to unload library. Error: '{}'", GetLastErrorAsString()), "DynamicLoader");
+                logger->Error(fmt::format("Failed to unload library. Error: '{}'", GetLastErrorAsString()), "DynamicLoader");
                 return false;
             }
             
@@ -127,11 +127,11 @@ namespace PeachCore {
 
             if (not symbol)
             {
-                logger->Error(format("Failed to locate symbol: '{}', Error: '{}'", fp_SymbolName, GetLastErrorAsString()), "DynamicLoader");
+                logger->Error(fmt::format("Failed to locate symbol: '{}', Error: '{}'", fp_SymbolName, GetLastErrorAsString()), "DynamicLoader");
                 return nullptr; //its already nullptr but its nice to be explicit here
             }
             
-            logger->Debug(format("Symbol located: '{}'", fp_SymbolName), "DynamicLoader");
+            logger->Debug(fmt::format("Symbol located: '{}'", fp_SymbolName), "DynamicLoader");
 
             return symbol;
         }

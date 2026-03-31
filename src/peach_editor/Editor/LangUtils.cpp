@@ -37,7 +37,7 @@ namespace PeachEditor::Dotnet
 
         if (not logger)
         {
-            PeachCore::PrintError("Tried passing a nullptr ref to logger inside GetDotnetVersion() from DotnetUtils.h");
+            PRINT_ERROR("Tried passing a nullptr ref to logger inside GetDotnetVersion() from DotnetUtils.h");
             return false;
         }
         else if (not fp_DotnetVersionString)
@@ -121,7 +121,7 @@ namespace PeachEditor::Dotnet
 
         if (not logger)
         {
-            PeachCore::PrintError("Tried passing a nullptr ref to logger inside GenerateProjectFiles() from DotnetUtils.h");
+            PRINT_ERROR("Tried passing a nullptr ref to logger inside GenerateProjectFiles() from DotnetUtils.h");
             return false;
         }
 
@@ -129,7 +129,7 @@ namespace PeachEditor::Dotnet
 
         if (not filesystem::exists(fp_ProjectPath))
         {
-            logger->Error(format("Failed to locate directory for C# project generation with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils");
+            logger->Error(fmt::format("Failed to locate directory for C# project generation with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils");
             return false;
         }
 
@@ -139,7 +139,7 @@ namespace PeachEditor::Dotnet
 
         if (not GetDotnetVersion(&f_DotnetVersion, logger))
         {
-            logger->Error(format("Failed to retrieve dotnet version, failed to generate valid C# project with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils");
+            logger->Error(fmt::format("Failed to retrieve dotnet version, failed to generate valid C# project with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils");
             return false;
         }
 
@@ -151,13 +151,13 @@ namespace PeachEditor::Dotnet
 
             if (f_DotNetMajorVersion < 6)
             {
-                logger->Error(format(".NET version '{}' found when Peach-E requires .NET SDK version 6.0 or higher", f_DotNetMajorVersion), "DotnetUtils");
+                logger->Error(fmt::format(".NET version '{}' found when Peach-E requires .NET SDK version 6.0 or higher", f_DotNetMajorVersion), "DotnetUtils");
                 return false;
             }
         }
         catch (const exception& Exception) //catch >O<
         {
-            logger->Error(format("Failed to parse .NET version number >O<, version found: '{}', with error: '{}'", f_DotnetVersion, Exception.what()), "DotnetUtils");
+            logger->Error(fmt::format("Failed to parse .NET version number >O<, version found: '{}', with error: '{}'", f_DotnetVersion, Exception.what()), "DotnetUtils");
             return false;
         }
 
@@ -173,7 +173,7 @@ namespace PeachEditor::Dotnet
 
         if (not csproj.is_open())
         {
-            logger->Error(format("Failed to open csproj file for writing: '{}'", fp_DotnetConfigs.ProjectPath), "DotnetUtils");
+            logger->Error(fmt::format("Failed to open csproj file for writing: '{}'", fp_DotnetConfigs.ProjectPath), "DotnetUtils");
             return false;
         }
 
@@ -221,7 +221,7 @@ namespace PeachEditor::Dotnet
 
         //////////////////// Log Info ////////////////////
 
-        logger->Info(format("C# project generated with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils");
+        logger->Info(fmt::format("C# project generated with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils");
 
         //////////////////// Create C# Solution for vs ////////////////////
 
@@ -236,7 +236,7 @@ namespace PeachEditor::Dotnet
 
         if (result != 0)
         {
-            logger->Error(format("Failed to create C# solution! Solution name: '{}', Project path: '{}'", fp_ProjectName, fp_DotnetConfigs.ProjectPath), "DotnetUtils");
+            logger->Error(fmt::format("Failed to create C# solution! Solution name: '{}', Project path: '{}'", fp_ProjectName, fp_DotnetConfigs.ProjectPath), "DotnetUtils");
             return false;
         }
 
@@ -244,13 +244,13 @@ namespace PeachEditor::Dotnet
 
         if (result != 0)
         {
-            logger->Error(format("Failed to add C# project -> Solution name: '{}', Project path: '{}'", fp_ProjectName, fp_DotnetConfigs.ProjectPath), "DotnetUtils");
+            logger->Error(fmt::format("Failed to add C# project -> Solution name: '{}', Project path: '{}'", fp_ProjectName, fp_DotnetConfigs.ProjectPath), "DotnetUtils");
             return false;
         }
 
         //////////////////// Log Info ////////////////////
 
-        logger->Info(format("C# solution generated with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils");
+        logger->Info(fmt::format("C# solution generated with name: '{}', and at path: '{}'", fp_ProjectName, fp_ProjectPath), "DotnetUtils");
 
         //////////////////// Dotnet Testing not Real Production Code ////////////////////
 
@@ -275,7 +275,7 @@ namespace PeachEditor::Dotnet
 
         if (not f_ScriptFile.is_open())
         {
-            logger->Error(format("Failed to generate default C# script file at: '{}'", f_FullFilePath), "DotnetUtils");
+            logger->Error(fmt::format("Failed to generate default C# script file at: '{}'", f_FullFilePath), "DotnetUtils");
             return false;
         }
 
@@ -323,7 +323,7 @@ namespace PeachEditor::Dotnet
 
         if (result != 0)
         {
-            logger->Error(format("Failed to build C# project! at path: '{}'", fp_SolutionPath), "DotnetUtils");
+            logger->Error(fmt::format("Failed to build C# project! at path: '{}'", fp_SolutionPath), "DotnetUtils");
             return false;
         }
 
@@ -341,7 +341,7 @@ namespace PeachEditor::Dotnet
 
         if (not logger)
         {
-            PeachCore::PrintError("Tried passing a nullptr ref to logger inside GetHostFxrLocalPath() from LangUtils.cpp");
+            PRINT_ERROR("Tried passing a nullptr ref to logger inside GetHostFxrLocalPath() from LangUtils.cpp");
             return false;
         }
         else if (not fp_HostFxrString)
@@ -365,7 +365,7 @@ namespace PeachEditor::Dotnet
 
         const filesystem::path f_HostFxrPath = buffer;
 
-        logger->Info(format("Successfully found hostexr at path: '{}'", f_HostFxrPath.string()), "LangUtils");
+        logger->Info(fmt::format("Successfully found hostexr at path: '{}'", f_HostFxrPath.string()), "LangUtils");
 
         *fp_HostFxrString = f_HostFxrPath.string();
 
@@ -421,7 +421,7 @@ namespace PeachEditor::Lua
 
         if (not logger)
         {
-            PeachCore::PrintError("Tried passing a nullptr ref to logger inside Lua::CompileProjectScripts()");
+            PRINT_ERROR("Tried passing a nullptr ref to logger inside Lua::CompileProjectScripts()");
             return false;
         }
 
@@ -469,11 +469,11 @@ namespace PeachEditor::Lua
 
             if (f_ScriptName.size() > numeric_limits<uint16_t>::max())
             {
-                logger->Error(format("Tried to pass a script named: '{}' that is bigger than 65536 characters, full compilation of lua project was unable to proceed!", f_ScriptName), "Lua::CompileProjectScripts");
+                logger->Error(fmt::format("Tried to pass a script named: '{}' that is bigger than 65536 characters, full compilation of lua project was unable to proceed!", f_ScriptName), "Lua::CompileProjectScripts");
                 return false;
             }
 
-            logger->Info(format("Compiling Lua script: '{}' -> '{}'", lv_ScriptPath.string(), f_ScriptName), "Lua::CompileProjectScripts");
+            logger->Info(fmt::format("Compiling Lua script: '{}' -> '{}'", lv_ScriptPath.string(), f_ScriptName), "Lua::CompileProjectScripts");
 
             ////////////////////////////////////////////// Compile: pushes function (chunk) onto the stack on success //////////////////////////////////////////////
 
@@ -482,7 +482,7 @@ namespace PeachEditor::Lua
             if (f_CompilationStatus != LUA_OK)
             {
                 const char* f_LuaError = lua_tostring(f_LuaState, -1);
-                logger->Error(format("Lua compile error in '{}': {}", lv_ScriptPath.string(), f_LuaError ? f_LuaError : "<unknown>"), "Lua::CompileProjectScripts");
+                logger->Error(fmt::format("Lua compile error in '{}': {}", lv_ScriptPath.string(), f_LuaError ? f_LuaError : "<unknown>"), "Lua::CompileProjectScripts");
 
                 lua_pop(f_LuaState, 1); // pop error
                 lua_close(f_LuaState);
@@ -502,7 +502,7 @@ namespace PeachEditor::Lua
 
             if (f_DumpStatus != 0)
             {
-                logger->Error(format("lua_dump failed for script '{}'", lv_ScriptPath.string()), "Lua::CompileProjectScripts");
+                logger->Error(fmt::format("lua_dump failed for script '{}'", lv_ScriptPath.string()), "Lua::CompileProjectScripts");
                 lua_pop(f_LuaState, 1); // pop compiled function
                 lua_close(f_LuaState);
 
@@ -522,7 +522,7 @@ namespace PeachEditor::Lua
 
         lua_close(f_LuaState);
 
-        //logger->Info(format("Successfully compiled {} Lua scripts into {} bytes of bytecode", fp_ScriptPaths.size(), fp_OutputBytecode.size()), "Lua::CompileProjectScripts");
+        //logger->Info(fmt::format("Successfully compiled {} Lua scripts into {} bytes of bytecode", fp_ScriptPaths.size(), fp_OutputBytecode.size()), "Lua::CompileProjectScripts");
 
         return true;
     }

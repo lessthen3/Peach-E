@@ -538,7 +538,7 @@ namespace PeachCore::OpenGL {
             )
             const
         {
-            // Extract file extension assuming format "filename.ext"
+            // Extract file extension assuming fmt::format "filename.ext"
             size_t lastDotIndex = fp_ScriptFilePath.rfind('.');
 
             if (lastDotIndex == string::npos)

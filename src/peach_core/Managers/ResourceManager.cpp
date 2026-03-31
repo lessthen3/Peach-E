@@ -25,7 +25,7 @@ namespace PeachCore {
 
         if(not resource_logger)
         {
-            PrintError("[CRITICAL_LOGGING_ERROR]: ResourceManager failed to initialize the resource_thread logger >w<");
+            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: ResourceManager failed to initialize the resource_thread logger >w<");
             return false;
         }
 
@@ -281,7 +281,7 @@ namespace PeachCore {
 
         if (not f_HostExr)
         {
-            resource_logger->Error(format("Failed to load hostexr at path: '{}'", fp_HostFxrPath), "ResourceManager");
+            resource_logger->Error(fmt::format("Failed to load hostexr at path: '{}'", fp_HostFxrPath), "ResourceManager");
             return false;
         }
 
@@ -388,13 +388,13 @@ namespace PeachCore {
         }
         catch (const exception& fp_Exception)
         {
-            resource_logger->Error(format("Failed to load texture image!, error: '{}'", fp_Exception.what()), "ResourceManager");
+            resource_logger->Error(fmt::format("Failed to load texture image!, error: '{}'", fp_Exception.what()), "ResourceManager");
             return false;
         }
 
         if (not f_RawTextureDataPtr)
         {
-            //resource_logger->Error(format("Failed to load texture! path: {}, reason: {}", fp_FilePath, stbi_failure_reason()), "ResourceManager");
+            //resource_logger->Error(fmt::format("Failed to load texture! path: {}, reason: {}", fp_FilePath, stbi_failure_reason()), "ResourceManager");
             return false;
         }
 
@@ -448,7 +448,7 @@ namespace PeachCore {
 
     //    if (strncmp(f_Type, "WAVE", 4) != 0) 
     //    {
-    //        cerr << "Invalid WAV file format: " << filename << endl;
+    //        cerr << "Invalid WAV file fmt::format: " << filename << endl;
     //        return false;
     //    }
 
@@ -491,15 +491,15 @@ namespace PeachCore {
     //    vector<char> data(subchunk2Size);
     //    file.read(data.data(), subchunk2Size);
 
-    //    ALenum format;
+    //    ALenum fmt::format;
     //    if (f_NumChannels == 1) {
-    //        format = (f_BitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
+    //        fmt::format = (f_BitsPerSample == 8) ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
     //    }
     //    else {
-    //        format = (f_BitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
+    //        fmt::format = (f_BitsPerSample == 8) ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
     //    }
 
-    //    alBufferData(buffer, format, data.data(), subchunk2Size, f_SampleRate);
+    //    alBufferData(buffer, fmt::format, data.data(), subchunk2Size, f_SampleRate);
 
         return true;
     }
@@ -519,7 +519,7 @@ namespace PeachCore {
             return false;
         }
 
-        ////////////////////////////////////////////// Extract file extension assuming format "filename.ext" //////////////////////////////////////////////
+        ////////////////////////////////////////////// Extract file extension assuming fmt::format "filename.ext" //////////////////////////////////////////////
 
         size_t lastDotIndex = fp_ShaderFilePath.rfind('.');
 

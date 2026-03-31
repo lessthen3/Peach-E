@@ -234,7 +234,7 @@ namespace PeachEditor::ShaderCompilerUtils {
         //check for nullptrs
         if (not logger)
         {
-            PeachCore::PrintError("Tried to pass nullptr reference to logger during ReflectDescriptorBindings(), nothing was done.");
+            PRINT_ERROR("Tried to pass nullptr reference to logger during ReflectDescriptorBindings(), nothing was done.");
             return false;
         }
         else if (not fp_BindingInfo)
@@ -289,7 +289,7 @@ namespace PeachEditor::ShaderCompilerUtils {
         //check for nullptrs
         if (not logger)
         {
-            PeachCore::PrintError("Tried to pass nullptr reference to logger during ReflectPushConstants(), nothing was done.");
+            PRINT_ERROR("Tried to pass nullptr reference to logger during ReflectPushConstants(), nothing was done.");
             return false;
         }
         else if (not fp_PushConstants)

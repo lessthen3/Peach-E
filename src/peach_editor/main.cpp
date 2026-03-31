@@ -45,7 +45,7 @@ int
 
     //     if (f_FtError)
     //     {
-    //         PeachCore::PrintError("FreeType init FAILED");
+    //         PeachCore::PRINT_ERROR("FreeType init FAILED");
     //     }
     //     else
     //     {
@@ -68,7 +68,7 @@ int
 
     //     if (not f_Ft)
     //     {
-    //         PeachCore::PrintError("msdfgen-ext FreeType init FAILED");
+    //         PeachCore::PRINT_ERROR("msdfgen-ext FreeType init FAILED");
     //     }
     //     else
     //     {
@@ -95,9 +95,9 @@ int
     //    b2DestroyWorld(f_WorldId);
     //}
 
-    PeachCore::Print(std::to_string(PeachCore::NullResources::GetDefaultFontSize()));
+    PRINT(std::to_string(PeachCore::NullResources::GetDefaultFontSize()), PeachCore::Colours::BrightWhite);
 
-    std::cout << fp_ArgVector[0] << "\n"; //COOL AF
+    PRINT(fp_ArgVector[0], PeachCore::Colours::BrightMagenta); //COOL AF
 
     //WARNING: WE ONLY USE THIS FOR DEVELOPMENT, FOR DEPLOYMENT WE NEED THIS DIRECTORY TO BE THE BASE DIR OF THE EXECUTABLE
     // Get the full path of the executable
@@ -112,7 +112,7 @@ int
 
     if (mf_TopLevelDir.empty())
     {
-        PeachCore::PrintError("Failed to find the top-level directory 'Peach-E'!", PeachCore::Colours::Magenta);
+        PRINT("Failed to find the top-level directory 'Peach-E'!", PeachCore::Colours::Magenta);
         return EXIT_FAILURE;
     }
 
@@ -134,7 +134,7 @@ int
 
         if (not peach_editor->InitializePeachEditor(mf_PeachERootPath))
         {
-            PeachCore::PrintError("Failed to initialize Peach Editor properly uwu");
+            PRINT_ERROR("Failed to initialize Peach Editor properly uwu");
             return EXIT_FAILURE;
         }
 
@@ -144,7 +144,7 @@ int
     }
     catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
     {
-        PeachCore::PrintError(std::format("Unhandled exception: {}", Exception.what()));
+        PRINT_ERROR(fmt::format("Unhandled exception: {}", Exception.what()));
 
         return EXIT_FAILURE;
     }

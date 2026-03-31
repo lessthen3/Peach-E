@@ -10,6 +10,8 @@
 ********************************************************************/
 #include "PeachConsole.h"
 
+#include <fmt/format.h>
+
 namespace PeachCore::PUI {
 
     //PeachConsole::PeachConsole() 
@@ -41,7 +43,7 @@ namespace PeachCore::PUI {
 
             if (fv_CurrentChar != '-')
             {
-                PrintError(format("[POORLY FORMED COMMAND]: expected '-' but found '{}' instead", fv_CurrentChar));
+                PRINT_ERROR(fmt::format("[POORLY FORMED COMMAND]: expected '-' but found '{}' instead", fv_CurrentChar));
                 return false;
             }
 
@@ -64,7 +66,7 @@ namespace PeachCore::PUI {
 
             if (not pm_CommandList.contains(fv_Command))
             {
-                PrintError(format("[INVALID COMMAND]: '{}'", fv_Command));
+                PRINT_ERROR(fmt::format("[INVALID COMMAND]: '{}'", fv_Command));
                 return false;
             }
 

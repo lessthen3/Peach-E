@@ -87,7 +87,7 @@ namespace PeachEditor {
 
             if (not main_editor_logger)
             {
-                PeachCore::PrintError("Initialization error: Was not able to initialize PeachEditorManager's main logger");
+                PRINT_ERROR("Initialization error: Was not able to initialize PeachEditorManager's main logger");
                 return false;
             }
 

@@ -10,6 +10,8 @@
 ********************************************************************/
 #include "ResourceManager.h"
 
+#include <fmt/format.h>
+
 namespace PeachEditor{
 
     bool
@@ -24,18 +26,18 @@ namespace PeachEditor{
         //always check for nullptrs kids >O<
         if (not logger)
         {
-            PeachCore::PrintError("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during WriteSPIRVToFile()");
+            PRINT_ERROR("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during WriteSPIRVToFile()");
             return false;
         }
         // Ensure directory exists
         else if (not filesystem::exists(fp_DesiredOutputDirectory))
         {
-            logger->Error(format("ShaderCompilerUtils Error: Tried to pass invalid write directory: '{}' to WriteSPIRVToFile()", fp_DesiredOutputDirectory), "ShaderCompilerUtils");
+            logger->Error(fmt::format("ShaderCompilerUtils Error: Tried to pass invalid write directory: '{}' to WriteSPIRVToFile()", fp_DesiredOutputDirectory), "ShaderCompilerUtils");
             return false;
         }
         else if (fp_SpirvBytecode.empty()) //check if the byte vector is empty uwu
         {
-            logger->Error(format("ShaderCompilerUtils Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "ShaderCompilerUtils");
+            logger->Error(fmt::format("ShaderCompilerUtils Error: Tried passing empty byte vector for writing to file name: '{}', nothing was done.", fp_DesiredName), "ShaderCompilerUtils");
             return false;
         }
 
@@ -54,7 +56,7 @@ namespace PeachEditor{
 
         if (not file.is_open())
         {
-            logger->Error(format("ShaderCompilerUtils Error: Failed to open file: '{}' for writing.", f_FileName), "ShaderCompilerUtils");
+            logger->Error(fmt::format("ShaderCompilerUtils Error: Failed to open file: '{}' for writing.", f_FileName), "ShaderCompilerUtils");
             return false;
         }
 
@@ -75,7 +77,7 @@ namespace PeachEditor{
         //check for nullptr for logger ref
         if (not logger)
         {
-            PeachCore::PrintError("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during LoadRawShaderSource()");
+            PRINT_ERROR("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during LoadRawShaderSource()");
             return false;
         }
         //more nullptr checking
@@ -91,12 +93,12 @@ namespace PeachEditor{
             return false;
         }
 
-        // Extract file extension assuming format "filename.ext"
+        // Extract file extension assuming fmt::format "filename.ext"
         size_t lastDotIndex = fp_ShaderSourcePath.rfind('.');
 
         if (lastDotIndex == string::npos)
         {
-            logger->Error(format("ShaderCompilerUtils Error: No file extension found at filepath: '{}'", fp_ShaderSourcePath), "ShaderCompilerUtils");
+            logger->Error(fmt::format("ShaderCompilerUtils Error: No file extension found at filepath: '{}'", fp_ShaderSourcePath), "ShaderCompilerUtils");
             return false;
         }
 
@@ -110,7 +112,7 @@ namespace PeachEditor{
             f_FileExtension != ".frag"
             )
         {
-            logger->Error(format("Found file extension: '{}', when GLSL Shader was expected at specified filepath: '{}'", f_FileExtension, fp_ShaderSourcePath), "ShaderCompilerUtils");
+            logger->Error(fmt::format("Found file extension: '{}', when GLSL Shader was expected at specified filepath: '{}'", f_FileExtension, fp_ShaderSourcePath), "ShaderCompilerUtils");
             return false;
         }
 
@@ -118,7 +120,7 @@ namespace PeachEditor{
 
         if (not f_ShaderFile.is_open())
         {
-            logger->Error(format("ShaderCompilerUtils Error: Failed to open shader at filepath: '{}', for reading.", fp_ShaderSourcePath), "ShaderCompilerUtils");
+            logger->Error(fmt::format("ShaderCompilerUtils Error: Failed to open shader at filepath: '{}', for reading.", fp_ShaderSourcePath), "ShaderCompilerUtils");
             return false;
         }
 

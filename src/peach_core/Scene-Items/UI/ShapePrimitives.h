@@ -52,7 +52,7 @@ For the UI, the shader graph will do a lot of heavy lifting, I just believe havi
 the engine as well as using peach-e
 
 For example, not having to rewrite tedious geometry equations for common effects like wrap around style stripe movement, border outlines, etc; for
-the engine side of things, it makes using templates a lot easier since the shader information will be coming in a predictable format dictated and enforced
+the engine side of things, it makes using templates a lot easier since the shader information will be coming in a predictable fmt::format dictated and enforced
 by the shader graph. 
 
 for anyone that wants to write glsl by hand I can just hand them a template and specify what can be done within peach-e's restraints, and I can sleep

@@ -60,7 +60,7 @@ namespace PeachCore::OpenGL {
 
         pm_VAO = pm_Render->Generate2DBuffers(vertices, indices);
 
-        Print("The VAO ID for the Viewport Shader is: " + to_string(pm_VAO), Colours::Magenta);
+        PRINT("The VAO ID for the Viewport Shader is: " + to_string(pm_VAO), Colours::Magenta);
 
         ////////////////////////////////////////////////
         // Shaders
@@ -78,7 +78,7 @@ namespace PeachCore::OpenGL {
         //    editor_rendering_logger.get()
         //);
 
-        Print("The program ID for the Viewport Shader is: " + to_string(pm_ViewportShader->GetProgramID()), Colours::Magenta);
+        PRINT("The program ID for the Viewport Shader is: " + to_string(pm_ViewportShader->GetProgramID()), Colours::Magenta);
 
         ////////////////////////////////////////////////
         // Create Render Texture
@@ -86,7 +86,7 @@ namespace PeachCore::OpenGL {
 
         if (not CreateRenderTexture(pm_CurrentViewportWidth, pm_CurrentViewportHeight))
         {
-            PeachCore::PrintError("Was not able to create render texture");
+           PRINT_ERROR("Was not able to create render texture");
         }
     }
 

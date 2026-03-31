@@ -81,7 +81,7 @@ namespace PeachCore {
 
         if (not audio_logger)
         {
-            PrintError("[CRITICAL_LOGGING_ERROR]: AudioManager failed to initialize the audio_thread logger >w<");
+            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: AudioManager failed to initialize the audio_thread logger >w<");
             return false;
         }
 
@@ -155,7 +155,7 @@ namespace PeachCore {
     {
         if (not logger)
         {
-            PrintError("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
+            PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
             return nullptr;
         }
         else if (not pm_IsInitialized)

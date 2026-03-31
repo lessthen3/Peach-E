@@ -10,6 +10,8 @@
 ********************************************************************/
 #include "InputManager.h"
 
+#include <fmt/format.h>
+
 namespace PeachCore {
 
     [[nodiscard]] bool
@@ -25,7 +27,7 @@ namespace PeachCore {
 
         if (not input_logger)
         {
-            PrintError("[CRITICAL_LOGGING_ERROR]: InputManager failed to initialize the input_logger >O<");
+            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: InputManager failed to initialize the input_logger >O<");
             return false;
         }
 
@@ -54,7 +56,7 @@ namespace PeachCore {
         {
             input_logger->Error
             (
-                format("Action named : '{}' was not found in the Input Map, did you misspell or forget to add '{}' to the Input Map?", fp_ActionName, fp_ActionName),
+                fmt::format("Action named : '{}' was not found in the Input Map, did you misspell or forget to add '{}' to the Input Map?", fp_ActionName, fp_ActionName),
                 "InputManager::WasPressed"
             );
 
@@ -102,7 +104,7 @@ namespace PeachCore {
         {
             input_logger->Error
             (
-                format("Action named : '{}' was not found in the Input Map, did you misspell or forget to add '{}' to the Input Map?", fp_ActionName, fp_ActionName),
+                fmt::format("Action named : '{}' was not found in the Input Map, did you misspell or forget to add '{}' to the Input Map?", fp_ActionName, fp_ActionName),
                 "InputManager::WasPressed"
             );
 
@@ -210,7 +212,7 @@ namespace PeachCore {
 
                     input_logger->Info
                     (
-                        format("Stylus with ID: '{}' entered proximity", f_PenID),
+                        fmt::format("Stylus with ID: '{}' entered proximity", f_PenID),
                         "InputManager::PollEvents"
                     );
                 }
@@ -287,7 +289,7 @@ namespace PeachCore {
 
                     input_logger->Info
                     (
-                        format("Stylus with ID: '{}' left proximity", f_PenID),
+                        fmt::format("Stylus with ID: '{}' left proximity", f_PenID),
                         "InputManager::PollEvents"
                     );
                 }
@@ -315,7 +317,7 @@ namespace PeachCore {
 
                     input_logger->Info
                     (
-                        format("Gamepad connected with ID: {}", f_JoystickID),
+                        fmt::format("Gamepad connected with ID: {}", f_JoystickID),
                         "InputManager::PollEvents"
                     );
                 }
@@ -334,7 +336,7 @@ namespace PeachCore {
 
                     input_logger->Info
                     (
-                        format("Gamepad disconnected with ID: {}", f_JoystickID),
+                        fmt::format("Gamepad disconnected with ID: {}", f_JoystickID),
                         "InputManager::PollEvents"
                     );
 
@@ -385,7 +387,7 @@ namespace PeachCore {
 
                     input_logger->Info
                     (
-                        format("Joystick connected with ID: {}", f_JoystickID),
+                        fmt::format("Joystick connected with ID: {}", f_JoystickID),
                         "InputManager::PollEvents"
                     );
                 }
@@ -404,7 +406,7 @@ namespace PeachCore {
 
                     input_logger->Info
                     (
-                        format("Gamepad disconnected with ID: {}", f_JoystickID),
+                        fmt::format("Gamepad disconnected with ID: {}", f_JoystickID),
                         "InputManager::PollEvents"
                     );
 

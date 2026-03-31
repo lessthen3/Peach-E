@@ -183,7 +183,7 @@ namespace PeachCore {
         static void
             SegFaultHandler(int fp_Signal) //primitive segfault handler
         {
-            PrintError(format("[!] Crash signal received: {}, __FATAL__SEGMENTATION__FAULT__", fp_Signal));
+            PRINT_ERROR(fmt::format("[!] Crash signal received: {}, __FATAL__SEGMENTATION__FAULT__", fp_Signal));
             // possibly notify watchdog or dump stack trace
             exit(FATAL_SEGMENTATION_FAULT); //clean exit so everything calls their destructors
         }
@@ -208,7 +208,7 @@ namespace PeachCore {
         //////////////////////////////////////// Engine Initialization Methods ////////////////////////////////////////
 
         bool 
-            LoadGameStartupConfigs() //This method should be able to load configs from JSON or some other binary format that cereal supports
+            LoadGameStartupConfigs() //This method should be able to load configs from JSON or some other binary fmt::format that cereal supports
         {
 
             return true;

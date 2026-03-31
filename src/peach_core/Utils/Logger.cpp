@@ -13,6 +13,7 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <fmt/format.h>
 
 static constexpr uint32_t FLUSH_EVERY_N_LOGS = 256u;
 static constexpr uintmax_t MAX_LOG_FILE_SIZE_BYTES = 10u * 1024u * 1024u; // 10 MB
@@ -79,6 +80,23 @@ namespace PeachCore {
         CloseOpenLogFiles(); //Closes any files that are open to prevent introducing vulnerabilities in privileged environments
     }
 
+    bool
+        Logger::UpdateThreadOwner //the owning thread must update and pass off the logger to be considered valid otherwise it wont uwu
+        (
+            const thread::id& fp_NewThreadID
+        )
+    {
+        if (not AssertThreadAccess("UpdateThreadOwner")) //can't log here since it's only triggered by improper thread usage which will trigger asserthreadacess again
+        {
+            PRINT_ERROR(fmt::format("Tried to call UpdateThreadOwner from a thread that didn't own logger named: {}", pm_LoggerName));
+            return false;
+        }
+
+        pm_ThreadOwnerID = fp_NewThreadID;
+
+        return true;
+    }
+
    bool
         Logger::UpdateActiveMask(const uint32_t fp_NewLogMask)
     {
@@ -123,7 +141,7 @@ namespace PeachCore {
             {
                 if (not CreateLogFile(pm_CurrentWorkingDirectory, lv_LogStringName))
                 {
-                    PrintError("Failed to create log file named: " + lv_LogStringName);
+                    PRINT_ERROR("Failed to create log file named: " + lv_LogStringName);
                     return false;
                 }
 
@@ -194,9 +212,7 @@ namespace PeachCore {
                 }
             }
 
-#ifdef PEACH_USING_OS_TERMINAL
-            Print(f_LogEntry, Colours::BrightWhite);
-#endif
+            PRINT(f_LogEntry, Colours::BrightWhite);
         }
     }
 
@@ -233,9 +249,7 @@ namespace PeachCore {
                 }
             }
 
-#ifdef PEACH_USING_OS_TERMINAL
-            Print(f_LogEntry, Colours::BrightBlue);
-#endif
+            PRINT(f_LogEntry, Colours::BrightBlue);
         }
     }
 
@@ -272,9 +286,7 @@ namespace PeachCore {
                 }
             }
 
-#ifdef PEACH_USING_OS_TERMINAL
-            Print(f_LogEntry, Colours::BrightGreen);
-#endif
+            PRINT(f_LogEntry, Colours::BrightGreen);
         }
     }
 
@@ -290,7 +302,7 @@ namespace PeachCore {
         {
             const string f_TimeStamp = GetCurrentTimestamp();
 
-            const string f_LogEntry = format
+            const string f_LogEntry = fmt::format
             (
                 "[{}][warning][{}] ({} ln {}, {}): {}",
                 f_TimeStamp,
@@ -322,9 +334,7 @@ namespace PeachCore {
                 }
             }
 
-#ifdef PEACH_USING_OS_TERMINAL
-            Print(f_LogEntry, Colours::BrightYellow);
-#endif
+            PRINT(f_LogEntry, Colours::BrightYellow);
         }
     }
 
@@ -340,7 +350,7 @@ namespace PeachCore {
         {
             const string f_TimeStamp = GetCurrentTimestamp();
 
-            const string f_LogEntry = format
+            const string f_LogEntry = fmt::format
             (
                 "[{}][error][{}] ({} ln {}, {}): {}",
                 f_TimeStamp,
@@ -372,9 +382,7 @@ namespace PeachCore {
                 }
             }
 
-#ifdef PEACH_USING_OS_TERMINAL
-            PrintError(f_LogEntry, Colours::Red);
-#endif
+            PRINT_ERROR(f_LogEntry);
         }
     }
 
@@ -390,7 +398,7 @@ namespace PeachCore {
         {
             const string f_TimeStamp = GetCurrentTimestamp();
 
-            const string f_LogEntry = format
+            const string f_LogEntry = fmt::format
             (
                 "[{}][fatal][{}] ({} ln {}, {}): {}",
                 f_TimeStamp,
@@ -422,9 +430,7 @@ namespace PeachCore {
                 }
             }
 
-#ifdef PEACH_USING_OS_TERMINAL
-            PrintError(f_LogEntry, Colours::Magenta);
-#endif
+            PRINT(f_LogEntry, Colours::Magenta);
         }
     }
 
@@ -436,13 +442,6 @@ namespace PeachCore {
             const PEACH_LOGGER_FLAGS fp_Flags
         )
     {
-#ifdef PEACH_DEBUG
-        //stringstream f_UckCPlusPlus; //XXX: cpp is a dumb fucking language sometimes holy please make good features and not dumbass nonsense holy shit
-        //f_UckCPlusPlus << this_thread::get_id();
-        //string f_CallerThreadID = f_UckCPlusPlus.str();
-
-        //PrintError(format("Logger name: '{}' from thread number : {}, [Caller Thread ID]: {}", fp_DesiredLoggerName, static_cast<uint8_t>(fp_ThreadName), f_CallerThreadID));
-#endif
         ////////////////////////////////////////////// Store Initializer Thread ID //////////////////////////////////////////////
 
         pm_ThreadOwnerID = this_thread::get_id();
@@ -471,7 +470,7 @@ namespace PeachCore {
         {
             if (fp_Flags & PEACH_DONT_CREATE_DIRECTORY)
             {
-                PrintError("[CRITICAL_LOGGING_ERROR]: Failed to find valid log output directory");
+                PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: Failed to find valid log output directory");
                 return false;
             }
 
@@ -481,7 +480,7 @@ namespace PeachCore {
             }
             catch (const exception& f_Exception)
             {
-                PrintError(format("Failed to create desired log output directory with exception: '{}'", f_Exception.what()));
+                PRINT_ERROR(fmt::format("Failed to create desired log output directory with exception: '{}'", f_Exception.what()));
                 return false;
             }
         }
@@ -490,7 +489,7 @@ namespace PeachCore {
 
         if (not UpdateActiveMask(fp_Flags))
         {
-            PrintError("[CRITICAL_LOGGING_ERROR]: Failed to create required log files for logger named: " + pm_LoggerName);
+            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: Failed to create required log files for logger named: " + pm_LoggerName);
             return false;
         }
 
@@ -527,7 +526,7 @@ namespace PeachCore {
 
                 if (not f_LogFile.is_open())
                 {
-                    PrintError(format("Failed to truncate oversized log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName));
+                    PRINT_ERROR(fmt::format("Failed to truncate oversized log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName));
                     return false;
                 }
 
@@ -545,7 +544,7 @@ namespace PeachCore {
 
         if (not f_LogFile.is_open())
         {
-            PrintError(format("Failed to open log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName));
+            PRINT_ERROR(fmt::format("Failed to open log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName));
             return false;
         }
 
@@ -581,7 +580,7 @@ namespace PeachCore {
         f_UckCPlusPlus << this_thread::get_id();
         string f_CallerThreadID = f_UckCPlusPlus.str();
 
-        PrintError(format("Logger name: '{}' called method '{}' from the wrong thread, [Caller Thread ID]: {}", pm_LoggerName, fp_FunctionName, f_CallerThreadID));
+        PRINT_ERROR(fmt::format("Logger name: '{}' called method '{}' from the wrong thread, [Caller Thread ID]: {}", pm_LoggerName, fp_FunctionName, f_CallerThreadID));
 
         return false;
     }

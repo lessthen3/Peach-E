@@ -19,7 +19,7 @@ namespace PeachCore {
 
         if (not physics_logger)
         {
-            PrintError("PhysicsManager failed to initialize the physics_thread logger >w<");
+            PRINT_ERROR("PhysicsManager failed to initialize the physics_thread logger >w<");
             return false;
         }
 
@@ -59,7 +59,7 @@ namespace PeachCore {
     {
         if (not InitializePhysicsEngine2D(fp_LogOutputDirectory, fp_GravityX, fp_GravityY))
         {
-            PrintError("Failed to Initialize Physics Thread!");
+            PRINT_ERROR("Failed to Initialize Physics Thread!");
             return;
         }
 
@@ -106,7 +106,7 @@ namespace PeachCore {
     {
         if (not InitializePhysicsEngine3D(fp_LogOutputDirectory))
         {
-            PrintError("Failed to Initialize Physics Thread!");
+            PRINT_ERROR("Failed to Initialize Physics Thread!");
             return;
         }
 
@@ -144,7 +144,7 @@ namespace PeachCore {
     {
         if (not logger)
         {
-            PrintError("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
+            PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
             return nullptr;
         }
         else if (not pm_IsInitialized)

@@ -108,7 +108,7 @@ namespace PeachCore {
 
             if (f_IndexBits >= pm_PeachNodes.size()) //check for bounds since the user passes this
             {
-                scene_logger->Error(format("Attempted to remove a peach node with invalid ID: {}, Node ID is out of bounds oof", fp_NodeID), "SceneTree"); //print node id for identification however the index bits are the relevant part aka the high 56 bits uwu
+                scene_logger->Error(fmt::format("Attempted to remove a peach node with invalid ID: {}, Node ID is out of bounds oof", fp_NodeID), "SceneTree"); //print node id for identification however the index bits are the relevant part aka the high 56 bits uwu
                 return PEACH_ERROR_INVALID_NODE_REMOVAL_ID;
             }
 
@@ -116,12 +116,12 @@ namespace PeachCore {
 
             if (not f_NodeReference) //not sure ab this one since the recursive removal function already always checks nulls 
             {
-                scene_logger->Error(format("Attempted to remove a peach node with invalid ID: {}, Tried to reference stale node reference that is set -> NULL", fp_NodeID), "SceneTree");
+                scene_logger->Error(fmt::format("Attempted to remove a peach node with invalid ID: {}, Tried to reference stale node reference that is set -> NULL", fp_NodeID), "SceneTree");
                 return PEACH_ERROR_INVALID_NODE_REMOVAL_ID;
             }
             else if (f_NodeReference->ID != fp_NodeID)
             {
-                scene_logger->Error(format("Attempted to remove a peach node with invalid ID: {}, Node ID was improperly indexed at creation due to internal engine error PLEASE REPORT THIS BUG", fp_NodeID), "SceneTree");
+                scene_logger->Error(fmt::format("Attempted to remove a peach node with invalid ID: {}, Node ID was improperly indexed at creation due to internal engine error PLEASE REPORT THIS BUG", fp_NodeID), "SceneTree");
                 return PEACH_ERROR_INVALID_NODE_REMOVAL_ID;
             }
 
