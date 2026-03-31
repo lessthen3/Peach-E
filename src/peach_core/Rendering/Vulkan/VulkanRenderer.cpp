@@ -8,6 +8,8 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
+#ifdef PEACH_RENDERER_VULKAN
+
 #include "VulkanRenderer.h"
 
 namespace PeachCore::Vulkan {
@@ -787,3 +789,5 @@ namespace PeachCore::Vulkan {
         return true;
     }
 }//namespace PeachCore::Vulkan
+
+#endif

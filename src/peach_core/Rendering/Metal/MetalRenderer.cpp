@@ -8,9 +8,10 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
+#ifdef PEACH_RENDERER_METAL
+
 #include "MetalRenderer.h"
 
-#ifdef __APPLE__
 
 namespace PeachCore::Metal{
 

@@ -575,16 +575,31 @@ if(BUILD_PEACH_EDITOR)
     source_group("third_party/spirv_cross" FILES ${SPIRV_CROSS_SOURCES})
     source_group("third_party/bc7enc_rdo" FILES ${BC7ENC_RDO_SOURCES})
 
+    if(PEACH_MACOS)
+        if(
+            CMAKE_OSX_ARCHITECTURES STREQUAL "arm64" OR 
+            CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64"
+        )
+            set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
+            set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
+            set(ASTCENC_ISA_SSE41 OFF CACHE BOOL "" FORCE)
+            set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
+        else()
+            set(ASTCENC_ISA_NEON  OFF CACHE BOOL "" FORCE)
+            set(ASTCENC_ISA_AVX2  ON  CACHE BOOL "" FORCE)
+            set(ASTCENC_ISA_SSE41 ON  CACHE BOOL "" FORCE)
+            set(ASTCENC_ISA_SSE2  ON  CACHE BOOL "" FORCE)
+        endif()
+    endif()
 
     # tell astcenc which ISA to build for based on our platform
     if(PEACH_WINDOWS OR PEACH_LINUX)
         set(ASTCENC_ISA_SSE41 ON CACHE BOOL "" FORCE)
-    elseif(PEACH_PLATFORM_IS_APPLE)
-        set(ASTCENC_UNIVERSAL_BUILD ON CACHE BOOL "" FORCE) # gives u SSE41+AVX2+NEON fat binary
     endif()
 
     set(ASTCENC_CLI OFF CACHE BOOL "" FORCE) # dont build the command line tool
     set(ASTCENC_SHAREDLIB OFF CACHE BOOL "" FORCE)
+    set(ASTCENC_DYNAMIC_RUNTIME OFF CACHE BOOL "" FORCE)
 
     add_subdirectory(third_party/peach_editor/source_include/astcenc)
 

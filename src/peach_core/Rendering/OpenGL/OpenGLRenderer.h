@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#ifndef __APPLE__
+#ifdef PEACH_RENDERER_OPENGL
 
 #include <SDL3/SDL.h>
 

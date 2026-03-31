@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#ifdef __APPLE__
+#ifdef PEACH_RENDERER_METAL
 
 #include "../../Utils/Logger.h"
 
