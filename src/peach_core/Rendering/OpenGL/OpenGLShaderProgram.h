@@ -574,4 +574,4 @@ namespace PeachCore::OpenGL {
     };
 }//namespace PeachCore::OpenGL
 
-#endif
+#endif /*PEACH_RENDERER_OPENGL*/

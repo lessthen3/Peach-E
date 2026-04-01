@@ -8,15 +8,5 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#ifdef PEACH_RENDERER_OPENGL
-
-#include "OpenGLShaderProgram.h"
-
-
-namespace PeachCore::OpenGL {
-
-
-
-}//namespace PeachCore::OpenGL
-
-#endif /*PEACH_RENDERER_OPENGL*/
+#define MINIAUDIO_IMPLEMENTATION
+#include <miniaudio/miniaudio.h>

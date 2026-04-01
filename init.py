@@ -150,7 +150,7 @@ def WriteBuildSummaryMarkdown(fp_BaseDir: str, fp_PrintErrors: bool, fp_PrintWar
 
 ############# Main CMake Function #############
 
-def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> bool:
+def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_ShouldExportCommands : bool, fp_IsVerbose : bool) -> bool:
 
     f_GeneratorMap = {
         "vs2026": "Visual Studio 18 2026",
@@ -184,8 +184,18 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> b
     
     f_IsMultiConfig = fp_Generator in ["vs2026", "vs2022", "vs2019", "vs2017", "vs2015", "xcode", "ninja-mc"]
 
-    f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator], '-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
+    f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator]]
 
+    if fp_ShouldExportCommands:
+        f_CMakeConfigCommand.append('-DCMAKE_EXPORT_COMPILE_COMMANDS=ON');
+    
+    f_ExtraBuildConfigs = []
+
+    if fp_IsVerbose:
+        if fp_Generator == "vs2022":
+            f_ExtraBuildConfigs += ['--verbose', '--', '-verbosity:diagnostic']
+
+    
     if not f_IsMultiConfig:
 
         if fp_BuildType == "Release and Debug": #Don't allow "both" configs for single config generators uwu
@@ -223,7 +233,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> b
         try:
             print(CreateColouredText(f"[INFO]: Running CMake single config build for {fp_BuildType}...", "green"))
 
-            run_command_with_live_output(['cmake', '--build', 'build'])
+            run_command_with_live_output(['cmake', '--build', 'build'] + f_ExtraBuildConfigs)
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText(f"[ERROR]: CMake single config {fp_BuildType} build process failed!", "red"))
@@ -239,7 +249,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> b
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Debug...", "green"))
 
-            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Debug'])
+            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Debug'] + f_ExtraBuildConfigs)
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake debug build process failed!", "red"))
@@ -253,7 +263,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str) -> b
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Release...", "green"))
 
-            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Release'])
+            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Release'] + f_ExtraBuildConfigs)
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake release build process failed!", "red"))
@@ -377,7 +387,7 @@ def main() -> bool:
         '-T',
         nargs=1,
         metavar="[target]",
-        help=CreateColouredText("ios, android, wasm, psvita, or leave empty for native", 'cyan')
+        help=CreateColouredText("ios, tvos, android, wasm, psvita, or leave empty for native", 'cyan')
     )
 
     parser.add_argument(
@@ -398,7 +408,33 @@ def main() -> bool:
         help=CreateColouredText('Dump all build warnings + errors', 'bright magenta')
     )
 
+    parser.add_argument(
+        '--export_commands',
+        action='store_true',
+        help=CreateColouredText('Export compile commands', 'bright magenta')
+    )
+
+    parser.add_argument(
+        '--verbose',
+        action='store_true',
+        help=CreateColouredText('Adds verbose and will add additional flags depending on generator', 'bright magenta')
+    )
+
     args = parser.parse_args()
+
+    ############# Export compile commands? #############
+
+    f_IsVerbose = False;
+
+    if args.verbose:
+        f_IsVerbose = True;
+
+    ############# Export compile commands? #############
+
+    f_ShouldExportCompileCommands = False
+
+    if args.export_commands:
+        f_ShouldExportCompileCommands = True;
 
     ############# Target Platform Config #############
 
@@ -482,10 +518,22 @@ def main() -> bool:
         if not unpack_versioned_dep(f_ShadercDir, "release_v"):
             return False
 
-
     ############# Run Build Fingers Crossed >w< #############
 
-    if not run_cmake(f_BuildType, f_DesiredGenerator, f_ToolchainKey):
+    build_result = run_cmake(f_BuildType, f_DesiredGenerator, f_ToolchainKey, f_ShouldExportCompileCommands, f_IsVerbose)
+
+    ############# Provide Printout #############
+
+    if args.dump_output:
+        WriteBuildSummaryMarkdown(".", True, True);
+    elif args.dump_warnings:
+        WriteBuildSummaryMarkdown(".", False, True);
+    elif args.dump_errors:
+        WriteBuildSummaryMarkdown(".", True, False);
+
+    ############# return false on failed build ;w; #############
+
+    if not build_result:
         return False
     
     ############# Report Build Stats #############
@@ -494,15 +542,6 @@ def main() -> bool:
     print(CreateColouredText(f"Generator: {f_DesiredGenerator}", "bright magenta"))
     print(CreateColouredText(f"Build Type: {f_BuildType}", "bright magenta"))
     print(CreateColouredText(f"Platform: {f_CurrentPlatform}\n", "bright magenta"))
-
-    ############# Provide Printout #############
-
-    if args.dump_output:
-        WriteBuildSummaryMarkdown(True, True);
-    elif args.dump_warnings:
-        WriteBuildSummaryMarkdown(False, True);
-    elif args.dump_errors:
-        WriteBuildSummaryMarkdown(True, False);
 
     return True
 

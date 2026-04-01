@@ -189,7 +189,14 @@ namespace PeachCore {
         if (ValidateLogMsg(PEACH_TRACE_LOG)) //IMPORTANT: don't need to check if the log file was created since activelogmask tracks that as well >w< and the activemask can't be modified directly since its private
         {
             const string f_TimeStamp = GetCurrentTimestamp();
-            const string f_LogEntry = "[" + f_TimeStamp + "][trace][" + fp_Sender + "]: " + fp_Message;
+            const string f_LogEntry = 
+                fmt::format
+                (
+                    "[{}][trace][{}]: {}",
+                    f_TimeStamp,
+                    fp_Sender,
+                    fp_Message
+                );
 
             pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_TRACE_LOG);
 
@@ -226,7 +233,14 @@ namespace PeachCore {
         if (ValidateLogMsg(PEACH_DEBUG_LOG))
         {
             const string f_TimeStamp = GetCurrentTimestamp();
-            const string f_LogEntry = "[" + f_TimeStamp + "][debug][" + fp_Sender + "]: " + fp_Message;
+            const string f_LogEntry =
+                fmt::format
+                (
+                    "[{}][debug][{}]: {}",
+                    f_TimeStamp,
+                    fp_Sender,
+                    fp_Message
+                );
 
             pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_DEBUG_LOG);
 
@@ -263,7 +277,14 @@ namespace PeachCore {
         if (ValidateLogMsg(PEACH_INFO_LOG))
         {
             const string f_TimeStamp = GetCurrentTimestamp();
-            const string f_LogEntry = "[" + f_TimeStamp + "][info][" + fp_Sender + "]: " + fp_Message;
+            const string f_LogEntry = 
+                fmt::format
+                (
+                    "[{}][info][{}]: {}",
+                    f_TimeStamp,
+                    fp_Sender,
+                    fp_Message
+                );
 
             pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_INFO_LOG);
 

@@ -10,9 +10,7 @@
 ********************************************************************/
 #pragma once
 
-/*
-    Borrowed the triangle.cpp template from https://github.com/charles-lunarg/vk-bootstrap/blob/main/example/triangle.cpp
-*/
+#ifdef PEACH_RENDERER_VULKAN
 
 ///PeachCore
 #include "VulkanShaderProgram.h"
@@ -327,3 +325,5 @@ namespace PeachCore::Vulkan{
             RecreateSwapChain();
     };
 }//namespace PeachCore::Vulkan
+
+#endif /*PEACH_RENDERER_VULKAN*/

@@ -153,6 +153,10 @@ target_sources(peach_core PRIVATE
     ${MONOCYPHER_SOURCES}
 )
 
+if(PEACH_PLATFORM_IS_APPLE)
+    target_sources(peach_core PRIVATE src/peach_core/Rendering/Metal/MetalBridge.mm ) #just to get the objc file compiled for the extern "C" call owo
+endif()
+
 target_include_directories(peach_core PUBLIC
     third_party/peach_core/source_include #supported across the board owo ily guys ~~nyah
 )
@@ -449,6 +453,7 @@ endif()
 
 target_compile_definitions(peach_core PUBLIC 
     $<$<CONFIG:Debug>:PEACH_DEBUG>
+    SDL_MAIN_HANDLED
 )
 
 if(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
@@ -464,9 +469,7 @@ endif(PEACH_VITA)
 if(PEACH_PLATFORM_IS_WINDOWS)
 
     target_compile_definitions(peach_core PUBLIC
-        SODIUM_STATIC #needed for statically linking libsodium
         GLEW_STATIC #needed for statically linking glew
-
         PEACH_API_STATIC #used for compiling peach_api as a static lib uwu
     )
 
@@ -475,12 +478,12 @@ if(PEACH_PLATFORM_IS_WINDOWS)
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
+        
+        set_target_properties(peach_core PROPERTIES ENABLE_EXPORTS OFF)
 
         target_compile_options(peach_core PUBLIC 
             /utf-8
         )
-
-        target_link_options(peach_core PRIVATE /NODEFAULTLIB:LIBCMTD)
     endif(MSVC)
 
 endif(PEACH_PLATFORM_IS_WINDOWS)
@@ -833,8 +836,6 @@ if(BUILD_PEACH_EDITOR)
             set_target_properties(Peach_Editor PROPERTIES ENABLE_EXPORTS OFF)
 
             target_link_options(Peach_Editor PRIVATE 
-                /NODEFAULTLIB:LIBCMTD
-                /NODEFAULTLIB:LIBCMT
                 $<$<NOT:$<CONFIG:Debug>>:/LTCG> #because nethost was compiled w /GL w/e ig its gonna happen anyways owo
             )
         endif()
@@ -919,7 +920,6 @@ if(BUILD_PEACH_ENGINE)
 
         set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS OFF)
 
-        target_link_options(${PROJECT_NAME} PRIVATE /NODEFAULTLIB:LIBCMTD)
     endif(MSVC)
 
     ####################################### Link Peach Engine to Peach Core

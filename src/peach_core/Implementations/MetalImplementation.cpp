@@ -8,15 +8,12 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#ifdef PEACH_RENDERER_OPENGL
+#ifdef PEACH_RENDERER_METAL
 
-#include "OpenGLShaderProgram.h"
+    #define NS_PRIVATE_IMPLEMENTATION
+    #define CA_PRIVATE_IMPLEMENTATION
+    #define MTL_PRIVATE_IMPLEMENTATION
 
+    #include <peach_metal/PeachMetal.hpp>
 
-namespace PeachCore::OpenGL {
-
-
-
-}//namespace PeachCore::OpenGL
-
-#endif /*PEACH_RENDERER_OPENGL*/
+#endif /*PEACH_RENDERER_METAL*/

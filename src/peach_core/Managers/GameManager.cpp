@@ -8,12 +8,6 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#define SDL_MAIN_HANDLED
-
-#define VMA_IMPLEMENTATION
-
-#define MINIAUDIO_IMPLEMENTATION
-
 #include "GameManager.h"
 
 #include <csignal>

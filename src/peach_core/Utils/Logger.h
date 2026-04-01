@@ -18,7 +18,7 @@
 #define PEACH_USING_OS_TERMINAL
 #endif
 
-#define PEACH_FILENAME PeachExtractFilename(__FILE__)
+#define PEACH_FILENAME ::PeachCore::PeachExtractFilename(__FILE__)
 
 #define PEACH_ASSERT(fp_Condition, fp_Message)                                              \
     do                                                                                      \

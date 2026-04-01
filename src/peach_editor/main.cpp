@@ -95,8 +95,6 @@ int
     //    b2DestroyWorld(f_WorldId);
     //}
 
-    PRINT(std::to_string(PeachCore::NullResources::GetDefaultFontSize()), PeachCore::Colours::BrightWhite);
-
     PRINT(fp_ArgVector[0], PeachCore::Colours::BrightMagenta); //COOL AF
 
     //WARNING: WE ONLY USE THIS FOR DEVELOPMENT, FOR DEPLOYMENT WE NEED THIS DIRECTORY TO BE THE BASE DIR OF THE EXECUTABLE
