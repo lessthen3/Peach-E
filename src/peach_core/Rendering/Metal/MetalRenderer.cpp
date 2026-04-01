@@ -11,6 +11,7 @@
 #ifdef PEACH_RENDERER_METAL
 
 #include "MetalRenderer.h"
+#include <fmt/format.h>
 
 namespace PeachCore::Metal{
 
@@ -87,7 +88,11 @@ namespace PeachCore::Metal{
             return false;
         }
 
+        // cache the layer void* at init time, not per frame
+        pm_CachedLayer = SDL_Metal_GetLayer(pm_MetalView);
+            
         rendering_logger->Info("Metal renderer initialized successfully UwU", "MetalRenderer");
+            
         return true;
     }
 
@@ -188,12 +193,15 @@ namespace PeachCore::Metal{
         // AutoreleasePool scope per frame — critical for metal-cpp memory management
         NS::AutoreleasePool* f_Pool = NS::AutoreleasePool::alloc()->init();
 
-        // get next drawable from the CAMetalLayer
-        CA::MetalLayer* f_Layer = reinterpret_cast<CA::MetalLayer*>(
-            SDL_Metal_GetLayer(pm_MetalView)
-        );
+            // in BeginFrame — no CA::MetalLayer* needed at all
+        void* f_RawDrawable = PEACH_GetNextDrawable(pm_CachedLayer);
 
-        pm_CurrentDrawable = f_Layer->nextDrawable();
+        if (not f_RawDrawable)
+        {
+            return StatusCode::NO_DRAWABLE;
+        }
+
+        pm_CurrentDrawable = reinterpret_cast<CA::MetalDrawable*>(f_RawDrawable);
 
         if (not pm_CurrentDrawable)
         {

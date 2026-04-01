@@ -121,11 +121,6 @@ namespace rdo_bc
 
 		image_u8 orig_ultrasmooth_blocks_vis(ultrasmooth_blocks_vis);
 
-		if (rdo_debug_output)
-		{
-			save_png("ultrasmooth_block_mask_pre_filter.png", ultrasmooth_blocks_vis, false);
-		}
-
 		for (uint32_t by = 0; by < blocks_y; by++)
 		{
 			for (uint32_t bx = 0; bx < blocks_x; bx++)
@@ -149,11 +144,6 @@ namespace rdo_bc
 		} // by
 
 		ultrasmooth_blocks_vis = orig_ultrasmooth_blocks_vis;
-
-		if (rdo_debug_output)
-		{
-			save_png("ultrasmooth_block_mask.png", ultrasmooth_blocks_vis, false);
-		}
 
 		std::vector<float> block_mse_scales(total_blocks);
 

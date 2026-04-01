@@ -54,7 +54,7 @@ namespace PeachCore::Metal{
         // for small data like transforms: setVertexBytes(&transform, sizeof, index)
         // for textures: setFragmentTexture(texture, index)
         // for large uniform blocks: MTL::Buffer* bound at a slot
-        vector<MTL::Buffer*> pm_UniformBuffers; // one per frame in flight typically
+        std::vector<MTL::Buffer*> pm_UniformBuffers; // one per frame in flight typically
     };
 }
 

@@ -99,7 +99,8 @@ file(GLOB_RECURSE JOLT_SOURCES
 )
 
 file(GLOB FMT_SOURCES
-    third_party/peach_core/source_include/fmt/*.cc
+    third_party/peach_core/source_include/fmt/format.cc
+    third_party/peach_core/source_include/fmt/os.cc
 )
 
 file(GLOB MONOCYPHER_SOURCES
@@ -283,6 +284,7 @@ elseif(PEACH_MACOS) #TODO fix iokit and other frameworks that dont exist on ios 
         "-framework ForceFeedback"
         "-framework Carbon" #wtf sdl3 u still use this garbo
         "-framework UniformTypeIdentifiers"
+        "-lpthread"
     ) #needed for statically linking SDL3
 
 elseif(PEACH_BSD)
@@ -478,8 +480,6 @@ if(PEACH_PLATFORM_IS_WINDOWS)
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
         
-        set_target_properties(peach_core PROPERTIES ENABLE_EXPORTS OFF)
-
         target_compile_options(peach_core PUBLIC 
             /utf-8
         )
@@ -562,10 +562,7 @@ if(BUILD_PEACH_EDITOR)
     source_group("third_party/bc7enc_rdo" FILES ${BC7ENC_RDO_SOURCES})
 
     if(PEACH_MACOS)
-        if(
-            CMAKE_OSX_ARCHITECTURES STREQUAL "arm64" OR 
-            CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64"
-        )
+        if(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
             set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
             set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
             set(ASTCENC_ISA_SSE41 OFF CACHE BOOL "" FORCE)
@@ -575,8 +572,8 @@ if(BUILD_PEACH_EDITOR)
             set(ASTCENC_ISA_AVX2  ON  CACHE BOOL "" FORCE)
             set(ASTCENC_ISA_SSE41 ON  CACHE BOOL "" FORCE)
             set(ASTCENC_ISA_SSE2  ON  CACHE BOOL "" FORCE)
-        endif()
-    endif()
+        endif(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+    endif(PEACH_MACOS)
 
     # tell astcenc which ISA to build for based on our platform
     if(PEACH_WINDOWS OR PEACH_LINUX)
@@ -589,7 +586,39 @@ if(BUILD_PEACH_EDITOR)
 
     add_subdirectory(third_party/peach_editor/source_include/astcenc)
 
-    set_target_properties(astcenc-sse4.1-static PROPERTIES FOLDER "third_party")
+    if(PEACH_MACOS)
+        foreach(f_AstcTarget
+            astcenc-neon-static
+            astcenc-avx2-static
+            astcenc-sse4.1-static
+            astcenc-sse2-static
+            astcenc-none-static
+        )
+            if(TARGET ${f_AstcTarget})
+                set_target_properties(${f_AstcTarget} PROPERTIES
+                    XCODE_ATTRIBUTE_ARCHS       "${CMAKE_OSX_ARCHITECTURES}"
+                    XCODE_ATTRIBUTE_VALID_ARCHS "${CMAKE_OSX_ARCHITECTURES}"
+                    OSX_ARCHITECTURES           "${CMAKE_OSX_ARCHITECTURES}"
+                )
+            endif(TARGET ${f_AstcTarget})
+        endforeach()
+
+            # on arm64 — exclude x86 ISA targets from the build entirely
+    # Xcode will still generate them in the project but won't compile them
+    if(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+        foreach(f_AstcTarget
+            astcenc-avx2-static
+            astcenc-sse4.1-static
+            astcenc-sse2-static
+        )
+            if(TARGET ${f_AstcTarget})
+                set_target_properties(${f_AstcTarget} PROPERTIES
+                    EXCLUDE_FROM_ALL TRUE
+                )
+            endif(TARGET ${f_AstcTarget})
+        endforeach()
+        endif(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+    endif(PEACH_MACOS)
 
     if(MSVC)
         foreach(f_AstcTarget 
@@ -668,12 +697,11 @@ if(BUILD_PEACH_EDITOR)
         )
 
     elseif(PEACH_MACOS)
-
         ############ Pretty Fonts
 
         STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/steve64/freetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/steve64/freetyped.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/steve64/libfreetype.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/steve64/libfreetyped.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
         )
 
@@ -716,7 +744,7 @@ if(BUILD_PEACH_EDITOR)
         STATIC_IMPORT(shaderc 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steve64/libshaderc_combined.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steve64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include"
         )
 
     elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
@@ -833,8 +861,6 @@ if(BUILD_PEACH_EDITOR)
                 $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
             ) 
 
-            set_target_properties(Peach_Editor PROPERTIES ENABLE_EXPORTS OFF)
-
             target_link_options(Peach_Editor PRIVATE 
                 $<$<NOT:$<CONFIG:Debug>>:/LTCG> #because nethost was compiled w /GL w/e ig its gonna happen anyways owo
             )
@@ -856,7 +882,7 @@ if(BUILD_PEACH_EDITOR)
             SPIRV_Tools_Reduce
             SPIRV_Tools_Remapper
         )
-    endif(NOT PEACH_WINDOWS OR NOT PEACH_MACOS)
+    endif(NOT PEACH_WINDOWS AND NOT PEACH_MACOS)
 
     if(PEACH_PLATFORM_IS_WINDOWS) #needed for statically linking nethost for peach_editor
         target_link_libraries(Peach_Editor PRIVATE 
@@ -917,8 +943,6 @@ if(BUILD_PEACH_ENGINE)
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
-
-        set_target_properties(${PROJECT_NAME} PROPERTIES ENABLE_EXPORTS OFF)
 
     endif(MSVC)
 

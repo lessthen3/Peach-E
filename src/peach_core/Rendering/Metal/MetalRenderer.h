@@ -22,6 +22,7 @@
 #include "../../Utils/Logger.h"
 
 extern "C" void PEACH_AssignMetalDeviceToLayer(void* fp_Layer, void* fp_Device);
+extern "C" void* PEACH_GetNextDrawable(void* fp_Layer);
 
 namespace PeachCore::Metal{
 
@@ -73,6 +74,8 @@ namespace PeachCore::Metal{
         uint32_t pm_WindowHeight = 0;
 
         bool pm_IsFrameStarted = false;
+        
+        void* pm_CachedLayer = nullptr;
 
     private:
         [[nodiscard]] bool CreatePipeline();

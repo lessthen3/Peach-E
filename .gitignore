@@ -54,4 +54,5 @@ third_party/peach_editor/vulkan/win64/debug_v*/
 #build errors
 
 build_errors.md
+build_warnings.md
 

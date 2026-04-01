@@ -247,7 +247,7 @@ namespace PeachCore {
                 const size_t fp_InitialFrameRate
             );
 
-        [[nodiscard]] bool
+        [[nodiscard]] PEACH_STATUS_CODE
             InitializeMetal();
 
         [[nodiscard]] bool
@@ -314,7 +314,7 @@ namespace PeachCore {
             The idea is that the most recent position will be used, and if the last used position idfk idk if thisll work since i cant predict the next frame, and if i use the current frame data and last frames, then the visuals will be outta sync
             with the current real position which is no good for gameplay, and tryna do predictions like that could be a bad route if the render time oversteps its processing tiime.
         */
-        inline const float 
+        inline const float
             Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
             const noexcept
         {
@@ -326,7 +326,7 @@ namespace PeachCore {
             Lerp(const glm::vec2& fp_Start, const glm::vec2& fp_End, const glm::vec2& fp_Rate)
             const noexcept
         {
-
+            return glm::vec2(0);
         }
 
         [[nodiscard]] bool

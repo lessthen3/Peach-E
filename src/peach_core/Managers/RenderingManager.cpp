@@ -127,7 +127,7 @@ namespace PeachCore {
             //case RENDER_UPDATE_POSITION_OP: /*UpdatePos(cmd.node_id, UnpackVec2(cmd.operand));*/ break;
             //case RENDER_DONT_DRAW_OP: /*DrawNode(cmd.node_id);*/ break;
             default:
-                PRINT_ERROR("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!", Colours::BrightRed);
+                PRINT_ERROR("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!");
             }
         }
 
@@ -483,7 +483,7 @@ namespace PeachCore {
     }
 
     PEACH_STATUS_CODE
-        InitializeMetal()
+        RenderingManager::InitializeMetal()
     {
 
         return PEACH_OK;

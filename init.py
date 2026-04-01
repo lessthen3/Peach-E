@@ -76,7 +76,7 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
     f_OutputLines = []
 
     # keywords that indicate an error line — lowercase check
-    f_ErrorKeywords   = ("error:", "fatal error:", "linker error", "lnk", "c2", "c3")
+    f_ErrorKeywords   = ("error:", "fatal error:", "linker error", "lnk", "c2", "c3", "ld:", "undefined symbol", "referenced from")
     f_WarningKeywords = ("warning:",)
 
     try:
