@@ -17,6 +17,40 @@
 
 namespace PeachCore {
 
+    //////////////////// Grab and Load Default Texture into Memory UwU ////////////////////
+
+    [[nodiscard]] static unique_ptr<unsigned char>
+        LoadDefaultTexture()
+    {
+        int f_Width = 0, f_Height = 0, f_Channels = 0;
+
+        unique_ptr<unsigned char> f_Pixels = nullptr;
+
+        //(
+        //    //stbi_load_from_memory
+        //    //(
+        //    //    NullResources::PEACH_NULL_TEXTURE,
+        //    //    static_cast<int>(NullResources::GetDefaultTextureSize()),
+        //    //    &f_Width,
+        //    //    &f_Height,
+        //    //    &f_Channels,
+        //    //    4 // force RGBA
+        //    //)
+        //);
+
+        if (not f_Pixels)
+        {
+            //rendering_logger->Error(fmt::format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
+            return nullptr;
+        }
+
+        return f_Pixels;
+    }
+
+}
+
+namespace PeachCore {
+
     void 
         RenderingManager::Shutdown()
     {
@@ -26,8 +60,8 @@ namespace PeachCore {
     bool 
         RenderingManager::Initialize
         (
-            const RendererType fp_DesiredRenderer,
-            const string& fp_LogOutputDirectory
+            const string& fp_LogOutputDirectory,
+            const size_t fp_InitialFrameRate
         )   
     {
         //////////////////// Initialize Logger ////////////////////
@@ -52,12 +86,7 @@ namespace PeachCore {
 
         //////////////////// Initialize Loading and Command Queues ////////////////////
 
-        if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop
-        {
-            rendering_logger->Fatal(fmt::format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", SDL_GetError()), "GameManager");
-            return false;
-        }
-        else if (not InitializeLoadingQueue())
+        if (not InitializeLoadingQueue())
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager");
             return false;
@@ -65,71 +94,21 @@ namespace PeachCore {
 
         InitializeDrawCommandQueue();
 
-        //////////////////// Initialize Rendering Backend ////////////////////
-
-        if (fp_DesiredRenderer == RendererType::Vulkan)
-        {
-            if (not InitializeVulkan())
-            {
-                rendering_logger->Fatal("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager");
-                exit(PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN);
-            }
-        }
-        #ifndef __APPLE__
-            else if(fp_DesiredRenderer == RendererType::OpenGL)
-            {
-                if (InitializeOpenGL() != PEACH_OK)
-                {
-                    rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager");
-                    exit(PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
-                }
-            }
-        #endif
-        else
-        {
-            rendering_logger->Fatal("Invalid rendering backend was selected, RenderingManager was not able to initialize properly", "RenderingManager");
-        }
+        //rendering_logger->Fatal("Invalid rendering backend was selected, RenderingManager was not able to initialize properly", "RenderingManager");
 
         pm_IsInitialized = true;
+        pm_CurrentFrameRateLimit = fp_InitialFrameRate;
+
+        RENDER_FRAME_TIME_STEP = 1.0f / (float)fp_InitialFrameRate;
 
         return true;
     }
    
     void
-        RenderingManager::RequestRender()
-    {
-        pm_RenderSemaphore.release(); // Gives 1 ticket, wakes render thread
-    }
-
-    void
         RenderingManager::Stop()
         noexcept
     {
         pm_IsRunning.store(false, std::memory_order_release);
-        pm_RenderSemaphore.release(); // Wake it up to exit        
-    }
-
-    void
-        RenderingManager::PollUserInputEvents()
-    {
-        InputManager::get_single().PollEvents();
-
-        InputManager::get_single().GetWindowCloseRequests(pm_CloseWindowRequests);
-
-        for (const auto& lv_Window : pm_CloseWindowRequests)
-        {
-            if (SDL_GetWindowID(pm_MainWindow) == lv_Window)
-            {
-                pm_IsRunning.store(false, std::memory_order_release);
-                //pm_VulkanRenderer->CleanUp();
-            }
-
-            SDL_DestroyWindow(SDL_GetWindowFromID(lv_Window)); //WARNING DO NOT CLOSE WINDOW HERE SEND A REQUEST TO THE RENDERING MANAGER FOR THAT
-        } 
-
-        glm::vec2 f_MousePos = InputManager::get_single().GetCurrentMousePosition();
-
-        PRINT(fmt::format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
     }
 
    bool
@@ -153,62 +132,6 @@ namespace PeachCore {
         }
 
         return f_ContainsCommands;
-    }
-
-   bool
-        RenderingManager::CreateSDLWindow
-        (
-            SDL_Window** fp_SDLWindow,
-            const RendererType fp_RenderingBackend,
-            const string& fp_WindowTitle,
-            const unsigned int fp_WindowWidth,
-            const unsigned int fp_WindowHeight
-        )
-    {
-        if (*fp_SDLWindow)
-        {
-            rendering_logger->Error("Tried passing a valid SDL_Window* handle for window creation, please cleanup original SDL window or dereference pointer before attempting to create a new SDL window", "RenderingManager");
-            return false;
-        }
-
-        uint64_t f_WindowFlags = 1;
-
-        if (fp_RenderingBackend == RendererType::OpenGL)
-        {
-            f_WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
-        }
-        else if (fp_RenderingBackend == RendererType::Vulkan)
-        {
-            f_WindowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE;
-        }
-        else if (fp_RenderingBackend == RendererType::Metal)
-        {
-            f_WindowFlags = SDL_WINDOW_METAL | SDL_WINDOW_RESIZABLE;
-        }
-        else
-        {
-            rendering_logger->Error("Invalid Renderer Type was passed to CreateSDLWindow(), please pass a valid rendering backend type", "RenderingManager");
-            return false;
-        }
-
-        *fp_SDLWindow = SDL_CreateWindow
-        (
-            fp_WindowTitle.c_str(),
-            fp_WindowWidth,
-            fp_WindowHeight,
-            f_WindowFlags
-        );
-
-        if (not *fp_SDLWindow)
-        {
-            rendering_logger->Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "RenderingManager");
-            return false;
-        }
-
-        SDL_WindowID f_WindowID = SDL_GetWindowID(*fp_SDLWindow);
-        pm_CurrentlyActiveWindows[f_WindowID] = *fp_SDLWindow;
-
-        return true;
     }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
@@ -276,30 +199,65 @@ namespace PeachCore {
         RenderingManager::RenderLoopGL
         (
             const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch
+            latch& fp_InitLatch,
+            SDL_Window* fp_MainWindow,
+            const size_t fp_InitialFrameRate
         )
     {
-        if (not Initialize(RendererType::OpenGL, fp_LogOutputDirectory))
+        pm_MainWindow = fp_MainWindow;
+
+        if (not Initialize(fp_LogOutputDirectory, fp_InitialFrameRate))
         {
 
             return;
         }
+        if (InitializeOpenGL() != PEACH_OK)
+        {
+            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager");
+            exit(PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
+        }
 
         fp_InitLatch.count_down();
 
+        auto f_CurrentTime = chrono::high_resolution_clock::now();
+        float f_RenderAccumulator = 0.0f;
+
         while (pm_IsRunning.load(std::memory_order_acquire))
         {
-            // Block until main thread wakes us
-            pm_RenderSemaphore.acquire();
+            auto f_NewTime = chrono::high_resolution_clock::now();
+            float f_FrameTime = chrono::duration<float>(f_NewTime - f_CurrentTime).count();
 
-            if (not pm_IsRunning.load(std::memory_order_acquire))
+            f_CurrentTime = f_NewTime;
+
+            //////////////////// clamp to one frame render pass when its taking too long owo ////////////////////
+
+            if (f_FrameTime > 0.25)
             {
-                break; // Double check after wake
+                f_FrameTime = RENDER_FRAME_TIME_STEP;
             }
 
-            ProcessCommands();
-            PresentFrameGL(); // swap buffers etc.
-            PollUserInputEvents();
+            //////////////////// Increment Accumulator ////////////////////
+
+            f_RenderAccumulator += f_FrameTime;
+
+            //////////////////// Physics and fixed interval updates ////////////////////
+
+            if (f_RenderAccumulator >= RENDER_FRAME_TIME_STEP)
+            {
+                PresentFrameGL(); // swap buffers etc.
+                f_RenderAccumulator -= RENDER_FRAME_TIME_STEP;
+            }
+
+            ProcessCommands(); //TODO: write a heuristic to figure out the best way to stream assets since we dont wanna fully drain the pipeline everytime but also tbh doesnt matter that much uwu
+
+            // sleep whatever is left in the budget after all work is done
+            float f_Remaining = RENDER_FRAME_TIME_STEP - chrono::duration<float>(chrono::high_resolution_clock::now() - f_CurrentTime).count();
+
+            // sleep the remaining time so we don't burn a core, and be nice to other processes uwu
+            if (f_Remaining > 0.001f) // dont bother sleeping < 1ms 
+            {
+                this_thread::sleep_for(chrono::duration<float>(f_Remaining * 0.9f));  // 90% to avoid oversleeping
+            }
         }
 
         Shutdown();
@@ -348,12 +306,6 @@ namespace PeachCore {
                 return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL;
             }
 
-            if (not CreateSDLWindow(&pm_MainWindow, RendererType::OpenGL, "Peach Window", 800, 600))
-            {
-                rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager");
-                return PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW;
-            }
-
             rendering_logger->Debug("main SDL window successfully created", "RenderingManager");
 
             pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(pm_MainWindow, rendering_logger, true);
@@ -386,30 +338,65 @@ namespace PeachCore {
         RenderingManager::RenderLoopVK
         (
             const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch
+            latch& fp_InitLatch,
+            SDL_Window* fp_MainWindow,
+            const size_t fp_InitialFrameRate
         )
     {
-        if (not Initialize(RendererType::Vulkan, fp_LogOutputDirectory))
+        pm_MainWindow = fp_MainWindow;
+
+        if (not Initialize(fp_LogOutputDirectory, fp_InitialFrameRate))
         {
 
             return;
         }
+        if (not InitializeVulkan())
+        {
+            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager");
+            exit(PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN);
+        }
 
         fp_InitLatch.count_down();
 
+        auto f_CurrentTime = chrono::high_resolution_clock::now();
+        float f_RenderAccumulator = 0.0f;
+
         while (pm_IsRunning.load(std::memory_order_acquire))
         {
-            // Block until main thread wakes us
-            pm_RenderSemaphore.acquire();
+            auto f_NewTime = chrono::high_resolution_clock::now();
+            float f_FrameTime = chrono::duration<float>(f_NewTime - f_CurrentTime).count();
 
-            if (not pm_IsRunning.load(std::memory_order_acquire))
+            f_CurrentTime = f_NewTime;
+
+            //////////////////// clamp to one frame render pass when its taking too long owo ////////////////////
+
+            if (f_FrameTime > 0.25)
             {
-                break; // Double check after wake
+                f_FrameTime = RENDER_FRAME_TIME_STEP;
             }
 
-            ProcessCommands();
-            PresentFrameVK(); // swap buffers etc.
-            PollUserInputEvents();
+            //////////////////// Increment Accumulator ////////////////////
+
+            f_RenderAccumulator += f_FrameTime;
+
+            //////////////////// Physics and fixed interval updates ////////////////////
+
+            if (f_RenderAccumulator >= RENDER_FRAME_TIME_STEP)
+            {
+                PresentFrameVK(); // swap buffers etc.
+                f_RenderAccumulator -= RENDER_FRAME_TIME_STEP;
+            }
+
+            ProcessCommands(); //TODO: write a heuristic to figure out the best way to stream assets since we dont wanna fully drain the pipeline everytime but also tbh doesnt matter that much uwu
+
+            // sleep whatever is left in the budget after all work is done
+            float f_Remaining = RENDER_FRAME_TIME_STEP - chrono::duration<float>(chrono::high_resolution_clock::now() - f_CurrentTime).count();
+
+            // sleep the remaining time so we don't burn a core, and be nice to other processes uwu
+            if (f_Remaining > 0.001f) // dont bother sleeping < 1ms 
+            {
+                this_thread::sleep_for(chrono::duration<float>(f_Remaining * 0.9f));  // 90% to avoid oversleeping
+            }
         }
 
         Shutdown();
@@ -423,12 +410,6 @@ namespace PeachCore {
             rendering_logger->Fatal("Volk failed to initialize! ending program execution immediately", "RenderingManager");
             return false;
         }
-
-        if (not CreateSDLWindow(&pm_MainWindow, RendererType::Vulkan, "Peach Window", 800, 600))
-        {
-            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create the main window, exiting execution immediately", "RenderingManager");
-            exit(PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW); //idk if i wanna exit here but it doesn really matter, i might want the "stack trace" from the false chain created by intialize failing
-        }   
 
         pm_VulkanRenderer = make_unique<Vulkan::Renderer>();
         
@@ -480,10 +461,32 @@ namespace PeachCore {
         RenderingManager::RenderLoopMetal
         (
             const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch
+            latch& fp_InitLatch,
+            SDL_Window* fp_MainWindow,
+            const size_t fp_InitialFrameRate
         )
     {
+        pm_MainWindow = fp_MainWindow;
 
+        if (not Initialize(fp_LogOutputDirectory, fp_InitialFrameRate))
+        {
+
+            return;
+        }
+        if (InitializeMetal() != PEACH_OK)
+        {
+            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid Metal context, exiting execution immediately", "RenderingManager");
+            exit(PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
+        }
+
+        fp_InitLatch.count_down();
+    }
+
+    PEACH_STATUS_CODE
+        InitializeMetal()
+    {
+
+        return PEACH_OK;
     }
 
     bool
@@ -507,11 +510,19 @@ namespace PeachCore {
       
     }
 
-    uint64_t
-        RenderingManager::GetFrameRateLimit() 
+    size_t
+        RenderingManager::GetCurrentFrameRateLimit() 
         const noexcept
     {
-        return pm_FrameRateLimit;
+        return pm_CurrentFrameRateLimit;
+    }
+
+    void
+        RenderingManager::SetNewFrameRateLimit(const size_t fp_NewFrameRateLimit)
+        noexcept
+    {
+        pm_CurrentFrameRateLimit = fp_NewFrameRateLimit;
+        RENDER_FRAME_TIME_STEP = 1.0f / (float)fp_NewFrameRateLimit;
     }
 
    bool 
@@ -527,45 +538,4 @@ namespace PeachCore {
     {
         pm_IsVSyncEnabled = fp_IsEnabled;
     }
-
-    void 
-        RenderingManager::SetFrameRateLimit(uint64_t fp_Limit) 
-        noexcept
-    {
-        pm_FrameRateLimit = fp_Limit;
-    }
-}
-
-namespace PeachCore {
-
-    //////////////////// Grab and Load Default Texture into Memory UwU ////////////////////
-
-    [[nodiscard]] static unique_ptr<unsigned char>
-        LoadDefaultTexture()
-    {
-        int f_Width = 0, f_Height = 0, f_Channels = 0;
-
-        unique_ptr<unsigned char> f_Pixels = nullptr;
-
-        //(
-        //    //stbi_load_from_memory
-        //    //(
-        //    //    NullResources::PEACH_NULL_TEXTURE,
-        //    //    static_cast<int>(NullResources::GetDefaultTextureSize()),
-        //    //    &f_Width,
-        //    //    &f_Height,
-        //    //    &f_Channels,
-        //    //    4 // force RGBA
-        //    //)
-        //);
-
-        if (not f_Pixels)
-        {
-            //rendering_logger->Error(fmt::format("Failed to load texture default texture! (wtf), reason: {}", stbi_failure_reason()));
-            return nullptr;
-        }
-
-        return f_Pixels;
-    }
-
 }

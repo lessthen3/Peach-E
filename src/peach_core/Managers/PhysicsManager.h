@@ -106,7 +106,7 @@ namespace PeachCore {
             );
 
         void
-            RequestPhysicsWorldStep();
+            RequestPhysicsWorldStep(float fp_Dt, size_t fp_Steps);
 
         void
            Stop();

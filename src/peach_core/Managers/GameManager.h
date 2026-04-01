@@ -82,9 +82,10 @@ namespace PeachCore {
     private:
         //////////////////// FPS Vars ////////////////////
 
-        float USER_DEFINED_CONSTANT_UPDATE_FPS = 60.0f;
-        float USER_DEFINED_UPDATE_FPS = 60.0f;
-        float USER_DEFINED_RENDER_FPS = 10.0f; //Needs to be adjustable in-game so no const >w<
+        size_t USER_DEFINED_CONSTANT_UPDATE_FPS = 60u;
+        size_t USER_DEFINED_RENDER_FPS = 10u; //Needs to be adjustable in-game so no const >w<
+
+        float pm_CurrentTimeScale = 1.0f;
 
         //////////////////// Main Logger and Console Buffers ////////////////////
 
@@ -134,6 +135,9 @@ namespace PeachCore {
         atomic<bool> m_IsRunning{ true };
         latch pm_ThreadInitializationLatch{ 4 }; //4 because thats the number of thread managers  - 1 because the resourcemanager has its own latch since the order is : resource thread first, then every other thread since those arent order sensitive uwu
         latch pm_ResourceInitializationLatch{ 1 };
+
+        SDL_Window* pm_MainWindow = nullptr;
+        vector<SDL_WindowID> pm_CloseWindowRequests;
 
     //////////////////////////////////////////////
     // Public Members
@@ -230,6 +234,13 @@ namespace PeachCore {
 
         void
             CallConstantUpdate(double fp_FixedDeltaTime);
+
+        //////////////////////////////////////////////
+        // Window Stuff
+        //////////////////////////////////////////////
+
+        void
+            PollUserInputEvents();
 
         //////////////////////////////////////// Plugin Stuff ////////////////////////////////////////
 

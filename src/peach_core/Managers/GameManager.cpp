@@ -18,6 +18,65 @@
 
 #include <csignal>
 
+namespace PeachCore {
+
+    [[nodiscard]] static bool
+        CreateSDLWindow
+        (
+            SDL_Window** fp_SDLWindow,
+            const RendererType fp_RenderingBackend,
+            const string& fp_WindowTitle,
+            const unsigned int fp_WindowWidth,
+            const unsigned int fp_WindowHeight,
+            Logger* const logger
+        )
+    {
+        if (*fp_SDLWindow)
+        {
+            logger->Error("Tried passing a valid SDL_Window* handle for window creation, please cleanup original SDL window or dereference pointer before attempting to create a new SDL window", "GameManager");
+            return false;
+        }
+
+        uint64_t f_WindowFlags = 1;
+
+        if (fp_RenderingBackend == RendererType::OpenGL)
+        {
+            f_WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+        }
+        else if (fp_RenderingBackend == RendererType::Vulkan)
+        {
+            f_WindowFlags = SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE;
+        }
+        else if (fp_RenderingBackend == RendererType::Metal)
+        {
+            f_WindowFlags = SDL_WINDOW_METAL | SDL_WINDOW_RESIZABLE;
+        }
+        else
+        {
+            logger->Error("Invalid Renderer Type was passed to CreateSDLWindow(), please pass a valid rendering backend type", "GameManager");
+            return false;
+        }
+
+        *fp_SDLWindow = SDL_CreateWindow
+        (
+            fp_WindowTitle.c_str(),
+            fp_WindowWidth,
+            fp_WindowHeight,
+            f_WindowFlags
+        );
+
+        if (not *fp_SDLWindow)
+        {
+            logger->Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "GameManager");
+            return false;
+        }
+
+        SDL_WindowID f_WindowID = SDL_GetWindowID(*fp_SDLWindow);
+
+        return true;
+    }
+}
+
 namespace PeachCore
 {
     //////////////////////////////////////////////
@@ -68,6 +127,16 @@ namespace PeachCore
         {
             main_logger->Fatal("Failed to initialize Peach Engine virtual file system, ending engine program execution immediately", "GameManager");
             return false;
+        }
+        else if (not SDL_Init(SDL_INIT_VIDEO | SDL_INIT_GAMEPAD)) //YEAH THIS should be here oops idk how we created a SDL window before calling init oop
+        {
+            main_logger->Fatal(fmt::format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", SDL_GetError()), "GameManager");
+            return false;
+        }
+        else if (not CreateSDLWindow(&pm_MainWindow, fp_RenderingBackend, "Peach Window", 800, 600, main_logger.get()))
+        {
+            main_logger->Fatal("Initialization failed: Was not able to create the main window, exiting execution immediately", "GameManager");
+            return false; //PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW;
         }
         else if (not InitializeThreads(fp_RootPath, fp_RenderingBackend))
         {
@@ -217,25 +286,52 @@ namespace PeachCore
 
         ////////////////////////////////////////////// Rendering //////////////////////////////////////////////
 
-        if (pm_RequiredThreads & ThreadName::RenderThread and fp_RenderingBackend == RendererType::Vulkan)
+        if (pm_RequiredThreads & ThreadName::RenderThread)
         {
-            pm_RenderThread = jthread
-            (
-                &RenderingManager::RenderLoopVK, 
-                std::ref(RenderingManager::get_single()), 
-                f_LogDir, 
-                std::ref(pm_ThreadInitializationLatch)
-            );
-        }
-        else if (pm_RequiredThreads & ThreadName::RenderThread and fp_RenderingBackend == RendererType::OpenGL)
-        {
-            pm_RenderThread = jthread
-            (
-                &RenderingManager::RenderLoopGL, 
-                std::ref(RenderingManager::get_single()), 
-                f_LogDir, 
-                std::ref(pm_ThreadInitializationLatch)
-            );
+#ifdef PEACH_RENDERER_VULKAN
+            if(fp_RenderingBackend == RendererType::Vulkan)
+            {
+                pm_RenderThread = jthread
+                (
+                    &RenderingManager::RenderLoopVK,
+                    std::ref(RenderingManager::get_single()),
+                    f_LogDir,
+                    std::ref(pm_ThreadInitializationLatch),
+                    pm_MainWindow,
+                    10
+                );
+            }
+#endif
+
+#ifdef PEACH_RENDERER_OPENGL
+            if (fp_RenderingBackend == RendererType::OpenGL)
+            {
+                pm_RenderThread = jthread
+                (
+                    &RenderingManager::RenderLoopGL,
+                    std::ref(RenderingManager::get_single()),
+                    f_LogDir,
+                    std::ref(pm_ThreadInitializationLatch),
+                    pm_MainWindow,
+                    10
+                );
+            }
+#endif
+
+#ifdef PEACH_RENDERER_METAL
+            if (fp_RenderingBackend == RendererType::Metal)
+            {
+                pm_RenderThread = jthread
+                (
+                    &RenderingManager::RenderLoopMetal,
+                    std::ref(RenderingManager::get_single()),
+                    f_LogDir,
+                    std::ref(pm_ThreadInitializationLatch),
+                    pm_MainWindow,
+                    10
+                );
+            }
+#endif
         }
         else
         {
@@ -430,13 +526,11 @@ namespace PeachCore
     void
         GameManager::StartMainGameLoop()
     {
-        const float f_PhysicsDeltaTime = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;  // Fixed physics update rate 
-        const float f_UserDefinedDeltaTime = 1.0f / USER_DEFINED_UPDATE_FPS;  // User-defined Update() rate
-        float f_RenderDeltaTime = 1.0f / USER_DEFINED_RENDER_FPS;  // Should be variable to allow dynamic adjustment in-game
+        const float PHYSICS_TIME_STEP = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;  // Fixed physics update rate 
+        float INPUT_POLL_TIME_STEP = 1.0f / USER_DEFINED_RENDER_FPS;  // Should be variable to allow dynamic adjustment in-game
 
         float f_PhysicsAccumulator = 0.0f;
-        float f_GeneralUpdateAccumulator = 0.0f;
-        float f_RenderAccumulator = 0.0f;
+        float f_InputAccumulator = 0.0f;
 
         auto f_CurrentTime = chrono::high_resolution_clock::now();
 
@@ -462,43 +556,34 @@ namespace PeachCore
             //////////////////// Increment Accumulators ////////////////////
 
             f_PhysicsAccumulator += f_FrameTime;
-            f_GeneralUpdateAccumulator += f_FrameTime;
-            f_RenderAccumulator += f_FrameTime;
+            f_InputAccumulator += f_FrameTime;
+
+            //////////////////// Poll Inputs OwO ////////////////////
+
+            if (f_InputAccumulator >= INPUT_POLL_TIME_STEP)
+            {
+                PollUserInputEvents();
+                f_InputAccumulator -= INPUT_POLL_TIME_STEP;
+            }
 
             //////////////////// Physics and fixed interval updates ////////////////////
 
-            if (f_PhysicsAccumulator >= f_PhysicsDeltaTime)
+            if (f_PhysicsAccumulator >= PHYSICS_TIME_STEP)
             {
-                physics_manager->RequestPhysicsWorldStep();
-                f_PhysicsAccumulator -= f_PhysicsDeltaTime;
-            }
+                size_t f_Steps = 0;
 
-            //////////////////// Push Rendering Request to Render Thread ////////////////////
-
-            if (f_RenderAccumulator >= f_RenderDeltaTime)
-            {
-                if(rendering_manager->IsActive())
+                while (f_PhysicsAccumulator >= PHYSICS_TIME_STEP)
                 {
-                    rendering_manager->RequestRender(); //tells the render thread to do smth w a flag
-                }
-                else
-                {
-                    break;
+                    f_PhysicsAccumulator -= PHYSICS_TIME_STEP;
+                    f_Steps++;
                 }
 
-                f_RenderAccumulator -= f_RenderDeltaTime;
-            }
+                float f_ScaledDt = PHYSICS_TIME_STEP * pm_CurrentTimeScale;
 
-            //////////////////// User-defined game logic updates ////////////////////
-
-            if (f_GeneralUpdateAccumulator >= f_UserDefinedDeltaTime)
-            {
-                //UpdatePlugins(f_UserDefinedDeltaTime); //run loaded plugins alongside player scripts uwu
-                //Update(f_UserDefinedDeltaTime);
+                physics_manager->RequestPhysicsWorldStep(f_ScaledDt, f_Steps);
+                CallConstantUpdate(f_ScaledDt);
 
                 pm_CurrentScene.CleanSceneTree(); //Check for any node removals uwu, done everytime after scripts are ran to check for queued for removal nodes uwu
-
-                f_GeneralUpdateAccumulator -= f_UserDefinedDeltaTime;
             }
         }
     }
@@ -583,6 +668,31 @@ namespace PeachCore
         //process shit by calling the python/lua/dotnet runtime on the Update()/ConstantUpdate() functions defined inside the scripts
     }
 
+    //////////////////////////////////////////////
+    // Window Stuff
+    //////////////////////////////////////////////
+
+    void
+        GameManager::PollUserInputEvents()
+    {
+        InputManager::get_single().PollEvents();
+
+        InputManager::get_single().GetWindowCloseRequests(pm_CloseWindowRequests);
+
+        for (const auto& lv_Window : pm_CloseWindowRequests)
+        {
+            if (SDL_GetWindowID(pm_MainWindow) == lv_Window)
+            {
+                m_IsRunning.store(false, std::memory_order_release);
+            }
+
+            SDL_DestroyWindow(SDL_GetWindowFromID(lv_Window)); //WARNING DO NOT CLOSE WINDOW HERE SEND A REQUEST TO THE RENDERING MANAGER FOR THAT
+        }
+
+        glm::vec2 f_MousePos = InputManager::get_single().GetCurrentMousePosition();
+
+        PRINT(fmt::format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
+    }
     //////////////////////////////////////////////
     // Peach API Functions
     //////////////////////////////////////////////

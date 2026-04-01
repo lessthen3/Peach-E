@@ -127,7 +127,11 @@ namespace PeachCore {
     }
 
     void
-        PhysicsManager::RequestPhysicsWorldStep()
+        PhysicsManager::RequestPhysicsWorldStep
+        (
+            float fp_Dt, 
+            size_t fp_Steps
+        )
     {
         pm_PhysicsSemaphore.release();
     }
