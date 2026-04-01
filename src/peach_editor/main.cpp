@@ -143,7 +143,6 @@ int
     catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
     {
         PRINT_ERROR(fmt::format("Unhandled exception: {}", Exception.what()));
-
         return EXIT_FAILURE;
     }
 }

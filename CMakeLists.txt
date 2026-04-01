@@ -72,7 +72,6 @@ add_library(peach_core ${PEACH_BUILD_TYPE}
 
 target_include_directories(peach_core PUBLIC
     ${PROJECT_SOURCE_DIR}/third_party/peach_core/header_only #header only library includes
-    ${PROJECT_SOURCE_DIR}/src/peach_core
 )
 
 set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach_core PIC friendly UwU
@@ -540,7 +539,7 @@ if(BUILD_PEACH_EDITOR)
     )
 
     file(GLOB BC7ENC_RDO_SOURCES
-        third_party/peach_editor/source_include/bc7enc_rdo
+        third_party/peach_editor/source_include/bc7enc_rdo/*.cpp
     )
 
     target_sources(Peach_Editor PRIVATE
@@ -554,6 +553,7 @@ if(BUILD_PEACH_EDITOR)
         third_party/peach_editor/source_include
         third_party/peach_editor/weird_source_include/spirv_cross        # root hpp files
         third_party/peach_editor/weird_source_include/spirv_cross/include # vendored spirv-headers
+        ${PROJECT_SOURCE_DIR}/src/peach_core
     )
 
     source_group("third_party/tinyxml2" FILES ${TINYXML2_SOURCES})
@@ -928,6 +928,10 @@ if(BUILD_PEACH_ENGINE)
         peach_core
     )
 
+    target_include_directories(${PROJECT_NAME} PRIVATE 
+        ${PROJECT_SOURCE_DIR}/src/peach_core
+    )
+
 endif(BUILD_PEACH_ENGINE)
 
 if(BUILD_PEACH_TESTS)
@@ -962,6 +966,10 @@ if(BUILD_PEACH_TESTS)
 
     target_link_libraries(Peach_Tests PRIVATE 
         peach_core
+    )
+
+    target_include_directories(Peach_Tests PRIVATE 
+        ${PROJECT_SOURCE_DIR}/src/peach_core
     )
 
 endif(BUILD_PEACH_TESTS)

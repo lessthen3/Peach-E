@@ -313,7 +313,7 @@ namespace PeachCore {
             if (glewInit() != GLEW_OK)
             {
                 rendering_logger->Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager");
-                SDL_DestroyWindow(pm_OpenGLRenderer->GetMainWindow());
+                SDL_DestroyWindow(pm_MainWindow);
                 return PEACH_ERROR_FAILED_INITIALIZE_GLEW;
             }
 

@@ -3,7 +3,7 @@
  *              Created by Ranyodh Mandur - 🍑 2024
  *
  *              Licensed under the MIT License (MIT).
- *         For more details, see the LICENSE file or visit:         
+ *         For more details, see the LICENSE file or visit:
  *               https://opensource.org/licenses/MIT
  *
  *           Peach-E is a free open source game engine
@@ -11,244 +11,349 @@
 #ifdef PEACH_RENDERER_OPENGL
 
 #include "OpenGLRenderer.h"
+#include <fmt/format.h>
 
 namespace PeachCore::OpenGL {
 
-    void
-        Viewport::SetupViewport
-        (
-            const unsigned int fp_Width,
-            const unsigned int fp_Height,
-            Renderer* fp_Renderer,
-            shared_ptr<Logger> fp_EditorRenderingLogger
-        )
+    Renderer::Renderer //peach renderer is never supposed to create an sdl window, it only manages closing it
+    (
+        SDL_Window* fp_CurrentWindow,
+        shared_ptr<Logger> fp_RenderingLogger,
+        const bool fp_Is3DEnabled
+    )
     {
-        pm_CurrentViewportWidth = fp_Width;
-        pm_CurrentViewportHeight = fp_Height;
-
-        ////////////////////////////////////////////////
-        // Get Reference to Current Renderer
-        ////////////////////////////////////////////////
-
-        if (not fp_Renderer)
+        if (not fp_RenderingLogger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
         {
-            //handle error here
-            return;
+            PRINT_ERROR("Tried to initialize PeachRenderer with a nullptr for the Rendering Logger doofus");
+            throw runtime_error("Ending program execution immediately since no valid logger was found"); //idk how else to stop the rest of initialization
         }
-        pm_Render = fp_Renderer;
 
-        editor_rendering_logger = fp_EditorRenderingLogger;
+        rendering_logger = fp_RenderingLogger;
 
-        ////////////////////////////////////////////////
-        // Generate Buffers
-        ////////////////////////////////////////////////
-
-        vector<float> vertices =
+        if (not fp_CurrentWindow)
         {
-            // Positions      // Texture Coords
-            1.0f,  1.0f, 0.0f,   1.0f, 1.0f,  // Top Right
-            1.0f, -1.0f, 0.0f,   1.0f, 0.0f,  // Bottom Right
-           -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,  // Bottom Left
-           -1.0f,  1.0f, 0.0f,   0.0f, 1.0f   // Top Left
-        };
+            rendering_logger->Fatal("Tried to initialize PeachRenderer with a nullptr for the SDL Window doofus", "PeachRenderer");
+            throw runtime_error("Ending program execution immediately since no valid SDL Window was found"); //idk how else to stop the rest of initialization
+        }
 
-        vector<unsigned int> indices =
-        {  // note that we start from 0!
-            0, 1, 3,   // first triangle
-            1, 2, 3    // second triangle
-        };
+        pm_MainWindow = fp_CurrentWindow;
 
-        pm_VAO = pm_Render->Generate2DBuffers(vertices, indices);
+        pm_Is3DEnabled = fp_Is3DEnabled;
 
-        PRINT("The VAO ID for the Viewport Shader is: " + to_string(pm_VAO), Colours::Magenta);
+        ////Set Core Profile for OpenGL Context whatever the fuck that means
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-        ////////////////////////////////////////////////
-        // Shaders
-        ////////////////////////////////////////////////
+        //// Set OpenGL version (e.g., OpenGL 3.3 core profile)
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
-        //TO REALLY FUCKING DO: move all shader loading stuff to the resourcemanager, this is bad practice
-        // 
-        //string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
+        // Create an OpenGL context associated with the window
+        pm_OpenGLContext = SDL_GL_CreateContext(pm_MainWindow);
+        SDL_GL_MakeCurrent(pm_MainWindow, pm_OpenGLContext);
 
-        //pm_ViewportShader = new OpenGLShaderProgram
-        //(
-        //    "Viewport Shader",
-        //    f_BaseDir + "/shaders/viewport.vs",
-        //    f_BaseDir + "/shaders/viewport.fs",
-        //    editor_rendering_logger.get()
-        //);
-
-        PRINT("The program ID for the Viewport Shader is: " + to_string(pm_ViewportShader->GetProgramID()), Colours::Magenta);
-
-        ////////////////////////////////////////////////
-        // Create Render Texture
-        ////////////////////////////////////////////////
-
-        if (not CreateRenderTexture(pm_CurrentViewportWidth, pm_CurrentViewportHeight))
+        if (not pm_OpenGLContext)
         {
-           PRINT_ERROR("Was not able to create render texture");
+            rendering_logger->Fatal(fmt::format("Failed to create OpenGL context: {}", SDL_GetError()), "OpenGL::Renderer");
+            SDL_DestroyWindow(pm_MainWindow);
+        }
+
+        rendering_logger->Debug("OpenGL initialized properly", "OpenGL::Renderer");
+
+        if (pm_Is3DEnabled)
+        {
+            glEnable(GL_DEPTH_TEST);
+            glDepthFunc(GL_LESS);
         }
     }
 
     void
-        Viewport::ResizeViewport
-        (
-            const unsigned int fp_Width,
-            const unsigned int fp_Height
-        )
+        Renderer::SetMainWindow(SDL_Window* fp_SDLWindow)
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
+        pm_MainWindow = fp_SDLWindow;
+    }
 
-        ////////////////////////////////////////////////
-        // Delete Old Render Texture
-        ////////////////////////////////////////////////
-
-        glDeleteTextures(1, &pm_RenderTexture);
-
-        ////////////////////////////////////////////////
-        // Generate New Render Texture
-        ////////////////////////////////////////////////
-
-        glGenTextures(1, &pm_RenderTexture);
-
-        glBindTexture(GL_TEXTURE_2D, pm_RenderTexture);
-
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pm_CurrentViewportWidth, pm_CurrentViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pm_RenderTexture, 0);
-
-        ////////////////////////////////////////////////
-        // Delete Old Render Buffer
-        ////////////////////////////////////////////////
-        glDeleteRenderbuffers(1, &pm_DepthRenderBuffer);
-
-        ////////////////////////////////////////////////
-        // Generate New Render Buffer
-        ////////////////////////////////////////////////
-        glGenRenderbuffers(1, &pm_DepthRenderBuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, pm_DepthRenderBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, pm_CurrentViewportWidth, pm_CurrentViewportHeight);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, pm_DepthRenderBuffer);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    SDL_GLContext*
+        Renderer::GetGLContext()
+    {
+        return &pm_OpenGLContext;
     }
 
     void
-        Viewport::RenderViewport
-        (
-            const glm::vec2& fp_Position,
-            const unsigned int fp_Width,
-            const unsigned int fp_Height
-        )
+        Renderer::DeleteTexture(const uint32_t fp_TextureID)
     {
-        if (pm_CurrentViewportWidth != fp_Width or pm_CurrentViewportHeight != fp_Height)
-        {
-            pm_CurrentViewportWidth = fp_Width;
-            pm_CurrentViewportHeight = fp_Height;
-
-            ResizeViewport(pm_CurrentViewportWidth, pm_CurrentViewportHeight);
-        }
-
-        glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
-
-        glClearColor(1.0f, 0.3f, 0.3f, 1.0f);  // Red background
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
-        //glEnable(GL_DEPTH_TEST);
-
-        if (not pm_Render)
-        {
-            throw runtime_error("no valid renderer for viewport");
-        }
-
-        //// Enable scissor test and set the scissor rectangle
-        //glEnable(GL_SCISSOR_TEST);
-        //glScissor(0, 0, fp_Width, fp_Height); // Set this to the area you want to clear
-
-        glViewport(fp_Position.x, fp_Position.y, pm_CurrentViewportWidth, pm_CurrentViewportHeight);
-
-        //pm_Render->DrawShapePrimitive(*pm_ViewportShader, pm_VAO);
-        //glDisable(GL_SCISSOR_TEST);
-
-        glBindFramebuffer(GL_FRAMEBUFFER, 0); // Bind to default framebuffer
-        pm_Render->DrawTexture(*pm_ViewportShader, pm_VAO, pm_RenderTexture);
-        //glDisable(GL_DEPTH_TEST);
+        //glDeleteBuffers(fp_TextureID);
     }
-
 
     bool
-        Viewport::CreateRenderTexture
+        Renderer::DeleteShaderProgram
         (
-            const unsigned int fp_Width,
-            const unsigned int fp_Height
+            const string& fp_ShaderProgramName
         )
     {
-        pm_CurrentViewportWidth = fp_Width;
-        pm_CurrentViewportHeight = fp_Height;
+        try //idk lazy way of dealing with repeated deletes of a shader program
+        {
+            glDeleteProgram(pm_ShaderPrograms.at(fp_ShaderProgramName).GetProgramID());
+            pm_ShaderPrograms.erase(fp_ShaderProgramName);
+            return true;
+        }
+        catch (const exception& ex)
+        {
+            rendering_logger->Warning(fmt::format("An error occurred: {}", ex.what()), "OpenGL::Renderer"); //this might not work LOL
+            return false;
+        }
+    }
 
-        ////////////////////////////////////////////////
-        // Generate Frame Buffer
-        ////////////////////////////////////////////////
+    void
+        Renderer::SetupInstancedArray
+        (
+            uint32_t instanceVBO,
+            const vector<float>& instanceData,
+            uint32_t attributeIndex,
+            uint32_t size,
+            uint32_t instanceDataLength,
+            int offset
+        )
+        const
+    {
 
-        glGenFramebuffers(1, &pm_FrameBuffer);
-        glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
+    }
 
-        ////////////////////////////////////////////////
-        // Generate Render Texture
-        ////////////////////////////////////////////////
+    // Example usage: suppose you want to pass a model matrix per instance
+    // You would call setupInstancedArray four times, one for each row of the matrix, because glVertexAttribPointer can only handle up to 4 float components at a time.
 
-        glGenTextures(1, &pm_RenderTexture);
+    void
+        Renderer::GenerateUniformBufferObject() //used for uniforms that are shared across multiple shaders
+    {
 
-        glBindTexture(GL_TEXTURE_2D, pm_RenderTexture);
+    }
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, pm_CurrentViewportWidth, pm_CurrentViewportHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    static void
+        SetTextureFiltering
+        (
+            GLuint fp_TextureID,
+            TextureFiltering fp_Filter
+        )
+    {
+        glBindTexture(GL_TEXTURE_2D, fp_TextureID);
 
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        switch (fp_Filter)
+        {
+        case TextureFiltering::Nearest:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            break;
+        case TextureFiltering::Linear:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            break;
+        case TextureFiltering::MipMapNearestNearest:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+            break;
+        case TextureFiltering::MipMapLinearNearest:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+            break;
+        case TextureFiltering::MipMapNearestLinear:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+            break;
+        case TextureFiltering::MipMapLinearLinear:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            break;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
+
+    GLuint
+        Renderer::RegisterTexture
+        (
+            const string& fp_PeachObjectID,
+            unsigned char* fp_Data,
+            const unsigned int fp_Width,
+            const unsigned int fp_Height,
+            const unsigned int fp_Channels
+        )
+    {
+        GLuint f_Texture;
+
+        glGenTextures(1, &f_Texture);
+        glBindTexture(GL_TEXTURE_2D, f_Texture);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        GLenum f_ColourFormat = GL_RGBA;
+
+        if (fp_Channels == 3)
+        {
+            f_ColourFormat = GL_RGB;
+        }
+        else if (fp_Channels == 1)
+        {
+            f_ColourFormat = GL_RED;
+        }
+
+        if (fp_Data)
+        {
+            glTexImage2D(GL_TEXTURE_2D, 0, f_ColourFormat, fp_Width, fp_Height, 0, f_ColourFormat, GL_UNSIGNED_BYTE, fp_Data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+            rendering_logger->Info(fmt::format("Successfully freed data from: {}", fp_PeachObjectID), "OpenGL::Renderer");
+        }
+        else
+        {
+            rendering_logger->Info("Failed to Register Texture", "OpenGL::Renderer");
+        }
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pm_RenderTexture, 0);
+        return f_Texture;
+    }
 
-        ////////////////////////////////////////////////
-        // Generate Render Buffer
-        ////////////////////////////////////////////////
+    void
+        Renderer::DrawTexture
+        (
+            const ShaderProgram& fp_Shader,
+            GLuint fp_VAO,
+            GLuint fp_Texture
+        )
+    {
+        glUseProgram(fp_Shader.GetProgramID());
 
-        glGenRenderbuffers(1, &pm_DepthRenderBuffer);
-        glBindRenderbuffer(GL_RENDERBUFFER, pm_DepthRenderBuffer);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, pm_CurrentViewportWidth, pm_CurrentViewportHeight);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        //glEnable(GL_TEXTURE_2D);
+        //glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
 
-        glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, pm_DepthRenderBuffer);
+        glBindTexture(GL_TEXTURE_2D, fp_Texture);
+        glBindVertexArray(fp_VAO);
 
-        ////////////////////////////////////////////////
-        // Setup Frame Buffer
-        ////////////////////////////////////////////////
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-        // Check if framebuffer is complete
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            editor_rendering_logger->Error("Error: Framebuffer is not complete!", "Viewport");
-            glBindFramebuffer(GL_FRAMEBUFFER, 0);
-            return false;
-        }
-       
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindVertexArray(0);
+        glUseProgram(0);
+        glBindTexture(GL_TEXTURE_2D, 0);
 
-        ////////////////////////////////////////////////
-        // Unbind Buffers and Reset GL state
-        ////////////////////////////////////////////////
+        //glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
+        //glDisable(GL_TEXTURE_2D);
+    }
 
-        editor_rendering_logger->Debug("Render Texture successfully setup UwU", "Viewport");
+    void
+        Renderer::DrawShapePrimitive
+        (
+            const ShaderProgram& fp_Shader,
+            const GLuint fp_VAO
+        )
+    {
+        glBindVertexArray(fp_VAO);
+
+        glUseProgram(fp_Shader.GetProgramID());
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        glBindVertexArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        glUseProgram(0);
+    }
+
+    GLuint //returns the vao id
+        Renderer::Generate2DBuffers
+        (
+            const vector<float>& fp_Vertices,
+            const vector<unsigned int>& fp_Indices
+        )
+        const
+    {
+        GLuint vbo;
+        glGenBuffers(1, &vbo);
+
+        GLuint vao;
+        glGenVertexArrays(1, &vao);
+
+        GLuint ebo;
+        glGenBuffers(1, &ebo);
+
+        glBindVertexArray(vao);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * fp_Indices.size(), fp_Indices.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * fp_Vertices.size(), fp_Vertices.data(), GL_STATIC_DRAW);
+
+        // position coord attribute
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        // texture coord attribute
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+
+        glBindVertexArray(0); //IMPORTANT: REMEMBER TO ALWAYS UNBIND VERTEX ARRAY FIRST SINCE UNBINDING ANYTHING INSIDE OF IT BEFOREHAND WILL DE CONFIGURE IT
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        return vao;
+    }
+
+    //WIP
+    GLuint //returns the vao id
+        Renderer::Generate3DBuffers
+        (
+            const vector<float>& fp_Vertices,
+            const vector<unsigned int>& fp_Indices
+        )
+        const
+    {
+        GLuint vbo;
+        glGenBuffers(1, &vbo);
+
+        GLuint vao;
+        glGenVertexArrays(1, &vao);
+
+        GLuint ebo;
+        glGenBuffers(1, &ebo);
+
+        glBindVertexArray(vao);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * fp_Indices.size(), fp_Indices.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * fp_Vertices.size(), fp_Vertices.data(), GL_STATIC_DRAW);
+
+        // position coord attribute
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // 0th point start stride by 8, eg 0-3, 8-11, 16-19, . . .
+        glEnableVertexAttribArray(0);
+
+        // texture coord attribute
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); //3rd point start, stride by 8, eg. 3-5, 11-13, 19-21, . . .
+        glEnableVertexAttribArray(1);
+
+        // normal coord attribute
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float))); //5th point start, stride by 8, eg. 5-8, 13-16, 21-24, . . .
+        glEnableVertexAttribArray(2);
+
+        glBindVertexArray(0); //IMPORTANT: REMEMBER TO ALWAYS UNBIND VERTEX ARRAY FIRST SINCE UNBINDING ANYTHING INSIDE OF IT BEFOREHAND WILL DE CONFIGURE IT
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+        return vao;
+    }
+
+    ShaderProgram*
+        Renderer::GetShaderProgram(const string& fp_Name)
+    {
+        return &pm_ShaderPrograms.at(fp_Name);
+    }
+
+    bool
+        Renderer::RenderFrame()
+    {
 
         return true;
     }
+
 }//namespace PeachCore::OpenGL
 
 #endif
