@@ -19,7 +19,7 @@ project(Peach_Engine VERSION 0.0.1 DESCRIPTION "Peach Engine" LANGUAGES CXX C)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-####################################### Enforce C99 Standard
+####################################### Enforce C17 Standard
 
 set(CMAKE_C_STANDARD 17) #needed for box2d owo
 set(CMAKE_C_STANDARD_REQUIRED ON)
