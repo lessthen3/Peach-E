@@ -1,6 +1,6 @@
 /*******************************************************************
  *                        Peach-E v0.0.1
- *              Created by Ranyodh Mandur - 🍑 2024
+ *           Created by Ranyodh Singh Mandur - 🍑 2024
  *
  *              Licensed under the MIT License (MIT).
  *         For more details, see the LICENSE file or visit:         
@@ -13,9 +13,9 @@
 #ifdef PEACH_RENDERER_OPENGL
 
 ///PeachCore
-#include "../../Utils/Logger.h"
-#include "../../Scene-Items/Visual/Fog.h"
-#include "../PeachMaterial.h"
+#include "../../../Utils/Logger.h"
+#include "../../../Scene-Items/Visual/Fog.h"
+#include "../../PeachMaterial.h"
 
 ///External
 #include <GL/glew.h>

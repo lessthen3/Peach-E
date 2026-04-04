@@ -16,7 +16,7 @@
 //////// Rendering Backends ////////
 
 #ifdef PEACH_RENDERER_OPENGL
-#include "../Rendering/OpenGL/OpenGLRenderer.h"
+#include "../Rendering/OpenGL/Desktop/OpenGLRenderer.h"
 #endif
 
 #ifdef PEACH_RENDERER_VULKAN
@@ -25,6 +25,14 @@
 
 #ifdef PEACH_RENDERER_METAL 
 #include "../Rendering/Metal/MetalRenderer.h"
+#endif
+
+#ifdef PEACH_RENDERER_OPENGL_ES
+#include "../Rendering/OpenGL/Mobile/MobileGLRenderer.h"
+#endif
+
+#ifdef PEACH_RENDERER_WEBGL
+#include "../Rendering/OpenGL/Browser/WebGLRenderer.h"
 #endif
 
 //////// Rendering Primitives ////////
@@ -147,6 +155,10 @@ namespace PeachCore {
 #endif
 #ifdef PEACH_RENDERER_OPENGL
         unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr; //OpenGL not supported on mac anymore fuck you tim apple
+#endif
+#ifdef PEACH_RENDERER_OPENGL_ES
+#endif
+#ifdef PEACH_RENDERER_WEBGL
 #endif
 
         size_t pm_CurrentFrameRateLimit = 0u;

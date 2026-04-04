@@ -445,7 +445,7 @@ elseif(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH
 elseif(PEACH_ANDROID)
     target_compile_definitions(peach_core PUBLIC
         PEACH_RENDERER_VULKAN
-        PEACH_RENDERER_OPENGL # OpenGL ES fallback
+        PEACH_RENDERER_OPENGL_ES
     )
 
 endif()
