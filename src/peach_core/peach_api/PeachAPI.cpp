@@ -48,7 +48,9 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE
     PEACH_QueueRemovalByID(const PEACH_NODE fp_PeachNodeID)
 {
-    return PeachCore::GameManager::get_single().GetCurrentScene()->QueueNodeForRemoval(fp_PeachNodeID);
+    //return PeachCore::GameManager::get_single().GetCurrentScene()->QueueNodeForRemoval(fp_PeachNodeID);
+
+    return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE

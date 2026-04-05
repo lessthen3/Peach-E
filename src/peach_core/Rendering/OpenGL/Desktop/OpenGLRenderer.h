@@ -15,7 +15,8 @@
 #include <SDL3/SDL.h>
 
 #include "OpenGLShaderProgram.h"
-//#include "../Scene-Items/2D/PeachCamera2D.h"
+#include "../../../Scene-Items/Visual/Camera.h"
+#include "../../../Managers/ResourceManager.h"
 
 namespace PeachCore::OpenGL {
 
@@ -29,19 +30,30 @@ namespace PeachCore::OpenGL {
         MipMapLinearLinear
     };
 
-
-    struct ShaderAsset
+    struct TextureSlot
     {
-
+        TextureID ID;
     };
 
-    struct MeshData
+    struct MeshSlot
     {
-        GLuint VAO;
-        GLuint VBO_Positions;
-        GLuint VBO_Normals;
-        GLuint EBO;
+        MeshID ID;
+    };
+
+    struct RenderObject
+    {
+        GLuint VAO = 0;
+        GLuint VBO_Positions = 0;
+        GLuint VBO_Normals = 0;
+        GLuint EBO = 0;
         GLsizei IndexCount;
+
+        size_t ShaderProgramID = 0; //doesn't need to be serialized is pure runtime, also this decouples shaders and objects so shaders can be bound in groups and drawn owo
+
+        uint8_t Flags = 0;
+
+        uint32_t Generation = 0; 
+        bool InUse = false;
     };
 
 
@@ -51,36 +63,17 @@ namespace PeachCore::OpenGL {
         SDL_Window* pm_MainWindow = nullptr;
         bool pm_Is3DEnabled = false;
 
-        //vector<unique_ptr<PeachCamera2D>> pm_ListOfScenePeachCameras2D; //only the renderer cares about cameras
-
-        unordered_map<string, ShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which OpenGLShaderProgram
-
-        unordered_map<string, GLuint> pm_ListOfRegisteredTextures;
-
-        unordered_map<string, MeshData> pm_ListOfMeshes;
+        vector<Camera2D> pm_Camera2Ds; //only the renderer cares about cameras
+        vector<ShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which OpenGLShaderProgram
+        vector<TextureSlot> pm_TextureSlots; //indexed via TextureID's, if a script wants to access a texture or remap UV's it'll use the TextureID and ask renderingmanager to do that owo
+        vector<MeshSlot> pm_MesheSlots;
 
         SDL_GLContext pm_OpenGLContext;
 
         shared_ptr<Logger> rendering_logger = nullptr;
 
     public:
-        ~Renderer() = default;
-
-        //~Renderer()
-        //{
-        //    SDL_GL_DestroyContext(pm_OpenGLContext);
-
-        //    if (pm_MainWindow) //RenderingManager handles bookeeping and creation, after though each PeachRenderer takes exclusive control over its SDL window
-        //    {
-        //        SDL_DestroyWindow(pm_MainWindow);
-        //        pm_MainWindow = nullptr;
-        //    }
-
-        //    //pm_ListOfScenePeachCameras2D.clear();
-        //    pm_ShaderPrograms.clear();
-        //    pm_ListOfRegisteredTextures.clear();
-        //    pm_RenderingLogger.reset();
-        //}
+        ~Renderer() = default; //driver + OS will clean things up faster tbh
 
         explicit
             Renderer //peach renderer is never supposed to create an sdl window, it only manages closing it
@@ -99,11 +92,11 @@ namespace PeachCore::OpenGL {
         void
             DeleteTexture(const uint32_t fp_TextureID);
 
-        bool
-            DeleteShaderProgram
-            (
-                const string& fp_ShaderProgramName
-            );
+        //bool
+        //    DeleteShaderProgram
+        //    (
+        //        const string& fp_ShaderProgramName
+        //    );
 
         void
             SetupInstancedArray
@@ -164,9 +157,6 @@ namespace PeachCore::OpenGL {
                 const vector<unsigned int>& fp_Indices
             )
             const;
-
-        ShaderProgram*
-            GetShaderProgram(const string& fp_Name);
 
         bool
             RenderFrame();

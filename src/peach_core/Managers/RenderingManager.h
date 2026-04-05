@@ -58,6 +58,8 @@ namespace PeachCore {
     enum class RendererType : int
     {
         OpenGL,
+        WebGL,
+        MobileGL,
         Vulkan,
         Metal
     };
@@ -96,6 +98,8 @@ namespace PeachCore {
     //    constexpr uint8_t RENDER_SET_TRANSFORM_OP = 0x09;// | pointer to mat4 |
     //    constexpr uint8_t RENDER_PUSH_STATE_OP = 0x0A;// | � |
     //    constexpr uint8_t RENDER_POP_STATE_OP = 0x0B;// | � |
+
+    constexpr uint8_t RENDER_CREATE_TEXTURE = 0x01;
 
     //    constexpr uint8_t RENDER_OP_FRAME_END = 0x0C; // | Used for render thread to figure out when to sleep
 
@@ -157,8 +161,10 @@ namespace PeachCore {
         unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr; //OpenGL not supported on mac anymore fuck you tim apple
 #endif
 #ifdef PEACH_RENDERER_OPENGL_ES
+        unique_ptr<WebGL::Renderer> pm_WebGLRenderer = nullptr;
 #endif
 #ifdef PEACH_RENDERER_WEBGL
+        unique_ptr<MobileGL::Renderer> pm_MobileGLRenderer = nullptr;
 #endif
 
         size_t pm_CurrentFrameRateLimit = 0u;

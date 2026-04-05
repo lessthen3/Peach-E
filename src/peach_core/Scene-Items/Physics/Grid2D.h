@@ -14,14 +14,9 @@
 
 namespace PeachCore {
 
-    class Grid2D: public PeachNode2D
+    class Grid2D
     {
     public:
-        virtual void OnEnter();
-        virtual void OnUpdate(float fp_TimeSinceLastFrame);
-        virtual void OnConstantUpdate(float fp_TimeSinceLastFrame);
-        virtual void OnExit();
-        virtual void QueueRemoval();
 
         Grid2D() = default;
         ~Grid2D() = default;

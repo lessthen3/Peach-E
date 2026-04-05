@@ -675,7 +675,7 @@ namespace PeachCore
 
         for (const auto& lv_Window : pm_CloseWindowRequests)
         {
-            if (SDL_GetWindowID(pm_MainWindow) == lv_Window)
+            if (SDL_GetWindowID(pm_MainWindow) == lv_Window) //ERROR: THIS WILL NOT CLOSE GRACEFULLY but w/e the driver will pick it up :^)
             {
                 m_IsRunning.store(false, std::memory_order_release);
             }

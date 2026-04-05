@@ -8,5 +8,7 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
+
+/* David Reid 2026 uwu*/
 #define MINIAUDIO_IMPLEMENTATION
 #include <miniaudio/miniaudio.h>

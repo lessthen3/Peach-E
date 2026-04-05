@@ -60,6 +60,26 @@
         __VA_ARGS__;                               \
     }
 
+/*
+    idk static error handling with C++ is really fucking annoying when trying to give useful information via an error or failed assert
+    found at compile time which is definitely what you want lmfao like wtf man, u introduce constexpr into C++17 but like don't
+    consider the fact that static error propogation up a compile time "stack trace" would be useful when doing all this template shit
+    at compile time?????????????????????
+
+    like yeah ik that most compilers will implement a proper call stack when the static assert fails but like cmon the compiler fucking
+    knows whats wrong why not just let me use it to tell me what it needs u fucks
+
+    annnd yeah ik "oh its coming in C++26", fuck you I don't want to wait another 10 years for gcc, msvc and clang to finally probably
+    implement most of the standard fuck you
+
+    although gcc is surpisingly faithful to the standard, idk why I use clang on more posixy platforms lmfao
+
+    well apple-clang is the only way to get things to work properly w all the dynamically linked weirdness and compilation between 
+    objc++ <-> C++
+
+    I should just be happy that compiler engineers even allow me to lick their boots, but I'm not >:^(
+*/
+
 #define PEACH_STRINGIFY(fp_X) #fp_X
 #define PEACH_TOSTRING(fp_X) PEACH_STRINGIFY(fp_X)
 

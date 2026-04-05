@@ -25,10 +25,10 @@ namespace PeachCore
 
     struct Vertex
     {
-        glm::vec3 position;
-        glm::vec3 normal;
-        glm::vec2 uv;
-        // tangents, etc.
+        glm::vec3 Position;
+        glm::vec3 Normal;
+        glm::vec2 UV;
+        glm::vec4 Tangent; // vec4 because the w component stores the bitangent handedness sign
     };
 
     struct Material
@@ -36,36 +36,45 @@ namespace PeachCore
 
     };
 
+    struct PBRMaterial
+    {
+        glm::vec4 AlbedoColor;
+        float Roughness;
+        float Metallic;
+        float AO;
+        float EmissiveStrength;
+    };
+
     struct MeshData 
     {
-        vector<Vertex>   vertices;
-        vector<uint32_t> indices;
+        vector<Vertex> Vertices;
+        vector<uint32_t> Indices;
         // material ids etc.
     };
 
     struct Bone
     {
-        string name;
-        int parentIndex;
-        glm::mat4 offsetMatrix;
+        string Name;
+        int ParentIndex;
+        glm::mat4 OffsetMatrix;
     };
 
     struct AnimationKeyframe
     {
-        float time;
+        float Time;
         // transforms per bone…
     };
 
     struct AnimationClip 
     {
-        string name;
-        float duration;
-        vector<AnimationKeyframe> keyframes;
+        string Name;
+        float Duration;
+        vector<AnimationKeyframe> Keyframes;
     };
 
     struct AnimationData 
     {
-        vector<Bone> bones;
-        vector<AnimationClip> clips;
+        vector<Bone> Bones;
+        vector<AnimationClip> Clips;
     };
 }

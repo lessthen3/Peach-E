@@ -47,10 +47,28 @@ namespace PeachCore {
     //};
 
     //for longer lived pure data sources, ID's are helpful for locating them on the gpu or PCM audio
-    using AudioID = uint64_t;
-    using TextureID = uint64_t;
-    using MeshID = uint64_t;
-    using AnimationID = uint64_t;
+    template<typename Tag>
+    struct TypedID //this will be thrown out by the compiler probably but its still stack alloc'd so wont be that bad owo, but the type checking at compile time is useful owo
+    {
+        uint64_t Value = 0;
+
+        TypedID() = default;
+        explicit TypedID(uint64_t fp_Value) : Value(fp_Value) {}
+
+        bool operator==(const TypedID&) const noexcept = default;
+        bool operator!=(const TypedID&) const noexcept = default;
+        explicit operator bool() const noexcept { return Value != 0; }
+    };
+
+    struct TextureTag {}; //compile time convenience owo c++ should have aliases for this, this is how i thought typedef worked originally but eh owo
+    struct MeshTag {};
+    struct AudioTag {};
+    struct AnimationTag {};
+
+    using TextureID = TypedID<TextureTag>;
+    using MeshID = TypedID<MeshTag>;
+    using AudioID = TypedID<AudioTag>;
+    using AnimationID = TypedID<AnimationTag>;
 
     using VulkanShaderBytecode = vector<uint32_t>;
 

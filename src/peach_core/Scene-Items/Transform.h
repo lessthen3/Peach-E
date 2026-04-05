@@ -13,6 +13,7 @@
 ///GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 namespace PeachCore {
 
@@ -20,7 +21,7 @@ namespace PeachCore {
     {
     private:
         glm::vec2 pm_Position;
-        float       pm_Rotation;          // radians, CCW = +'ve
+        float pm_Rotation;          // radians, CCW = +'ve
         glm::vec2 pm_Scale;
         glm::vec2 pm_Origin;    // pivot in local space (e.g. sprite center)
 
@@ -49,13 +50,15 @@ namespace PeachCore {
             , pm_Origin(fp_Origin) 
         {}
 
-        // --- Getters ---
+        ////////////////////////////////////////////// Getters //////////////////////////////////////////////
+
         const glm::vec2& GetPosition() const noexcept { return pm_Position; }
         float                 GetRotation() const noexcept { return pm_Rotation; }   // radians
         const glm::vec2& GetScale()    const noexcept { return pm_Scale; }
         const glm::vec2& GetOrigin()   const noexcept { return pm_Origin; }
 
-        // --- Setters ---
+        ////////////////////////////////////////////// Setters //////////////////////////////////////////////
+
         void 
             SetPosition(const glm::vec2& fp_Position) 
             noexcept
@@ -88,7 +91,7 @@ namespace PeachCore {
             pm_IsDirty = true;
         }
 
-        // --- Incremental ops ---
+        ////////////////////////////////////////////// Incremental ops //////////////////////////////////////////////
 
         void 
             Translate(const glm::vec2& fp_Offset) 
@@ -98,7 +101,8 @@ namespace PeachCore {
             pm_IsDirty = true;
         }
 
-        // angle in radians
+        ////////////////////////////////////////////// angle in radians //////////////////////////////////////////////
+
         void 
             Rotate(const float fp_DeltaRadians)
             noexcept
@@ -115,26 +119,20 @@ namespace PeachCore {
             pm_IsDirty = true;
         }
 
-        // --- Direction helpers (useful for audio & physics) ---
-
-        // "right" (local +X) vector in world space
+        ////////////////////////////////////////////// Direction helpers, useful for audio + physics //////////////////////////////////////////////
+        
         glm::vec2 
-            Right() 
+            Right()  // (local +X) vector in world space
             const noexcept
         {
-            const float c = cos(pm_Rotation);
-            const float s = sin(pm_Rotation);
-            return { c, s };
+            return { cos(pm_Rotation), sin(pm_Rotation) };
         }
-
-        // "up" (local +Y) vector in world space
+        
         glm::vec2 
-            Up() 
+            Up()  // (local +Y) vector in world space
             const noexcept
         {
-            const float c = cos(pm_Rotation);
-            const float s = sin(pm_Rotation);
-            return { -s, c };   // rotate (0,1) by pm_Rotation
+            return { -sin(pm_Rotation), cos(pm_Rotation) };   // rotate (0,1) by pm_Rotation
         }
 
         const glm::mat4& 
@@ -159,69 +157,71 @@ namespace PeachCore {
 
      struct Transform3D
     {
-    public:
-        Transform3D() = default;
-
     private:
-        //Intiailize everything as identity matrices uwu owo!
-
-        glm::mat4 pm_ProjectionMatrix{ 1.0f };
-        glm::mat4 pm_GetModelViewMatrix{ 1.0f };
-        glm::mat4 pm_ViewMatrix{ 1.0f };
-        glm::mat4 pm_OrthographicMatrix{ 1.0f };
+        //Intiailize as and identity matrices uwu owo!
+        glm::mat4 pm_LocalMatrix{ 1.0f };
 
         //API reachpoint vars for human friendly shtuff >w<
 
         glm::vec3 pm_Position{ 0.0f, 0.0f, 0.0f };
+        glm::quat pm_Rotation{ 1.0f, 0.0f, 0.0f, 0.0f }; // identity quaternion — NOT Euler
         glm::vec3 pm_Scale{ 1.0f, 1.0f, 1.0f };
-        glm::vec3 pm_Rotation{ 0.0f, 0.0f, 0.0f };
 
         //Deterimines whether local matrix needs to be updated on request owo
-
-        bool pm_IsDirty{ false };
+        bool  pm_IsDirty{ true }; // true so first GetLocalMatrix() always computes
 
     public:
-    //    glm::mat4
-    //        GetProjectionMatrix(float fov, float width, float height, float zNear, float zFar)
-    //        const
-    //    {
-    //        float aspectRatio = width / height;
-    //        //ProjectionMatrix.identity();
-    //        //ProjectionMatrix.perspective(fov, aspectRatio, zNear, zFar);
-    //        return ProjectionMatrix;
-    //    }
+        Transform3D() = default;
 
-    //    glm::mat4
-    //        GetOrthographicMatrix(float fov, float width, float height, float zNear, float zFar)
-    //        const
-    //    {
-    //        //OrthographicMatrix.identity();
-    //        //OrthographicMatrix.orthoSymmetric(width, height, zNear, zFar);
-    //        return OrthographicMatrix;
-    //    }
+    public:
+        void SetPosition(const glm::vec3& fp_Pos)    noexcept { pm_Position = fp_Pos;  pm_IsDirty = true; }
+        void SetScale(const glm::vec3& fp_Scale)  noexcept { pm_Scale = fp_Scale; pm_IsDirty = true; }
 
-    //    glm::mat4
-    //        GetModelViewMatrix(const glm::vec3& fp_Rotation, glm::mat4 vMatrix)
-    //        const
-    //    {
-    //        //GetModelViewMatrix.identity().translate(gameItem.getPosition())
-    //        //    .rotateX(glm::radians(-fp_Rotation.x))
-    //        //    .rotateY(glm::radians(-fp_Rotation.y))
-    //        //    .rotateZ(glm::radians(-fp_Rotation.z))
-    //        //    .scale(gameItem.getScale());
+        void SetRotation(const glm::quat& fp_Quat)   noexcept { pm_Rotation = fp_Quat; pm_IsDirty = true; }
 
-    //        return  glm::mat4(vMatrix*GetModelViewMatrix);
-    //    }
-
-        glm::mat4
-            GetViewMatrix(const glm::vec3& fp_CameraPos)
+        // Euler convenience — converts to quat internally, no Euler state stored
+        void
+            SetRotationEuler
+            (
+                const glm::vec3& fp_EulerRadians
+            )
             noexcept
         {
-            pm_ViewMatrix = glm::mat4(1.0f);
-            //pm_ViewMatrix = glm::rotate(pm_ViewMatrix, pm_Rotation);
-            pm_ViewMatrix = glm::translate(pm_ViewMatrix , fp_CameraPos);
+            pm_Rotation = glm::quat(fp_EulerRadians); // glm constructs quat from Euler
+            pm_IsDirty = true;
+        }
 
-            return pm_ViewMatrix;
+        void
+            Rotate
+            (
+                float fp_AngleRadians,
+                const glm::vec3& fp_Axis
+            )
+            noexcept
+        {
+            pm_Rotation = glm::normalize(glm::angleAxis(fp_AngleRadians, fp_Axis) * pm_Rotation);
+            pm_IsDirty = true;
+        }
+
+        void Translate(const glm::vec3& fp_Offset) noexcept { pm_Position += fp_Offset; pm_IsDirty = true; }
+
+        // "Forward" in local space, -Z by convention, matches OpenGL and glm
+        //third hand rule uwu
+        glm::vec3 Forward() const noexcept { return pm_Rotation * glm::vec3(0.0f, 0.0f, -1.0f); }
+        glm::vec3 Right()      const noexcept { return pm_Rotation * glm::vec3(1.0f, 0.0f, 0.0f); }
+        glm::vec3 Up()         const noexcept { return pm_Rotation * glm::vec3(0.0f, 1.0f, 0.0f); }
+
+        const glm::mat4&
+            GetLocalMatrix()
+            noexcept
+        {
+            if (pm_IsDirty)
+            {                                                                                                   // quat → rotation matrix
+                pm_LocalMatrix = glm::translate(glm::mat4(1.0f), pm_Position) * glm::mat4_cast(pm_Rotation) * glm::scale(glm::mat4(1.0f), pm_Scale);
+                pm_IsDirty = false;
+            }
+
+            return pm_LocalMatrix;
         }
     };
 }

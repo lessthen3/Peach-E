@@ -14,7 +14,7 @@
 
 namespace PeachCore {
 
-    struct Sprite2D : public PeachNode2D
+    struct Sprite2D
     {
 
         //using unique ptrs to avoid any hanging ptrs and to make garbage collection easier/simpler
@@ -23,7 +23,7 @@ namespace PeachCore {
     // OpenGLShaderProgram Shaders; //Contains multiple shaders relevant to drawing the object
     };
 
-    struct Sprite3D : public PeachNode3D //actually this is needed since itll have a 3d transform uwu
+    struct Sprite3D //actually this is needed since itll have a 3d transform uwu
     {
 
     };

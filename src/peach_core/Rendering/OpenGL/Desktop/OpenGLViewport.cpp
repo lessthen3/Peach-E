@@ -12,15 +12,33 @@
 
 #include "OpenGLViewport.h"
 
+#include <fmt/format.h>
+
 namespace PeachCore::OpenGL {
 
-    void
+    static const vector<float> VERTICES =
+    {
+        // Positions      // Texture Coords
+        1.0f,  1.0f, 0.0f,   1.0f, 1.0f,  // Top Right
+        1.0f, -1.0f, 0.0f,   1.0f, 0.0f,  // Bottom Right
+       -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,  // Bottom Left
+       -1.0f,  1.0f, 0.0f,   0.0f, 1.0f   // Top Left
+    };
+
+    static const vector<unsigned int> INDICES =
+    {  // note that we start from 0!
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
+    };
+
+    bool
         Viewport::SetupViewport
         (
             const unsigned int fp_Width,
             const unsigned int fp_Height,
+            unique_ptr<ShaderProgram>&& fp_ViewportShader,
             Renderer* fp_Renderer,
-            shared_ptr<Logger> fp_EditorRenderingLogger
+            shared_ptr<Logger> fp_RenderingLogger
         )
     {
         pm_CurrentViewportWidth = fp_Width;
@@ -33,52 +51,31 @@ namespace PeachCore::OpenGL {
         if (not fp_Renderer)
         {
             //handle error here
-            return;
+            return false;
         }
-        pm_Render = fp_Renderer;
 
-        editor_rendering_logger = fp_EditorRenderingLogger;
+        pm_Render = fp_Renderer;
+        rendering_logger = fp_RenderingLogger;
+
+        ////////////////////////////////////////////////
+        // Viewport Shader UwU
+        ////////////////////////////////////////////////
+
+        if (not pm_ViewportShader)
+        {
+            rendering_logger->Error("Passed nullptr viewport shader", "OpenGL::Viewport");
+            return false;
+        }
+
+        pm_ViewportShader = std::move(fp_ViewportShader);
+        PRINT(fmt::format("The program ID for the Viewport Shader is: {}", pm_ViewportShader->GetProgramID()), Colours::Magenta);
 
         ////////////////////////////////////////////////
         // Generate Buffers
         ////////////////////////////////////////////////
 
-        vector<float> vertices =
-        {
-            // Positions      // Texture Coords
-            1.0f,  1.0f, 0.0f,   1.0f, 1.0f,  // Top Right
-            1.0f, -1.0f, 0.0f,   1.0f, 0.0f,  // Bottom Right
-           -1.0f, -1.0f, 0.0f,   0.0f, 0.0f,  // Bottom Left
-           -1.0f,  1.0f, 0.0f,   0.0f, 1.0f   // Top Left
-        };
-
-        vector<unsigned int> indices =
-        {  // note that we start from 0!
-            0, 1, 3,   // first triangle
-            1, 2, 3    // second triangle
-        };
-
-        pm_VAO = pm_Render->Generate2DBuffers(vertices, indices);
-
-        PRINT("The VAO ID for the Viewport Shader is: " + to_string(pm_VAO), Colours::Magenta);
-
-        ////////////////////////////////////////////////
-        // Shaders
-        ////////////////////////////////////////////////
-
-        //TO REALLY FUCKING DO: move all shader loading stuff to the resourcemanager, this is bad practice
-        // 
-        //string f_BaseDir = PHYSFS_getWriteDir(); //WARNING: USED ONLY FOR TESTING NEED THIS TO BE IN RESOURCELOADINGMANAGER
-
-        //pm_ViewportShader = new OpenGLShaderProgram
-        //(
-        //    "Viewport Shader",
-        //    f_BaseDir + "/shaders/viewport.vs",
-        //    f_BaseDir + "/shaders/viewport.fs",
-        //    editor_rendering_logger.get()
-        //);
-
-        PRINT("The program ID for the Viewport Shader is: " + to_string(pm_ViewportShader->GetProgramID()), Colours::Magenta);
+        pm_VAO = pm_Render->Generate2DBuffers(VERTICES, INDICES);
+        PRINT(fmt::format("The VAO ID for the Viewport Shader is: {}", pm_VAO), Colours::Magenta);
 
         ////////////////////////////////////////////////
         // Create Render Texture
@@ -87,10 +84,13 @@ namespace PeachCore::OpenGL {
         if (not CreateRenderTexture(pm_CurrentViewportWidth, pm_CurrentViewportHeight))
         {
             PRINT_ERROR("Was not able to create render texture");
+            return false;
         }
+
+        return true;
     }
 
-    void
+    bool
         Viewport::ResizeViewport
         (
             const unsigned int fp_Width,
@@ -125,11 +125,13 @@ namespace PeachCore::OpenGL {
         ////////////////////////////////////////////////
         // Delete Old Render Buffer
         ////////////////////////////////////////////////
+
         glDeleteRenderbuffers(1, &pm_DepthRenderBuffer);
 
         ////////////////////////////////////////////////
         // Generate New Render Buffer
         ////////////////////////////////////////////////
+
         glGenRenderbuffers(1, &pm_DepthRenderBuffer);
         glBindRenderbuffer(GL_RENDERBUFFER, pm_DepthRenderBuffer);
         glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, pm_CurrentViewportWidth, pm_CurrentViewportHeight);
@@ -137,35 +139,35 @@ namespace PeachCore::OpenGL {
 
         glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, pm_DepthRenderBuffer);
 
+        ////////////////////////////////////////////////
+        // Validate Frame Buffer
+        ////////////////////////////////////////////////
+
+        GLenum f_Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+        if (f_Status != GL_FRAMEBUFFER_COMPLETE) // Check if framebuffer is complete
+        {
+            rendering_logger->Error(fmt::format("Framebuffer is not complete! status: 0x{:X}", f_Status), "OpenGL::Viewport");
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            return false;
+        }
+
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        return true;
     }
 
     void
         Viewport::RenderViewport
         (
-            const glm::vec2& fp_Position,
-            const unsigned int fp_Width,
-            const unsigned int fp_Height
+            const glm::vec2& fp_Position
         )
     {
-        if (pm_CurrentViewportWidth != fp_Width or pm_CurrentViewportHeight != fp_Height)
-        {
-            pm_CurrentViewportWidth = fp_Width;
-            pm_CurrentViewportHeight = fp_Height;
-
-            ResizeViewport(pm_CurrentViewportWidth, pm_CurrentViewportHeight);
-        }
-
         glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
 
         glClearColor(1.0f, 0.3f, 0.3f, 1.0f);  // Red background
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
         //glEnable(GL_DEPTH_TEST);
-
-        if (not pm_Render)
-        {
-            throw runtime_error("no valid renderer for viewport");
-        }
 
         //// Enable scissor test and set the scissor rectangle
         //glEnable(GL_SCISSOR_TEST);
@@ -231,10 +233,11 @@ namespace PeachCore::OpenGL {
         // Setup Frame Buffer
         ////////////////////////////////////////////////
 
-        // Check if framebuffer is complete
-        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        GLenum f_Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+
+        if (f_Status != GL_FRAMEBUFFER_COMPLETE) // Check if framebuffer is complete
         {
-            editor_rendering_logger->Error("Error: Framebuffer is not complete!", "Viewport");
+            rendering_logger->Error(fmt::format("Framebuffer is not complete! status: 0x{:X}", f_Status), "OpenGL::Viewport");
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             return false;
         }
@@ -245,7 +248,7 @@ namespace PeachCore::OpenGL {
         // Unbind Buffers and Reset GL state
         ////////////////////////////////////////////////
 
-        editor_rendering_logger->Debug("Render Texture successfully setup UwU", "Viewport");
+        rendering_logger->Debug("Render Texture successfully setup UwU", "OpenGL::Viewport");
 
         return true;
     }

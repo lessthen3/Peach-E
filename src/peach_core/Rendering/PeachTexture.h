@@ -39,59 +39,8 @@ namespace PeachCore {
 
     public:
         PeachTexture(const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight);
-        ~PeachTexture();
+        ~PeachTexture() = default;
 
-        PeachTexture& 
-            operator=(PeachTexture&& other) //move operator
-            noexcept 
-        {
-            if (this != &other) 
-            {
-                // Clean up existing resources if necessary
-                // No need to explicitly delete the texture since sf::Texture manages its own memory
-
-                // Transfer object based resources 
-                pm_TileUVs = std::move(other.pm_TileUVs);
-                m_Name = std::move(other.m_Name);
-
-                //Create new copies of primitive types
-                m_Width = other.m_Width;
-                m_Height = other.m_Height;
-
-                pm_TileWidth = other.pm_TileWidth;
-                pm_TileHeight = other.pm_TileHeight;
-
-                pm_IsValid = other.pm_IsValid;
-
-                // "Reset" the other object
-                other.m_Width = 0;
-                other.m_Height = 0;
-
-                other.pm_TileWidth = 0;
-                other.pm_TileHeight = 0;
-
-                other.pm_IsValid = false;
-            }
-            return *this;
-        }
-
-        PeachTexture&
-            operator=(nullptr_t fp_NullPtr) //null operator
-            noexcept
-        {
-            pm_TileUVs.clear();
-            m_Name = "";
-
-            m_Width = 0;
-            m_Height = 0;
-
-            pm_TileWidth = 0;
-            pm_TileHeight = 0;
-
-            pm_IsValid = false;
-
-            return *this;
-        }
 
         // Define tile size and calculate UVs for spritesheets
         void 

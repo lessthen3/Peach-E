@@ -16,17 +16,6 @@
 ///STL
 #include <glm/glm.hpp>
 
-namespace PeachCore{
-    struct PBRMaterial
-    {
-        glm::vec4 m_AlbedoColor;
-        float     m_Roughness;
-        float     m_Metallic;
-        float     m_AO;
-        float     m_EmissiveStrength;
-    };
-}
-
 namespace PeachCore {
 
     static const glm::vec4 DEFAULT_COLOUR = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);

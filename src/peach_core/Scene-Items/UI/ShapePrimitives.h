@@ -83,7 +83,7 @@ namespace PeachCore::PUI {
     };
 
 
-    enum class ShapeType : uint8_t
+    enum class ShapeType : uint8_t //dunno why this is bitmasked 
     {
         NO_SHAPE = 0,
         Rectangle = 1 << 0,
@@ -109,7 +109,7 @@ namespace PeachCore::PUI {
          
         const ShapeType ShapeType;
 
-        virtual inline bool 
+        [[nodiscard]] virtual inline bool 
             IsWithin(const glm::vec2& fp_TestPoint) const = 0;
     };
 
@@ -122,7 +122,7 @@ namespace PeachCore::PUI {
         Rectangle() : Shape(ShapeType::Rectangle) {}
 
         [[nodiscard]] inline bool
-            IsWithin(const glm::vec2& fp_TestPoint)
+            IsWithin(const glm::vec2& fp_TestPoint) //simple AABB test owo
             const noexcept override
         {
             return
@@ -230,6 +230,11 @@ namespace PeachCore::PUI {
         glm::vec2 m_BaseLength{ 0.0f, 0.0f };
         glm::vec2 m_HeightLength{ 0.0f, 0.0f };
 
+        //default triangle thats base is on the X axis ^^, equilateral
+        glm::vec2 A{ 0.0f, 1.0f };
+        glm::vec2 B{ 1.0f, 0.0f };
+        glm::vec2 C{ -1.0f, 0.0f };
+
         Triangle() : Shape(ShapeType::Triangle) {}
 
 
@@ -237,7 +242,23 @@ namespace PeachCore::PUI {
             IsWithin(const glm::vec2& fp_TestPoint)
             const noexcept override
         {
-            return true;
+            glm::vec2 v0 = C - A;
+            glm::vec2 v1 = B - A;
+            glm::vec2 v2 = fp_TestPoint - A;
+
+            float dot00 = glm::dot(v0, v0);
+            float dot01 = glm::dot(v0, v1);
+            float dot02 = glm::dot(v0, v2);
+            float dot11 = glm::dot(v1, v1);
+            float dot12 = glm::dot(v1, v2);
+
+            // Compute barycentric coordinates
+            float invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
+            float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
+            float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
+
+            // check (u >= 0, v >= 0, u + v < 1)
+            return (u >= 0.0f) and (v >= 0.0f) and (u + v < 1.0f);
         }
     };
 
@@ -247,11 +268,21 @@ namespace PeachCore::PUI {
 
         vector<glm::vec2> pm_Vertices;
 
-        Polygon() : Shape(ShapeType::Polygon) {}
+        Polygon(const vector<glm::vec2>& fp_Vertices)
+            :
+            Shape(ShapeType::Polygon),
+            pm_Vertices(fp_Vertices)
+        {}
+
+        void
+            AssertWindingOrderCCW() // algorithms all depend on verts being wound CCW owo
+        {
+
+        }
 
 
         [[nodiscard]] inline bool
-            IsWithin(const glm::vec2& fp_TestPoint)
+            IsWithin(const glm::vec2& fp_TestPoint) //pretty much just gotta test if the point lies to the left of every edge wound CCW
             const noexcept override
         {
             return true;

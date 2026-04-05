@@ -12,12 +12,6 @@
 
 namespace PeachCore {
 
-    PeachTexture::~PeachTexture()
-    {
-        //RenderingManager::Renderer().GetOpenGLRenderer()->DeleteTexture(m_ID);
-        cout << "Hey! I am out of this joint, let's blow this popsicle stand buckoo" << "\n";
-    }
-
     PeachTexture::PeachTexture(const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight)
     {
         m_Width = fp_TextureWidth; //I AM NOT SURE WHICH ONE IS X AND WHICH ONE IS Y TBH SO IMA ASSUME IT WORKS WITH NORMAL LOGIC LOL

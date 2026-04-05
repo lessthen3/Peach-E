@@ -43,7 +43,7 @@ namespace PeachCore::OpenGL {
         ////Set Core Profile for OpenGL Context whatever the fuck that means
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-        //// Set OpenGL version (e.g., OpenGL 3.3 core profile)
+        //// Set OpenGL version
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
@@ -84,24 +84,24 @@ namespace PeachCore::OpenGL {
         //glDeleteBuffers(fp_TextureID);
     }
 
-    bool
-        Renderer::DeleteShaderProgram
-        (
-            const string& fp_ShaderProgramName
-        )
-    {
-        try //idk lazy way of dealing with repeated deletes of a shader program
-        {
-            glDeleteProgram(pm_ShaderPrograms.at(fp_ShaderProgramName).GetProgramID());
-            pm_ShaderPrograms.erase(fp_ShaderProgramName);
-            return true;
-        }
-        catch (const exception& ex)
-        {
-            rendering_logger->Warning(fmt::format("An error occurred: {}", ex.what()), "OpenGL::Renderer"); //this might not work LOL
-            return false;
-        }
-    }
+    //bool
+    //    Renderer::DeleteShaderProgram
+    //    (
+    //        const string& fp_ShaderProgramName
+    //    )
+    //{
+    //    try //idk lazy way of dealing with repeated deletes of a shader program
+    //    {
+    //        glDeleteProgram(pm_ShaderPrograms.at(fp_ShaderProgramName).GetProgramID());
+    //        pm_ShaderPrograms.erase(fp_ShaderProgramName);
+    //        return true;
+    //    }
+    //    catch (const exception& ex)
+    //    {
+    //        rendering_logger->Warning(fmt::format("An error occurred: {}", ex.what()), "OpenGL::Renderer"); //this might not work LOL
+    //        return false;
+    //    }
+    //}
 
     void
         Renderer::SetupInstancedArray
@@ -220,21 +220,23 @@ namespace PeachCore::OpenGL {
         )
     {
         glUseProgram(fp_Shader.GetProgramID());
-
-        //glEnable(GL_TEXTURE_2D);
-        //glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
-
+        glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
         glBindTexture(GL_TEXTURE_2D, fp_Texture);
-        glBindVertexArray(fp_VAO);
 
+        // tell the sampler uniform it lives on texture unit 0
+        //GLint f_SamplerLocation = glGetUniformLocation(fp_Shader.GetProgramID(), "u_Texture");
+
+        //if (f_SamplerLocation != -1)
+        //{
+        //    glUniform1i(f_SamplerLocation, 0);
+        //}
+
+        glBindVertexArray(fp_VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         glBindVertexArray(0);
         glUseProgram(0);
         glBindTexture(GL_TEXTURE_2D, 0);
-
-        //glActiveTexture(GL_TEXTURE0); // activate the texture unit first before binding texture
-        //glDisable(GL_TEXTURE_2D);
     }
 
     void
@@ -339,12 +341,6 @@ namespace PeachCore::OpenGL {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         return vao;
-    }
-
-    ShaderProgram*
-        Renderer::GetShaderProgram(const string& fp_Name)
-    {
-        return &pm_ShaderPrograms.at(fp_Name);
     }
 
     bool

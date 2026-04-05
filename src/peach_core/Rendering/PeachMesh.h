@@ -17,8 +17,6 @@
 ///PeachCore
 #include "PeachMaterial.h"
 
-#define PEACH_SIZE_OF_ARRAY_PTR(fp_Type, fp_Ptr)  sizeof(*fp_Ptr) / sizeof(fp_Type)
-
 ///OpenGL
 #ifndef __APPLE__
 
@@ -40,65 +38,7 @@ namespace PeachCore::OpenGL {
         //CLASS CONSTRUCTOR
         //////////////////////////////////////////////
 
-         PeachMesh
-         (
-             float* fp_Vertices, 
-             int* fp_Indices, 
-             float* fp_TextCoords, 
-             float* fp_Normals
-         )
-         {
-            try 
-            {
-                pm_VertexCount = PEACH_SIZE_OF_ARRAY_PTR(int, fp_Indices);
-
-                glGenVertexArrays(1, &pm_VAO);
-                glBindVertexArray(pm_VAO);
-
-                glGenBuffers(1, &pm_VBO);
-                pm_ListVBO.push_back(pm_VBO);
-
-                glBindBuffer(GL_ARRAY_BUFFER, pm_VBO);
-                glBufferData(GL_ARRAY_BUFFER, PEACH_SIZE_OF_ARRAY_PTR(float, fp_Vertices), fp_Vertices, GL_STATIC_DRAW);
-                glEnableVertexAttribArray(0);
-                glVertexAttribPointer(0, 3, GL_FLOAT, false, 0, 0);
-
-                // Indices EBO (ELEMENT_ARRAY_BUFFER) - stored in VAO state
-                {
-                    glGenBuffers(1, &pm_VBO);
-                    pm_ListVBO.push_back(pm_VBO);
-
-                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pm_VBO);
-                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, PEACH_SIZE_OF_ARRAY_PTR(int, fp_Indices), fp_Indices, GL_STATIC_DRAW);
-
-                    glGenBuffers(1, &pm_VBO);
-                    pm_ListVBO.push_back(pm_VBO);
-                }
-
-                glBindBuffer(GL_ARRAY_BUFFER, pm_VBO);
-                glBufferData(GL_ARRAY_BUFFER, PEACH_SIZE_OF_ARRAY_PTR(float, fp_TextCoords), fp_TextCoords, GL_STATIC_DRAW);
-                glEnableVertexAttribArray(1);
-                glVertexAttribPointer(1, 2, GL_FLOAT, false, 0, 0);
-
-                glGenBuffers(1, &pm_VBO);
-                pm_ListVBO.push_back(pm_VBO);
-
-                glBindBuffer(GL_ARRAY_BUFFER, pm_VBO);
-                glBufferData(GL_ARRAY_BUFFER, PEACH_SIZE_OF_ARRAY_PTR(float, fp_Normals), fp_Normals, GL_STATIC_DRAW);
-                glEnableVertexAttribArray(2);
-                glVertexAttribPointer(2, 3, GL_FLOAT, false, 0, 0);
-
-                glBindBuffer(GL_ARRAY_BUFFER, 0);
-                //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); PROBLEM LINE BREAKS OPENGL IDK WHY
-
-                glBindVertexArray(0);
-            }
-            catch (const exception& fp_Exception)
-            {
-                PeachCore::PRINT_ERROR(fmt::format("Unhandled exception: {}", fp_Exception.what()));
-
-            }
-        }
+         PeachMesh() = default;
 
          void
              Render()
@@ -172,11 +112,3 @@ namespace PeachCore::OpenGL {
     };
 }
 #endif
-
-namespace PeachCore::Vulkan {
-
-    struct Mesh
-    {
-
-    };
-}

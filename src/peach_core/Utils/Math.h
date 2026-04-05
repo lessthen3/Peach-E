@@ -1,6 +1,6 @@
 ﻿/*******************************************************************
  *                        Peach-E v0.0.1
- *              Created by Ranyodh Mandur - 🍑 2024
+ *           Created by Ranyodh Singh Mandur - 🍑 2024
  *
  *              Licensed under the MIT License (MIT).
  *         For more details, see the LICENSE file or visit:
@@ -8,9 +8,15 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#include "Grid2D.h"
+#pragma once
 
-namespace PeachCore {
 
+namespace PeachCore::Math {
+
+    [[nodiscard]] static inline float 
+        Lerp(float t, float a, float b) 
+    {
+        return a + t * (b - a);
+    }
 
 }

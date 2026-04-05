@@ -17,6 +17,11 @@
 #include <typeindex>
 #include <functional>
 
+/*
+    This class is primarily used for tying an event system from a language runtime into peachy's C++ internals, and also works for
+    inter language communication if developers want to use multiple languages to write their game uwu owo
+*/
+
 namespace PeachCore {
 
     template<typename Event>
@@ -33,7 +38,8 @@ namespace PeachCore {
 
         // Post an event and handle it immediately
         template<typename EventType>
-        void PostEvent(const EventType& event)
+        void 
+            PostEvent(const EventType& event)
         {
             static_assert(is_base_of<Event, EventType>::value, "EventType must derive from Event");
 
@@ -49,7 +55,8 @@ namespace PeachCore {
 
         // Subscribe to an event type with a function
         template<typename EventType, typename Func>
-        void Subscribe(Func&& func) 
+        void 
+            Subscribe(Func&& func) 
         {
             handlers[typeid(EventType)].push_back
             (
@@ -62,7 +69,8 @@ namespace PeachCore {
 
         // Unsubscribe a handler (by function address, simplified version)
         template<typename EventType, typename Func>
-        void Unsubscribe(Func&& func) 
+        void 
+            Unsubscribe(Func&& func) 
         {
             auto& handlersList = handlers[typeid(EventType)];
 
@@ -81,7 +89,8 @@ namespace PeachCore {
             );
         }
 
-        void IncrementFrame()
+        void 
+            IncrementFrame()
         {
             m_CurrentFrame++;
         }

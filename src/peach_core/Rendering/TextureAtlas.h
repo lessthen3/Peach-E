@@ -35,6 +35,11 @@ namespace PeachCore {
 
     struct TextureAtlas
     {
+    private:
+        PeachTexture pm_Texture;
+        uint32_t pm_TileWidth;
+        uint32_t pm_TileHeight;
+
     //Constructor and Destructor
     public:
         TextureAtlas() = default;
@@ -72,11 +77,6 @@ namespace PeachCore {
         bool
             IsValidTileIndex(int fp_Index)
             const;
-        
-    private:
-        PeachTexture pm_Texture;
-        int pm_TileWidth;
-        int pm_TileHeight;
     };
 
 }

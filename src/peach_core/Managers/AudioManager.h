@@ -17,6 +17,18 @@
 
 namespace PeachCore {
 
+    struct AudioPCM
+    {
+        AudioID ID;
+        ma_sound Sound;
+    };
+
+    struct AudioStreamed
+    {
+        AudioID ID;
+        ma_sound Stream;
+    };
+
     //////////////////////////////////////////////
     // AudioManager word size
     //////////////////////////////////////////////
@@ -80,13 +92,13 @@ namespace PeachCore {
         atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
         atomic<bool> pm_IsInitialized{ false };
 
-        unordered_map<AudioID, ma_sound> m_Sounds;         // static SFX
-        unordered_map<AudioID, ma_sound> m_StreamedSounds; // music/ambient
-        ma_engine m_Engine;
+        vector<AudioPCM> pm_Sounds;         // static SFX
+        vector<AudioStreamed> pm_StreamedSounds; // music/ambient
+        ma_engine pm_Engine;
 
-        ma_sound_group m_MasterGroup;
-        ma_sound_group m_MusicGroup;
-        ma_sound_group m_SFXGroup;
+        ma_sound_group pm_MasterGroup;
+        ma_sound_group pm_MusicGroup;
+        ma_sound_group pm_SFXGroup;
 
         unique_ptr<Logger> audio_logger = nullptr;
 

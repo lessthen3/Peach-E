@@ -6,6 +6,8 @@ option(BUILD_PEACH_TESTS "build test suite" OFF)
 option(BUILD_PEACH_EDITOR "turns on build output for peach editor" ON)
 option(BUILD_PEACH_ENGINE "turns on build output for the executable peach engine, doesn't relate to peach_core" ON)
 
+option(BUILD_ASSET_CONVERTER_TOOL "builds the asset converter exe for importing assets for things like mods" OFF)
+
 ####################################### Enforce CMake Version
 
 cmake_minimum_required(VERSION 4.2.0) #need this for vs2026
@@ -57,6 +59,12 @@ file(
     "src/peach_core/*.hpp"
 )
 
+source_group(
+    TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/peach_core"
+    PREFIX "peach"
+    FILES ${PEACH_CORE_SOURCES}
+)
+
 ####################################### Static/Dynamic Library Target
 
 if(BUILD_PEACH_CORE_SHARED)
@@ -72,6 +80,7 @@ add_library(peach_core ${PEACH_BUILD_TYPE}
 
 target_include_directories(peach_core PUBLIC
     ${PROJECT_SOURCE_DIR}/third_party/peach_core/header_only #header only library includes
+    ${PROJECT_SOURCE_DIR}/src/peach_core #because it's prettier and easier for including owo
 )
 
 set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach_core PIC friendly UwU
@@ -508,6 +517,12 @@ if(BUILD_PEACH_EDITOR)
         "src/peach_editor/*.hpp"
     )
 
+    source_group(
+        TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/peach_editor"
+        PREFIX "peach_editor"
+        FILES ${PEACH_EDITOR_SOURCES}
+    )
+
     ####################################### Create executable target
 
     if(PEACH_MACOS) #create a bundle instead of a regular exe for macOS
@@ -553,7 +568,6 @@ if(BUILD_PEACH_EDITOR)
         third_party/peach_editor/source_include
         third_party/peach_editor/weird_source_include/spirv_cross        # root hpp files
         third_party/peach_editor/weird_source_include/spirv_cross/include # vendored spirv-headers
-        ${PROJECT_SOURCE_DIR}/src/peach_core
     )
 
     source_group("third_party/tinyxml2" FILES ${TINYXML2_SOURCES})
@@ -913,12 +927,20 @@ if(BUILD_PEACH_EDITOR)
 endif(BUILD_PEACH_EDITOR)
 
 if(BUILD_PEACH_ENGINE)
+
     ####################################### Find peach engine entry point
+
     file(
-        GLOB_RECURSE 
+        GLOB 
         PEACH_ENGINE_SOURCES 
         CONFIGURE_DEPENDS 
         "src/peach_engine/main.cpp" #thin wrapper for Peach Engine executable
+    )
+
+    source_group(
+        TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/peach_engine"
+        PREFIX "peach_engine"
+        FILES ${PEACH_ENGINE_SOURCES}
     )
 
     ####################################### Create executable target
@@ -950,10 +972,6 @@ if(BUILD_PEACH_ENGINE)
 
     target_link_libraries(${PROJECT_NAME} PRIVATE 
         peach_core
-    )
-
-    target_include_directories(${PROJECT_NAME} PRIVATE 
-        ${PROJECT_SOURCE_DIR}/src/peach_core
     )
 
 endif(BUILD_PEACH_ENGINE)
@@ -990,10 +1008,6 @@ if(BUILD_PEACH_TESTS)
 
     target_link_libraries(Peach_Tests PRIVATE 
         peach_core
-    )
-
-    target_include_directories(Peach_Tests PRIVATE 
-        ${PROJECT_SOURCE_DIR}/src/peach_core
     )
 
 endif(BUILD_PEACH_TESTS)

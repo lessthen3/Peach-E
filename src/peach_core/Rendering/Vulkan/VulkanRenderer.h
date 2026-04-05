@@ -182,6 +182,32 @@ namespace PeachCore::Vulkan{
             string Name; // For debugging/user selection
         };
 
+        struct TextureSlot //wrapped in the PeachCore::Vulkan namespace so is kosher >~<
+        {
+            VkImage Image = VK_NULL_HANDLE;
+            VkImageView ImageView = VK_NULL_HANDLE;
+            VkDeviceMemory Memory = VK_NULL_HANDLE;
+
+            uint32_t Generation = 0; // bumped on free
+            bool InUse = false;
+        };
+
+        struct MeshSlot
+        {
+            VkBuffer VertexBuffer;
+            VkBuffer IndexBuffer;
+            VkDeviceMemory Memory;
+
+            uint32_t Generation = 0; // bumped on free
+            bool InUse = false;
+        };
+
+        struct RenderObject
+        {
+
+        };
+
+
     private:
         struct Initializer //POD that contains all initialized data
         {
@@ -253,6 +279,9 @@ namespace PeachCore::Vulkan{
         bool pm_IsFrameStarted = false;
 
         shared_ptr<Logger> rendering_logger = nullptr;
+
+        vector<TextureSlot> pm_TextureSlots;
+        vector<MeshSlot> pm_MeshSlots;
 
     public:
         //////////////////// Initialize Method ////////////////////

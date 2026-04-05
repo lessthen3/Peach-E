@@ -22,13 +22,13 @@ namespace PeachCore::PUI {
         Button
         (
             const string& fp_NodeName,
-            const PeachNodeID fp_NodeID,
-            const PeachNodeID fp_ParentNodeID = PEACH_NODE_NULL_ID,
-            const uint8_t fp_Flags = PEACH_NODE_HAS_NO_FLAGS,
+            const uint32_t fp_Index,
+            const uint32_t fp_Generation,
+            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE,
             const ShapeType fp_ButtonShape = ShapeType::NO_SHAPE
         )
             : 
-            Node(fp_NodeName, fp_NodeID, fp_ParentNodeID, fp_Flags, NodeType::Button)
+            Node(fp_NodeName, fp_Index, fp_Generation, fp_Flags, NodeType::Button)
         {
             switch(fp_ButtonShape)
             {
