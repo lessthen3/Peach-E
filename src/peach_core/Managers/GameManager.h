@@ -57,6 +57,13 @@ namespace PeachCore {
         return static_cast<uint8_t>(fp_FuckCpp) & static_cast<uint8_t>(fp_FuckYou);
     }
 
+    inline ThreadName
+        operator^(ThreadName fp_FuckCpp, ThreadName fp_FuckYou)
+        noexcept
+    {
+        return static_cast<ThreadName>(static_cast<uint8_t>(fp_FuckCpp) ^ static_cast<uint8_t>(fp_FuckYou));
+    }
+
     enum class ScriptRuntimeType : uint8_t
     {
         Dotnet = 1 << 0,
@@ -116,17 +123,15 @@ namespace PeachCore {
         shared_ptr<NetworkCommandPipe> pm_NetworkCommandQueue = nullptr;
         shared_ptr<PhysicsCommandPipe> pm_PhysicsCommandQueue = nullptr;
 
-        //shared_ptr<CommandQueue> m_UserScriptCommandQueue = nullptr; //XXX: used for submitting update commands -> GameManager from script runtimes
-
-        //////////////////// Plugin Stuff ////////////////////
-
-        vector<NativeScriptData> pm_NativeScriptPlugins; //loaded at engine startup since they run alongside the game stuff for now ig idk future ryan what do u think owo? future ryan:
+        //shared_ptr<CommandQueue> m_UserScriptCommandQueue = nullptr; //XXX: used for submitting update commands -> GameManager from script runtimes from multiple threads owo
 
         //////////////////// Script Runtime Contexts ////////////////////
 
         DotnetContext pm_DotnetContext;
         Lua::ScriptRuntime pm_LuaRuntimeContext;
         //BongoJamRuntimeContext pm_BongoJamRuntimeContext;
+
+        vector<NativeScriptData> pm_NativeScriptPlugins; //loaded at engine startup since they run alongside the game stuff for now ig idk future ryan what do u think owo? future ryan: these are just native scripts not plugins lmfao
 
         //////////////////// Thread Handles ////////////////////
 

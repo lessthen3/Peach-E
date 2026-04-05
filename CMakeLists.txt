@@ -332,6 +332,11 @@ elseif(PEACH_HAIKU)
         network # Haiku network stack
     )
 
+elseif(PEACH_WASM)
+    target_link_options(peach_core PUBLIC 
+    "-sMAX_WEBGL_VERSION=2" 
+    "-sUSE_SDL=3" # Or 3 if you have the port
+    )
 endif()
 
 # Peach Core

@@ -32,18 +32,18 @@ namespace PeachCore {
         IS_QUEUED_FOR_REMOVAL = 1u << 3
     };
 
-    inline 
-        PeachNodeFlags operator|(PeachNodeFlags fp_FuckCpp, PeachNodeFlags fp_FuckYou) //fuck C++ CoodOEOs MSelLLLSlelS Ss brb ima write C++ like java and be confused why it doesn't work uwu
+    inline PeachNodeFlags 
+        operator|(PeachNodeFlags fp_FuckCpp, PeachNodeFlags fp_FuckYou) //fuck C++ CoodOEOs MSelLLLSlelS Ss brb ima write C++ like java and be confused why it doesn't work uwu
         noexcept
     {
         return static_cast<PeachNodeFlags>(static_cast<uint8_t>(fp_FuckCpp) | static_cast<uint8_t>(fp_FuckYou));
     }
 
-    inline
-        PeachNodeFlags operator&(PeachNodeFlags fp_FuckCpp, PeachNodeFlags fp_FuckYou) //fuck C++ CoodOEOs MSelLLLSlelS Ss brb ima write C++ like java and be confused why it doesn't work uwu
+    inline bool
+        operator&(PeachNodeFlags fp_FuckCpp, PeachNodeFlags fp_FuckYou)
         noexcept
     {
-        return static_cast<PeachNodeFlags>(static_cast<uint8_t>(fp_FuckCpp) & static_cast<uint8_t>(fp_FuckYou));
+        return static_cast<uint8_t>(fp_FuckCpp) & static_cast<uint8_t>(fp_FuckYou);
     }
 
     enum class PeachNodeType : uint8_t // this doesnt really need to be a bit mask tbh idk, fixed it owo

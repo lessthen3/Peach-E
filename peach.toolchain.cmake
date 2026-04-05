@@ -206,6 +206,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "wasm")
     set(CMAKE_AR "$ENV{EMSDK}/upstream/emscripten/emar")
     set(CMAKE_RANLIB "$ENV{EMSDK}/upstream/emscripten/emranlib")
 
+    # set(CMAKE_EXECUTABLE_SUFFIX ".html") # or .js UNSURE
+
     set(PEACH_WASM                ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_WEB     ON CACHE BOOL "" FORCE)
 

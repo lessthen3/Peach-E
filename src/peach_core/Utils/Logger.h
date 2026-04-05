@@ -13,7 +13,7 @@
 #define PEACH_LOGGER_DEFAULT_FLAGS PEACH_ALL_LOGS | PEACH_FLUSH_ERROR | PEACH_FLUSH_FATAL
 
 #ifdef PEACH_DEBUG //TEMPORARY JUST HERE FOR NOW TESTING THE IDEA, SINCE DEBUG DOESNT ALWAYS MEAN USING TERMINAL
-#define PEACH_USING_OS_TERMINAL
+    #define PEACH_USING_OS_TERMINAL
 #endif
 
 #define PEACH_FILENAME ::PeachCore::PeachExtractFilename(__FILE__)
@@ -57,10 +57,10 @@
 #include "../peach_api/LoggerFlags.h"
 
 
-constexpr const int FATAL_SEGMENTATION_FAULT = -6969;
+constexpr int FATAL_SEGMENTATION_FAULT = -6969;
 
 /// moody camel queue size uwu
-constexpr const unsigned int MOODY_CAMEL_QUEUE_SIZE = 128;
+constexpr unsigned int MOODY_CAMEL_QUEUE_SIZE = 128;
 
 namespace PeachCore {
 

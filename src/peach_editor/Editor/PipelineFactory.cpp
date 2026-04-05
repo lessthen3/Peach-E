@@ -1,13 +1,13 @@
-﻿///*******************************************************************
-// *                     Peach Editor v0.0.7
-// *             Created by Ranyodh Mandur - 🍑 2024
-// *
-// *             Licensed under the MIT License (MIT).
-// *         For more details, see the LICENSE file or visit:
-// *             https://opensource.org/licenses/MIT
-// *
-// *      Peach Editor is a free open source editor for Peach-E
-//********************************************************************/
+﻿/*******************************************************************
+ *                     Peach Editor v0.0.1
+ *         Created by Ranyodh Singh Mandur - 🍑 2024-2026
+ *
+ *             Licensed under the MIT License (MIT).
+ *         For more details, see the LICENSE file or visit:
+ *             https://opensource.org/licenses/MIT
+ *
+ *      Peach Editor is a free open source editor for Peach-E
+********************************************************************/
 //#include "PipelineFactory.h"
 //
 //namespace PeachEditor {
