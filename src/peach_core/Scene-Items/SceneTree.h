@@ -14,8 +14,8 @@
 
 ///PeachCore
 #include "PeachNode.h"
-#include "../Utils/Serializer.h"
-#include "../Utils/ChunkedPool.h"
+#include "Utils/Serializer.h"
+#include "Utils/ChunkedPool.h"
 
 #include "UI/PeachConsole.h"
 

@@ -1,33 +1,39 @@
 ﻿/*******************************************************************
  *                        Peach-E v0.0.1
- *              Created by Ranyodh Mandur - 🍑 2024
+ *         Created by Ranyodh Singh Mandur - 🍑 2024-2026
  *
  *              Licensed under the MIT License (MIT).
- *         For more details, see the LICENSE file or visit:         
+ *         For more details, see the LICENSE file or visit:
  *               https://opensource.org/licenses/MIT
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
 
-#include "../../Utils/Logger.h"
+///PeachCore
+#include "Utils/Logger.h"
 
+///STL
 #include <vector>
 #include <list>
 #include <stdexcept>
+
+///Box2D
 #include <box2d/box2d.h>
+
+///GLM
 #include <glm/glm.hpp>
 
 namespace PeachCore {
 
-    //typedef CGAL::Exact_predicates_inexact_constructions_kernel              Kernel;
-    //typedef CGAL::Partition_traits_2<Kernel>                                      Traits;
-    //typedef Traits::Point_2                                                        Point_2;
-    //typedef Traits::Polygon_2                                                   Polygon_2;
+    class CollisionPolygon2D 
+    {
+    private:
+        b2BodyId pm_Body2D = b2_nullBodyId;
+        bool pm_IsValid = false;
 
-    //typedef list<Polygon_2>                                                    Polygon_List;
+        //vector<b2BodyId> pm_ListOfConstituentPolygons;
 
-    class CollisionPolygon2D {
     public:
         CollisionPolygon2D() = default;
 
@@ -211,7 +217,8 @@ namespace PeachCore {
         //}
 
         // Function to ensure vertices are wound counter-clockwise in Box2D
-        vector<b2Vec2> AssertWindingOrderCCW(const vector<glm::vec2>& vertices)
+        vector<b2Vec2> 
+            AssertWindingOrderCCW(const vector<glm::vec2>& vertices)
         {
             vector<b2Vec2> box2dVertices;
             for (const auto& vertex : vertices)
@@ -237,7 +244,8 @@ namespace PeachCore {
             return box2dVertices;
         }
 
-        vector<b2Vec2> RemoveCollinearPoints(vector<b2Vec2>& fp_Vertices) 
+        vector<b2Vec2> 
+            RemoveCollinearPoints(vector<b2Vec2>& fp_Vertices) 
         {
             vector<b2Vec2> result;
 
@@ -256,12 +264,5 @@ namespace PeachCore {
             }
             return result;
         }
-
-    private:
-        b2BodyId pm_Body2D = b2_nullBodyId;
-        bool pm_IsValid = false;
-
-        //vector<b2BodyId> pm_ListOfConstituentPolygons;
     };
-
 } // >w<

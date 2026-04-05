@@ -13,9 +13,9 @@
 #ifdef PEACH_RENDERER_OPENGL
 
 ///PeachCore
-#include "../../../Utils/Logger.h"
-#include "../../../Scene-Items/Visual/Fog.h"
-#include "../../PeachMaterial.h"
+#include "Utils/Logger.h"
+#include "Scene-Items/Visual/Fog.h"
+#include "Rendering/PeachMaterial.h"
 
 ///External
 #include <GL/glew.h>

@@ -15,8 +15,8 @@
 #include <SDL3/SDL.h>
 
 #include "OpenGLShaderProgram.h"
-#include "../../../Scene-Items/Visual/Camera.h"
-#include "../../../Managers/ResourceManager.h"
+#include "Scene-Items/Visual/Camera.h"
+#include "Managers/ResourceManager.h"
 
 namespace PeachCore::OpenGL {
 

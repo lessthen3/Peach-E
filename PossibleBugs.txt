@@ -1,0 +1,1 @@
+- mixing <cstdint> and <stdint.h> might lead to some fixed size bug issues regarding serialization I should look into that owo

@@ -1,9 +1,9 @@
 ﻿/*******************************************************************
  *                        Peach-E v0.0.1
- *              Created by Ranyodh Mandur - 🍑 2024
+ *         Created by Ranyodh Singh Mandur - 🍑 2024-2026
  *
  *              Licensed under the MIT License (MIT).
- *         For more details, see the LICENSE file or visit:         
+ *         For more details, see the LICENSE file or visit:
  *               https://opensource.org/licenses/MIT
  *
  *           Peach-E is a free open source game engine
@@ -30,7 +30,7 @@ namespace PeachCore {
     // ThreadName Enum
     //////////////////////////////////////////////
 
-    enum ThreadName : uint8_t
+    enum class ThreadName : uint8_t
     {
         MainThread = 1 << 0,
         RenderThread = 1 << 1,
@@ -43,10 +43,23 @@ namespace PeachCore {
         ALL_THREADS = MainThread | RenderThread | ResourceThread | NetworkThread | PhysicsThread | AudioThread
     };
 
+    inline
+        ThreadName operator|(ThreadName fp_FuckCpp, ThreadName fp_FuckYou) //fuck C++ CoodOEOs MSelLLLSlelS Ss brb ima write C++ like java and be confused why it doesn't work uwu
+        noexcept
+    {
+        return static_cast<ThreadName>(static_cast<uint8_t>(fp_FuckCpp) | static_cast<uint8_t>(fp_FuckYou));
+    }
+
+    inline bool 
+        operator&(ThreadName fp_FuckCpp, ThreadName fp_FuckYou)
+        noexcept
+    {
+        return static_cast<uint8_t>(fp_FuckCpp) & static_cast<uint8_t>(fp_FuckYou);
+    }
 
     enum class ScriptRuntimeType : uint8_t
     {
-        Dotnet = 1 <<0,
+        Dotnet = 1 << 0,
         BongoJam = 1 << 1,
         Lua = 1 << 2,
         None = 0
@@ -123,7 +136,7 @@ namespace PeachCore {
         jthread pm_AudioThread;
         jthread pm_NetworkThread;
 
-        uint8_t pm_RequiredThreads = 0; //required threads for execution
+        ThreadName pm_RequiredThreads = ThreadName::NO_THREAD; //required threads for execution
 
         //////////////////// Scene Stuff ////////////////////
 
@@ -152,7 +165,7 @@ namespace PeachCore {
             InitializePeachEngineCustom //used headless
             (
                 const string& fp_RootPath,
-                const uint8_t fp_RequiredThreads,
+                const ThreadName fp_RequiredThreads,
                 const RendererType fp_RenderingBackend,
                 bool fp_IsSegfaultHandled = false
             );

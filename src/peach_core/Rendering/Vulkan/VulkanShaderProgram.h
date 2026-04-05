@@ -11,13 +11,14 @@
 #pragma once
 
 #ifdef PEACH_RENDERER_VULKAN
+
 ///External
 #include <volk/volk.h>
 #include <vk-bootstrap/VkBootstrap.h>
 
 ///PeachCore
-#include "../../Utils/Logger.h"
-#include "../../Utils/Serializer.h"
+#include "Utils/Logger.h"
+#include "Utils/Serializer.h"
 
 namespace PeachCore::Vulkan { //namespacing this because it doesnt need to be a class, just a file w shader utilization tools
 
