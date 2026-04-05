@@ -1,7 +1,14 @@
-########################################
-# peach.toolchain.cmake
-# 🍑 Starlight Brew Inc, Ranyodh Singh Mandur
-########################################
+#######################################
+#                        Peach-E v0.0.1
+#         Created by Ranyodh Singh Mandur - 🍑 2024-2026
+#
+#              Licensed under the MIT License (MIT).
+#         For more details, see the LICENSE file or visit:
+#               https://opensource.org/licenses/MIT
+#
+#           Peach-E is a free open source game engine
+#######################################
+
 ############# require target platform to be passed explicitly #############
 
 if(NOT DEFINED PEACH_TARGET_PLATFORM OR PEACH_TARGET_PLATFORM STREQUAL "")
