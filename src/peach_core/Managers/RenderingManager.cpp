@@ -432,21 +432,21 @@ namespace PeachCore {
         uint32_t f_StatusCode = pm_VulkanRenderer->BeginFrame();
         if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
         {
-            PRINT_ERROR(fmt::format("BeginFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            PRINT_ERROR(fmt::format("BeginFrame() failed exit, StatusCode: {}", f_StatusCode));
             return false;
         }
 
         f_StatusCode = pm_VulkanRenderer->DrawFrame();
         if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
         {
-            PRINT_ERROR(fmt::format("DrawFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            PRINT_ERROR(fmt::format("DrawFrame() failed exit, StatusCode: {}", f_StatusCode));
             return false;
         }
 
         f_StatusCode = pm_VulkanRenderer->EndFrame();
         if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
         {
-            PRINT_ERROR(fmt::format("EndFrame() failed exit, StatusCode: {}", f_StatusCode), Colours::BrightMagenta);
+            PRINT_ERROR(fmt::format("EndFrame() failed exit, StatusCode: {}", f_StatusCode));
             return false;
         }
 

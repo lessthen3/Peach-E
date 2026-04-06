@@ -20,7 +20,16 @@ namespace PUI {
     {
         Rectangle m_Shape;
 
-        Panel(const string& fp_NodeName, uint64_t fp_NodeID, const uint8_t fp_Flags, const ShapeType fp_ButtonShape) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::Panel)
+        Panel
+        (
+            const string& fp_NodeName, 
+            const uint32_t fp_Index,
+            const uint32_t fp_Generation,
+            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE,
+            const ShapeType fp_ButtonShape = ShapeType::NO_SHAPE
+        ) 
+            :
+            Node(fp_NodeName, fp_Index, fp_Generation, fp_Flags, NodeType::Panel)
         {
             //OwO!
         }

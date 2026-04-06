@@ -98,7 +98,7 @@ namespace PeachCore::PUI {
     {
         virtual ~Shape() = default;
 
-        Shape(const ShapeType fp_ShapeType) : ShapeType(fp_ShapeType) {}
+        Shape(const ShapeType fp_ShapeType) : m_ShapeType(fp_ShapeType) {}
 
         //Position of the shape for use by Peach Engine so that a game dev/me can call a simple method like PUINode.move(new_vector) for the CPU side of things
         //The position is what the CPU uses for hit detection completely separate from whats drawn, but should very closely reflect the rendered position on screen
@@ -107,7 +107,7 @@ namespace PeachCore::PUI {
         //This transform operates on the QUAD_VERTS attribute and not the engine's interpretation of the Shape
         Transform2D Transform;
          
-        const ShapeType ShapeType;
+        const ShapeType m_ShapeType;
 
         [[nodiscard]] virtual inline bool 
             IsWithin(const glm::vec2& fp_TestPoint) const = 0;
