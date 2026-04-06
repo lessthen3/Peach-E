@@ -570,7 +570,8 @@ if(BUILD_PEACH_EDITOR)
     )
 
     file(GLOB BC7ENC_RDO_SOURCES
-        third_party/peach_editor/source_include/bc7enc_rdo/rbo_bc_encoder.cpp
+        third_party/peach_editor/source_include/bc7enc_rdo/rdo_bc_encoder.cpp
+        third_party/peach_editor/source_include/bc7enc_rdo/bc7enc.cpp
     )
 
     target_sources(Peach_Editor PRIVATE
