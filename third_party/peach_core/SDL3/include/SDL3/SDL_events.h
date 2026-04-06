@@ -1343,7 +1343,7 @@ extern SDL_DECLSPEC bool SDLCALL SDL_WaitEvent(SDL_Event *event);
  * \param event the SDL_Event structure to be filled in with the next event
  *              from the queue, or NULL.
  * \param timeoutMS the maximum number of milliseconds to wait for the next
- *                  available event.
+ *                  available event, or -1 to wait indefinitely.
  * \returns true if this got an event or false if the timeout elapsed without
  *          any events available.
  *

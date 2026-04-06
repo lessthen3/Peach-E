@@ -240,15 +240,15 @@ elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, 
 
     STATIC_IMPORT(glew 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64/libGLEW.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64/libGLEW.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64/libGLEWd.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
     )
 
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/debug/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/release/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
@@ -789,14 +789,14 @@ if(BUILD_PEACH_EDITOR)
         )
 
         STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-core.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/release/libmsdfgen-core.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/debug/libmsdfgen-core.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
         )
 
         STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/libmsdfgen-ext.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/release/libmsdfgen-ext.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/debug/libmsdfgen-ext.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
         )
 
@@ -825,53 +825,9 @@ if(BUILD_PEACH_EDITOR)
         ############ Vulkan Specific Imports
 
         STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc_combined.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
-        )
-
-        ############ SPIRV Tools
-
-        STATIC_IMPORT(SPIRV_Tools 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Diff 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-diff.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-diff.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Link 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-link.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-link.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Lint 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-lint.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-lint.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Opt 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-opt.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-opt.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Reduce 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-reduce.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPIRV-Tools-reduce.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
-        )
-
-        STATIC_IMPORT(SPIRV_Tools_Remapper 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPVRemapper.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libSPVRemapper.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/spirv-tools"
         )
 
     else()
