@@ -17,6 +17,9 @@
 #include <dotnet/hostfxr.h>
 #include <dotnet/coreclr_delegates.h>
 
+///STL
+#include <vector>
+
 namespace PeachCore {
 
     struct ScriptInstance
