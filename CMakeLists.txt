@@ -856,20 +856,6 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### Linking deps + peach_core
 
-    if(NOT PEACH_WINDOWS AND NOT PEACH_MACOS) #shaderc_combined handles this for windows ^w^
-        target_link_libraries(Peach_Editor PRIVATE
-            #Tools for compiling, and debuggin SPIRV, not needed for game runtime uwu
-            #spirv-tools
-            SPIRV_Tools
-            SPIRV_Tools_Diff
-            SPIRV_Tools_Link
-            SPIRV_Tools_Lint
-            SPIRV_Tools_Opt
-            SPIRV_Tools_Reduce
-            SPIRV_Tools_Remapper
-        )
-    endif(NOT PEACH_WINDOWS AND NOT PEACH_MACOS)
-
     if(PEACH_PLATFORM_IS_WINDOWS) #needed for statically linking nethost for peach_editor
         target_link_libraries(Peach_Editor PRIVATE 
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:advapi32>
