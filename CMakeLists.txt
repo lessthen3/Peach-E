@@ -827,7 +827,7 @@ if(BUILD_PEACH_EDITOR)
         STATIC_IMPORT(shaderc 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc_combined.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include/shaderc"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include"
         )
 
     else()
