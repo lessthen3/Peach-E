@@ -1,16 +1,14 @@
 /*******************************************************************
  *                        Peach-E v0.0.1
- *              Created by Ranyodh Mandur - 🍑 2024
+ *         Created by Ranyodh Singh Mandur - 🍑 2024-2026
  *
  *              Licensed under the MIT License (MIT).
- *         For more details, see the LICENSE file or visit:         
+ *         For more details, see the LICENSE file or visit:
  *               https://opensource.org/licenses/MIT
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #pragma once
-
-
 
 namespace PeachCore { //add graph viewer where the list of points from curve2d is graphed, dots connected and smoothed best i can, in a small window in editor to show path
 
