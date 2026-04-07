@@ -56,7 +56,7 @@ namespace PeachEditor::ShaderCompilerUtils {
     }
 
     bool
-       ValidateSPIRV
+        ValidateSPIRV
         (
             const string& fp_SpvPath,
             PeachCore::Logger* logger
@@ -67,7 +67,7 @@ namespace PeachEditor::ShaderCompilerUtils {
     }
 
     bool
-      CrossCompileToMSL
+        CrossCompileToMSL
         (
             const string& fp_SpvPath,
             const string& fp_OutputPath,
@@ -79,7 +79,7 @@ namespace PeachEditor::ShaderCompilerUtils {
     }
 
     bool
-       CrossCompileToHLSL
+        CrossCompileToHLSL
     (
         const string& fp_SpvPath,
         const string& fp_OutputPath,
@@ -91,7 +91,7 @@ namespace PeachEditor::ShaderCompilerUtils {
     }
 
     bool
-      CompileFullShaderPipeline
+        CompileFullShaderPipeline
     (
         const string& fp_ShaderSourcePath,
         const string& fp_OutputDirectory,
@@ -226,7 +226,7 @@ namespace PeachEditor::ShaderCompilerUtils {
     bool
         ReflectDescriptorBindings
         (
-            vector<DescriptorBindingInfo>* fp_BindingInfo,
+            vector<PeachCore::Vulkan::DescriptorBindingInfo>* fp_BindingInfo,
             const vector<uint32_t>& fp_SpirvBytecode,
             PeachCore::Logger* logger
         )
@@ -281,7 +281,7 @@ namespace PeachEditor::ShaderCompilerUtils {
     bool
         ReflectPushConstants
         (
-            vector<PushConstantInfo>* fp_PushConstants,
+            vector<PeachCore::Vulkan::PushConstantInfo>* fp_PushConstants,
             const vector<uint32_t>& fp_SpirvBytecode,
             PeachCore::Logger* logger
         )

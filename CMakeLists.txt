@@ -145,7 +145,8 @@ if(PEACH_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID OR 
     )
 
     file(GLOB VKBOOTSTRAP_SOURCES
-        third_party/peach_core/plat_dep_source_include/vk-bootstrap/VkBootstrap.cpp
+        third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.cpp
+        third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.inl
     )
 
     target_sources(peach_core PRIVATE
@@ -484,12 +485,16 @@ target_compile_definitions(peach_core PUBLIC
 
 if(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
 
-    target_compile_definitions(peach_core PUBLIC VK_NO_PROTOTYPES) # IMPORTANT: tells volk to not use the default vulkan loader
+    target_compile_definitions(peach_core PRIVATE #needs to be private otherwise will leak into the editor which needs vulkan.h for cross 
+        VK_NO_PROTOTYPES
+    ) # IMPORTANT: tells volk to not use the default vulkan loader
 
 endif(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
 
 if(PEACH_VITA)
-    target_compile_definitions(peach_core PUBLIC BOX2D_DISABLE_SIMD)
+    target_compile_definitions(peach_core PUBLIC #vita can't do SIMD w Box2D too old ;w;
+        BOX2D_DISABLE_SIMD
+    )
 endif(PEACH_VITA)
 
 if(PEACH_PLATFORM_IS_WINDOWS)
@@ -939,9 +944,9 @@ if(BUILD_PEACH_TESTS)
         GLOB_RECURSE 
         PEACH_TEST_SOURCES 
         CONFIGURE_DEPENDS 
-        "test_suite/*.cpp" 
-        "test_suite/*.h"
-        "test_suite/*.hpp"
+        "test_suite/cpp/*.cpp" 
+        "test_suite/cpp/*.h"
+        "test_suite/cpp/*.hpp"
     )
 
         ####################################### Create executable target

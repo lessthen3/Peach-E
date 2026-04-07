@@ -24,7 +24,7 @@ namespace PeachCore::PUI {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE,
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE,
             const ShapeType fp_ButtonShape = ShapeType::NO_SHAPE
         )
             : 

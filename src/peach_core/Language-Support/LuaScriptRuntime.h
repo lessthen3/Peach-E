@@ -22,8 +22,7 @@ extern "C"
     #include <lua/lualib.h>
 }
 
-namespace PeachCore {
-namespace Lua {
+namespace PeachCore::Lua {
 
     struct ScriptInstance
     {
@@ -75,8 +74,8 @@ namespace Lua {
         bool
             CallOnEnter
             (
-                ScriptInstance& fp_ScriptInstance, 
-                PEACH_NODE fp_NodeID
+                ScriptInstance& fp_ScriptInstance,
+                PEACH_NodeID fp_NodeID
             );
 
         bool
@@ -85,5 +84,4 @@ namespace Lua {
                 ScriptInstance& fp_ScriptInstance
             );
     };
-}//namespace Lua
-}//namespace PeachCore
+}//namespace PeachCore::Lua

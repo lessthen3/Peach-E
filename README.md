@@ -91,23 +91,20 @@ That's it. Plain and simple.
 ## Platforms Successfully Tested
 
 ```ini
-os=Windows
-arch=x86_64
-compiler=msvc
-compiler.runtime=static
-compiler.version=193
+os= Windows
+arch= x86_64
+compiler= msvc 193 static
 ```
 
 ```ini
-os=Macos
-arch=armv8
-compiler=apple-clang
-compiler.version=16-17
+os= MacOS 12
+arch= armv8
+compiler= apple-clang 16-17
 ```
 
 ```ini
-os=Linux
-arch=x86_64
-compiler=clang
-compiler.version=19
+os= Ubuntu 22.04 LTS, Arch idk the version
+arch= x86_64
+compiler= clang 19
+compiler= gcc 12(? idk i forget the version)
 ```

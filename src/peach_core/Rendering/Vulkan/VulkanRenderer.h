@@ -13,7 +13,7 @@
 #ifdef PEACH_RENDERER_VULKAN
 
 ///PeachCore
-#include "VulkanShaderProgram.h"
+#include "VulkanShaderProgram.h" //THIS NEEDS TO BE FIRST DO NOT MOVE OWO
 
 ///Vulkan
 #include <vma/vk_mem_alloc.h>

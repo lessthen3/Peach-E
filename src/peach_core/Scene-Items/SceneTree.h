@@ -66,9 +66,9 @@ namespace PeachCore {
 
         SceneNodeStorage pm_SceneNodes;
 
-        unordered_map<string, PeachNodeID> pm_StringToNodeID; //used for when node names are changed by user, to help between the engine ID tracking and the user identifying the node
+        unordered_map<string, PEACH_NodeID> pm_StringToNodeID; //used for when node names are changed by user, to help between the engine ID tracking and the user identifying the node
 
-        queue<PeachNodeID> pm_PeachNodesQueuedForRemoval; //this holds the lower 56 bits only since the index is all we care ab in the vector uwu
+        queue<PEACH_NodeID> pm_PeachNodesQueuedForRemoval; //this holds the lower 56 bits only since the index is all we care ab in the vector uwu
 
         shared_ptr<Logger> scene_logger = nullptr;
 
@@ -126,7 +126,7 @@ namespace PeachCore {
         }
 
         [[nodiscard]] PEACH_STATUS_CODE
-            QueueNodeForRemoval(const PeachNodeID fp_NodeID)
+            QueueNodeForRemoval(const PEACH_NodeID fp_NodeID)
         {
             //if (fp_NodeID.Index >= pm_SceneNodes[fp_NodeID.Type]) //check for bounds since the user passes this
             //{
@@ -155,9 +155,9 @@ namespace PeachCore {
         [[nodiscard]] PEACH_STATUS_CODE
             ReparentPeachNode //returns true if operation was successful, returns false otherwise
             (
-                const PeachNodeID fp_OriginalParent,
-                const PeachNodeID fp_NewParent,
-                const PeachNodeID fp_ChildNode
+                const PEACH_NodeID fp_OriginalParent,
+                const PEACH_NodeID fp_NewParent,
+                const PEACH_NodeID fp_ChildNode
             )
         {
             //uint64_t 
@@ -165,23 +165,23 @@ namespace PeachCore {
             return PEACH_OK;
         }
 
-        PeachNodeID
-            DuplicateNode(const PeachNodeID fp_DesiredNode)
+        PEACH_NodeID
+            DuplicateNode(const PEACH_NodeID fp_DesiredNode)
         {
 
         }
 
         PEACH_STATUS_CODE
-            GetTreeString(PeachNodeID fp_DesiredNode, string& fp_StringContainer); //returns entire tree from parent node as a string
+            GetTreeString(PEACH_NodeID fp_DesiredNode, string& fp_StringContainer); //returns entire tree from parent node as a string
 
         PEACH_STATUS_CODE
-            GetPathInTreeString(PeachNodeID fp_DesiredNode, string& fp_StringContainer); //returns the path string relative scene root/
+            GetPathInTreeString(PEACH_NodeID fp_DesiredNode, string& fp_StringContainer); //returns the path string relative scene root/
 
         PEACH_STATUS_CODE
-            GetRelativePathString(PeachNodeID fp_ParentNode, PeachNodeID fp_DesiredNode, string& fp_StringContainer); //returns the path string relative to a specific node
+            GetRelativePathString(PEACH_NodeID fp_ParentNode, PEACH_NodeID fp_DesiredNode, string& fp_StringContainer); //returns the path string relative to a specific node
 
         PEACH_STATUS_CODE
-            IsNodeInTree(PeachNodeID fp_DesiredNode)
+            IsNodeInTree(PEACH_NodeID fp_DesiredNode)
         {
 
             return PEACH_OK;
@@ -190,7 +190,7 @@ namespace PeachCore {
         bool
             RenameNode
             (
-                const PeachNodeID fp_DesiredNode, 
+                const PEACH_NodeID fp_DesiredNode, 
                 const string& fp_NodeName
             )
         {
@@ -224,7 +224,7 @@ namespace PeachCore {
         {
             while (not pm_PeachNodesQueuedForRemoval.empty())
             {
-                PeachNodeID f_NodeID = pm_PeachNodesQueuedForRemoval.front(); //Only index bits are pushed into the removal queue uwu
+                PEACH_NodeID f_NodeID = pm_PeachNodesQueuedForRemoval.front(); //Only index bits are pushed into the removal queue uwu
                 pm_PeachNodesQueuedForRemoval.pop();
 
                 //RemoveEntireTree(std::move(pm_PeachNodes[f_NodeID]));
@@ -262,7 +262,7 @@ namespace PeachCore {
             //recursion base case is that when the lowest level of the "tree" is hit it will just skip the for loop and recurse back up uwu
             //don't need to remove ID's for children from parent node since the entire tree is being removed if being called by this method
 
-            for (const PeachNodeID lv_ChildNodeID : fp_ParentNode->GetChildren()) //dont need to perform bounds checks since the nodeid can only be added if it satisfies the vector bounds at creation uwu
+            for (const PEACH_NodeID lv_ChildNodeID : fp_ParentNode->GetChildren()) //dont need to perform bounds checks since the nodeid can only be added if it satisfies the vector bounds at creation uwu
             {
                 //RemoveEntireTree(std::move(pm_PeachNodes[GetNodeIndex(lv_ChildNodeID)]));//needa get index bits again since the child nodes are full ID's and not the lower 56 bits uwu
             }

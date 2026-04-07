@@ -16,61 +16,11 @@
 #include <memory>
 
 ///PeachCore
-#include "../peach_api/StatusCodes.h"
-#include "../Utils/Logger.h"
+#include "peach_api/StatusCodes.h"
+#include "peach_api/NodeDef.h"
+
+#include "Utils/Logger.h"
 #include "Transform.h"
-
-namespace PeachCore {
-
-    enum class PeachNodeFlags : uint8_t //fuck the type system when it comes to flags uwu
-    {
-        NONE = 0,
-
-        IS_PAUSABLE = 1u << 0,
-        IS_ACTIVE = 1u << 1,
-        IS_VISIBLE = 1u << 2,
-        IS_QUEUED_FOR_REMOVAL = 1u << 3
-    };
-
-    inline PeachNodeFlags 
-        operator|(PeachNodeFlags fp_FuckCpp, PeachNodeFlags fp_FuckYou) //fuck C++ CoodOEOs MSelLLLSlelS Ss brb ima write C++ like java and be confused why it doesn't work uwu
-        noexcept
-    {
-        return static_cast<PeachNodeFlags>(static_cast<uint8_t>(fp_FuckCpp) | static_cast<uint8_t>(fp_FuckYou));
-    }
-
-    inline bool
-        operator&(PeachNodeFlags fp_FuckCpp, PeachNodeFlags fp_FuckYou)
-        noexcept
-    {
-        return static_cast<uint8_t>(fp_FuckCpp) & static_cast<uint8_t>(fp_FuckYou);
-    }
-
-    enum class PeachNodeType : uint8_t // this doesnt really need to be a bit mask tbh idk, fixed it owo
-    {
-        RENDER_2D,
-        RENDER_3D,
-        PHYSICS_2D,
-        PHYSICS_3D,
-        AUDIO_2D,
-        AUDIO_3D,
-        UTILITY,
-        INTERFACE,
-        BLANK
-    };
-
-    struct PeachNodeID
-    {
-        uint32_t Index = 0;
-        PeachNodeType Type = PeachNodeType::BLANK;
-
-        uint32_t Generation = 0;
-
-        bool operator==(const PeachNodeID&) const = default;
-    };
-
-    constexpr PeachNodeID PEACH_NODE_NULL_ID = PeachNodeID{ 0, PeachNodeType::BLANK, 0 }; //Represents no ID, or invalid ID
-}
 
 namespace PeachCore {
 
@@ -84,28 +34,28 @@ namespace PeachCore {
         (
             const string& fp_NodeName, 
             const uint32_t fp_Index,
-            const PeachNodeType fp_Type,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE
+            const PEACH_NodeType fp_Type,
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
             m_PeachName(fp_NodeName), 
-            m_ID(fp_Index, fp_Type, fp_Generation),
+            m_ID(fp_Index, fp_Generation, fp_Type),
             m_Flags(fp_Flags)
         {}
 
         string m_PeachName; //used to identify node uniquely, is a string so that users can just type: "node.remove("myNodeName")"
 
-        const PeachNodeID m_ID; //can only be set at object creation uwu
-        PeachNodeFlags m_Flags;
-        PeachNodeID m_ParentNode; //default initialized to it's own ID so that if a node is its own parent we know its a loner (;w;)
+        const struct PEACH_NodeID m_ID; //can only be set at object creation uwu
+        PEACH_NodeFlags m_Flags;
+        struct PEACH_NodeID m_ParentNode; //default initialized to it's own ID so that if a node is its own parent we know its a loner (;w;)
 
     protected:
-        vector<PeachNodeID> pm_Children; //don't need to explicitly clean this up since the destructors will clean up everything properly when the owning node exits scope
+        vector<PEACH_NodeID> pm_Children; //don't need to explicitly clean this up since the destructors will clean up everything properly when the owning node exits scope
 
     public:
 
-        [[nodiscard]] virtual const vector<PeachNodeID>&
+        [[nodiscard]] virtual const vector<PEACH_NodeID>&
             GetChildren()
             const noexcept
         {
@@ -113,13 +63,13 @@ namespace PeachCore {
         }
 
         virtual void
-            AddChild(PeachNodeID fp_Child)
+            AddChild(PEACH_NodeID fp_Child)
         {
             pm_Children.push_back(fp_Child);
         }
 
         [[nodiscard]] virtual bool
-            RemoveChild(PeachNodeID fp_Child)
+            RemoveChild(PEACH_NodeID fp_Child)
         {
             size_t f_OldSize = pm_Children.size();
             std::erase(pm_Children, fp_Child);
@@ -127,7 +77,7 @@ namespace PeachCore {
         }
 
         [[nodiscard]] virtual inline bool
-            HasPeachNode(PeachNodeID fp_DesiredNode)
+            HasPeachNode(PEACH_NodeID fp_DesiredNode)
         {
             return find(pm_Children.begin(), pm_Children.end(), fp_DesiredNode) == pm_Children.end(); // Check if the element was found
         }
@@ -224,35 +174,6 @@ namespace PeachCore {
             WriteIndex.fetch_add(1u, memory_order_release);
         }
 
-        // Convenience: write position and dirty the slot in one call, will get inlined anyways
-        //void
-        //    SetPosition(const glm::vec2& fp_Pos)
-        //    noexcept
-        //{
-        //    GetWriteSlot().SetPosition(fp_Pos);
-        //}
-
-        //void
-        //    Translate(const glm::vec2& fp_Offset)
-        //    noexcept
-        //{
-        //    GetWriteSlot().Translate(fp_Offset);
-        //}
-
-        //void
-        //    SetRotation(float fp_Radians)
-        //    noexcept
-        //{
-        //    GetWriteSlot().SetRotation(fp_Radians);
-        //}
-
-        //void
-        //    SetScale(const glm::vec2& fp_Scale)
-        //    noexcept
-        //{
-        //    GetWriteSlot().SetScale(fp_Scale);
-        //}
-
         [[nodiscard]] const glm::mat4&
             GetReadMatrix()
             const noexcept
@@ -297,11 +218,11 @@ namespace PeachCore {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE,
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE,
             const uint8_t fp_DrawOrder = 0
         ) 
             : 
-            PeachNode(fp_NodeName, fp_Index, PeachNodeType::RENDER_2D, fp_Generation, fp_Flags),
+            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_RENDER_2D, fp_Flags),
             DrawGroup(fp_DrawOrder)
         {}
 
@@ -319,10 +240,10 @@ namespace PeachCore {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, PeachNodeType::RENDER_3D, fp_Generation, fp_Flags)
+            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_RENDER_3D, fp_Flags)
         {}
 
         TransformDouble3D m_Transform;
@@ -337,10 +258,10 @@ namespace PeachCore {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, PeachNodeType::AUDIO_2D, fp_Generation, fp_Flags)
+            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_AUDIO_2D, fp_Flags)
         {}
 
         TransformDouble2D m_Transform;
@@ -358,10 +279,10 @@ namespace PeachCore {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, PeachNodeType::AUDIO_3D, fp_Generation, fp_Flags)
+            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_AUDIO_3D, fp_Flags)
         {}
 
         TransformDouble3D m_Transform;
@@ -379,10 +300,10 @@ namespace PeachCore {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, PeachNodeType::INTERFACE, fp_Generation, fp_Flags)
+            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_INTERFACE, fp_Flags)
         {}
 
         TransformDouble2D m_Transform;
@@ -397,10 +318,10 @@ namespace PeachCore {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, PeachNodeType::PHYSICS_2D, fp_Generation, fp_Flags)
+            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_PHYSICS_2D, fp_Flags)
         {}
 
         TransformDouble2D m_Transform;
@@ -415,10 +336,10 @@ namespace PeachCore {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, PeachNodeType::PHYSICS_3D, fp_Generation, fp_Flags)
+            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_PHYSICS_3D, fp_Flags)
         {}
 
         TransformDouble3D m_Transform;
@@ -433,10 +354,10 @@ namespace PeachCore {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, PeachNodeType::UTILITY, fp_Generation, fp_Flags)
+            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_UTILITY, fp_Flags)
         {}
     };
 }//namespace PeachCore
@@ -477,11 +398,11 @@ namespace PeachCore::PUI {
             const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE,
+            const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE,
             const NodeType fp_InterfaceType = NodeType::None
         )
             : 
-            PeachNode(fp_NodeName, fp_Index, PeachNodeType::INTERFACE, fp_Generation, fp_Flags),
+            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_INTERFACE, fp_Flags),
             m_Type(fp_InterfaceType)
         {}
 

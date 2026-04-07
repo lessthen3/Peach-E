@@ -16,10 +16,9 @@
 #include <spirv_cross.hpp>
 #include <spirv_glsl.hpp>
 
-#include <vulkan/vulkan_core.h>
-
 ///PeachCore
 #include <Utils/Logger.h>
+#include <Rendering/Vulkan/PipelineFactory.h>
 
 ///STL
 #include <unordered_map>
@@ -52,22 +51,6 @@ namespace PeachEditor::ShaderCompilerUtils
         vector<string> InputVars;
         vector<string> UniformBuffers;
         vector<string> SampledImages;
-    };
-
-    struct DescriptorBindingInfo
-    {
-        string Name;
-        uint32_t Binding;
-        uint32_t Set;
-        VkDescriptorType Type;
-    };
-
-    struct PushConstantInfo
-    {
-        string Name;
-        uint32_t Offset;
-        uint32_t Size;
-        VkShaderStageFlags StageFlags;
     };
 
     [[nodiscard]] static bool
@@ -146,7 +129,7 @@ namespace PeachEditor::ShaderCompilerUtils
     static bool
         ReflectDescriptorBindings
         (
-            vector<DescriptorBindingInfo>* fp_BindingInfo,
+            vector<PeachCore::Vulkan::DescriptorBindingInfo>* fp_BindingInfo,
             const vector<uint32_t>& fp_SpirvBytecode,
             PeachCore::Logger* logger
         );
@@ -154,7 +137,7 @@ namespace PeachEditor::ShaderCompilerUtils
     static bool
         ReflectPushConstants
         (
-            vector<PushConstantInfo>* fp_PushConstants,
+            vector<PeachCore::Vulkan::PushConstantInfo>* fp_PushConstants,
             const vector<uint32_t>& fp_SpirvBytecode,
             PeachCore::Logger* logger
         );

@@ -18,6 +18,7 @@
 
 #include "StatusCodes.h"
 #include "LoggerFlags.h"
+#include "NodeDef.h"
 
 //////////////////////////////////////////////////////////// C++ --> C compatibility preprocessor defs ////////////////////////////////////////////////////////////
 
@@ -39,21 +40,9 @@
 
 #endif //C++ detection
 
-//////////////////////////////////////////////////////////// C version preprocessor defs ////////////////////////////////////////////////////////////
-
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
-    #define C23_CONSTEXPR constexpr
-#else
-    #define C23_CONSTEXPR 
-#endif
-
-//////////////////////////////////////////////////////////// Typedefs ////////////////////////////////////////////////////////////
-
-typedef uint64_t PEACH_NODE; //all nodes are only passed by ID
-
 //////////////////////////////////////////////////////////// Core API Functions ////////////////////////////////////////////////////////////
 
-PEACH_API C23_CONSTEXPR PEACH_STATUS_CODE
+PEACH_API PEACH_STATUS_CODE
     PEACH_StatusCodeToString(const PEACH_STATUS_CODE fp_StatusCodesize_t, size_t fp_BufferSize, char* fp_CharBuffer);
 
 PEACH_API PEACH_STATUS_CODE
@@ -70,44 +59,44 @@ PEACH_API PEACH_STATUS_CODE
     PEACH_ChangeScene(const char* fp_NewSceneName);
 
 PEACH_API PEACH_STATUS_CODE
-    PEACH_QueueRemovalByID(const PEACH_NODE fp_PeachNodeID); //queues for removal from scene tree at end of frame or whenever is convenient idk
+    PEACH_QueueRemovalByID(const PEACH_NodeID fp_PeachNodeID); //queues for removal from scene tree at end of frame or whenever is convenient idk
 
 PEACH_API PEACH_STATUS_CODE
     PEACH_QueueRemovalByName(const char* fp_PeachNodeName);
 
 PEACH_API PEACH_STATUS_CODE
-    PEACH_DuplicatePeachNode(const PEACH_NODE fp_OriginalNode, PEACH_NODE*const fp_DuplicatedNodeContainer);
+    PEACH_DuplicatePeachNode(const PEACH_NodeID fp_OriginalNode, PEACH_NodeID*const fp_DuplicatedNodeContainer);
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_SetNodeVisibility(const PEACH_NODE fp_NodeID, const bool fp_Visibility); //bool is fine since im only supporting C99+ and that has stdbool.h rawr >O<
+    PEACH_SetNodeVisibility(const PEACH_NodeID fp_NodeID, const bool fp_Visibility); //bool is fine since im only supporting C99+ and that has stdbool.h rawr >O<
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_ChangeNodeName(const PEACH_NODE fp_NodeID, const char* fp_NewName); 
+    PEACH_ChangeNodeName(const PEACH_NodeID fp_NodeID, const char* fp_NewName); 
 
 //////////////////////////////////////////////////////////////////////////////////////////// PeachNode2D Transformations ////////////////////////////////////////////////////////////////////////////////////////////
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_MoveNode2D(const PEACH_NODE fp_NodeID, const float fp_Dx, const float fp_Dy);
+    PEACH_MoveNode2D(const PEACH_NodeID fp_NodeID, const float fp_Dx, const float fp_Dy);
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_RotateNode2D(const PEACH_NODE fp_NodeID, const float fp_Rotation);
+    PEACH_RotateNode2D(const PEACH_NodeID fp_NodeID, const float fp_Rotation);
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_ScaleNode2D(const PEACH_NODE fp_NodeID, const float fp_Scale);
+    PEACH_ScaleNode2D(const PEACH_NodeID fp_NodeID, const float fp_Scale);
 
 //////////////////////////////////////////////////////////////////////////////////////////// Audio Operations ////////////////////////////////////////////////////////////////////////////////////////////
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_StreamSound(const PEACH_NODE fp_NodeID); 
+    PEACH_StreamSound(const PEACH_NodeID fp_NodeID); 
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_PlaySound(const PEACH_NODE fp_NodeID); 
+    PEACH_PlaySound(const PEACH_NodeID fp_NodeID); 
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_SelectAudioOutputDevice(const PEACH_NODE fp_NodeID); 
+    PEACH_SelectAudioOutputDevice(const PEACH_NodeID fp_NodeID); 
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_SelectAudioInputDevice(const PEACH_NODE fp_NodeID); 
+    PEACH_SelectAudioInputDevice(const PEACH_NodeID fp_NodeID); 
 
 
 

@@ -96,7 +96,7 @@ namespace PeachCore::Lua {
     }
 
     bool 
-        ScriptRuntime::CallOnEnter(ScriptInstance& fp_ScriptInstance, PEACH_NODE nodeID)
+        ScriptRuntime::CallOnEnter(ScriptInstance& fp_ScriptInstance, PEACH_NodeID nodeID)
     {
         if (not pm_LuaState or fp_ScriptInstance.TableRef == LUA_NOREF)
         {
@@ -117,7 +117,7 @@ namespace PeachCore::Lua {
 
         // Push 'self' (if you want) or nodeID
         // Example: pass nodeID
-        lua_pushinteger(pm_LuaState, static_cast<lua_Integer>(nodeID)); // stack: [ table, Init, nodeID ]
+        //lua_pushinteger(pm_LuaState, static_cast<lua_Integer>(nodeID)); // stack: [ table, Init, nodeID ]
 
         // Call: 1 arg, 0 returns
         int status = lua_pcall(pm_LuaState, 1, 0, 0);

@@ -9,7 +9,7 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "PeachAPI.h"
-#include "../Managers/GameManager.h"
+#include "Managers/GameManager.h"
 
 using namespace std; //can do this here since it's not included anywhere uwu
 
@@ -46,7 +46,7 @@ PEACH_API PEACH_STATUS_CODE
 }
 
 PEACH_API PEACH_STATUS_CODE
-    PEACH_QueueRemovalByID(const PEACH_NODE fp_PeachNodeID)
+    PEACH_QueueRemovalByID(const PEACH_NodeID fp_PeachNodeID)
 {
     //return PeachCore::GameManager::get_single().GetCurrentScene()->QueueNodeForRemoval(fp_PeachNodeID);
 
@@ -54,7 +54,7 @@ PEACH_API PEACH_STATUS_CODE
 }
 
 PEACH_API PEACH_STATUS_CODE
-    PEACH_DuplicatePeachNode(const PEACH_NODE fp_OriginalNode, PEACH_NODE*const  fp_DuplicatedNodeContainer)
+    PEACH_DuplicatePeachNode(const PEACH_NodeID fp_OriginalNode, PEACH_NodeID*const  fp_DuplicatedNodeContainer)
 {
     if (not fp_DuplicatedNodeContainer)
     {
@@ -62,13 +62,13 @@ PEACH_API PEACH_STATUS_CODE
         return PEACH_ERROR_NULLPTR_REF_PASSED;
     }
 
-    *fp_DuplicatedNodeContainer = 69; //OwO
+    fp_DuplicatedNodeContainer->Index = 69; //OwO
 
     return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_ChangeNodeName(const PEACH_NODE fp_NodeID, const char* fp_NewName)
+    PEACH_ChangeNodeName(const PEACH_NodeID fp_NodeID, const char* fp_NewName)
 {
 
     return PEACH_OK;
@@ -78,28 +78,28 @@ PEACH_API PEACH_STATUS_CODE
 
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_MoveNode2D(const PEACH_NODE fp_NodeID, const float fp_Dx, const float fp_Dy)
+    PEACH_MoveNode2D(const PEACH_NodeID fp_NodeID, const float fp_Dx, const float fp_Dy)
 {
 
     return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_RotateNode2D(const PEACH_NODE fp_NodeID, const float fp_Rotation)
+    PEACH_RotateNode2D(const PEACH_NodeID fp_NodeID, const float fp_Rotation)
 {
 
     return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_ScaleNode2D(const PEACH_NODE fp_NodeID, const float fp_Scale)
+    PEACH_ScaleNode2D(const PEACH_NodeID fp_NodeID, const float fp_Scale)
 {
 
     return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_SetNodeVisibility(const PEACH_NODE fp_NodeID, const bool fp_Visibility)
+    PEACH_SetNodeVisibility(const PEACH_NodeID fp_NodeID, const bool fp_Visibility)
 {
 
     return PEACH_OK;
@@ -108,28 +108,28 @@ PEACH_API PEACH_STATUS_CODE
 //////////////////////////////////////////////////////////////////////////////////////////// Audio Operations ////////////////////////////////////////////////////////////////////////////////////////////
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_StreamSound(const PEACH_NODE fp_NodeID)
+    PEACH_StreamSound(const PEACH_NodeID fp_NodeID)
 {
 
     return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_PlaySound(const PEACH_NODE fp_NodeID)
+    PEACH_PlaySound(const PEACH_NodeID fp_NodeID)
 {
 
     return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_SelectAudioOutputDevice(const PEACH_NODE fp_NodeID)
+    PEACH_SelectAudioOutputDevice(const PEACH_NodeID fp_NodeID)
 {
 
     return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
-    PEACH_SelectAudioInputDevice(const PEACH_NODE fp_NodeID)
+    PEACH_SelectAudioInputDevice(const PEACH_NodeID fp_NodeID)
 {
 
     return PEACH_OK;
@@ -137,7 +137,7 @@ PEACH_API PEACH_STATUS_CODE
 
 //////////////////////////////////////////////////////////////////////////////////////////// Error Handling ////////////////////////////////////////////////////////////////////////////////////////////
 
-PEACH_API C23_CONSTEXPR PEACH_STATUS_CODE
+PEACH_API PEACH_STATUS_CODE
     PEACH_StatusCodeToString(const PEACH_STATUS_CODE fp_StatusCode, size_t fp_BufferSize, char* fp_CharBuffer)
 {
     if (not fp_CharBuffer)
