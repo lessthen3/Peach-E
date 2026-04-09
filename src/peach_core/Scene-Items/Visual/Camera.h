@@ -284,7 +284,7 @@ namespace PeachCore {
             float farP
         )
             : 
-            pm_Forwards(glm::vec3(0.0f, 0.0f, -1.0f)),
+            pm_Position(position),
             pm_GlobalUp(up), 
             m_HorizontalRotation(yaw), 
             m_VerticalRotation(pitch),
@@ -292,7 +292,7 @@ namespace PeachCore {
             m_AspectRatio(aspect),
             m_NearClippingPlane(nearP),
             m_FarClippingPlane(farP),
-            pm_Position(position)
+            pm_Forwards(glm::vec3(0.0f, 0.0f, -1.0f))
         {
             UpdateCameraOrientationVectors();
             UpdateCameraMatrices();

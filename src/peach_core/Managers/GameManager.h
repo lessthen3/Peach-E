@@ -20,6 +20,12 @@
 #include "PhysicsManager.h"
 #include "NetworkManager.h"
 
+#include <thread>
+
+#ifndef __cpp_lib_jthread
+//idfk freebsd 15 is weird w its clang mang
+#endif
+
 //SHOULD MANAGE THE ENTIRE GAME ENGINE ON THE MAIN THREAD, IM NOT SURE IF ILL MOVE ALL THE IMPORTANT CODE FROM MAIN INTO HERE TO CLEAN THINGS UP
 
 //AND MAKE RESPONSIBILITES AND CODE IN GENERAL MORE CLEAN AND EASY TO READ
@@ -135,11 +141,11 @@ namespace PeachCore {
 
         //////////////////// Thread Handles ////////////////////
 
-        jthread pm_RenderThread;
-        jthread pm_PhysicsThread;
-        jthread pm_ResourceThread;
-        jthread pm_AudioThread;
-        jthread pm_NetworkThread;
+        thread pm_RenderThread;
+        thread pm_PhysicsThread;
+        thread pm_ResourceThread;
+        thread pm_AudioThread;
+        thread pm_NetworkThread;
 
         ThreadName pm_RequiredThreads = ThreadName::NO_THREAD; //required threads for execution
 

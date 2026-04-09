@@ -14,8 +14,14 @@
 #include "../Utils/Logger.h"
 
 ///DotNet
-#include <dotnet/hostfxr.h>
-#include <dotnet/coreclr_delegates.h>
+
+#ifdef PEACH_PLATFORM_FREEBSD
+    #include <dotnet9/hostfxr.h>
+    #include <dotnet9/coreclr_delegates.h>
+#else
+    #include <dotnet10/hostfxr.h>
+    #include <dotnet10/coreclr_delegates.h>
+#endif
 
 ///STL
 #include <vector>

@@ -94,6 +94,16 @@ target_include_directories(peach_core PUBLIC
     ${PROJECT_SOURCE_DIR}/src/peach_core #because it's prettier and easier for including owo
 )
 
+if(PEACH_BSD) #FreeBSD only supports dotnet 9, but pls get that alpha 10 into pkg pwetty pwease owo
+    target_include_directories(peach_core PUBLIC
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/include_dotnet9 
+    )
+else()
+    target_include_directories(peach_core PUBLIC 
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/include_dotnet10
+    )
+endif()
+
 set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach_core PIC friendly UwU
 
 ####################################### peach_core src includes
@@ -253,6 +263,24 @@ elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
+elseif(PEACH_BSD) #Xxx: doing this took decades off my life ;w;
+
+    ############ GL extensions for legacy systems
+
+    STATIC_IMPORT(glew 
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/freebsd64/libGLEW.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/freebsd64/libGLEWd.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
+    )
+
+    ############ Windowing and Input
+
+    STATIC_IMPORT(SDL3 
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/freebsd64/debug/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/freebsd64/release/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
+    )
+
 else()
     message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
 endif()
@@ -310,16 +338,17 @@ elseif(PEACH_MACOS) #TODO fix iokit and other frameworks that dont exist on ios 
 
 elseif(PEACH_BSD)
 
+    # Gotta let the linker know where to find GL since bsd is a special little kitty >O<
+    link_directories(/usr/local/lib)
+    include_directories(/usr/local/include)
+
     find_package(OpenGL REQUIRED)
 
     target_link_libraries(peach_core PUBLIC
         GL
         glew
-    )
-
-    # FreeBSD uses clang by default, pthread is separate
-    target_link_libraries(peach_core PUBLIC 
-        pthread
+        usbhid # needed for SDL3
+        pthread # FreeBSD uses clang by default, pthread is separate
     )
 
 elseif(PEACH_HAIKU)    
@@ -334,9 +363,9 @@ elseif(PEACH_HAIKU)
     )
 
 elseif(PEACH_WASM)
-    target_link_options(peach_core PUBLIC 
+    target_link_options(peach_core PUBLIC #wasm is weird mang, but I get it owo
     "-sMAX_WEBGL_VERSION=2" 
-    "-sUSE_SDL=3" # Or 3 if you have the port
+    "-sUSE_SDL=3" 
     )
 endif()
 
@@ -420,7 +449,7 @@ elseif(PEACH_WASM)
     target_compile_definitions(peach_core PUBLIC
         PEACH_PLATFORM_WASM
         PEACH_PLATFORM_WEB
-        PEACH_ARCH_WASM32
+        PEACH_ARCH_WASM32 #ik that wasm3 or w/e is 64 bit idfk owo uwu
     )
 
 elseif(PEACH_VITA)
@@ -611,7 +640,7 @@ if(BUILD_PEACH_EDITOR)
     endif(PEACH_MACOS)
 
     # tell astcenc which ISA to build for based on our platform
-    if(PEACH_WINDOWS OR PEACH_LINUX)
+    if(PEACH_WINDOWS OR PEACH_LINUX OR PEACH_BSD)
         set(ASTCENC_ISA_SSE41 ON CACHE BOOL "" FORCE)
     endif()
 
@@ -720,15 +749,15 @@ if(BUILD_PEACH_EDITOR)
         STATIC_IMPORT(nethost 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/release/libnethost.lib" #juicy static linkage UwU
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/debug/nethost.lib" #debug dll
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet10"
         )
 
         ############ shaderc
 
         STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/release_v20260330/shaderc_combined.lib" 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/win64/debug_v20260330/shaderc_combined.lib" 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64/release_v20260330/shaderc_combined.lib" 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64/debug_v20260330/shaderc_combined.lib" 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
     elseif(PEACH_MACOS)
@@ -771,15 +800,15 @@ if(BUILD_PEACH_EDITOR)
         STATIC_IMPORT(nethost 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steve64/libnethost_universal.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steve64/libnethost_universal.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet10"
         )
 
         ############ Vulkan Specific Imports
 
         STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steve64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/steve64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/steve64/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/steve64/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
     elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
@@ -788,8 +817,8 @@ if(BUILD_PEACH_EDITOR)
         ############ Pretty Fonts
 
         STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/release/freetype.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/debug/freetyped.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/tux64/release/libfreetype.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/tux64/debug/libfreetyped.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
         )
 
@@ -824,19 +853,72 @@ if(BUILD_PEACH_EDITOR)
         STATIC_IMPORT(nethost 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/tux64/libnethost.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/tux64/libnethost.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet10"
         )
 
         ############ Vulkan Specific Imports
 
         STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/tux64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/vulkan/include"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/tux64/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/tux64/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
+        )
+
+    elseif(PEACH_BSD) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
+        # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"
+
+        ############ Pretty Fonts
+
+        STATIC_IMPORT(freetype 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64/libfreetype.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64/libfreetyped.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
+        )
+
+        STATIC_IMPORT(msdfgen_core 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/release/libmsdfgen-core.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/debug/libmsdfgen-core.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
+        )
+
+        STATIC_IMPORT(msdfgen_ext 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/release/libmsdfgen-ext.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/debug/libmsdfgen-ext.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
+        )
+
+        # ############ Asset Importing
+
+        STATIC_IMPORT(assimp 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libassimp.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libassimp.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
+        )
+
+        STATIC_IMPORT(assimp_draco 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libdraco.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libdraco.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
+        )
+
+        ############ dotnet stuff
+
+        STATIC_IMPORT(nethost 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/freebsd64/libnethost.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/freebsd64/libnethost.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet9"
+        )
+
+        ############ Vulkan Specific Imports
+
+        STATIC_IMPORT(shaderc 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
     else()
-        message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
+        message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH EDITOR IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX/FREEBSD SORRY NOT SORRY")
     endif()
 
     ####################################### Compiler Options and Definitions

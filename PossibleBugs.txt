@@ -1,1 +1,5 @@
 - mixing <cstdint> and <stdint.h> might lead to some fixed size bug issues regarding serialization I should look into that owo
+
+
+
+USING DOTNET 9.0.14 because latest port to FreeBSD probably why godot uses it ngl owo icu

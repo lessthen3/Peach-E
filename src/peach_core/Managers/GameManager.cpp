@@ -275,7 +275,7 @@ namespace PeachCore
         //otherwise we just leave it be
 
         //always going to require resource thread for loading peachey
-        pm_ResourceThread = jthread
+        pm_ResourceThread = thread
         (
             &ResourceManager::ResourceLoop, 
             std::ref(ResourceManager::get_single()), 
@@ -293,7 +293,7 @@ namespace PeachCore
 #ifdef PEACH_RENDERER_VULKAN
             if(fp_RenderingBackend == RendererType::Vulkan)
             {
-                pm_RenderThread = jthread
+                pm_RenderThread = thread
                 (
                     &RenderingManager::RenderLoopVK,
                     std::ref(RenderingManager::get_single()),
@@ -308,7 +308,7 @@ namespace PeachCore
 #ifdef PEACH_RENDERER_OPENGL
             if (fp_RenderingBackend == RendererType::OpenGL)
             {
-                pm_RenderThread = jthread
+                pm_RenderThread = thread
                 (
                     &RenderingManager::RenderLoopGL,
                     std::ref(RenderingManager::get_single()),
@@ -323,7 +323,7 @@ namespace PeachCore
 #ifdef PEACH_RENDERER_METAL
             if (fp_RenderingBackend == RendererType::Metal)
             {
-                pm_RenderThread = jthread
+                pm_RenderThread = thread
                 (
                     &RenderingManager::RenderLoopMetal,
                     std::ref(RenderingManager::get_single()),
@@ -344,7 +344,7 @@ namespace PeachCore
 
         if (pm_RequiredThreads & ThreadName::AudioThread)
         {
-            pm_AudioThread = jthread
+            pm_AudioThread = thread
             (
                 &AudioManager::AudioLoop, 
                 std::ref(AudioManager::get_single()), 
@@ -362,7 +362,7 @@ namespace PeachCore
 
         if (pm_RequiredThreads & ThreadName::NetworkThread)
         {
-            pm_NetworkThread = jthread
+            pm_NetworkThread = thread
             (
                 &NetworkManager::NetworkLoop,
                 std::ref(NetworkManager::get_single()), 
@@ -381,7 +381,7 @@ namespace PeachCore
         {
             if(fp_Is3D)
             {
-                pm_PhysicsThread = jthread
+                pm_PhysicsThread = thread
                 (
                     &PhysicsManager::PhysicsLoop3D, 
                     std::ref(PhysicsManager::get_single()),
@@ -391,7 +391,7 @@ namespace PeachCore
             }
             else
             {
-                pm_PhysicsThread = jthread
+                pm_PhysicsThread = thread
                 (
                     &PhysicsManager::PhysicsLoop2D, 
                     std::ref(PhysicsManager::get_single()), 

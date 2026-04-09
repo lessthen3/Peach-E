@@ -23,8 +23,12 @@ extern "C"
 }
 
 ///Ew Microsoft
-#include <dotnet/nethost.h>
 
+#ifdef PEACH_PLATFORM_FREEBSD
+    #include <dotnet9/nethost.h>
+#else
+    #include <dotnet10/nethost.h>
+#endif
 
 namespace PeachEditor {
     using namespace std;

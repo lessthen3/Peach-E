@@ -76,8 +76,11 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
     f_OutputLines = []
 
     # keywords that indicate an error line — lowercase check
-    f_ErrorKeywords   = ("error:", "fatal error:", "linker error", "lnk", "c2", "c3", "ld:", "undefined symbol", "referenced from")
-    f_WarningKeywords = ("warning:",)
+    f_ErrorKeywords   = (
+        "error:", "fatal error:", "linker error", "lnk", "c2", "c3", "ld:", "undefined symbol", "referenced from"
+        ,"failed:", "ninja:", "cc:", "clang:", "command failed"
+    )
+    f_WarningKeywords = ("warning:")
 
     try:
         for line in f_Process.stdout:
@@ -150,7 +153,7 @@ def WriteBuildSummaryMarkdown(fp_BaseDir: str, fp_PrintErrors: bool, fp_PrintWar
 
 ############# Main CMake Function #############
 
-def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_ShouldExportCommands : bool, fp_IsVerbose : bool) -> bool:
+def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_ExtraArgs: list, fp_ShouldExportCommands : bool, fp_IsVerbose : bool) -> bool:
 
     f_GeneratorMap = {
         "vs2026": "Visual Studio 18 2026",
@@ -186,14 +189,17 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_S
 
     f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator]]
 
+    if fp_TargetPlatform == "freebsd":
+        print(f"got here w platform name {fp_TargetPlatform}")
+
+        f_CMakeConfigCommand.append("-DOPENGL_INCLUDE_DIR=/usr/local/include") #so that cmake will look for GL headers in the right place ^w^
+
     if fp_ShouldExportCommands:
         f_CMakeConfigCommand.append('-DCMAKE_EXPORT_COMPILE_COMMANDS=ON');
     
-    f_ExtraBuildConfigs = []
-
     if fp_IsVerbose:
         if fp_Generator == "vs2022":
-            f_ExtraBuildConfigs += ['--verbose', '--', '-verbosity:diagnostic']
+            fp_ExtraArgs += ['--verbose', '--', '-verbosity:diagnostic']
 
     
     if not f_IsMultiConfig:
@@ -233,7 +239,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_S
         try:
             print(CreateColouredText(f"[INFO]: Running CMake single config build for {fp_BuildType}...", "green"))
 
-            run_command_with_live_output(['cmake', '--build', 'build'] + f_ExtraBuildConfigs)
+            run_command_with_live_output(['cmake', '--build', 'build'] + fp_ExtraArgs)
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText(f"[ERROR]: CMake single config {fp_BuildType} build process failed!", "red"))
@@ -249,7 +255,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_S
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Debug...", "green"))
 
-            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Debug'] + f_ExtraBuildConfigs)
+            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Debug'] + fp_ExtraArgs)
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake debug build process failed!", "red"))
@@ -263,7 +269,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_S
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Release...", "green"))
 
-            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Release'] + f_ExtraBuildConfigs)
+            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Release'] + fp_ExtraArgs)
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake release build process failed!", "red"))
@@ -462,6 +468,13 @@ def main() -> bool:
 
         print(CreateColouredText(f"[INFO]: Auto-detected platform: {f_ToolchainKey} ~ nya~", "bright cyan"))
     
+    ############# Thread Limiter #############
+
+    f_ExtraArgs = []
+
+    if f_SystemPlatform == "FreeBSD":
+        f_ExtraArgs.extend(["--", "-j", "2"])
+
     ############# Validate Build Config #############
 
     f_BuildType = "nothing"
@@ -520,7 +533,7 @@ def main() -> bool:
 
     ############# Run Build Fingers Crossed >w< #############
 
-    build_result = run_cmake(f_BuildType, f_DesiredGenerator, f_ToolchainKey, f_ShouldExportCompileCommands, f_IsVerbose)
+    build_result = run_cmake(f_BuildType, f_DesiredGenerator, f_ToolchainKey, f_ExtraArgs, f_ShouldExportCompileCommands, f_IsVerbose)
 
     ############# Provide Printout #############
 
