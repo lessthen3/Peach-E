@@ -48,8 +48,8 @@
 third_party/peach_editor/assimp/win64/release_v*/
 third_party/peach_editor/assimp/win64/debug_v*/
 
-third_party/peach_editor/vulkan/win64/release_v*/
-third_party/peach_editor/vulkan/win64/debug_v*/
+third_party/peach_editor/shaderc_combined/win64/release_v*/
+third_party/peach_editor/shaderc_combined/win64/debug_v*/
 
 #build errors
 

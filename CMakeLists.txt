@@ -864,7 +864,7 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
-    elseif(PEACH_BSD) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
+    elseif(PEACH_BSD) #XXX: ;A;
         # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64"
 
         ############ Pretty Fonts

@@ -3,7 +3,7 @@ Peach-E is a modern, cross-platform, open source 2D/3D game engine built with C+
 
 Peach-E is and __will always be 100% free__. No stupid licensing garbage and no royalties. Built by a game developer, for game developers of any skill level.
 
-Currently you can target Windows(x64), MacOS(ARM64) and Linux(x64). Native support for FreeBSD, Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, Windows ARM and PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
+Currently you can target Windows(x64), MacOS(ARM64) and Linux(x64), FreeBSD(x64). Native support for Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, Windows ARM and PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
 
 Peach-E can be used headless with C++, or via the peach_api headers which utilizes a C calling convention so linking against C, Rust or whatever uses the calling convention is supported.
 
@@ -107,4 +107,10 @@ os= Ubuntu 22.04 LTS, Arch idk the version
 arch= x86_64
 compiler= clang 19
 compiler= gcc 12(? idk i forget the version)
+```
+
+```ini
+os= FreeBSD 15 (owo)
+arch= x86_64
+compiler= clang 19 (gcc rlly doesn't like the PCH and randomized memory addressing)
 ```

@@ -524,7 +524,7 @@ def main() -> bool:
         if not unpack_versioned_dep(assimp_dir, "release_v"):
             return False
         
-        f_ShadercDir = f_BaseDir + "/third_party/peach_editor/vulkan/win64"
+        f_ShadercDir = f_BaseDir + "/third_party/peach_editor/shaderc_combined/win64"
 
         if not unpack_versioned_dep(f_ShadercDir, "debug_v"): #the compressed deps are always named using debug_v* or release_v*
             return False
