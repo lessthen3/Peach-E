@@ -3,3 +3,143 @@
 
 
 USING DOTNET 9.0.14 because latest port to FreeBSD probably why godot uses it ngl owo icu
+
+WEIRD ERRORS FREEBSD 15, Intel i7 4790k iGPU owo: [2026-04-09 14:40:12.402][warning][VulkanRenderer] (VulkanRenderer.cpp ln 328, PeachCore::Vulkan::Renderer::EndFrame): VK_SUBOPTIMAL_KHR happened idk y
+EndFrame() failed exit, StatusCode: 1024
+
+[2026-04-09 14:40:15.123][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+X Error of failed request:  BadAccess (attempt to access private resource denied)
+  Major opcode of failed request:  130 ()
+  Minor opcode of failed request:  1
+  Serial number of failed request:  3217
+  Current serial number in output stream:  3234
+Abort trap                 (core dumped) ./Peach_Engine
+[uwu@rawr ~/starlight_brew/Peach-E/build]$ 
+
+
+use x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:53.962][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:54.142][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:54.232][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+mouse x : 0, y: 0
+acquired image index: 1 currentframe: 1
+[2026-04-09 14:39:54.413][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:54.504][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:54.594][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:54.686][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:54.776][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:54.866][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:54.958][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:55.137][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+mouse x : 0, y: 0
+acquired image index: 1 currentframe: 1
+[2026-04-09 14:39:55.317][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+mouse x : 0, y: 0
+acquired image index: 0 currentframe: 0
+[2026-04-09 14:39:55.408][info][VulkanRenderer]: Attempting to recreate swapchain due to window resize
+X Error of failed request:  BadAccess (attempt to access private resource denied)
+  Major opcode of failed request:  130 ()
+  Minor opcode of failed request:  1
+  Serial number of failed request:  3296
+  Current serial number in output stream:  3325
+Abort trap                 (core dumped) ./Peach_Engine
+[uwu@rawr ~/starlight_brew/Peach-E/build]$ ./Peach_Engine
+[2026-04-09 14:40:05.229][debug][GameManager]: main_thread logger successfully initialized
+[2026-04-09 14:40:05.229][debug][GameManager]: PhysFS initialized at root: ./
+[2026-04-09 14:40:05.311][debug][ResourceManager]: ResourceThreadLogger successfully initialized
+[2026-04-09 14:40:05.311][info][ResourceManager]: ResourceManager successfully initialized all queues
+Hello World!
+
+[2026-04-09 14:40:05.311][warning][Peach-E] (GameManager.cpp ln 411, PeachCore::GameManager::InitializeThreads): NEW ENGINE ON THE BLOCK MY SLIME
+[2026-04-09 14:40:05.312][trace][Peach-E]: Success! This Built Correctly
+[2026-04-09 14:40:05.312][debug][RenderingManager]: RenderingLogger successfully initialized
+[2026-04-09 14:40:05.312][debug][NetworkManager]: NetworkLogger successfully initialized
+[2026-04-09 14:40:05.312][info][RenderingManager]: RenderingManager successfully retrieved loaded resource queue from ResourceManager
+[2026-04-09 14:40:05.312][info][RenderingManager]: RenderingManager successfully initialized the draw command queue
+[2026-04-09 14:40:05.312][debug][AudioManager]: AudioLogger successfully initialized
+[2026-04-09 14:40:05.312][info][AudioManager]: AudioManager successfully retrieved loaded resource queue from ResourceManager
+[2026-04-09 14:40:05.312][info][AudioManager]: AudioManager successfully initialized the audio command queue
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+'-avx512er' is not a recognized feature for this target (ignoring feature)
+'-avx512pf' is not a recognized feature for this target (ignoring feature)
+[2026-04-09 14:40:05.370][info][RenderingManager]: Success! VulkanRenderer initialized properly, full rendering capabilities should be ready UwU
+[2026-04-09 14:40:05.370][info][GameManager]: Successfully retrieved Resource Loading Command Queue from ResourceManager
+[2026-04-09 14:40:05.370][info][GameManager]: Successfully retrieved Draw Command Queue from RenderingManager
+[2026-04-09 14:40:05.370][info][GameManager]: Successfully retrieved Audio Command Queue from AudioManaager
+[2026-04-09 14:40:05.370][info][GameManager]: Successfully retrieved Resource Loading Command Queue from ResourceManager
+[2026-04-09 14:40:05.370][debug][RenderingManager]: InputLogger successfully initialized
+mouse x : 0, y: 0
+
+still worked ig idk im tired owo
