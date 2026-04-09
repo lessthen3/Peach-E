@@ -76,14 +76,6 @@ namespace PeachCore {
 
         rendering_logger->Debug("RenderingLogger successfully initialized", "RenderingManager");
 
-        //////////////////// Intialize InputManager ////////////////////
-
-        if (not InputManager::get_single().Initialize(fp_LogOutputDirectory, PEACH_LOGGER_DEFAULT_FLAGS))
-        {
-
-            return false;
-        }
-
         //////////////////// Initialize Loading and Command Queues ////////////////////
 
         if (not InitializeLoadingQueue())
@@ -300,7 +292,7 @@ namespace PeachCore {
         PEACH_STATUS_CODE
             RenderingManager::InitializeOpenGL()
         {
-            if (pm_IsInitialized)
+            if (pm_IsOpenGLInitialized)
             {
                 rendering_logger->Warning("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager");
                 return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL;
@@ -320,6 +312,8 @@ namespace PeachCore {
             rendering_logger->Debug("GLEW initialized properly", "RenderingManager");
 
             rendering_logger->Info("Successfully initialized OpenGL!", "RenderingManager");
+
+            pm_IsOpenGLInitialized = true;
 
             return PEACH_OK;
         }

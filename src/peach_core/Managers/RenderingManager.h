@@ -194,6 +194,8 @@ namespace PeachCore {
 
         unique_ptr<unsigned char> pm_DefaultTexture = nullptr;
 
+        bool pm_IsOpenGLInitialized = false;
+
     public: 
         atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
         atomic<bool> pm_IsInitialized{ false };

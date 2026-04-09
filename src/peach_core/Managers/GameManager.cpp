@@ -144,6 +144,14 @@ namespace PeachCore
             return false;
         }
 
+        //////////////////// Intialize InputManager ////////////////////
+
+        if (not InputManager::get_single().Initialize(fp_RootPath + "/logs", PEACH_LOGGER_DEFAULT_FLAGS))
+        {
+
+            return false;
+        }
+
         //LoadScriptRuntime(fp_BootConfPath, ScriptRuntimeType::Dotnet); //WARNING: this just loads the dotnet stuff for now
 
         //////////////////////////////////////////////

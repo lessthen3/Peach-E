@@ -96,7 +96,7 @@ namespace PeachEditor {
 #ifdef PEACH_PLATFORM_APPLE
             auto f_RenderingBackend = PeachCore::RendererType::Metal; //TESTING: apple only supports metal but the other plats need a default renderer and meta data to save the backend set by usr
 #else
-            auto f_RenderingBackend = PeachCore::RendererType::Vulkan;
+            auto f_RenderingBackend = PeachCore::RendererType::OpenGL;
 #endif
 
             //////////////////// Main Initialization Calls //////////////////// 
