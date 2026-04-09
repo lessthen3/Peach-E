@@ -168,7 +168,7 @@ namespace PeachCore
 
         //LoadPluginsFromConfigs(f_ListOfPluginsToLoad);
 
-        InitializePlugins();
+        //InitializePlugins();
 
         //////////////////////////////////////////////
         // Load Startup Configs
@@ -521,7 +521,7 @@ namespace PeachCore
         GameManager::StartMainGameLoop()
     {
         const float PHYSICS_TIME_STEP = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;  // Fixed physics update rate 
-        float INPUT_POLL_TIME_STEP = 1.0f / USER_DEFINED_RENDER_FPS;  // Should be variable to allow dynamic adjustment in-game
+        float INPUT_POLL_TIME_STEP = 1.0f / USER_DEFINED_POLLING_RATE;  // Should be variable to allow dynamic adjustment in-game
 
         float f_PhysicsAccumulator = 0.0f;
         float f_InputAccumulator = 0.0f;
@@ -586,65 +586,65 @@ namespace PeachCore
     // Plugin Stuff
     //////////////////////////////////////////////
 
-    void
-        GameManager::LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad)
-    {
-        for (const auto& lv_PluginPath : fp_ListOfPluginsToLoad)
-        {
-            NativeScriptData f_TempPlugin = {};
-            ResourceManager::get_single().LoadNativeSciptInstanceFFS(lv_PluginPath, f_TempPlugin);
+    //void
+    //    GameManager::LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad)
+    //{
+    //    for (const auto& lv_PluginPath : fp_ListOfPluginsToLoad)
+    //    {
+    //        NativeScriptData f_TempPlugin = {};
+    //        ResourceManager::get_single().LoadNativeSciptInstanceFFS(lv_PluginPath, f_TempPlugin);
 
-            pm_NativeScriptPlugins.emplace_back(move(f_TempPlugin.Instance), f_TempPlugin.Handle);
-        }
-    }
+    //        pm_NativeScriptPlugins.emplace_back(move(f_TempPlugin.Instance), f_TempPlugin.Handle);
+    //    }
+    //}
 
-    void 
-        GameManager::InitializePlugins()
-        const
-    {
-        for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
-        {
-            lv_PluginInfo.Instance->Initialize();
-        }
-    }
+    //void 
+    //    GameManager::InitializePlugins()
+    //    const
+    //{
+    //    for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
+    //    {
+    //        lv_PluginInfo.Instance->Initialize();
+    //    }
+    //}
 
-    void 
-        GameManager::UpdatePlugins(float fp_TimeSinceLastFrame)
-        const
-    {
-        for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
-        {
-            lv_PluginInfo.Instance->Update(fp_TimeSinceLastFrame);
-        }
-    }
+    //void 
+    //    GameManager::UpdatePlugins(float fp_TimeSinceLastFrame)
+    //    const
+    //{
+    //    for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
+    //    {
+    //        lv_PluginInfo.Instance->Update(fp_TimeSinceLastFrame);
+    //    }
+    //}
 
-    void 
-        GameManager::ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
-        const
-    {
-        for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
-        {
-            lv_PluginInfo.Instance->ConstantUpdate(fp_TimeSinceLastFrame);
-        }
-    }
+    //void 
+    //    GameManager::ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
+    //    const
+    //{
+    //    for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
+    //    {
+    //        lv_PluginInfo.Instance->ConstantUpdate(fp_TimeSinceLastFrame);
+    //    }
+    //}
 
-    void 
-        GameManager::ShutdownPlugins()
-    {
-        for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
-        {
-            lv_PluginInfo.Instance->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
+    //void 
+    //    GameManager::ShutdownPlugins()
+    //{
+    //    for (auto& lv_PluginInfo : pm_NativeScriptPlugins)
+    //    {
+    //        lv_PluginInfo.Instance->Shutdown(); //plugin devs better cleanup after themselves, nothing I can do to ensure safety here uwu
 
-            if (lv_PluginInfo.Handle != nullptr)
-            {
-                DYNLIB_UNLOAD(lv_PluginInfo.Handle);
-            }
+    //        if (lv_PluginInfo.Handle != nullptr)
+    //        {
+    //            DYNLIB_UNLOAD(lv_PluginInfo.Handle);
+    //        }
 
-            lv_PluginInfo.Instance.reset(); //clear plugin and let it delete but should change this to be explicit and not inside the plugin itself shutdown is sufficient tbh
-        }
+    //        lv_PluginInfo.Instance.reset(); //clear plugin and let it delete but should change this to be explicit and not inside the plugin itself shutdown is sufficient tbh
+    //    }
 
-        pm_NativeScriptPlugins.clear(); //wait why am i clearing plugin handles before unloading them LMFAO, XXX: fixed it uwu ><
-    }
+    //    pm_NativeScriptPlugins.clear(); //wait why am i clearing plugin handles before unloading them LMFAO, XXX: fixed it uwu ><
+    //}
 
     //////////////////////////////////////////////
     // Core Runner Functions

@@ -63,11 +63,13 @@ namespace PeachCore {
                 Logger* logger
             )
         {
-            if (not filesystem::exists(fp_DylibPath))
+            if (not filesystem::exists(fp_DylibPath) and filesystem::is_regular_file(fp_DylibPath))
             {
                 logger->Error(fmt::format("Library path does not exist: '{}'", fp_DylibPath), "DynamicLoader");
                 return nullptr;
             }
+
+            //logger->Debug(fmt::format("Successfully located DLL at: {}", fp_DylibPath), "DynamicLoader");
 
             DYNLIB_HANDLE f_LibraryHandle = DYNLIB_LOAD(fp_DylibPath.c_str());
 

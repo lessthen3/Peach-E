@@ -103,7 +103,7 @@ namespace PeachCore {
         //////////////////// FPS Vars ////////////////////
 
         size_t USER_DEFINED_CONSTANT_UPDATE_FPS = 60u;
-        size_t USER_DEFINED_RENDER_FPS = 10u; //Needs to be adjustable in-game so no const >w<
+        size_t USER_DEFINED_POLLING_RATE = 10u; //Needs to be adjustable in-game so no const >w<
 
         float pm_CurrentTimeScale = 1.0f;
 
@@ -262,22 +262,22 @@ namespace PeachCore {
 
         //////////////////////////////////////// Plugin Stuff ////////////////////////////////////////
 
-        void
-            InitializePlugins()
-            const;
+        //void
+        //    InitializePlugins()
+        //    const;
 
-        void
-            UpdatePlugins(float fp_TimeSinceLastFrame)
-            const;
+        //void
+        //    UpdatePlugins(float fp_TimeSinceLastFrame)
+        //    const;
 
-        void
-            ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
-            const;
+        //void
+        //    ConstantUpdatePlugins(float fp_TimeSinceLastFrame)
+        //    const;
 
-        void
-            ShutdownPlugins();
+        //void
+        //    ShutdownPlugins();
 
-        void
-            LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad);
+        //void
+        //    LoadPluginsFromConfigs(const vector<string>& fp_ListOfPluginsToLoad);
     };
 }

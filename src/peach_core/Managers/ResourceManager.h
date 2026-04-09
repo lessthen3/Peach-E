@@ -24,7 +24,7 @@
 // Language Support
 //////////////////////////////////////////////
 
-#include "../Language-Support/NativeScript.h"
+#include "peach_api/NativeScriptDef.h"
 #include "../Language-Support/DotnetRuntime.h"
 #include "../Language-Support/LuaScriptRuntime.h"
 
@@ -33,8 +33,6 @@
 #include <miniaudio/miniaudio.h>
 #include <moody_camel/readerwriterqueue.h>
 
-typedef NativeScript* (*CreateNativeScriptFunc)();
-typedef void (*DestroyNativeScriptFunc)(NativeScript*);
 
 namespace PeachCore {
 
@@ -158,8 +156,8 @@ namespace PeachCore {
 
     struct NativeScriptData
     {
-        unique_ptr<NativeScript, DestroyNativeScriptFunc> Instance = { nullptr, nullptr }; //>O<
-        DYNLIB_HANDLE Handle = nullptr; //>w<
+        PEACH_ScriptDef ScriptDef = {}; // function pointers + memory associated w the instance
+        DYNLIB_HANDLE   Handle = nullptr; // null for statically registered scripts
     };
 
     //////////////////////////////////////////////

@@ -582,43 +582,31 @@ namespace PeachCore {
         ResourceManager::LoadNativeSciptInstanceFFS
         (
             const string& fp_PluginFilePath,
-            NativeScriptData& fp_Plugin
+            NativeScriptData& op_ScriptDataOut
         )
         const
     {
-        DYNLIB_HANDLE f_Handle;
-
-        if (not (filesystem::exists(fp_PluginFilePath) and filesystem::is_regular_file(fp_PluginFilePath)))
-        {
-            resource_logger->Error("Failed to locate DLL at: " + fp_PluginFilePath, "ResourceManager");
-            return false;
-        }
-
-        f_Handle = DYNLIB_LOAD(fp_PluginFilePath.c_str());
-        resource_logger->Debug("Successfully located DLL at: " + fp_PluginFilePath, "ResourceManager");
+        DYNLIB_HANDLE f_Handle = DynamicLoader::LoadDynamicLibrary(fp_PluginFilePath, resource_logger.get());
 
         if (not f_Handle)
         {
-            resource_logger->Error("Failed to load plugin at path: " + fp_PluginFilePath, "ResourceManager");
+
             return false;
         }
 
-        resource_logger->Debug("Successfully loaded plugin at: " + fp_PluginFilePath, "ResourceManager");
+        auto f_GetDef = (PEACH_GetScriptDefFn)DYNLIB_GETSYM(f_Handle, "PEACH_GetScriptDef");
 
-        auto f_CreateFunc = (CreateNativeScriptFunc)DYNLIB_GETSYM(f_Handle, "createPlugin");
-        auto f_DestroyFunc = (DestroyNativeScriptFunc)DYNLIB_GETSYM(f_Handle, "destroyPlugin");
-
-        if (not f_CreateFunc or not f_DestroyFunc)
+        if (not f_GetDef)
         {
-            resource_logger->Error("Failed to find CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager");
+            resource_logger->Error(fmt::format("Plugin missing PEACH_GetScriptDef symbol: {}", fp_PluginFilePath), "ResourceManager");
             DYNLIB_UNLOAD(f_Handle);
             return false;
         }
 
         resource_logger->Debug("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager");
 
-        fp_Plugin.Instance = unique_ptr<NativeScript, DestroyNativeScriptFunc>(f_CreateFunc(), f_DestroyFunc); //creates smrt poiner with destructor tied to it;
-        fp_Plugin.Handle = f_Handle;
+        op_ScriptDataOut.ScriptDef = f_GetDef(nullptr); // nullptr = single-script plugin
+        op_ScriptDataOut.Handle = f_Handle;
 
         return true;
     }
