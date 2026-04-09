@@ -94,12 +94,14 @@ That's it. Plain and simple.
 os= Windows
 arch= x86_64
 compiler= msvc 193 static
+hardware= ryzen 5950x + rx 9070xt
 ```
 
 ```ini
 os= MacOS 12
 arch= armv8
 compiler= apple-clang 16-17
+hardware= macbook pro m4 pro, mac mini m4
 ```
 
 ```ini
@@ -107,10 +109,12 @@ os= Ubuntu 22.04 LTS, Arch idk the version
 arch= x86_64
 compiler= clang 19
 compiler= gcc 12(? idk i forget the version)
+hardware= [ryzen 5950x + rx 9070xt], [ryzen 7 7745hx + rtx 4070]
 ```
 
 ```ini
 os= FreeBSD 15 (owo)
 arch= x86_64
-compiler= clang 19 (gcc rlly doesn't like the PCH and randomized memory addressing)
+compiler= clang 19 (gcc rlly doesn"'"t like the PCH and randomized memory addressing)
+hardware= intel i7 4790k iGPU
 ```
