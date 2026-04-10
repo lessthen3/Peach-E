@@ -84,7 +84,7 @@ namespace PeachCore {
     // Private Destructor and Constructor
     //////////////////////////////////////////////
     private:
-        ~GameManager() = default;
+        ~GameManager();
         GameManager() = default;
 
     //////////////////////////////////////////////

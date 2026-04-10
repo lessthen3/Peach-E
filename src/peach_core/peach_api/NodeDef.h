@@ -31,9 +31,12 @@ extern "C"
         PEACH_FLAGS_IS_PAUSABLE = (1u << 0),
         PEACH_FLAGS_IS_ACTIVE = (1u << 1),
         PEACH_FLAGS_IS_VISIBLE = (1u << 2),
-        PEACH_FLAGS_IS_QUEUED_FOR_REMOVAL = (1u << 3)
+        PEACH_FLAGS_IS_QUEUED_FOR_REMOVAL = (1u << 3),
+        PEACH_FLAGS_IS_INPUT_POLLING_ACTIVE = (1u << 4), // for easily checking if a node script known at export and build time has an input callback function for polling owo
+        PEACH_FLAGS_SHOULD_UPDATE_BE_CALLED = (1u << 5) //eg for games driven by user interaction with elements that only react to input
     } PEACH_NodeFlags;
 
+    //XXX: this is used for indexing into the tuple on SceneTree to determine which plf::colony will be accessed so these absolutely need to agree w the c++ internals owo
     typedef enum PEACH_NodeType // this doesnt really need to be a bit mask tbh idk, future me uwu: fixed it owo
     {
         PEACH_TYPE_RENDER_2D = 0,

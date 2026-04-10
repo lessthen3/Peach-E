@@ -73,6 +73,15 @@ namespace PeachCore {
 
 namespace PeachCore
 {
+    GameManager::~GameManager()
+    {
+        if (pm_RenderThread.joinable()) { pm_RenderThread.join(); }
+        if (pm_AudioThread.joinable()) { pm_AudioThread.join(); }
+        if (pm_PhysicsThread.joinable()) { pm_PhysicsThread.join(); }
+        if (pm_NetworkThread.joinable()) { pm_NetworkThread.join(); }
+        if (pm_ResourceThread.joinable()) { pm_ResourceThread.join(); }
+    }
+
     //////////////////////////////////////////////
     // Initialization, Startup, and Shutdown/Cleanup OwO
     //////////////////////////////////////////////
@@ -275,13 +284,16 @@ namespace PeachCore
         //otherwise we just leave it be
 
         //always going to require resource thread for loading peachey
-        pm_ResourceThread = thread
+        pm_ResourceThread = std::move
         (
-            &ResourceManager::ResourceLoop, 
-            std::ref(ResourceManager::get_single()), 
-            f_LogDir, 
-            fp_RootPath, 
-            std::ref(pm_ResourceInitializationLatch)
+            thread
+            (
+                &ResourceManager::ResourceLoop,
+                std::ref(ResourceManager::get_single()),
+                f_LogDir,
+                fp_RootPath,
+                std::ref(pm_ResourceInitializationLatch)
+            )
         );
 
         pm_ResourceInitializationLatch.wait(); //wait for resource thread to initialize before going further w any other threads uwu
@@ -293,14 +305,17 @@ namespace PeachCore
 #ifdef PEACH_RENDERER_VULKAN
             if(fp_RenderingBackend == RendererType::Vulkan)
             {
-                pm_RenderThread = thread
+                pm_RenderThread = std::move
                 (
-                    &RenderingManager::RenderLoopVK,
-                    std::ref(RenderingManager::get_single()),
-                    f_LogDir,
-                    std::ref(pm_ThreadInitializationLatch),
-                    pm_MainWindow,
-                    10
+                    thread
+                    (
+                        &RenderingManager::RenderLoopVK,
+                        std::ref(RenderingManager::get_single()),
+                        f_LogDir,
+                        std::ref(pm_ThreadInitializationLatch),
+                        pm_MainWindow,
+                        10
+                    )
                 );
             }
 #endif
@@ -308,14 +323,17 @@ namespace PeachCore
 #ifdef PEACH_RENDERER_OPENGL
             if (fp_RenderingBackend == RendererType::OpenGL)
             {
-                pm_RenderThread = thread
+                pm_RenderThread = std::move
                 (
-                    &RenderingManager::RenderLoopGL,
-                    std::ref(RenderingManager::get_single()),
-                    f_LogDir,
-                    std::ref(pm_ThreadInitializationLatch),
-                    pm_MainWindow,
-                    10
+                    thread
+                    (
+                        &RenderingManager::RenderLoopGL,
+                        std::ref(RenderingManager::get_single()),
+                        f_LogDir,
+                        std::ref(pm_ThreadInitializationLatch),
+                        pm_MainWindow,
+                        10
+                    )
                 );
             }
 #endif
@@ -323,14 +341,17 @@ namespace PeachCore
 #ifdef PEACH_RENDERER_METAL
             if (fp_RenderingBackend == RendererType::Metal)
             {
-                pm_RenderThread = thread
+                pm_RenderThread = std::move
                 (
-                    &RenderingManager::RenderLoopMetal,
-                    std::ref(RenderingManager::get_single()),
-                    f_LogDir,
-                    std::ref(pm_ThreadInitializationLatch),
-                    pm_MainWindow,
-                    10
+                    thread
+                    (
+                        &RenderingManager::RenderLoopMetal,
+                        std::ref(RenderingManager::get_single()),
+                        f_LogDir,
+                        std::ref(pm_ThreadInitializationLatch),
+                        pm_MainWindow,
+                        10
+                    )
                 );
             }
 #endif
@@ -344,13 +365,16 @@ namespace PeachCore
 
         if (pm_RequiredThreads & ThreadName::AudioThread)
         {
-            pm_AudioThread = thread
+            pm_AudioThread = std::move
             (
-                &AudioManager::AudioLoop, 
-                std::ref(AudioManager::get_single()), 
-                f_LogDir, 
-                0.0f, 
-                std::ref(pm_ThreadInitializationLatch)
+                thread
+                (
+                    &AudioManager::AudioLoop,
+                    std::ref(AudioManager::get_single()),
+                    f_LogDir,
+                    0.0f,
+                    std::ref(pm_ThreadInitializationLatch)
+                )
             );
         }
         else
@@ -362,12 +386,15 @@ namespace PeachCore
 
         if (pm_RequiredThreads & ThreadName::NetworkThread)
         {
-            pm_NetworkThread = thread
+            pm_NetworkThread = std::move
             (
-                &NetworkManager::NetworkLoop,
-                std::ref(NetworkManager::get_single()), 
-                f_LogDir, 
-                std::ref(pm_ThreadInitializationLatch)
+                thread
+                (
+                    &NetworkManager::NetworkLoop,
+                    std::ref(NetworkManager::get_single()),
+                    f_LogDir,
+                    std::ref(pm_ThreadInitializationLatch)
+                )
             );
         }
         else
@@ -381,24 +408,30 @@ namespace PeachCore
         {
             if(fp_Is3D)
             {
-                pm_PhysicsThread = thread
+                pm_PhysicsThread = std::move
                 (
-                    &PhysicsManager::PhysicsLoop3D, 
-                    std::ref(PhysicsManager::get_single()),
-                    f_LogDir, 
-                    std::ref(pm_ThreadInitializationLatch)
+                    thread
+                    (
+                        &PhysicsManager::PhysicsLoop3D,
+                        std::ref(PhysicsManager::get_single()),
+                        f_LogDir,
+                        std::ref(pm_ThreadInitializationLatch)
+                    )
                 );
             }
             else
             {
-                pm_PhysicsThread = thread
+                pm_PhysicsThread = std::move
                 (
-                    &PhysicsManager::PhysicsLoop2D, 
-                    std::ref(PhysicsManager::get_single()), 
-                    f_LogDir, 
-                    std::ref(pm_ThreadInitializationLatch),
-                    0.0f,    // fp_GravityX
-                    -9.8f    // fp_GravityY
+                    thread
+                    (
+                        &PhysicsManager::PhysicsLoop2D,
+                        std::ref(PhysicsManager::get_single()),
+                        f_LogDir,
+                        std::ref(pm_ThreadInitializationLatch),
+                        0.0f,    // fp_GravityX
+                        -9.8f    // fp_GravityY
+                    )
                 );
             }
         }

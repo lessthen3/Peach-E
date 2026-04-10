@@ -10,30 +10,29 @@
 ********************************************************************/
 #pragma once
 
-#include "../PeachNode.h"
+#include "Scene-Items/PeachNode.h"
 #include "ShapePrimitives.h"
 
-namespace PeachCore {
-namespace PUI {
+namespace PeachCore::PUI {
 
     struct Slider : public Node
     {
-        Rectangle m_Shape;
+        ShapePrimitive m_Shape;  // default called in constructor as rectangular
 
-        Slider
-        (
-            const string& fp_NodeName,
-            const uint32_t fp_Index,
-            const uint32_t fp_Generation,
-            const PeachNodeFlags fp_Flags = PeachNodeFlags::NONE,
-            const ShapeType fp_ButtonShape = ShapeType::NO_SHAPE
-        ) 
-            : Node(fp_NodeName, fp_Index, fp_Generation, fp_Flags, NodeType::Panel)
+        explicit
+            Slider
+            (
+                const uint32_t fp_Index,
+                const uint32_t fp_Generation,
+                const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE,
+                ShapePrimitive fp_Shape = RectShape{}  // pass any shape directly
+            )
+            :
+            Node(fp_Index, fp_Generation, fp_Flags, NodeType::Button)
         {
             //>w<!
         }
 
     };
 
-}// namespace PUI
-}// namespace PeachCore
+}// namespace PeachCore::PUI

@@ -24,24 +24,22 @@
 
 namespace PeachCore {
 
-    class PeachNode
+    struct PeachNode
     {
-    public:
         virtual ~PeachNode() = default;
 
         explicit
             PeachNode
         (
-            const string& fp_NodeName, 
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeType fp_Type,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            m_PeachName(fp_NodeName), 
             m_ID(fp_Index, fp_Generation, fp_Type),
-            m_Flags(fp_Flags)
+            m_Flags(fp_Flags),
+            m_ParentNode(PEACH_NODE_NULL_ID)
         {}
 
         string m_PeachName; //used to identify node uniquely, is a string so that users can just type: "node.remove("myNodeName")"
@@ -215,14 +213,13 @@ namespace PeachCore {
 
         RenderNode2D
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE,
             const uint8_t fp_DrawOrder = 0
         ) 
             : 
-            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_RENDER_2D, fp_Flags),
+            PeachNode(fp_Index, fp_Generation, PEACH_TYPE_RENDER_2D, fp_Flags),
             DrawGroup(fp_DrawOrder)
         {}
 
@@ -237,13 +234,12 @@ namespace PeachCore {
 
         RenderNode3D
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_RENDER_3D, fp_Flags)
+            PeachNode(fp_Index, fp_Generation, PEACH_TYPE_RENDER_3D, fp_Flags)
         {}
 
         TransformDouble3D m_Transform;
@@ -255,13 +251,12 @@ namespace PeachCore {
 
         AudioNode2D
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_AUDIO_2D, fp_Flags)
+            PeachNode(fp_Index, fp_Generation, PEACH_TYPE_AUDIO_2D, fp_Flags)
         {}
 
         TransformDouble2D m_Transform;
@@ -276,13 +271,12 @@ namespace PeachCore {
 
         AudioNode3D
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_AUDIO_3D, fp_Flags)
+            PeachNode(fp_Index, fp_Generation, PEACH_TYPE_AUDIO_3D, fp_Flags)
         {}
 
         TransformDouble3D m_Transform;
@@ -297,16 +291,16 @@ namespace PeachCore {
 
         InterfaceNode
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_INTERFACE, fp_Flags)
+            PeachNode(fp_Index, fp_Generation, PEACH_TYPE_INTERFACE, fp_Flags)
         {}
 
         TransformDouble2D m_Transform;
+        bool m_Dirty = true; // needs redraw/layout dirty little kitten >w<
     };
 
     struct PhysicsNode2D final : public PeachNode
@@ -315,13 +309,12 @@ namespace PeachCore {
 
         PhysicsNode2D
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_PHYSICS_2D, fp_Flags)
+            PeachNode(fp_Index, fp_Generation, PEACH_TYPE_PHYSICS_2D, fp_Flags)
         {}
 
         TransformDouble2D m_Transform;
@@ -333,13 +326,12 @@ namespace PeachCore {
 
         PhysicsNode3D
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_PHYSICS_3D, fp_Flags)
+            PeachNode(fp_Index, fp_Generation, PEACH_TYPE_PHYSICS_3D, fp_Flags)
         {}
 
         TransformDouble3D m_Transform;
@@ -351,13 +343,12 @@ namespace PeachCore {
 
         UtilityNode
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
         )
             :
-            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_UTILITY, fp_Flags)
+            PeachNode(fp_Index, fp_Generation, PEACH_TYPE_UTILITY, fp_Flags)
         {}
     };
 }//namespace PeachCore
@@ -395,19 +386,17 @@ namespace PeachCore::PUI {
 
         Node
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE,
             const NodeType fp_InterfaceType = NodeType::None
         )
             : 
-            PeachNode(fp_NodeName, fp_Index, fp_Generation, PEACH_TYPE_INTERFACE, fp_Flags),
+            PeachNode(fp_Index, fp_Generation, PEACH_TYPE_INTERFACE, fp_Flags),
             m_Type(fp_InterfaceType)
         {}
 
         const NodeType m_Type; //default to no type, i like default constructors, they're cool
-        bool m_Dirty = true; // needs redraw/layout dirty little kitten >w<
     };
 
 }//namespace PeachCore::PUI

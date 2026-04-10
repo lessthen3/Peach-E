@@ -10,49 +10,44 @@
 ********************************************************************/
 #pragma once
 
-#include "../PeachNode.h"
+#include "Scene-Items/PeachNode.h"
 #include "ShapePrimitives.h"
 
 namespace PeachCore::PUI {
 
     struct Button final : public Node
     {
-        unique_ptr<Shape> m_Shape = nullptr;
+        /* 
+            Inline; no heap allocation, no pointer chasing; ShapePrimitive is 40 bytes. The whole Button lives in the heap alloc'd plf::colony block uwu
 
-        Button
+            this is better for cache locality and avoids excessive dereferncing which should make things easier on the mmu, significantly speeding up ui operations.
+
+            no vtables and type checking failures w bad dynamic_casts, just bad variant access errors uwu!
+
+            the call site should be the one to decide whether this type lives on the heap or stack, more flexible and gives more choice to the caller. wanna keep this the least opionated it can be.
+            the only cost is that because its a union there will be gaps in memory, but like the OS allocator is always gonna have those so whatever the types are relatively within the same size owo
+         */ 
+        ShapePrimitive m_Shape; //default called in constructor owo
+
+        explicit
+            Button
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE,
-            const ShapeType fp_ButtonShape = ShapeType::NO_SHAPE
+            ShapePrimitive fp_Shape = RectShape{}  // pass any shape directly
         )
             : 
-            Node(fp_NodeName, fp_Index, fp_Generation, fp_Flags, NodeType::Button)
+            Node(fp_Index, fp_Generation, fp_Flags, NodeType::Button)
+        {}
+
+        // Hit test — just thread through to the free function.
+       // The Node's position is whatever your layout system puts in here.
+        [[nodiscard]] bool
+            IsWithin(const glm::vec2& fp_WorldOrigin, const glm::vec2& fp_TestPoint) //compiler will inline the inner function, but the weight is too heavy for the entire function to be inlined tbh
+            const noexcept
         {
-            switch(fp_ButtonShape)
-            {
-                case ShapeType::Rectangle:
-                    m_Shape = make_unique<Rectangle>();
-                    break;
-                case ShapeType::Circle:
-                    m_Shape = make_unique<Circle>();
-                    break;
-                case ShapeType::Ellipse:
-                    m_Shape = make_unique<Ellipse>();
-                    break;
-                case ShapeType::Capsule:
-                    m_Shape = make_unique<Capsule>();
-                    break;
-                case ShapeType::Triangle:
-                    m_Shape = make_unique<Triangle>();
-                    break;
-                default:
-                    //handle error here later idfk
-                    break;
-            }
+            return PUI::IsWithin(m_Shape, fp_WorldOrigin, fp_TestPoint);
         }
-
     };
-
 }// namespace PeachCore

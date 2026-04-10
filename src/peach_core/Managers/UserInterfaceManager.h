@@ -11,7 +11,7 @@
 #pragma once
 
 /*
-This Class contains all algorithms that run and determine state between all PUI nodes uwu, including walking the tree to determine hit detection, what elements are 
+    This Class contains all algorithms that run and determine state between all PUI nodes uwu, including walking the tree to determine hit detection, what elements are 
 */
 
 #include <glm/glm.hpp>
@@ -19,8 +19,7 @@ This Class contains all algorithms that run and determine state between all PUI 
 ///STL
 #include "../Scene-Items/UI/Panel.h"
 
-namespace PeachCore{
-namespace PUI{
+namespace PeachCore::PUI {
 
     struct Section //defines a container that should evenly divide the screen into pieces where AABB checks can easily be done to determine whether a bounding box is contained inside
     {
@@ -66,5 +65,5 @@ namespace PUI{
             //     return nullptr;
             // }
     };
-}//namespace PUI
-}//namespace PeachCore
+
+}//namespace PeachCore::PUI

@@ -11,12 +11,15 @@
 #pragma once
 
 ///PeachCore
-#include "../../Utils/Logger.h"
-#include "../Transform.h"
+#include "Utils/Logger.h"
 
 ///STL
 #include <vector>
-#include <cstdint>
+#include <variant>
+#include <type_traits>
+
+///CSTDL
+#include <stdint.h>
 
 ///GLM
 #include <glm/glm.hpp>
@@ -64,6 +67,41 @@ that. I find shader systems to be far too complicated and weird in other game en
 especially for something that is heavily iterated on like overall aesthetic of a game. 
 */
 
+
+/*
+ *  ShapePrimitives — pure CPU-side geometry for hit detection / layout / AABB queries.
+ *
+ *  Design intentions:
+ *   - ZERO GPU coupling. These structs never see a renderer. The renderer always
+ *     gets a quad + a mat4 uniform. What we describe here is the *logical* shape
+ *     the CPU uses for IsWithin, AABB, winding order, etc.
+ *
+ *   - ZERO heap per shape (except PolygonShape whose vertex list is inherently
+ *     dynamic — that's unavoidable and fine since polygons are rare in UI).
+ *
+ *   - NO virtual dispatch. std::visit over the variant compiles to a jump table
+ *     (one indexed indirect branch), same overhead as a vtable call minus the
+ *     extra pointer dereference to the heap object. We also eliminate the
+ *     unique_ptr indirection entirely.
+ *
+ *   - Shapes carry NO Transform2D. A Transform2D with a glm::mat4 inside it
+ *     is ~100 bytes of GPU-oriented data that has zero business being in a
+ *     struct whose only job is CPU point-in-shape tests. Position lives on
+ *     the PUI Node. IsWithin and GetAABB take an fp_Origin explicitly.
+ *
+ *   - ShapeType enum kept for external API clarity (readable switch statements
+ *     in game code, serialization, editor inspector). Bitmask removed — these
+ *     are never ORed, sequential values are correct.
+ *
+ *   sizeof(ShapePrimitive) breakdown:
+ *     largest member  = TriangleShape (3x glm::vec2 = 24 bytes)
+ *     variant overhead = 8 bytes (discriminant + alignment padding)
+ *     total           ≈ 32 bytes
+ *
+ *   Old approach: 8 bytes (unique_ptr) + ~150 bytes scattered on heap (Transform2D
+ *   + vtable ptr + shape params). New approach: 32 bytes, inline, cache-local. uwu
+ */
+
 //Maybe i should do a union or variant(typesafe union) to encap everything so i can stack alloc them or maybe i should just heap alloc
 //and do a unique_ptr storage to avoid slicing and preserve memory footprint on the cpu cache since there could be a bunch of assets
 //not sure, i mean they'll be held in a vector of unique_ptr's anyways idk needa be able to encap them in a type alias so that things like
@@ -83,210 +121,156 @@ namespace PeachCore::PUI {
     };
 
 
-    enum class ShapeType : uint8_t //dunno why this is bitmasked 
+    // ─── ShapeType enum ────────────────────────────────────────────────────────
+      // Sequential, not bitmask. Useful for serialization, inspector, external APIs.
+      // std::variant::index() is the runtime truth — this is just a readable alias.
+
+    enum class ShapeType : uint8_t
     {
-        NO_SHAPE = 0,
-        Rectangle = 1 << 0,
-        Circle = 1 << 1,
-        Ellipse = 1 << 2,
-        Capsule = 1 << 3,
-        Triangle = 1 << 4,
-        Polygon = 1 << 5
+        NoShape = 0,
+        Rectangle = 1,
+        Circle = 2,
+        Ellipse = 3,
+        Capsule = 4,
+        Triangle = 5,
+        Polygon = 6
     };
 
-    struct Shape
+    // ─── Geometry parameter structs ────────────────────────────────────────────
+   // These are pure data. No methods, no virtuals, no transforms.
+   // All measurements are in local/node space — fp_Origin offsets them at call time.
+
+    struct RectShape
     {
-        virtual ~Shape() = default;
-
-        Shape(const ShapeType fp_ShapeType) : m_ShapeType(fp_ShapeType) {}
-
-        //Position of the shape for use by Peach Engine so that a game dev/me can call a simple method like PUINode.move(new_vector) for the CPU side of things
-        //The position is what the CPU uses for hit detection completely separate from whats drawn, but should very closely reflect the rendered position on screen
-
-        //scale rotation and transform with respect to the GPU, so the transform is primarily for the shader to tell the GPU how to render the shape in terms of screen pixel coords
-        //This transform operates on the QUAD_VERTS attribute and not the engine's interpretation of the Shape
-        Transform2D Transform;
-         
-        const ShapeType m_ShapeType;
-
-        [[nodiscard]] virtual inline bool 
-            IsWithin(const glm::vec2& fp_TestPoint) const = 0;
+        float Width = 0.f;  // extends right  from fp_Origin
+        float Height = 0.f;  // extends downward from fp_Origin (Y-down screen space)
     };
 
-    struct Rectangle final : public Shape//UwU
+    struct CircleShape
     {
-        //(x, y) dictates top left corner, width and height dictate how far the bottom right vert is extended
-        float pm_Width = 0.0f; 
-        float pm_Height = 0.0f;
-        
-        Rectangle() : Shape(ShapeType::Rectangle) {}
-
-        [[nodiscard]] inline bool
-            IsWithin(const glm::vec2& fp_TestPoint) //simple AABB test owo
-            const noexcept override
-        {
-            return
-            (
-                (fp_TestPoint.x >= Transform.GetPosition().x and fp_TestPoint.x <= Transform.GetPosition().x + pm_Width)
-                and
-                (fp_TestPoint.y >= Transform.GetPosition().y and fp_TestPoint.y <= Transform.GetPosition().y + pm_Height) //plus because the pos is the top left corner is (0,0), and +'ve = below
-            );
-        }
-
-        inline bool
-            Resize(float fp_Width, float fp_Height, Logger*const logger)
-            noexcept
-        {
-            if (fp_Width < 0.0f)
-            {
-                logger->Error("Tried to pass a negative value for width to a Rectangle shape primitive", "ShapePrimitive");
-                return false;
-            }
-            else if (fp_Height < 0.0f)
-            {
-                logger->Error("Tried to pass a negative value for height to a Rectangle shape primitive", "ShapePrimitive");
-                return false;
-            }
-            else
-            {
-                pm_Width = fp_Width;
-                pm_Height = fp_Height;
-
-                return true;
-            }
-        }
+        float Radius = 0.f;  // fp_Origin = center
     };
 
-    struct Circle final : public Shape //regular circle, whenever resized the proportions stay constant
+    struct EllipseShape
     {
-        //(x, y) dictates the center position of the circle
-        float m_Radius = 0.0f;
-
-        Circle() : Shape(ShapeType::Circle) {}
-
-        [[nodiscard]] inline bool
-            IsWithin(const glm::vec2& fp_TestPoint) //test whether the point we're trying to test is within the radius of the circle shape
-            const noexcept override
-        {
-            return glm::distance(Transform.GetPosition(), fp_TestPoint) <= m_Radius;
-        }
-
-        inline bool
-            ResizeRadius(float fp_NewRadiusSize, Logger*const logger)
-            noexcept
-        {
-            if (fp_NewRadiusSize < 0.0f)
-            {
-                logger->Error("Tried to pass a negative value for radius to a Circle shape primitive", "ShapePrimitive");
-                return false;
-            }
-
-            m_Radius = fp_NewRadiusSize;
-
-            return true; 
-        }
-
+        float SemiMajor = 0.f;  // half-width  along X, fp_Origin = center
+        float SemiMinor = 0.f;  // half-height along Y
     };
 
-    struct Ellipse final : public Shape //oval, can be squashed or stretched vertically or horizontally
+    struct CapsuleShape
     {
-        //(x, y) dictates the center position of the ellipse
-
-        //we need two points to define the major and minor axis of an ellipse so it can be resized appropriately, the m_Position variable just dictates the transform of the ellipse as a whole
-        glm::vec2 m_MajorAxis{ 0.0f, 0.0f };
-        glm::vec2 m_MinorAxis{ 0.0f, 0.0f };
-
-        Ellipse() : Shape(ShapeType::Ellipse) {}
-
-
-        [[nodiscard]] inline bool
-            IsWithin(const glm::vec2& fp_TestPoint)
-            const noexcept override
-        {
-            return true;
-        }
-
+        // Both centers in *local* space — add fp_Origin at call time.
+        // Capsule = Minkowski sum of line segment + circle of Radius.
+        // Typical vertical capsule: LocalCenter1 = {0, -HalfLen}, LocalCenter2 = {0, +HalfLen}
+        glm::vec2 LocalCenter1{ 0.f,  0.5f };
+        glm::vec2 LocalCenter2{ 0.f, -0.5f };
+        float     Radius = 0.f;
     };
 
-    struct Capsule final : public Shape //2D capsule shape, when scaled proportions are held constant
+    struct TriangleShape
     {
-        //(x, y) dictates the center position of the rectangle of the capsule idk this is up for debate
-
-        Capsule() : Shape(ShapeType::Capsule) {}
-
-
-        [[nodiscard]] inline bool
-            IsWithin(const glm::vec2& fp_TestPoint)
-            const noexcept override
-        {
-            return true;
-        }
+        // Vertices in *local* space, CCW winding (required for IsWithin).
+        // Default: equilateral with centroid at origin-ish.
+        glm::vec2 A{ 0.f,  1.f };
+        glm::vec2 B{ 1.f, -1.f };
+        glm::vec2 C{ -1.f, -1.f };
     };
 
-    struct Triangle final : public Shape //twiangle rawr >O<, can be squashed or stretched as much as needed  
+    struct PolygonShape
     {
-        //(x, y) dictates the centroid position of the triangle
+        // Vertices in *local* space, CCW winding REQUIRED — call AssertWindingCCW()
+        // after construction. Convex polygons only for IsWithin. For concave UI shapes,
+        // decompose at load time (editor does this) and store as multiple PolygonShapes.
+        std::vector<glm::vec2> Vertices;
 
-        glm::vec2 m_BaseLength{ 0.0f, 0.0f };
-        glm::vec2 m_HeightLength{ 0.0f, 0.0f };
-
-        //default triangle thats base is on the X axis ^^, equilateral
-        glm::vec2 A{ 0.0f, 1.0f };
-        glm::vec2 B{ 1.0f, 0.0f };
-        glm::vec2 C{ -1.0f, 0.0f };
-
-        Triangle() : Shape(ShapeType::Triangle) {}
-
-
-        [[nodiscard]] inline bool
-            IsWithin(const glm::vec2& fp_TestPoint)
-            const noexcept override
-        {
-            glm::vec2 v0 = C - A;
-            glm::vec2 v1 = B - A;
-            glm::vec2 v2 = fp_TestPoint - A;
-
-            float dot00 = glm::dot(v0, v0);
-            float dot01 = glm::dot(v0, v1);
-            float dot02 = glm::dot(v0, v2);
-            float dot11 = glm::dot(v1, v1);
-            float dot12 = glm::dot(v1, v2);
-
-            // Compute barycentric coordinates
-            float invDenom = 1.0f / (dot00 * dot11 - dot01 * dot01);
-            float u = (dot11 * dot02 - dot01 * dot12) * invDenom;
-            float v = (dot00 * dot12 - dot01 * dot02) * invDenom;
-
-            // check (u >= 0, v >= 0, u + v < 1)
-            return (u >= 0.0f) and (v >= 0.0f) and (u + v < 1.0f);
-        }
-    };
-
-    struct Polygon final : public Shape //twiangle rawr >O<, can be squashed or stretched as much as needed  
-    {
-        //(x, y) dictates the center position of the polygon, idk how to figure that out tbh
-
-        vector<glm::vec2> pm_Vertices;
-
-        Polygon(const vector<glm::vec2>& fp_Vertices)
-            :
-            Shape(ShapeType::Polygon),
-            pm_Vertices(fp_Vertices)
-        {}
-
+        // Computes signed area via shoelace, flips winding in-place if CW.
+        // Call after constructing from external data (e.g. editor polygon tool).
         void
-            AssertWindingOrderCCW() // algorithms all depend on verts being wound CCW owo
+            AssertWindingCCW()
+            noexcept
         {
+            if (Vertices.size() < 3)
+            {
+                return;
+            }
 
+            // Shoelace formula — positive area = CCW in Y-down screen space
+            float f_SignedArea = 0.f;
+
+            for (size_t lv_I = 0; lv_I < Vertices.size(); ++lv_I)
+            {
+                const glm::vec2& fv_Curr = Vertices[lv_I];
+                const glm::vec2& fv_Next = Vertices[(lv_I + 1) % Vertices.size()];
+                f_SignedArea += (fv_Curr.x * fv_Next.y) - (fv_Next.x * fv_Curr.y);
+            }
+
+            // NOTE: in Y-down screen space CCW gives *negative* signed area by the
+            // standard math convention. If you're using Y-up (glm default world space),
+            // flip the comparison. For PUI screen space: negative = CCW = correct.
+            if (f_SignedArea > 0.f) // CW — flip
+            {
+                std::reverse(Vertices.begin(), Vertices.end());
+            }
         }
+    };
 
 
-        [[nodiscard]] inline bool
-            IsWithin(const glm::vec2& fp_TestPoint) //pretty much just gotta test if the point lies to the left of every edge wound CCW
-            const noexcept override
-        {
-            return true;
-        }
+    // ─── ShapePrimitive ────────────────────────────────────────────────────────
+    // The actual storage type. Put this inline in your PUI nodes — no unique_ptr,
+    // no heap, no pointer chase.
 
-    };    
+    using ShapePrimitive = std::variant
+    <
+        RectShape,
+        CircleShape,
+        EllipseShape,
+        CapsuleShape,
+        TriangleShape,
+        PolygonShape
+    >;
+
+    // ─── Free-function interface ───────────────────────────────────────────────
+    // These replace virtual dispatch. std::visit compiles to an indexed jump table.
+    // fp_Origin = the node's world-space position (top-left for Rect/Triangle/Polygon,
+    //             center for Circle/Ellipse/Capsule — match how the GPU interprets it).
+
+    // IsWithin — CPU hit detection for mouse events, focus, etc.
+    [[nodiscard]] bool
+        IsWithin
+        (
+            const ShapePrimitive& fp_Shape,
+            const glm::vec2& fp_Origin,
+            const glm::vec2& fp_TestPoint
+        )
+        noexcept;
+
+    // GetAABB — returns {x, y, width, height} in world space.
+    // Used for layout, dirty-region culling, focus rings, tooltips.
+    [[nodiscard]] glm::vec4
+        GetAABB
+        (
+            const ShapePrimitive& fp_Shape,
+            const glm::vec2& fp_Origin
+        )
+        noexcept;
+
+    // GetShapeType — readable enum from variant discriminant.
+    // Useful for serialization / editor inspector without a full visit.
+    [[nodiscard]] ShapeType
+        GetShapeType(const ShapePrimitive& fp_Shape)
+        noexcept;
+
+    // GetLocalVertices — debug/editor only, returns logical outline vertices.
+    // Returns heap-allocated vector — this is a cold-path query, that's fine.
+    [[nodiscard]] std::vector<glm::vec2>
+        GetLocalVertices(const ShapePrimitive& fp_Shape)
+        noexcept;
+
+    // Resize helpers — free functions keep the shape structs as plain data.
+    // Return false + log on invalid input (negative dimensions etc).
+    [[nodiscard]] bool ResizeRect(RectShape& fp_Shape, float fp_W, float fp_H, Logger* fp_Logger) noexcept;
+    [[nodiscard]] bool ResizeCircle(CircleShape& fp_Shape, float fp_Radius, Logger* fp_Logger) noexcept;
+    [[nodiscard]] bool ResizeEllipse(EllipseShape& fp_Shape, float fp_Major, float fp_Minor, Logger* fp_Logger) noexcept;
+    [[nodiscard]] bool ResizeCapsule(CapsuleShape& fp_Shape, float fp_Radius, Logger* fp_Logger) noexcept;
+
 }// namespace PeachCore::PUI

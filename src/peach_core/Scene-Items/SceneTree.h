@@ -66,6 +66,7 @@ namespace PeachCore {
 
         SceneNodeStorage pm_SceneNodes;
 
+        //idk for hash collisions we need a system of adding numbers like godot seems like the easiest thing to do owo
         unordered_map<string, PEACH_NodeID> pm_StringToNodeID; //used for when node names are changed by user, to help between the engine ID tracking and the user identifying the node
 
         queue<PEACH_NodeID> pm_PeachNodesQueuedForRemoval; //this holds the lower 56 bits only since the index is all we care ab in the vector uwu
@@ -188,7 +189,7 @@ namespace PeachCore {
         }
 
         bool
-            RenameNode
+            RenameNode 
             (
                 const PEACH_NodeID fp_DesiredNode, 
                 const string& fp_NodeName

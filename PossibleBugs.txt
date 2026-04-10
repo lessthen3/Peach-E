@@ -4,6 +4,12 @@
 
 USING DOTNET 9.0.14 because latest port to FreeBSD probably why godot uses it ngl owo icu
 
+
+THESE ERRORS HAPPEN WHEN HOLDING DRAG WINDOW RESIZE AND ESPECIALLY WHEN RESIZING AND RECREATING
+THE SWAPCHAIN IN VULKAN VERY RAPIDLY, ig it really doesn't like the memory whatever, freebsd is more strict than most
+operating systems about resource usage; tl;dr freebsd is a tiger mom owo
+
+
 WEIRD ERRORS FREEBSD 15, Intel i7 4790k iGPU owo: [2026-04-09 14:40:12.402][warning][VulkanRenderer] (VulkanRenderer.cpp ln 328, PeachCore::Vulkan::Renderer::EndFrame): VK_SUBOPTIMAL_KHR happened idk y
 EndFrame() failed exit, StatusCode: 1024
 

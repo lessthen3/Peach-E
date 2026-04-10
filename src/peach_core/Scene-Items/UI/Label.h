@@ -18,12 +18,19 @@ namespace PeachCore::PUI {
 
     struct Label : public Node //Just a generic text label
     {
-        Rectangle m_Shape;
+        ShapePrimitive m_Shape;  // default called in constructor as rectangular
 
-        //Label(const string& fp_NodeName, uint64_t fp_NodeID, const uint8_t fp_Flags, const ShapeType fp_ButtonShape) : Node(fp_NodeName, fp_NodeID, fp_Flags, NodeType::Label)
-        //{
-        //    //UwU!
-        //}
+        explicit
+            Label
+            (
+                const uint32_t fp_Index,
+                const uint32_t fp_Generation,
+                const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE,
+                ShapePrimitive fp_Shape = RectShape{}  // pass any shape directly
+            )
+            :
+            Node(fp_Index, fp_Generation, fp_Flags, NodeType::Label)
+        {}
 
     };
 

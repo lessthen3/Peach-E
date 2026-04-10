@@ -10,17 +10,19 @@
 ********************************************************************/
 #pragma once
 
+//idk if this should be a ui node its more utility that is meant to be paired w a ui but can just be standalone tbh it has useful parsing logic that can be repurposed into anything really owo
+
 ///STL
 #include <memory>
 #include <variant>
 
 ///PeachCore
-#include "../../Utils/Logger.h"
-#include "../PeachNode.h"
+#include "Utils/Logger.h"
+#include "Scene-Items/PeachNode.h"
 
 namespace PeachCore::PUI {
 
-    using ArgType = variant<string, int64_t, uint64_t, double>;
+    using ArgType = variant<string, int64_t, uint64_t, double>; //can use 64 bit types here since the vita will divide these into 2 registers and hardware atomicity isn't needed her i think IDK
     using ParsedArgument = pair<string, string>;
 
     constexpr int64_t INVALID_COMMAND = 0;
@@ -73,13 +75,12 @@ namespace PeachCore::PUI {
 
         PeachConsole
         (
-            const string& fp_NodeName,
             const uint32_t fp_Index,
             const uint32_t fp_Generation,
             const PEACH_NodeFlags fp_Flags = PEACH_FLAGS_NONE
             )
             :
-            Node(fp_NodeName, fp_Index, fp_Generation, fp_Flags, NodeType::Console)
+            Node(fp_Index, fp_Generation, fp_Flags, NodeType::Console)
         {}
 
         //WIP NEED TO LOCK THE THREAD SO THAT WE CAN SAFELY QUERY THE LOG BUFFERS SINCE THEY CAN BE WRITTEN TOO WHILE
