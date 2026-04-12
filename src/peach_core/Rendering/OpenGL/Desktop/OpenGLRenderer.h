@@ -40,7 +40,7 @@ namespace PeachCore::OpenGL {
         MeshID ID;
     };
 
-    struct RenderObject
+    struct RenderObject //Fits within one cache line >w<
     {
         GLuint VAO = 0;
         GLuint VBO_Positions = 0;
@@ -48,7 +48,7 @@ namespace PeachCore::OpenGL {
         GLuint EBO = 0;
         GLsizei IndexCount;
 
-        size_t ShaderProgramID = 0; //doesn't need to be serialized is pure runtime, also this decouples shaders and objects so shaders can be bound in groups and drawn owo
+        uint32_t ShaderProgramID = 0; //doesn't need to be serialized is pure runtime, also this decouples shaders and objects so shaders can be bound in groups and drawn owo
 
         uint8_t Flags = 0;
 
@@ -85,9 +85,6 @@ namespace PeachCore::OpenGL {
 
         void
             SetMainWindow(SDL_Window* fp_SDLWindow);
-
-        [[nodiscard]] SDL_GLContext*
-            GetGLContext();
 
         void
             DeleteTexture(const uint32_t fp_TextureID);

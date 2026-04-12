@@ -72,12 +72,6 @@ namespace PeachCore::OpenGL {
         pm_MainWindow = fp_SDLWindow;
     }
 
-    SDL_GLContext*
-        Renderer::GetGLContext()
-    {
-        return &pm_OpenGLContext;
-    }
-
     void
         Renderer::DeleteTexture(const uint32_t fp_TextureID)
     {

@@ -16,17 +16,18 @@
 
 ///PeachCore
 //#include "../Rendering/VulkanShaderProgram.h"
-#include "../Utils/Serializer.h"
-#include "../Utils/DynamicLoader.h"
-#include "../Utils/NullResources.h"
+#include "Utils/Serializer.h"
+#include "Utils/DynamicLoader.h"
+#include "Utils/NullResources.h"
 
 //////////////////////////////////////////////
 // Language Support
 //////////////////////////////////////////////
 
 #include "peach_api/NativeScriptDef.h"
-#include "../Language-Support/DotnetRuntime.h"
-#include "../Language-Support/LuaScriptRuntime.h"
+#include "peach_api/NodeDef.h"
+#include "Language-Support/DotnetRuntime.h"
+#include "Language-Support/LuaScriptRuntime.h"
 
 ///External
 #include <physfs/physfs.h>
@@ -168,12 +169,12 @@ namespace PeachCore {
     {
         int Width, Height, Channels;
         // owns data via unique_ptr + custom deleter
-        unique_ptr<unsigned char, void(*)(void*)> PixelData{ nullptr, free };
+        unique_ptr<unsigned char> PixelData{ nullptr };
 
         explicit
             TextureData
             (
-                unsigned char* fp_RawData,
+                unsigned char* fp_RawData, //ptr -> start of memory block uwu
                 int fp_Width,
                 int fp_Height,
                 int fp_Channels
@@ -182,7 +183,7 @@ namespace PeachCore {
             Width = fp_Width;
             Height = fp_Height;
             Channels = fp_Channels;
-            PixelData = { fp_RawData, free };
+            PixelData = unique_ptr<unsigned char>(fp_RawData);
         }
     };
 
@@ -211,17 +212,22 @@ namespace PeachCore {
 
     struct ResourceTransfer //just gonna use holds_alternative instead of a tagged union
     {
-        uint64_t NodeID = 0;   // who this is for
+        const PEACH_NodeID NodeID;   // who this is for
 
         ResourcePayload Payload;
 
         ~ResourceTransfer() = default;
 
-        ResourceTransfer(const uint64_t fp_NodeDestination, ResourcePayload&& fp_ResourcePayload)
-        {
-            NodeID = fp_NodeDestination;
-            Payload = std::move(fp_ResourcePayload);
-        }
+        explicit
+            ResourceTransfer
+            (
+                const PEACH_NodeID fp_NodeDestination, 
+                ResourcePayload&& fp_ResourcePayload
+            )
+            :
+            NodeID(fp_NodeDestination),
+            Payload(std::move(fp_ResourcePayload))
+        {}
     };
 
     using ResourcePipe = moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>;

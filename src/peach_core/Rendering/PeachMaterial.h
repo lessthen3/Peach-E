@@ -114,7 +114,7 @@ namespace PeachCore {
             return pm_Reflectance;
         }
 
-         [[nodiscard]] const uint64_t
+         [[nodiscard]] uint64_t
              GetTextureID() 
              const noexcept
          {
