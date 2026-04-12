@@ -149,3 +149,27 @@ Hello World!
 mouse x : 0, y: 0
 
 still worked ig idk im tired owo
+
+
+
+
+
+LINUX MINT
+
+Still getting begin frame failures on window minimizations so im not doing enough checks for rendering when the window is just not opened owo,
+
+game state can change since rendering manager doesnt really adjust anything it just reads the double buffered transforms, uvs and shader parameter instances so game state stays updated and rendering resumes on window focus regained owo
+
+BeginFrame() failed exit, StatusCode: 4
+mouse x : 0, y: 0
+mouse x : 0, y: 0
+BeginFrame() failed exit, StatusCode: 4
+mouse x : 0, y: 0
+BeginFrame() failed exit, StatusCode: 4
+BeginFrame() failed exit, StatusCode: 4
+mouse x : 0, y: 0
+BeginFrame() failed exit, StatusCode: 4
+mouse x : 0, y: 0
+
+
+

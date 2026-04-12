@@ -65,15 +65,17 @@ namespace PeachCore {
             return false;
         }
 
-        SDL_WindowID f_WindowID = SDL_GetWindowID(*fp_SDLWindow);
-
         return true;
     }
 }
 
 namespace PeachCore
 {
-    GameManager::~GameManager()
+    /*
+        dont needa check required threads here since joinable is false on default constructed threads
+        and if the thread was never created, then it'd just stay in that default constructed state owo
+    */
+    GameManager::~GameManager() 
     {
         if (pm_RenderThread.joinable()) { pm_RenderThread.join(); }
         if (pm_AudioThread.joinable()) { pm_AudioThread.join(); }
@@ -569,7 +571,6 @@ namespace PeachCore
 
         auto f_CurrentTime = chrono::high_resolution_clock::now();
 
-        auto rendering_manager = &RenderingManager::get_single();
         auto network_manager = &NetworkManager::get_single();
         auto physics_manager = &PhysicsManager::get_single();
         auto resource_manager = &ResourceManager::get_single();

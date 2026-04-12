@@ -153,7 +153,7 @@ def WriteBuildSummaryMarkdown(fp_BaseDir: str, fp_PrintErrors: bool, fp_PrintWar
 
 ############# Main CMake Function #############
 
-def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_ExtraArgs: list, fp_ShouldExportCommands : bool, fp_IsVerbose : bool) -> bool:
+def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_ExtraArgs: list, fp_ExtraConfigs: list) -> bool:
 
     f_GeneratorMap = {
         "vs2026": "Visual Studio 18 2026",
@@ -188,19 +188,6 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
     f_IsMultiConfig = fp_Generator in ["vs2026", "vs2022", "vs2019", "vs2017", "vs2015", "xcode", "ninja-mc"]
 
     f_CMakeConfigCommand = ['cmake', '-S', '.', '-B', 'build', '-G', f_GeneratorMap[fp_Generator]]
-
-    if fp_TargetPlatform == "freebsd":
-        print(f"got here w platform name {fp_TargetPlatform}")
-
-        f_CMakeConfigCommand.append("-DOPENGL_INCLUDE_DIR=/usr/local/include") #so that cmake will look for GL headers in the right place ^w^
-
-    if fp_ShouldExportCommands:
-        f_CMakeConfigCommand.append('-DCMAKE_EXPORT_COMPILE_COMMANDS=ON');
-    
-    if fp_IsVerbose:
-        if fp_Generator == "vs2022":
-            fp_ExtraArgs += ['--verbose', '--', '-verbosity:diagnostic']
-
     
     if not f_IsMultiConfig:
 
@@ -214,18 +201,21 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
 
     ############# Set Target Platform #############
 
-    if fp_TargetPlatform != "":
-        f_CMakeConfigCommand += [
-            "-DCMAKE_TOOLCHAIN_FILE=peach.toolchain.cmake",
-            f"-DPEACH_TARGET_PLATFORM={fp_TargetPlatform}"
-        ]
+    if fp_TargetPlatform == "":
+        print(CreateColouredText("[ERROR]: No target platform was selected, please specify which platform Peach-E is being built for uwu"))
+        return False
+    
+    f_CMakeConfigCommand += [
+        "-DCMAKE_TOOLCHAIN_FILE=peach.toolchain.cmake",
+        f"-DPEACH_TARGET_PLATFORM={fp_TargetPlatform}"
+    ]
 
     ############# Generate CMake Project #############
 
     try:
         print(CreateColouredText(f"[INFO]: Running CMake project generation for {f_GeneratorMap[fp_Generator]}...", "green"))
 
-        run_command_with_live_output(f_CMakeConfigCommand)
+        run_command_with_live_output(f_CMakeConfigCommand + fp_ExtraConfigs)
 
     except subprocess.CalledProcessError as err:
         print(CreateColouredText("[ERROR]: CMake project generation failed!", "red"))
@@ -397,6 +387,13 @@ def main() -> bool:
     )
 
     parser.add_argument(
+        '-J',
+        nargs=1,
+        metavar="[max_jobs]",
+        help=CreateColouredText("Set max number of jobs the compiler can do at once owo",'cyan')
+    )
+
+    parser.add_argument(
         '--dump_errors',
         action='store_true',
         help=CreateColouredText('Dump all build errors to build_errors.md', 'bright magenta')
@@ -428,53 +425,6 @@ def main() -> bool:
 
     args = parser.parse_args()
 
-    ############# Export compile commands? #############
-
-    f_IsVerbose = False;
-
-    if args.verbose:
-        f_IsVerbose = True;
-
-    ############# Export compile commands? #############
-
-    f_ShouldExportCompileCommands = False
-
-    if args.export_commands:
-        f_ShouldExportCompileCommands = True;
-
-    ############# Target Platform Config #############
-
-    f_ToolchainKey = ""
-
-    if args.T:
-        f_ToolchainKey = args.T[0].lower()
-    else:
-        f_SystemPlatform = platform.system()
-        f_MachineArch = platform.machine().lower()
-
-        if f_SystemPlatform == "Windows":
-            f_ToolchainKey = "windows-arm64" if "arm" in f_MachineArch else "windows" #python is weird mang
-        elif f_SystemPlatform == "Darwin":
-            f_ToolchainKey = "macos"
-        elif f_SystemPlatform == "Linux":
-            f_ToolchainKey = "linux"
-        elif f_SystemPlatform == "FreeBSD":
-            f_ToolchainKey = "freebsd"
-        elif f_SystemPlatform == "Haiku":
-            f_ToolchainKey = "haiku"
-        else:
-            print(CreateColouredText(f"[ERROR]: Could not auto-detect platform: {f_SystemPlatform}, please specify with -T uwu", "red"))
-            return False
-
-        print(CreateColouredText(f"[INFO]: Auto-detected platform: {f_ToolchainKey} ~ nya~", "bright cyan"))
-    
-    ############# Thread Limiter #############
-
-    f_ExtraArgs = []
-
-    if f_SystemPlatform == "FreeBSD":
-        f_ExtraArgs.extend(["--", "-j", "2"])
-
     ############# Validate Build Config #############
 
     f_BuildType = "nothing"
@@ -491,14 +441,6 @@ def main() -> bool:
     else:
         print(CreateColouredText("[ERROR]: No valid build type input detected, use -h or --help if you're unfamiliar", "red"))
         return False
-    
-    ############# Check for Generator #############
-        
-    if(not args.G):
-        print(CreateColouredText("[ERROR]: YOU DIDN'T USE -G FLAG BROTHER", "red"))
-        return False
-
-    f_DesiredGenerator = args.G[0].lower() #convert to all lower case for easier handling
 
     ############# Check for --clean flag #############
 
@@ -508,6 +450,60 @@ def main() -> bool:
     ############# Detect Platform #############
 
     f_CurrentPlatform = platform.system()
+
+    ############# Extra args and cmake configs owo #############
+
+    f_ExtraArgs = []
+    f_ExtraBuildConfigs = []
+
+    ############# Check for Generator #############
+        
+    if(not args.G):
+        print(CreateColouredText("[ERROR]: YOU DIDN'T USE -G FLAG BROTHER", "red"))
+        return False
+
+    f_DesiredGenerator = args.G[0].lower() #convert to all lower case for easier handling
+
+    ############# Export compile commands? #############
+
+    if args.verbose:
+        if f_DesiredGenerator == "vs2022":
+            f_ExtraArgs += ['--verbose', '--', '-verbosity:diagnostic']
+
+    ############# Thread Limiter #############
+
+    if f_CurrentPlatform == "FreeBSD":
+        f_ExtraArgs.extend(["--", "-j", "2"])
+
+    ############# Export compile commands? #############
+
+    if args.export_commands:
+        f_ExtraBuildConfigs.append('-DCMAKE_EXPORT_COMPILE_COMMANDS=ON')        
+
+    ############# Target Platform Config #############
+
+    f_ToolchainKey = ""
+
+    if args.T:
+        f_ToolchainKey = args.T[0].lower()
+    else:
+        f_MachineArch = platform.machine().lower()
+
+        if f_CurrentPlatform == "Windows":
+            f_ToolchainKey = "windows-arm64" if "arm" in f_MachineArch else "windows" #python is weird mang
+        elif f_CurrentPlatform == "Darwin":
+            f_ToolchainKey = "macos"
+        elif f_CurrentPlatform == "Linux":
+            f_ToolchainKey = "linux"
+        elif f_CurrentPlatform == "FreeBSD":
+            f_ToolchainKey = "freebsd"
+        elif f_CurrentPlatform == "Haiku":
+            f_ToolchainKey = "haiku"
+        else:
+            print(CreateColouredText(f"[ERROR]: Could not auto-detect platform: {f_CurrentPlatform}, please specify with -T uwu", "red"))
+            return False
+
+        print(CreateColouredText(f"[INFO]: Auto-detected platform: {f_ToolchainKey} ~ nya~", "bright cyan"))
 
     ############# Get Current Working Directory #############
 
@@ -533,7 +529,7 @@ def main() -> bool:
 
     ############# Run Build Fingers Crossed >w< #############
 
-    build_result = run_cmake(f_BuildType, f_DesiredGenerator, f_ToolchainKey, f_ExtraArgs, f_ShouldExportCompileCommands, f_IsVerbose)
+    build_result = run_cmake(f_BuildType, f_DesiredGenerator, f_ToolchainKey, f_ExtraArgs, f_ExtraBuildConfigs)
 
     ############# Provide Printout #############
 

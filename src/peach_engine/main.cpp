@@ -25,7 +25,21 @@ int
         //WARNING: this should not be the custom init but for now it is for testing before peach editor can generate peach binaries dam thats cool i didnt fully realize what that meant until now thats how its supposed to work
         //the editor is a settings factory but i was thinking ab it in the hacky ad hoc get it there fashion but no that sthe final design goal LMFAO dam we gettin it done owo
 
-        if (not engine_manager->InitializePeachEngineCustom(f_RootPath, PeachCore::ThreadName::ALL_THREADS ^ PeachCore::ThreadName::PhysicsThread, PeachCore::RendererType::Vulkan))
+#ifdef PEACH_PLATFORM_APPLE
+        auto f_RenderingBackend = PeachCore::RendererType::Metal; //TESTING: apple only supports metal but the other plats need a default renderer and meta data to save the backend set by usr
+#else
+        auto f_RenderingBackend = PeachCore::RendererType::Vulkan;
+#endif
+
+        if 
+        (
+            not engine_manager->InitializePeachEngineCustom
+            (
+                f_RootPath, 
+                PeachCore::ThreadName::ALL_THREADS ^ PeachCore::ThreadName::PhysicsThread, 
+                f_RenderingBackend
+            )
+        )
         {
 
             return PEACH_ERROR_FAILED_TO_INITIALIZE;

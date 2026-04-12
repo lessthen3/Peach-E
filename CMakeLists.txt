@@ -364,8 +364,8 @@ elseif(PEACH_HAIKU)
 
 elseif(PEACH_WASM)
     target_link_options(peach_core PUBLIC #wasm is weird mang, but I get it owo
-    "-sMAX_WEBGL_VERSION=2" 
-    "-sUSE_SDL=3" 
+        "-sMAX_WEBGL_VERSION=2" 
+        "-sUSE_SDL=3" 
     )
 endif()
 

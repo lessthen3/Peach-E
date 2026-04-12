@@ -15,6 +15,7 @@
 ///External
 #include <volk/volk.h> //THIS NEEDS TO BE FIRST DONT MOVE UWU
 #include <vk-bootstrap/VkBootstrap.h>
+#include "PipelineFactory.h"
 
 ///PeachCore
 #include "Utils/Logger.h"

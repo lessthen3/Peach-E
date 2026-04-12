@@ -17,7 +17,7 @@
 #include <glm/glm.hpp>
 
 ///STL
-#include "../Scene-Items/UI/Panel.h"
+#include "Scene-Items/UI/Panel.h"
 
 namespace PeachCore::PUI {
 

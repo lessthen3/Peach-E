@@ -14,6 +14,63 @@
 
 namespace PeachCore::Vulkan {
 
+    [[nodiscard]] static VkPipelineLayout 
+        CreatePipelineLayout
+        (
+            VkDevice device,
+            const vector<DescriptorBindingInfo>& descriptorBindings,
+            const vector<PushConstantInfo>& pushConstants
+        )
+    {
+        vector<VkDescriptorSetLayoutBinding> layoutBindings;
+        for (const auto& binding : descriptorBindings)
+        {
+            VkDescriptorSetLayoutBinding layoutBinding{};
+            layoutBinding.binding = binding.Binding;
+            layoutBinding.descriptorType = binding.Type;
+            layoutBinding.descriptorCount = 1;
+            layoutBinding.stageFlags = VK_SHADER_STAGE_ALL;
+            layoutBinding.pImmutableSamplers = nullptr;
+            layoutBindings.push_back(layoutBinding);
+        }
+
+        VkDescriptorSetLayoutCreateInfo layoutInfo{};
+        layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+        layoutInfo.bindingCount = static_cast<uint32_t>(layoutBindings.size());
+        layoutInfo.pBindings = layoutBindings.data();
+
+        VkDescriptorSetLayout descriptorSetLayout;
+        if (vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
+        {
+            throw runtime_error("Failed to create descriptor set layout!");
+        }
+
+        vector<VkPushConstantRange> ranges;
+        for (const auto& pc : pushConstants)
+        {
+            VkPushConstantRange range{};
+            range.offset = pc.Offset;
+            range.size = pc.Size;
+            range.stageFlags = pc.StageFlags;
+            ranges.push_back(range);
+        }
+
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+        pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+        pipelineLayoutInfo.setLayoutCount = 1;
+        pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+        pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(ranges.size());
+        pipelineLayoutInfo.pPushConstantRanges = ranges.data();
+
+        VkPipelineLayout pipelineLayout;
+        if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+        {
+            throw runtime_error("Failed to create pipeline layout!");
+        }
+
+        return pipelineLayout;
+    }
+
     bool
         ShaderProgram::BakePipelineData
         (

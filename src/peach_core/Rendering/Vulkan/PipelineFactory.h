@@ -10,12 +10,12 @@
 ********************************************************************/
 #pragma once
 
-#ifdef PEACH_RENDERER_VULKAN
+/*
+    this is needed by the editor and tools in general to cross compile glsl -> spv -> target, so this info will be needed ig idfk 
+    for reflecting and debugging the spv generated in editor ig idfk
+*/
 
-#include <volk/volk.h>
-
-#include <memory>
-#include <stdexcept>
+#include <vulkan/vulkan.h>
 
 #include <vector>
 #include <string>
@@ -58,5 +58,3 @@ namespace PeachCore::Vulkan
             );
     };
 } // namespace PeachEditor
-
-#endif /*PEACH_RENDERER_VULKAN*/
