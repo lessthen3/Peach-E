@@ -667,21 +667,22 @@ if(BUILD_PEACH_EDITOR)
             endif(TARGET ${f_AstcTarget})
         endforeach()
 
-            # on arm64 — exclude x86 ISA targets from the build entirely
-    # Xcode will still generate them in the project but won't compile them
-    if(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
-        foreach(f_AstcTarget
-            astcenc-avx2-static
-            astcenc-sse4.1-static
-            astcenc-sse2-static
-        )
-            if(TARGET ${f_AstcTarget})
-                set_target_properties(${f_AstcTarget} PROPERTIES
-                    EXCLUDE_FROM_ALL TRUE
-                )
-            endif(TARGET ${f_AstcTarget})
-        endforeach()
+        # on arm64 — exclude x86 ISA targets from the build entirely
+        # Xcode will still generate them in the project but won't compile them
+        if(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+            foreach(f_AstcTarget
+                astcenc-avx2-static
+                astcenc-sse4.1-static
+                astcenc-sse2-static
+            )
+                if(TARGET ${f_AstcTarget})
+                    set_target_properties(${f_AstcTarget} PROPERTIES
+                        EXCLUDE_FROM_ALL TRUE
+                    )
+                endif(TARGET ${f_AstcTarget})
+            endforeach()
         endif(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+        
     endif(PEACH_MACOS)
 
     if(MSVC)
