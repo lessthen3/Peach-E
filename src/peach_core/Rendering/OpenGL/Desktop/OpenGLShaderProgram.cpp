@@ -14,6 +14,8 @@
 
 #include <fmt/format.h>
 
+#include <sstream>
+
 namespace PeachCore::OpenGL {
 
 

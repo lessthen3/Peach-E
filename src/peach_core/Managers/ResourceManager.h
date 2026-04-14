@@ -13,6 +13,7 @@
 ///STL
 #include <semaphore>
 #include <latch>
+#include <filesystem>
 
 ///PeachCore
 //#include "../Rendering/VulkanShaderProgram.h"
@@ -100,10 +101,25 @@ namespace PeachCore {
 
     struct LoadCommand
     {
-        uint64_t NodeID = 0; //node destination, nodes are created first in the scenetree, then any resources tied to it are asked to be loaded from GameManager
-        string Location; //either a res:// inside the .peachbin or a location validated by the user on their system
-        bool IsExternal = false; //by default will look in .peachbin otherwise if true will look elsewhere ig
-        RESOURCE_OP OP = RESOURCE_OP::INVALID_LOAD; // UwU!
+        explicit
+            LoadCommand
+        (
+            const PEACH_NodeID fp_DestinationNode,
+            const string& fp_Location,
+            const RESOURCE_OP fp_LoadOperation,
+            const bool fp_IsExternal = false
+        )
+        :
+            NodeID(fp_DestinationNode),
+            Location(fp_Location),
+            OP(fp_LoadOperation),
+            IsExternal(fp_IsExternal)
+        {}
+
+        const PEACH_NodeID NodeID; //node destination, nodes are created first in the scenetree, then any resources tied to it are asked to be loaded from GameManager
+        const string Location; //either a res:// inside the .peachbin or a location validated by the user on their system
+        const RESOURCE_OP OP; // UwU!
+        const bool IsExternal; //by default will look in .peachbin otherwise if true will look elsewhere ig
     };
 
     //////////////////////////////////////////////
@@ -398,7 +414,7 @@ namespace PeachCore {
         ////////////////////////////////////////////////
 
         void
-            ProcessCommand(const LoadCommand& fp_Command);
+            ProcessCommand(LoadCommand* fp_Command);
 
         ////////////////////////////////////////////////
         // Resource Loading Functions
@@ -420,7 +436,7 @@ namespace PeachCore {
             LoadTextureFFS
             (
                 const string& fp_FilePath, 
-                const uint64_t fp_DestinationNode
+                const PEACH_NodeID fp_DestinationNode
             );
 
         bool
@@ -437,7 +453,7 @@ namespace PeachCore {
             LoadVulkanShaderFFS
             (
                 const string& fp_ShaderFilePath,
-                const uint64_t fp_DestinationNode
+                const PEACH_NodeID fp_DestinationNode
             );
 
         bool

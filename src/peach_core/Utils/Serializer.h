@@ -19,6 +19,7 @@
 #include <memory>
 #include <cstdint>
 #include <cstring> //for memcpy uwu
+#include <filesystem>
 
 #include <type_traits>
 #include <utility>

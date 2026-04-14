@@ -15,6 +15,8 @@
 #include <sstream>
 #include <fmt/format.h>
 
+#include <filesystem>
+
 static constexpr uint32_t FLUSH_EVERY_N_LOGS = 256u;
 static constexpr uint32_t MAX_LOG_FILE_SIZE_BYTES = 10u * 1024u * 1024u; // 10 MB
 

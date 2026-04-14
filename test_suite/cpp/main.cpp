@@ -52,7 +52,7 @@ int
 
     if (mf_TopLevelDir.empty())
     {
-        PeachCore::PrintError("Failed to find the top-level directory 'Peach-E'!", PeachCore::Colours::Magenta);
+        PRINT("Failed to find the top-level directory 'Peach-E'!", PeachCore::Colours::Magenta);
         return EXIT_FAILURE;
     }
 
@@ -72,7 +72,7 @@ int
 
     if (not testing_logger)
     {
-        PeachCore::PrintError("Initialization error: Was not able to initialize PeachTests' main logger");
+        PRINT_ERROR("Initialization error: Was not able to initialize PeachTests' main logger");
         return EXIT_FAILURE;
     }
 
@@ -94,12 +94,12 @@ int
         ////////////////////////////////////////////// Serializer Tests //////////////////////////////////////////////
 
 #ifdef BUILD_PEACH_SERIALIZER_TEST
-        PeachCore::Print("\n====================================================== Starting Serializer Test ======================================================", PeachCore::Colours::BrightMagenta);
+        PRINT("\n====================================================== Starting Serializer Test ======================================================", PeachCore::Colours::BrightMagenta);
 
         //PeachTests::RunSerializerPODTests(f_TestsRootDir + "/serialization", testing_logger.get());
         PeachTests::RunSerializerPODBinaryTests(testing_logger.get());
 
-        PeachCore::Print("====================================================== Ending Serializer Test ======================================================", PeachCore::Colours::BrightMagenta);
+        PRINT("====================================================== Ending Serializer Test ======================================================", PeachCore::Colours::BrightMagenta);
 #endif
 
         //uint32_t I = static_cast<uint32_t>( - 1);
@@ -127,7 +127,7 @@ int
 
     catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
     {
-        PeachCore::PrintError(std::format("Unhandled exception: {}", Exception.what()));
+        PRINT_ERROR(std::format("Unhandled exception: {}", Exception.what()));
 
         return EXIT_FAILURE;
     }

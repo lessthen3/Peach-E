@@ -5,6 +5,7 @@ import platform
 import shutil
 import sys
 import zipfile
+import re
 
 from shutil import which
 
@@ -49,6 +50,33 @@ g_ErrorLog:   dict[str, list[str]] = {}  # dep_name -> [error lines]
 g_WarningLog: dict[str, list[str]] = {}  # dep_name -> [warning lines]
 g_CurrentDep: str = "Peach-E"            # this is more for build_deps.py but w/e
 
+############# Compiled Regex Patterns for Build Output Classification #############
+
+_g_ErrorPatterns = [
+    re.compile(r':\s*error\b',              re.IGNORECASE), # "error:" / ": error" — GCC, Clang, MSVC
+    re.compile(r'\bfatal\s+error\b',        re.IGNORECASE), # "fatal error:" — preprocessor, linker
+    # re.compile(r'\bfailed\b',              re.IGNORECASE),  # ninja "FAILED: CMakeFiles/..." / MSBuild "Build FAILED."
+
+    re.compile(r'\blnk\d{4}\b',             re.IGNORECASE), # MSVC linker: LNK1181, LNK2019 etc — NOT bare "lnk"
+    re.compile(r'\b[Cc][2-9]\d{3}\b'),                      # MSVC compiler: C2065, C3861 — NOT "vec2" / "vec3"
+    re.compile(r'\bld:\s+error\b',          re.IGNORECASE), # GNU ld errors
+    re.compile(r'\bundefined\s+symbol\b',   re.IGNORECASE), # linker: undefined symbol
+    re.compile(r'\bduplicate\s+symbol\b',         re.IGNORECASE), # linker: duplicate symbol
+    re.compile(r'\bundefined\s+reference\b',re.IGNORECASE), # GCC linker variant
+    re.compile(r'\breferenced\s+from\b',    re.IGNORECASE), # Apple ld variant
+    
+    re.compile(r'\bninja:\s+error\b',       re.IGNORECASE), # "ninja: error:" — only ninja errors, not every ninja line
+    re.compile(r'\bcommand\s+failed\b',     re.IGNORECASE), # generic CMake command failure
+    re.compile(r'cmake\s+error',            re.IGNORECASE), # CMake configure errors
+
+    re.compile(r'\binternal\s+compiler\s+error\b',re.IGNORECASE), # GCC/Clang ICE
+]
+
+_g_WarningPatterns = [
+    re.compile(r':\s*warning\b',            re.IGNORECASE), # "warning:" / ": warning" — GCC, Clang, MSVC
+    re.compile(r'\b[Cc]4\d{3}\b'),                          # MSVC warnings: C4100, C4244 etc
+    re.compile(r'\bcmake\s+warning\b',      re.IGNORECASE), # CMake configure warnings
+]
 
 ############# Run command for live console feed #############
 
@@ -58,6 +86,7 @@ g_CurrentDep: str = "Peach-E"            # this is more for build_deps.py but w/
     Warnings → printed yellow in real time, collected into g_WarningLog
     Raises CalledProcessError if the command fails.
 """
+
 
 def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
 
@@ -75,27 +104,20 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
 
     f_OutputLines = []
 
-    # keywords that indicate an error line — lowercase check
-    f_ErrorKeywords   = (
-        "error:", "fatal error:", "linker error", "lnk", "c2", "c3", "ld:", "undefined symbol", "referenced from"
-        ,"failed:", "ninja:", "cc:", "clang:", "command failed"
-    )
-    f_WarningKeywords = ("warning:")
-
     try:
         for line in f_Process.stdout:
 
-            f_Lower = line.lower()
+            f_Stripped = line.rstrip('\n')
 
-            if any(kw in f_Lower for kw in f_ErrorKeywords):
-                sys.stdout.write(CreateColouredText(line.rstrip('\n'), "bright red") + '\n')
+            if any(pat.search(line) for pat in _g_ErrorPatterns):
+                sys.stdout.write(CreateColouredText(f_Stripped, "bright red") + '\n')
                 if g_CurrentDep:
-                    g_ErrorLog.setdefault(g_CurrentDep, []).append(line.rstrip('\n'))
+                    g_ErrorLog.setdefault(g_CurrentDep, []).append(f_Stripped)
 
-            elif any(kw in f_Lower for kw in f_WarningKeywords):
-                sys.stdout.write(CreateColouredText(line.rstrip('\n'), "yellow") + '\n')
+            elif any(pat.search(line) for pat in _g_WarningPatterns):
+                sys.stdout.write(CreateColouredText(f_Stripped, "yellow") + '\n')
                 if g_CurrentDep:
-                    g_WarningLog.setdefault(g_CurrentDep, []).append(line.rstrip('\n'))
+                    g_WarningLog.setdefault(g_CurrentDep, []).append(f_Stripped)
 
             else:
                 sys.stdout.write(line)
@@ -113,7 +135,6 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
 
     finally:
         f_Process.stdout.close()
-
 
 ############# Markdown Summary Dump #############
 

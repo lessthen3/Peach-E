@@ -9,6 +9,7 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "ResourceManager.h"
+#include "peach_api/NodeDef.h"
 
 namespace PeachCore {
 
@@ -66,7 +67,7 @@ namespace PeachCore {
 
         fp_InitLatch.count_down(); //count down latch should be the resource latch inside gamemanager uwu
 
-        LoadCommand f_LoadCommand;
+        // LoadCommand* f_LoadCommand = nullptr;
 
         while (pm_IsRunning.load(std::memory_order_acquire))
         {
@@ -80,56 +81,61 @@ namespace PeachCore {
 
             do { //needa do this since i already acquired a ticket so needa process a command if i wanna keep the N tickets N jobs system otherwise it'll do N tickets N-1 jobs since the loop acquires a ticket as well
 
-                if (not pm_LoadCommandQueue->try_dequeue(f_LoadCommand))
-                {
-                    break;
-                }
+                // if (not pm_LoadCommandQueue->try_dequeue(f_LoadCommand))
+                // {
+                //     break;
+                // }
 
-                ProcessCommand(f_LoadCommand);
+                // ProcessCommand(f_LoadCommand);
 
             } while (pm_ResourceSemaphore.try_acquire());
         }
     }
 
     void
-        ResourceManager::ProcessCommand(const LoadCommand& fp_Command)
+        ResourceManager::ProcessCommand(LoadCommand* fp_Command)
     {
         bool f_ContainsCommands = false;
+
+        if(not fp_Command)
+        {
+            return;
+        }
 
 
         f_ContainsCommands = true;
 
-        switch (fp_Command.OP)
+        switch (fp_Command->OP)
         {
         case RESOURCE_OP::LOAD_DOTNET_RUNTIME:
             break;
         case RESOURCE_OP::LOAD_TEXTURE:
         {
-            if (fp_Command.IsExternal)
+            if (fp_Command->IsExternal)
             {
-                LoadTextureFFS(fp_Command.Location, fp_Command.NodeID);
+                LoadTextureFFS(fp_Command->Location, fp_Command->NodeID);
             }
             else
             {
-                LoadTextureFB(fp_Command.Location, fp_Command.NodeID);
+                LoadTextureFB(fp_Command->Location, fp_Command->NodeID.Index);
             }
         }
         break;
         case RESOURCE_OP::LOAD_SCENE:
         {
-            if (fp_Command.IsExternal)
+            if (fp_Command->IsExternal)
             {
-                LoadSceneFFS(fp_Command.Location);
+                LoadSceneFFS(fp_Command->Location);
             }
             else
             {
-                LoadSceneFB(fp_Command.Location);
+                LoadSceneFB(fp_Command->Location);
             }
         }
         break;
         case RESOURCE_OP::LOAD_OPENGL_SHADER:
         {
-            if (fp_Command.IsExternal)
+            if (fp_Command->IsExternal)
             {
             }
             else
@@ -139,7 +145,7 @@ namespace PeachCore {
         break;
         case RESOURCE_OP::LOAD_MP3:
         {
-            if (fp_Command.IsExternal)
+            if (fp_Command->IsExternal)
             {
             }
             else
@@ -369,7 +375,7 @@ namespace PeachCore {
         ResourceManager::LoadTextureFFS
         (
             const string& fp_FilePath, 
-            const uint64_t fp_DestinationNode
+            const PEACH_NodeID fp_DestinationNode
         )
     {
         // Ensure directory exists
@@ -406,7 +412,7 @@ namespace PeachCore {
             f_Channels
         );
 
-        pm_DrawableResourceLoadingQueue->emplace( fp_DestinationNode, move(f_TextureData) ); //force an emplace dont care ab block growing
+        pm_DrawableResourceLoadingQueue->emplace( fp_DestinationNode, std::move(f_TextureData) ); //force an emplace dont care ab block growing
 
         return true; //texture loaded successfully!
     }
@@ -508,7 +514,7 @@ namespace PeachCore {
         ResourceManager::LoadVulkanShaderFFS
         (
             const string& fp_ShaderFilePath,
-            const uint64_t fp_DestinationNode
+            const PEACH_NodeID fp_DestinationNode
         )
     {
         ////////////////////////////////////////////// Ensure directory exists //////////////////////////////////////////////

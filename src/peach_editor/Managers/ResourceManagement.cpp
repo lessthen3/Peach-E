@@ -20,6 +20,8 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include <filesystem>
+
 namespace PeachEditor::ResourceManagement{
 
     //////////////////////////////////////////////

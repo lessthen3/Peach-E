@@ -42,7 +42,6 @@
 /// STL
 #include <string>
 #include <iostream>
-#include <filesystem>
 #include <fstream>
 
 #include <unordered_map>
@@ -53,8 +52,8 @@
 #include <source_location>
 
 ///PeachCore
-#include "../Utils/RingBuffer.h"
-#include "../peach_api/LoggerFlags.h"
+#include "RingBuffer.h"
+#include "peach_api/LoggerFlags.h"
 
 
 constexpr int FATAL_SEGMENTATION_FAULT = -6969;
