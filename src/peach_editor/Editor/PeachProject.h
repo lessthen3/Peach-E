@@ -10,7 +10,11 @@
 ********************************************************************/
 #pragma once
 
-#include <Utils/Serializer.h>
+#include <Utils/SerializerMacros.h>
+
+#include <string>
+#include <unordered_map>
+#include <stdint.h> //using the c version across the entire project owo don't need the std wrap tbh
 
 namespace PeachEditor{
 

@@ -9,6 +9,7 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "ResourceManager.h"
+#include "Utils/DynamicLoader.cpp"
 #include "peach_api/NodeDef.h"
 
 namespace PeachCore {
@@ -600,12 +601,12 @@ namespace PeachCore {
             return false;
         }
 
-        auto f_GetDef = (PEACH_GetScriptDefFn)DYNLIB_GETSYM(f_Handle, "PEACH_GetScriptDef");
+        auto f_GetDef = (PEACH_GetScriptDefFn)DynamicLoader::GetSymbol("PEACH_GetScriptDef", f_Handle, resource_logger.get());
 
         if (not f_GetDef)
         {
             resource_logger->Error(fmt::format("Plugin missing PEACH_GetScriptDef symbol: {}", fp_PluginFilePath), "ResourceManager");
-            DYNLIB_UNLOAD(f_Handle);
+            DynamicLoader::UnloadLibrary(f_Handle, resource_logger.get());
             return false;
         }
 

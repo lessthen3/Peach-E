@@ -493,8 +493,10 @@ def main() -> bool:
 
     ############# Thread Limiter #############
 
-    if f_CurrentPlatform == "FreeBSD":
-        f_ExtraArgs.extend(["--", "-j", "2"])
+    if args.J:
+        f_MaxNumberOfJobs = args.J[0]
+
+        f_ExtraArgs.extend(["--", "-j", f_MaxNumberOfJobs])
 
     ############# Export compile commands? #############
 

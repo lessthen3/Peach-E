@@ -622,3 +622,38 @@ namespace PeachCore {
         pm_LogSizeCounter = 0; //reset since all logs have been flushed
     }
 }
+
+//just static functions that the header includes for relevance ig idfk
+namespace PeachCore{
+
+#ifdef PEACH_PLATFORM_WINDOWS
+    #define NOMINMAX
+    #define WIN32_LEAN_AND_MEAN
+
+    #include <windows.h>
+#endif
+
+
+#if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
+
+    bool
+        EnableWindowsConsoleColours()
+    {
+        DWORD f_ConsoleMode;
+        HANDLE f_OutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+        if (GetConsoleMode(f_OutputHandle, &f_ConsoleMode))
+        {
+            SetConsoleMode(f_OutputHandle, f_ConsoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            return true;
+        }
+        else
+        {
+            cerr << ("Was not able to set console mode to allow windows to display ANSI escape codes") << "\n";
+            return false;
+        }
+    }
+
+#endif
+
+}
