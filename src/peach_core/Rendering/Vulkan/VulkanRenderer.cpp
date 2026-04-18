@@ -11,6 +11,7 @@
 #ifdef PEACH_RENDERER_VULKAN
 
 #include "VulkanRenderer.h"
+#include "Managers/InputManager.h"
 
 namespace PeachCore::Vulkan {
 
@@ -18,6 +19,8 @@ namespace PeachCore::Vulkan {
         Renderer::Initialize //used for lazy initialization and for default constructor support without needing to define an explicit move constructor UwU
         (
             SDL_Window* fp_MainWindow,
+            const uint32_t fp_InitialWindowWidth,
+            const uint32_t fp_InitialWindowHeight,
             shared_ptr<Logger> fp_RenderingLogger
         )
     {
@@ -36,8 +39,8 @@ namespace PeachCore::Vulkan {
         }
 
         pm_Init.MainWindow = fp_MainWindow;
-
-        SDL_GetWindowSize(pm_Init.MainWindow, &pm_RenderData.CurrentWindowWidth, &pm_RenderData.CurrentWindowHeight); //grab window size so render loop can start properly and not be thwarted at beginframe()
+        pm_RenderData.CurrentWindowWidth = fp_InitialWindowWidth; //grab window size so render loop can start properly and not be thwarted at beginframe()
+        pm_RenderData.CurrentWindowHeight = fp_InitialWindowHeight;
 
         if (not InitializeDevice("Game"))
         {
@@ -96,18 +99,14 @@ namespace PeachCore::Vulkan {
     uint32_t
         Renderer::BeginFrame()
     {
-        //////////////////// Get Current Window Size Before Starting Render Frame ////////////////////
-        SDL_GetWindowSize(pm_Init.MainWindow, &pm_RenderData.CurrentWindowWidth, &pm_RenderData.CurrentWindowHeight);
-
         //Check if window is minimized
-        if ((SDL_GetWindowFlags(pm_Init.MainWindow) & (SDL_WINDOW_MINIMIZED | SDL_WINDOW_HIDDEN | SDL_WINDOW_OCCLUDED))) 
+        if //this executes first, then when the window is resized properly to be visible, it will trigger the regular swapchain recreation >O<
+        (
+            InputManager::get_single().m_CurrentMainWindowState.IsHidden.load(std::memory_order_relaxed)
+            or pm_RenderData.CurrentWindowWidth == 0 or pm_RenderData.CurrentWindowHeight == 0
+        )  
         {
             //maybe print smth idk gotta log it once not a million times ever uwu 
-            return Renderer::StatusCode::NO_VALID_RENDERING_SURFACE;
-        }
-        else if (pm_RenderData.CurrentWindowWidth == 0 or pm_RenderData.CurrentWindowHeight == 0) //this executes first, then when the window is resized properly to be visible, it will trigger the regular swapchain recreation >O<
-        {
-            rendering_logger->Info("Won't start rendering when window size is 0", "VulkanRenderer");
             return Renderer::StatusCode::NO_VALID_RENDERING_SURFACE; //>w<
         }
         else if (pm_IsFrameStarted)
@@ -300,54 +299,47 @@ namespace PeachCore::Vulkan {
         pm_IsFrameStarted = false;
 
         //////////////////// Check for Window Resize ////////////////////
-        
+
+        pm_RenderData.CurrentWindowWidth = InputManager::get_single().m_CurrentMainWindowState.Width.load(std::memory_order_relaxed);
+        pm_RenderData.CurrentWindowHeight = InputManager::get_single().m_CurrentMainWindowState.Height.load(std::memory_order_relaxed);
+
         //random dude on forums said only use windowing size uwu idk what ab surface uwu and said recreating swapchains extra times is never a bad thing uwu only perf hit
-        if (pm_RenderData.CurrentWindowWidth != pm_Init.SwapChain.extent.width or pm_RenderData.CurrentWindowHeight != pm_Init.SwapChain.extent.height) 
+        if 
+        (
+            pm_RenderData.CurrentWindowWidth != pm_Init.SwapChain.extent.width or pm_RenderData.CurrentWindowHeight != pm_Init.SwapChain.extent.height
+            or result == VK_ERROR_OUT_OF_DATE_KHR
+            or result == VK_SUBOPTIMAL_KHR
+        ) 
         {
             rendering_logger->Info("Attempting to recreate swapchain due to window resize", "VulkanRenderer");
 
-            if(RecreateSwapChain())
-            {
-                pm_RenderData.CurrentFrameCycle = 0; //reset image to 0th index since the recreated swapchain starts on 0th, NOTE: should be done if swapchain recreation isnt successful uwu
-                return Renderer::RECREATED_SWAPCHAIN_SUCCESSFULLY & Renderer::OK;
-            }
-            else
+            if(not RecreateSwapChain())
             {
                 rendering_logger->Error("Failed to recreate swapchain after window resize event", "VulkanRenderer");
                 return Renderer::StatusCode::FAILED_TO_RECREATE_SWAPCHAIN_ERROR; //WARNING: this approach always assumes the swapchain can successfully be recreated, gotta handle if it fails somehow but idk lemme read the docs some more
             }
-        }
-        //idfk
-        else if(result == VK_ERROR_OUT_OF_DATE_KHR)
-        {
-            rendering_logger->Error("VK_ERROR_OUT_OF_DATE_KHR happened idk y", "VulkanRenderer");
-            return Renderer::StatusCode::OUT_OF_DATE_VULKAN_KHR;
-        }
-        else if (result == VK_SUBOPTIMAL_KHR)
-        {
-            rendering_logger->Warning("VK_SUBOPTIMAL_KHR happened idk y", "VulkanRenderer");
-            return Renderer::StatusCode::SUBOPTIMAL_VULKAN_KHR;
+
+            pm_RenderData.CurrentFrameCycle = 0; //reset image to 0th index since the recreated swapchain starts on 0th, NOTE: should be done if swapchain recreation isnt successful uwu
+            return Renderer::RECREATED_SWAPCHAIN_SUCCESSFULLY & Renderer::OK;
         }
         else if (result != VK_SUCCESS)
         {
             rendering_logger->Error("Failed to present swapchain image", "VulkanRenderer");
             return Renderer::StatusCode::NOT_VULKAN_SUCCESS;
         }
-        else
-        {
-            pm_RenderData.CurrentFrameCycle = (pm_RenderData.CurrentFrameCycle + 1) % pm_Init.SwapChain.image_count;
-            return Renderer::StatusCode::OK;
-        }
+
+        pm_RenderData.CurrentFrameCycle = (pm_RenderData.CurrentFrameCycle + 1) % pm_Init.SwapChain.image_count;
+        return Renderer::StatusCode::OK;
     }
 
     void
         Renderer::CleanUp()
     {
-        for (size_t i = 0; i < pm_Init.SwapChain.image_count; i++)
+        for (size_t lv_Index = 0; lv_Index < pm_Init.SwapChain.image_count; lv_Index++)
         {
-            pm_Init.Dispatch.destroySemaphore(pm_RenderData.FinishedSemaphores[i], nullptr);
-            pm_Init.Dispatch.destroySemaphore(pm_RenderData.AvailableSemaphores[i], nullptr);
-            pm_Init.Dispatch.destroyFence(pm_RenderData.InFlightFences[i], nullptr);
+            pm_Init.Dispatch.destroySemaphore(pm_RenderData.FinishedSemaphores[lv_Index], nullptr);
+            pm_Init.Dispatch.destroySemaphore(pm_RenderData.AvailableSemaphores[lv_Index], nullptr);
+            pm_Init.Dispatch.destroyFence(pm_RenderData.InFlightFences[lv_Index], nullptr);
         }
 
         pm_Init.Dispatch.destroyCommandPool(pm_RenderData.CommandPool, nullptr);

@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#include "../../Utils/Logger.h"
+#include "Utils/Logger.h"
 #include <box2d/box2d.h>
 
 #include <vector>
@@ -31,7 +31,7 @@ namespace PeachCore {
 
         }
 
-        void JoinSegment(CollisionSegment2D&& fp_Other) //joins two different segments into one segment
+        void JoinSegment(CollisionSegment2D&& fp_Other) //joins two different segments into one segment, future ryan: good comment past ryan really insightful lmfao
         {
 
         }

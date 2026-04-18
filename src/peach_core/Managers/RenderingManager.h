@@ -212,12 +212,18 @@ namespace PeachCore {
                 const string& fp_LogOutputDirectory,
                 latch& fp_InitLatch,
                 SDL_Window* fp_MainWindow,
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight,
                 const size_t fp_InitialFrameRate
             );
 
     private:
         [[nodiscard]] bool
-            InitializeVulkan();
+            InitializeVulkan
+            (
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight
+            );
 
         [[nodiscard]] bool
             PresentFrameVK();
@@ -231,25 +237,19 @@ namespace PeachCore {
                 const string& fp_LogOutputDirectory,
                 latch& fp_InitLatch,
                 SDL_Window* fp_MainWindow,
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight,
                 const size_t fp_InitialFrameRate
             );
-
-        bool
-            CreateOpenGLRenderer
-            (
-                SDL_Window* fp_Window
-            );
-
-        void
-            DestroyOpenGLRenderer();
-
-        [[nodiscard]] OpenGL::Renderer*const
-            GetOpenGLRenderer();
 
     private:
         //wip? future me: WORKING BITCH
         [[nodiscard]] PEACH_STATUS_CODE
-            InitializeOpenGL();
+            InitializeOpenGL
+            (
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight
+            );
 
         [[nodiscard]] bool
             PresentFrameGL();

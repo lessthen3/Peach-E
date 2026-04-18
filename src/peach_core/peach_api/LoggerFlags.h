@@ -44,7 +44,10 @@ extern "C"
 
         //high byte is aux flags
         PEACH_DONT_CREATE_DIRECTORY = (uint32_t)(1u << 16),
-        PEACH_LOG_TO_ONLY_SNAPSHOT_BUFFER = (uint32_t)(1u << 17)
+        PEACH_LOG_TO_ONLY_SNAPSHOT_BUFFER = (uint32_t)(1u << 17),
+
+        /* This just makes sure the enum is the size of Uint32 */
+        PEACH_LOGGER_FLAGS_ENUM_PADDING = 0x7FFFFFFF //idk sdl does this and they BEEN programming C for years my goat sam lantinga and the sdl team owo
     } Flags;
 
 #ifdef __cplusplus

@@ -178,6 +178,8 @@ namespace PeachCore {
                 const string& fp_RootPath,
                 const ThreadName fp_RequiredThreads,
                 const RendererType fp_RenderingBackend,
+                const uint32_t fp_StartingWindowWidth,
+                const uint32_t fp_StartingWindowHeight,
                 bool fp_IsSegfaultHandled = false
             );
 
@@ -222,6 +224,8 @@ namespace PeachCore {
             InitializeThreads
             (
                 const string& fp_RootPath,
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight,
                  RendererType fp_RenderingBackend, //o7
                 const bool fp_Is3D = false
 

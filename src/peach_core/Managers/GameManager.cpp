@@ -94,6 +94,8 @@ namespace PeachCore
             const string& fp_RootPath,
             const ThreadName fp_RequiredThreads,
             const RendererType fp_RenderingBackend,
+            const uint32_t fp_StartingWindowWidth,
+            const uint32_t fp_StartingWindowHeight,
             bool fp_IsSegfaultHandled
         )
     {
@@ -138,12 +140,12 @@ namespace PeachCore
             main_logger->Fatal(fmt::format("SDL could not initialize! ending engine program execution immediately, SDL_Error: {}", SDL_GetError()), "GameManager");
             return false;
         }
-        else if (not CreateSDLWindow(&pm_MainWindow, fp_RenderingBackend, "Peach Window", 800, 600, main_logger.get()))
+        else if (not CreateSDLWindow(&pm_MainWindow, fp_RenderingBackend, "Peach Window", fp_StartingWindowWidth, fp_StartingWindowHeight, main_logger.get()))
         {
             main_logger->Fatal("Initialization failed: Was not able to create the main window, exiting execution immediately", "GameManager");
             return false; //PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW;
         }
-        else if (not InitializeThreads(fp_RootPath, fp_RenderingBackend))
+        else if (not InitializeThreads(fp_RootPath, fp_StartingWindowWidth, fp_StartingWindowHeight, fp_RenderingBackend))
         {
             main_logger->Fatal("Failed to initialize Peach Engine managers, ending engine program execution immediately", "GameManager");
             return false;
@@ -157,7 +159,7 @@ namespace PeachCore
 
         //////////////////// Intialize InputManager ////////////////////
 
-        if (not InputManager::get_single().Initialize(fp_RootPath + "/logs", PEACH_LOGGER_DEFAULT_FLAGS))
+        if (not InputManager::get_single().Initialize(fp_StartingWindowWidth, fp_StartingWindowHeight, fp_RootPath + "/logs", PEACH_LOGGER_DEFAULT_FLAGS))
         {
 
             return false;
@@ -273,6 +275,8 @@ namespace PeachCore
         GameManager::InitializeThreads //XXX: used for kickstarting threads needed for engine execution
         (
             const string& fp_RootPath,
+            const uint32_t fp_InitialWindowWidth,
+            const uint32_t fp_InitialWindowHeight,
             RendererType fp_RenderingBackend,
             const bool fp_Is3D
         )
@@ -316,6 +320,8 @@ namespace PeachCore
                         f_LogDir,
                         std::ref(pm_ThreadInitializationLatch),
                         pm_MainWindow,
+                        fp_InitialWindowWidth,
+                        fp_InitialWindowHeight,
                         10
                     )
                 );
@@ -334,6 +340,8 @@ namespace PeachCore
                         f_LogDir,
                         std::ref(pm_ThreadInitializationLatch),
                         pm_MainWindow,
+                        fp_InitialWindowWidth,
+                        fp_InitialWindowHeight,
                         10
                     )
                 );

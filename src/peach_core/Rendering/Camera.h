@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "../PeachNode.h"
+#include "Scene-Items/PeachNode.h"
 
 namespace PeachCore {
 
@@ -28,7 +28,7 @@ namespace PeachCore {
         bool m_ProjDirty{ true };
         bool m_ViewDirty{ true };
 
-        TransformDouble2D pm_Transform;
+        DoubleBuffered::Transform2D pm_Transform;
 
     public:
         explicit
@@ -43,14 +43,14 @@ namespace PeachCore {
         {}
 
         // --- access to transform so PeachNodes / scripts can move camera ---
-        TransformDouble2D&
+        DoubleBuffered::Transform2D&
             GetTransform()       
             noexcept
         {
             return pm_Transform;
         }
 
-        const TransformDouble2D&
+        const DoubleBuffered::Transform2D&
             GetTransform() 
             const noexcept
         { 

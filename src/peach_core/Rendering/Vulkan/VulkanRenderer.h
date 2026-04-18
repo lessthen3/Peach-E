@@ -290,6 +290,8 @@ namespace PeachCore::Vulkan{
             Initialize //used for lazy initialization and for default constructor support without needing to define an explicit move constructor UwU
             (
                 SDL_Window* fp_MainWindow,
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight,
                 shared_ptr<Logger> fp_RenderingLogger
             );
 

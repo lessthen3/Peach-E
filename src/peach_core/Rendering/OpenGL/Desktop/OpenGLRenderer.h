@@ -15,7 +15,7 @@
 #include <SDL3/SDL.h>
 
 #include "OpenGLShaderProgram.h"
-#include "Scene-Items/Visual/Camera.h"
+#include "Rendering/Camera.h"
 #include "Managers/ResourceManager.h"
 
 namespace PeachCore::OpenGL {
@@ -79,6 +79,8 @@ namespace PeachCore::OpenGL {
             Renderer //peach renderer is never supposed to create an sdl window, it only manages closing it
             (
                 SDL_Window* fp_CurrentWindow,
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight,
                 shared_ptr<Logger> fp_RenderingLogger,
                 const bool fp_Is3DEnabled = false
             );

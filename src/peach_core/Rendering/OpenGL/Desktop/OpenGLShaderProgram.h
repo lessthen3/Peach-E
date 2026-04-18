@@ -14,7 +14,7 @@
 
 ///PeachCore
 #include "Utils/Logger.h"
-#include "Scene-Items/Visual/Fog.h"
+#include "Rendering/Fog.h"
 #include "Rendering/PeachMaterial.h"
 
 ///External

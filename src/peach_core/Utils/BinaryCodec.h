@@ -21,15 +21,8 @@
 /// C std 
 #include <stdint.h>
 
-
-#if defined(_MSC_VER)
-    #define PEACH_FORCEINLINE __forceinline
-#elif defined(__GNUC__) || defined(__clang__)
-    #define PEACH_FORCEINLINE inline __attribute__((always_inline))
-#else
-    // Fallback for anything else
-    #define PEACH_FORCEINLINE inline
-#endif
+/// compiler stupidity
+#include "compiler_dep/PeachForceInline.h"
 
 // Add these to your platform defines header
 #if defined(_MSC_VER)

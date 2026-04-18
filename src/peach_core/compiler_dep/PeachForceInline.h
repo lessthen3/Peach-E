@@ -1,4 +1,4 @@
-﻿/*******************************************************************
+/*******************************************************************
  *                        Peach-E v0.0.1
  *         Created by Ranyodh Singh Mandur - 🍑 2024-2026
  *
@@ -8,9 +8,14 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#include "ParallaxLayer.h"
-
-namespace PeachCore {
+#pragma once
 
 
-}
+#if defined(_MSC_VER)
+    #define PEACH_FORCEINLINE __forceinline
+#elif defined(__GNUC__) || defined(__clang__)
+    #define PEACH_FORCEINLINE inline __attribute__((always_inline))
+#else
+    // Fallback for anything else
+    #define PEACH_FORCEINLINE inline
+#endif

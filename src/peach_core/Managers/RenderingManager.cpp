@@ -52,9 +52,8 @@ namespace PeachCore {
 namespace PeachCore {
 
     void 
-        RenderingManager::Shutdown()
+        RenderingManager::Shutdown() //no moar sdl quit only main thread does that owo but it lives the entire runtime and the driver can handle that whatever
     {
-        //SDL_Quit(); //Render thread controls everything SDL related so if the render loop is exiting SDL should quit since no other thread touches or relies on SDL related functionality
     }
 
     bool 
@@ -120,6 +119,7 @@ namespace PeachCore {
             //case RENDER_DONT_DRAW_OP: /*DrawNode(cmd.node_id);*/ break;
             default:
                 PRINT_ERROR("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!");
+                break;
             }
         }
 
@@ -193,6 +193,8 @@ namespace PeachCore {
             const string& fp_LogOutputDirectory,
             latch& fp_InitLatch,
             SDL_Window* fp_MainWindow,
+            const uint32_t fp_InitialWindowWidth,
+            const uint32_t fp_InitialWindowHeight,
             const size_t fp_InitialFrameRate
         )
     {
@@ -203,7 +205,7 @@ namespace PeachCore {
 
             return;
         }
-        if (InitializeOpenGL() != PEACH_OK)
+        if (InitializeOpenGL(fp_InitialWindowWidth, fp_InitialWindowHeight) != PEACH_OK)
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager");
             exit(PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
@@ -262,35 +264,12 @@ namespace PeachCore {
         return true;
     }
 
-    bool
-            RenderingManager::CreateOpenGLRenderer
-            (
-                SDL_Window* fp_Window
-            )
-        {
-            if (not fp_Window)
-            {
-                rendering_logger->Warning("Please try creating an SDL window before trying to create a PeachRenderer!", "RenderingManager");
-                return false;
-            }
-
-            if (pm_OpenGLRenderer.get())
-            {
-                pm_OpenGLRenderer.reset(nullptr);
-            }
-
-            pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(fp_Window, rendering_logger);
-            return true;
-        }
-
-        void
-            RenderingManager::DestroyOpenGLRenderer()
-        {
-            pm_OpenGLRenderer.reset(nullptr);
-        }
-
         PEACH_STATUS_CODE
-            RenderingManager::InitializeOpenGL()
+            RenderingManager::InitializeOpenGL
+            (
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight
+            )
         {
             if (pm_IsOpenGLInitialized)
             {
@@ -300,12 +279,12 @@ namespace PeachCore {
 
             rendering_logger->Debug("main SDL window successfully created", "RenderingManager");
 
-            pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(pm_MainWindow, rendering_logger, true);
+            pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, rendering_logger, true);
 
             if (glewInit() != GLEW_OK)
             {
                 rendering_logger->Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager");
-                SDL_DestroyWindow(pm_MainWindow);
+                //SDL_DestroyWindow(pm_MainWindow);
                 return PEACH_ERROR_FAILED_INITIALIZE_GLEW;
             }
 
@@ -318,12 +297,6 @@ namespace PeachCore {
             return PEACH_OK;
         }
 
-        [[nodiscard]] OpenGL::Renderer*const
-            RenderingManager::GetOpenGLRenderer()
-        {
-            return pm_OpenGLRenderer.get();
-        }
-
 #endif
 
 #ifdef PEACH_RENDERER_VULKAN
@@ -334,6 +307,8 @@ namespace PeachCore {
             const string& fp_LogOutputDirectory,
             latch& fp_InitLatch,
             SDL_Window* fp_MainWindow,
+            const uint32_t fp_InitialWindowWidth,
+            const uint32_t fp_InitialWindowHeight,
             const size_t fp_InitialFrameRate
         )
     {
@@ -344,7 +319,7 @@ namespace PeachCore {
 
             return;
         }
-        if (not InitializeVulkan())
+        if (not InitializeVulkan(fp_InitialWindowWidth, fp_InitialWindowHeight))
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager");
             exit(PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN);
@@ -397,7 +372,11 @@ namespace PeachCore {
     }
 
     bool
-        RenderingManager::InitializeVulkan()
+        RenderingManager::InitializeVulkan //yeah ik it copies all the way down the stack frames and is w/e avoids initialization order problems down the line and doesn't really cost anything since this is called once at startup owo
+        (
+            const uint32_t fp_InitialWindowWidth,
+            const uint32_t fp_InitialWindowHeight
+        )
     {
         if (volkInitialize() != VK_SUCCESS)
         {
@@ -407,7 +386,7 @@ namespace PeachCore {
 
         pm_VulkanRenderer = make_unique<Vulkan::Renderer>();
         
-        if (not pm_VulkanRenderer->Initialize(pm_MainWindow, rendering_logger))
+        if (not pm_VulkanRenderer->Initialize(pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, rendering_logger))
         {
             rendering_logger->Fatal("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager");
             return false;

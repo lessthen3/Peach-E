@@ -10,9 +10,9 @@
 ********************************************************************/
 #pragma once
 
-#include "../Scene-Items/Physics/CollisionSegment2D.h"
-#include "../Scene-Items/Physics/CollisionPolygon2D.h"
-#include "../Scene-Items/Physics/CollisionShape2D.h"
+#include "Scene-Items/Physics2D/CollisionSegment2D.h"
+#include "Scene-Items/Physics2D/CollisionPolygon2D.h"
+#include "Scene-Items/Physics2D/CollisionShape2D.h"
 
 #include <moody_camel/readerwriterqueue.h>
 

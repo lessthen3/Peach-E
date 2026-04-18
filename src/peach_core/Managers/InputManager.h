@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "../Utils/Logger.h"
+#include "Utils/Logger.h"
 
 ///SDL3
 #include <SDL3/SDL.h>
@@ -24,14 +24,55 @@ namespace PeachCore {
 
     constexpr float JOYSTICK_MAX_STICK_VALUE = SDL_JOYSTICK_AXIS_MAX;
 
-    struct ThreadsafeVec2
+    //struct DoubleVector2
+    //{
+    //    glm::vec2 ouo[2];
+
+    //};
+
+    // somewhere accessible to both — could live on GameManager or RenderingManager
+    struct WindowState
     {
-        atomic<float> x;
-        atomic<float> y;
+        std::atomic<uint32_t>  Width{0};
+        std::atomic<uint32_t>  Height{0};
 
-        ThreadsafeVec2() : x(0.0f), y(0.0f) {}
+        std::atomic<bool> IsMinimized{false};
+        std::atomic<bool> IsMaximized{ false };
+
+        std::atomic<bool> IsKeyboardFocus{ false };
+        std::atomic<bool> IsMouseFocus{ false };
+
+        std::atomic<bool> IsHidden{false};
+        std::atomic<bool> IsOccluded{ false };
+
+        void
+            SetMaximized()
+        {
+            IsMinimized.store(false, std::memory_order_relaxed);
+            IsMaximized.store(true, std::memory_order_relaxed);
+        }
+
+        void
+            SetMinimized()
+        {
+            IsMinimized.store(true, std::memory_order_relaxed);
+            IsMaximized.store(false, std::memory_order_relaxed);
+        }
+
+        //void
+        //    SetHidden()
+        //{
+        //    IsHidden.store(true, std::memory_order_relaxed);
+        //    .store(false, std::memory_order_relaxed);
+        //}
+
+        //void 
+        //    SetShown()
+        //{
+        //    IsMinimized.store(true, std::memory_order_relaxed);
+        //    IsMaximized.store(false, std::memory_order_relaxed);
+        //}
     };
-
 
     struct InputState
     {
@@ -77,8 +118,6 @@ namespace PeachCore {
         glm::vec2 Position = glm::vec2(0);
         glm::vec2 Delta = glm::vec2(0);     // For motion
         glm::vec2 Scroll = glm::vec2(0);       // For scroll
-
-        bool IsCursorInWindow = true;
     };
 
     struct JoystickInput
@@ -161,42 +200,8 @@ namespace PeachCore {
     class InputManager 
     {
     //////////////////////////////////////////////
-    // Private Destructor and Constructor
-    //////////////////////////////////////////////
-    private:
-        ~InputManager() = default;
-        InputManager() = default;
-
-    //////////////////////////////////////////////
-    // Singleton Instance
-    //////////////////////////////////////////////
-    public:
-        static InputManager& get_single()
-        {
-            static InputManager input_manager;
-            return input_manager;
-        }
-
-        InputManager(const InputManager&) = delete;
-        InputManager& operator=(const InputManager&) = delete;
-        InputManager(InputManager&&) = delete;
-        InputManager& operator=(InputManager&&) = delete;
-
-    //////////////////////////////////////////////
     // Private Members
     //////////////////////////////////////////////
-    private:
-        //enum class ConnectedDevice : uint8_t
-        //{
-        //    None = 0,
-        //    Keyboard = 1 << 0,
-        //    Mouse = 1 << 1,
-        //    Stylus = 1 << 2,
-        //    Joystick = 1 << 3,
-        //    Gamepad = 1 << 4,
-        //    Touch = 1 << 5
-        //};
-
     private:
         unique_ptr<Logger> input_logger = nullptr;
 
@@ -220,12 +225,44 @@ namespace PeachCore {
 
         vector<SDL_WindowID> pm_WindowCloseRequests;
 
-        
     //////////////////////////////////////////////
     // Public Members
     //////////////////////////////////////////////
     public:
+        //enum class ConnectedDevice : uint8_t
+        //{
+        //    None = 0,
+        //    Keyboard = 1 << 0,
+        //    Mouse = 1 << 1,
+        //    Stylus = 1 << 2,
+        //    Joystick = 1 << 3,
+        //    Gamepad = 1 << 4,
+        //    Touch = 1 << 5
+        //};
 
+        WindowState m_CurrentMainWindowState;
+
+    //////////////////////////////////////////////
+    // Private Destructor and Constructor
+    //////////////////////////////////////////////
+    private:
+        ~InputManager() = default;
+        InputManager() = default;
+
+    //////////////////////////////////////////////
+    // Singleton Instance
+    //////////////////////////////////////////////
+    public:
+        static InputManager& get_single()
+        {
+            static InputManager input_manager;
+            return input_manager;
+        }
+
+        InputManager(const InputManager&) = delete;
+        InputManager& operator=(const InputManager&) = delete;
+        InputManager(InputManager&&) = delete;
+        InputManager& operator=(InputManager&&) = delete;
 
     //////////////////////////////////////////////
     // Public Methods
@@ -234,6 +271,8 @@ namespace PeachCore {
         [[nodiscard]] bool
             Initialize
             (
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight,
                 const string& fp_LogOutputDirectory,
                 const uint32_t fp_LogFlags
             );

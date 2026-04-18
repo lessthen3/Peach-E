@@ -15,7 +15,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-namespace PeachCore {
+namespace PeachCore::Math {
 
     struct Transform2D
     {
@@ -25,9 +25,8 @@ namespace PeachCore {
         glm::vec2 pm_Scale;
         glm::vec2 pm_Origin;    // pivot in local space (e.g. sprite center)
 
-        glm::mat4 pm_LocalMatrix{ 1.0f };
-
-        bool pm_IsDirty{ true }; //>W< used to track whether the matrix needs to be recalculated owo!, IMPORTANT: intialize to true since after construction just make sure its updated props
+        mutable glm::mat4 pm_LocalMatrix{ 1.0f };
+        mutable bool pm_IsDirty{ true }; //>W< used to track whether the matrix needs to be recalculated owo!, IMPORTANT: intialize to true since after construction just make sure its updated props
 
     public:
         Transform2D()
@@ -137,7 +136,7 @@ namespace PeachCore {
 
         const glm::mat4& 
             GetLocalMatrix()
-            noexcept
+            const noexcept
         {
             if(pm_IsDirty)
             {
@@ -158,17 +157,16 @@ namespace PeachCore {
      struct Transform3D
     {
     private:
-        //Intiailize as and identity matrices uwu owo!
-        glm::mat4 pm_LocalMatrix{ 1.0f };
-
         //API reachpoint vars for human friendly shtuff >w<
 
         glm::vec3 pm_Position{ 0.0f, 0.0f, 0.0f };
         glm::quat pm_Rotation{ 1.0f, 0.0f, 0.0f, 0.0f }; // identity quaternion — NOT Euler
         glm::vec3 pm_Scale{ 1.0f, 1.0f, 1.0f };
 
+        //Intiailize as and identity matrices uwu owo!
+        mutable glm::mat4 pm_LocalMatrix{ 1.0f };
         //Deterimines whether local matrix needs to be updated on request owo
-        bool  pm_IsDirty{ true }; // true so first GetLocalMatrix() always computes
+        mutable bool  pm_IsDirty{ true }; // true so first GetLocalMatrix() always computes
 
     public:
         Transform3D() = default;
@@ -213,7 +211,7 @@ namespace PeachCore {
 
         const glm::mat4&
             GetLocalMatrix()
-            noexcept
+            const noexcept
         {
             if (pm_IsDirty)
             {                                                                                                   // quat → rotation matrix

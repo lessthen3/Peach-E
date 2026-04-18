@@ -17,6 +17,8 @@ namespace PeachCore {
     [[nodiscard]] bool
         InputManager::Initialize
         (
+            const uint32_t fp_InitialWindowWidth,
+            const uint32_t fp_InitialWindowHeight,
             const string& fp_LogOutputDirectory,
             const uint32_t fp_LogFlags
         )
@@ -32,6 +34,9 @@ namespace PeachCore {
         }
 
         input_logger->Debug("InputLogger successfully initialized", "RenderingManager");
+
+        m_CurrentMainWindowState.Width = fp_InitialWindowWidth;
+        m_CurrentMainWindowState.Height = fp_InitialWindowHeight;
 
         return true;
     }
@@ -157,49 +162,42 @@ namespace PeachCore {
         swap(pm_LastFrameInput, pm_CurrentFrameInput);
         pm_CurrentFrameInput.Clear(input_logger.get()); // set everything false or zero
 
-        SDL_Event e;
+        SDL_Event wv_Event;
 
-        while (SDL_PollEvent(&e)) 
+        while (SDL_PollEvent(&wv_Event))
         {
-            switch (e.type) 
+            switch (wv_Event.type)
             {
             //////////////////// Keyboard Input Stuff ////////////////////
 
             case SDL_EVENT_KEY_DOWN:
-                pm_CurrentFrameInput.KeyboardEvent.IsKeyDown[e.key.scancode] = { true, false };
+                pm_CurrentFrameInput.KeyboardEvent.IsKeyDown[wv_Event.key.scancode] = { true, false };
                 break;
             case SDL_EVENT_KEY_UP:
-                pm_CurrentFrameInput.KeyboardEvent.IsKeyDown[e.key.scancode] = { false, false };
+                pm_CurrentFrameInput.KeyboardEvent.IsKeyDown[wv_Event.key.scancode] = { false, false };
                 break;
 
             //////////////////// Mouse Input Handling ////////////////////
 
             case SDL_EVENT_MOUSE_MOTION:
-                pm_CurrentFrameInput.MouseEvent.Delta = { e.motion.xrel, e.motion.yrel };
-                pm_CurrentFrameInput.MouseEvent.Position = { e.motion.x, e.motion.y };
+                pm_CurrentFrameInput.MouseEvent.Delta = { wv_Event.motion.xrel, wv_Event.motion.yrel };
+                pm_CurrentFrameInput.MouseEvent.Position = { wv_Event.motion.x, wv_Event.motion.y };
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
-                pm_CurrentFrameInput.MouseEvent.Scroll = { e.wheel.x, e.wheel.y };
+                pm_CurrentFrameInput.MouseEvent.Scroll = { wv_Event.wheel.x, wv_Event.wheel.y };
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
-                pm_CurrentFrameInput.MouseEvent.MouseButtonsDown[e.button.button] = { true, false };
+                pm_CurrentFrameInput.MouseEvent.MouseButtonsDown[wv_Event.button.button] = { true, false };
                 break;
             case SDL_EVENT_MOUSE_BUTTON_UP:
-                pm_CurrentFrameInput.MouseEvent.MouseButtonsDown[e.button.button] = { true, false };
-                break;
-            ///NOT SURE IF THESE ARE NEEDED SINCE THERE IS A WINDOW FLAG FOR MOUSE FOCUS ALREADY
-            case SDL_EVENT_WINDOW_MOUSE_LEAVE:
-                pm_CurrentFrameInput.MouseEvent.IsCursorInWindow = false;
-                break;
-            case SDL_EVENT_WINDOW_MOUSE_ENTER:
-                pm_CurrentFrameInput.MouseEvent.IsCursorInWindow = true;
+                pm_CurrentFrameInput.MouseEvent.MouseButtonsDown[wv_Event.button.button] = { true, false };
                 break;
 
             //////////////////// Stylus Input ////////////////////
 
             case SDL_EVENT_PEN_PROXIMITY_IN: //add pen when it comes into proximity, sdl has no other way to detect connected styluses so thisll work for now
             {
-                SDL_PenID f_PenID = e.pproximity.which;
+                SDL_PenID f_PenID = wv_Event.pproximity.which;
 
                 // Register a new stylus if it doesn't exist
                 if (not pm_ConnectedStyluses.contains(f_PenID))
@@ -223,11 +221,11 @@ namespace PeachCore {
             case SDL_EVENT_PEN_DOWN:
             case SDL_EVENT_PEN_MOTION:
             {
-                SDL_PenID f_PenID = e.pmotion.which;
+                SDL_PenID f_PenID = wv_Event.pmotion.which;
 
                 if (pm_ConnectedStyluses.contains(f_PenID))
                 {
-                    pm_ConnectedStyluses[f_PenID].Input.Position = { e.pmotion.x, e.pmotion.y };
+                    pm_ConnectedStyluses[f_PenID].Input.Position = { wv_Event.pmotion.x, wv_Event.pmotion.y };
                 }
 
                 break;
@@ -235,14 +233,14 @@ namespace PeachCore {
 
             case SDL_EVENT_PEN_AXIS:
             {
-                SDL_PenID f_PenID = e.paxis.which;
+                SDL_PenID f_PenID = wv_Event.paxis.which;
 
                 if (pm_ConnectedStyluses.contains(f_PenID))
                 {
-                    switch(e.paxis.axis)
+                    switch(wv_Event.paxis.axis)
                     {
                     case SDL_PEN_AXIS_PRESSURE:
-                        pm_ConnectedStyluses[f_PenID].Input.Pressure = e.paxis.value;
+                        pm_ConnectedStyluses[f_PenID].Input.Pressure = wv_Event.paxis.value;
                         break;
 
                     case SDL_PEN_AXIS_DISTANCE:
@@ -269,7 +267,7 @@ namespace PeachCore {
 
             case SDL_EVENT_PEN_UP:
             {
-                SDL_PenID f_PenID = e.pmotion.which;
+                SDL_PenID f_PenID = wv_Event.pmotion.which;
 
                 if (pm_ConnectedStyluses.contains(f_PenID))
                 {
@@ -281,7 +279,7 @@ namespace PeachCore {
 
             case SDL_EVENT_PEN_PROXIMITY_OUT: //remove pen from connected styluses when out of proximity
             {
-                SDL_PenID f_PenID = e.pproximity.which;
+                SDL_PenID f_PenID = wv_Event.pproximity.which;
 
                 if (pm_ConnectedStyluses.contains(f_PenID))
                 {
@@ -301,7 +299,7 @@ namespace PeachCore {
 
             case SDL_EVENT_GAMEPAD_ADDED:
             {
-                SDL_JoystickID f_JoystickID = e.gdevice.which;
+                SDL_JoystickID f_JoystickID = wv_Event.gdevice.which;
                 SDL_Gamepad* f_GamepadHandle = SDL_OpenGamepad(f_JoystickID);
 
                 if (f_GamepadHandle)
@@ -326,7 +324,7 @@ namespace PeachCore {
             }
             case SDL_EVENT_GAMEPAD_REMOVED:
             {
-                SDL_JoystickID f_JoystickID = e.gdevice.which;
+                SDL_JoystickID f_JoystickID = wv_Event.gdevice.which;
 
                 if (pm_ConnectedGamepads.contains(f_JoystickID))
                 {
@@ -347,7 +345,7 @@ namespace PeachCore {
             }
             case SDL_EVENT_GAMEPAD_AXIS_MOTION:
             {
-                SDL_JoystickID f_JoystickID = e.gaxis.which;
+                SDL_JoystickID f_JoystickID = wv_Event.gaxis.which;
 
                 auto it = pm_ConnectedGamepads.find(f_JoystickID);
 
@@ -371,7 +369,7 @@ namespace PeachCore {
 
             case SDL_EVENT_JOYSTICK_ADDED:
             {
-                SDL_JoystickID f_JoystickID = e.gdevice.which;
+                SDL_JoystickID f_JoystickID = wv_Event.gdevice.which;
                 SDL_Joystick* f_JoystickHandle = SDL_OpenJoystick(f_JoystickID);
 
                 if (f_JoystickHandle)
@@ -396,7 +394,7 @@ namespace PeachCore {
             }        
             case SDL_EVENT_JOYSTICK_REMOVED:
             {
-                SDL_JoystickID f_JoystickID = e.gdevice.which;
+                SDL_JoystickID f_JoystickID = wv_Event.gdevice.which;
 
                 if (pm_ConnectedJoysticks.contains(f_JoystickID))
                 {
@@ -417,7 +415,7 @@ namespace PeachCore {
             }
             case SDL_EVENT_JOYSTICK_AXIS_MOTION:
             {
-                SDL_JoystickID f_JoystickID = e.gaxis.which;
+                SDL_JoystickID f_JoystickID = wv_Event.gaxis.which;
 
                 auto it = pm_ConnectedJoysticks.find(f_JoystickID);
 
@@ -429,6 +427,7 @@ namespace PeachCore {
 
                 break;
             }
+            
             //////////////////// Audio Device Stuff ////////////////////
 
             case SDL_EVENT_AUDIO_DEVICE_ADDED:
@@ -438,11 +437,71 @@ namespace PeachCore {
             case SDL_EVENT_AUDIO_DEVICE_REMOVED:
                 break;
 
+            //////////////////// Touch Inputs ////////////////////
+
+            case SDL_EVENT_FINGER_MOTION:
+                break;
+            case SDL_EVENT_FINGER_DOWN:
+                break;
+            case SDL_EVENT_FINGER_UP:
+                break;
+            case SDL_EVENT_FINGER_CANCELED:
+                break;
+
+            case SDL_EVENT_PINCH_BEGIN:
+                break;
+            case SDL_EVENT_PINCH_END:
+                break;
+            case SDL_EVENT_PINCH_UPDATE:
+                break;
+
+            //////////////////// Camera Stuff ig idk ////////////////////
+
+            case SDL_EVENT_CAMERA_DEVICE_ADDED:
+                break;
+
             //////////////////// Window Stuff ////////////////////
 
             case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                pm_WindowCloseRequests.push_back(e.window.windowID);
+                pm_WindowCloseRequests.push_back(wv_Event.window.windowID);
                 break;
+            case SDL_EVENT_WINDOW_FOCUS_LOST:
+                m_CurrentMainWindowState.IsKeyboardFocus.store(false, std::memory_order_relaxed);
+                break;
+            case SDL_EVENT_WINDOW_FOCUS_GAINED:
+                m_CurrentMainWindowState.IsKeyboardFocus.store(true, std::memory_order_relaxed);
+                break;
+            case SDL_EVENT_WINDOW_HIDDEN:
+                m_CurrentMainWindowState.IsHidden.store(true, std::memory_order_relaxed);
+                break;
+            case SDL_EVENT_WINDOW_SHOWN:
+                m_CurrentMainWindowState.IsHidden.store(false, std::memory_order_relaxed);
+                break;
+            case SDL_EVENT_WINDOW_MAXIMIZED:
+                m_CurrentMainWindowState.SetMaximized();
+                break;
+            case SDL_EVENT_WINDOW_MINIMIZED:
+                m_CurrentMainWindowState.SetMinimized();
+                break;
+            case SDL_EVENT_WINDOW_RESIZED:
+                m_CurrentMainWindowState.Width.store(wv_Event.window.data1, std::memory_order_relaxed);
+                m_CurrentMainWindowState.Height.store(wv_Event.window.data2, std::memory_order_relaxed); //idek what data2 is lmfao
+                break;
+            case SDL_EVENT_WINDOW_OCCLUDED:
+                m_CurrentMainWindowState.IsOccluded.store(true, std::memory_order_relaxed);
+                break;
+            case SDL_EVENT_WINDOW_EXPOSED: // window became visible again
+                m_CurrentMainWindowState.IsOccluded.store(false, std::memory_order_relaxed);
+                break;
+            ///NOT SURE IF THESE ARE NEEDED SINCE THERE IS A WINDOW FLAG FOR MOUSE FOCUS ALREADY
+            case SDL_EVENT_WINDOW_MOUSE_LEAVE:
+                m_CurrentMainWindowState.IsMouseFocus.store(false, std::memory_order_relaxed);
+                break;
+            case SDL_EVENT_WINDOW_MOUSE_ENTER:
+                m_CurrentMainWindowState.IsMouseFocus.store(true, std::memory_order_relaxed);
+                break;
+
+            
             }
         }
 
