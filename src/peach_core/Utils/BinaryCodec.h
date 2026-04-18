@@ -130,7 +130,7 @@ namespace PeachCore::BinaryCodec::Utility{
 
         if constexpr (std::is_same_v<T, bool>) //no standard size for bool so we just clamp it to 1 byte
         {
-            uint8_t f_BoolAsInt = fp_ArithmeticVal ? 1 : 0; // Convert boolean to 32-bit integer
+            uint8_t f_BoolAsInt = fp_ArithmeticVal ? 1 : 0; // Convert boolean to 8-bit integer
             fp_Bytes.push_back(f_BoolAsInt);
         }
         else if constexpr(tp_IsBigEndian)
@@ -190,7 +190,7 @@ namespace PeachCore::BinaryCodec::Utility{
     PEACH_FORCEINLINE void
         EncodeStringUTF8
         (
-            std::vector<uint8_t>& fp_ByteCode,
+            std::vector<uint8_t>& fp_Bytes,
             const std::string& fp_String
         )
     {
@@ -204,45 +204,78 @@ namespace PeachCore::BinaryCodec::Utility{
 
         ////////////////////////////////////////////// Encode String Length //////////////////////////////////////////////
 
-        size_t f_StringLengthOffset = fp_ByteCode.size(); //length index, no -1 needed since we adding the length after we stored this owo
+        size_t f_StringLengthOffset = fp_Bytes.size(); //length index, no -1 needed since we adding the length after we stored this owo
 
-        //just do little endian here since we're gonna patch regardless so no point wasting the extra bswap instruction owo
-        EncodeNumber<false, LengthT>(fp_ByteCode, static_cast<LengthT>(fp_String.size())); //encode string assuming no additional characters for escape
+        //add space for slot since we gon write it after
+        fp_Bytes.resize(f_StringLengthOffset + sizeof(LengthT), 0); //needa resize her since we want elements here and the string write wont do that
 
-        fp_ByteCode.reserve(fp_ByteCode.size() + fp_String.size());
+        const size_t f_DataStartOffset = fp_Bytes.size();
+        fp_Bytes.reserve(f_DataStartOffset + fp_String.size()); //reserve space to avoid re alloc overhead and to allow simd opt on a fixed size container
 
         ////////////////////////////////////////////// Write Character by Character //////////////////////////////////////////////
 
-        for (const char lv_Char : fp_String)
+        const char* fv_SegStart = fp_String.data();
+        const char* fv_End      = fp_String.data() + fp_String.size();
+
+        while(1)
         {
-            switch (lv_Char)
+            const char* fv_Hit = strpbrk(fv_SegStart, "\n\t\\");
+
+            // clamp to end if no escape chars remain in this segment
+            if (fv_Hit == nullptr || fv_Hit >= fv_End)
             {
-            case '\n':  // Newline
-                fp_ByteCode.push_back('\\');
-                fp_ByteCode.push_back('n');
-                break;
-            case '\t':  // Tab
-                fp_ByteCode.push_back('\\');
-                fp_ByteCode.push_back('t');
-                break;
-            case '\\':  // Backslash
-                fp_ByteCode.push_back('\\');
-                fp_ByteCode.push_back('\\');
-                break;
-            default:
-                fp_ByteCode.push_back(static_cast<uint8_t>(lv_Char));
+                fv_Hit = fv_End;
+            }
+
+            // bulk insert the clean segment before the hit
+            if (fv_Hit > fv_SegStart)
+            {
+                fp_Bytes.insert
+                (
+                    fp_Bytes.end(),
+                    reinterpret_cast<const uint8_t*>(fv_SegStart),
+                    reinterpret_cast<const uint8_t*>(fv_Hit)
+                );
+            }
+
+
+            if (fv_Hit == fv_End)
+            {
                 break;
             }
+
+            switch (*fv_Hit)
+            {
+            case '\n':  // Newline
+                fp_Bytes.push_back('\\');
+                fp_Bytes.push_back('n');
+                break;
+            case '\t':  // Tab
+                fp_Bytes.push_back('\\');
+                fp_Bytes.push_back('t');
+                break;
+            case '\\':  // Backslash
+                fp_Bytes.push_back('\\');
+                fp_Bytes.push_back('\\');
+                break;
+            default:
+                break;
+            }
+
+            fv_SegStart = fv_Hit + 1;
         }
 
         // we add sizeof(LengthT) because we are working on a byte array, 
         // so the offset before encoding was N, and after we called EncodeNumber<LengthT> it's N + sizeof(LengthT)
-        const size_t f_FinalEncodedStringLength = fp_ByteCode.size() - (f_StringLengthOffset + sizeof(LengthT));
+        const size_t f_FinalEncodedStringLength = fp_Bytes.size() - f_DataStartOffset;
 
         ////////////////////////////////////////////// Overflow Check on String Size With Passed Type //////////////////////////////////////////////
 
         if (f_FinalEncodedStringLength > std::numeric_limits<LengthT>::max()) [[unlikely]]
         {
+            // Roll back to leave fp_ByteCode consistent before throwing
+            fp_Bytes.resize(f_StringLengthOffset);
+            fp_Bytes.shrink_to_fit(); // hint to release excess capacity, not guaranteed by standard but all major impls honour it
             throw std::length_error("EncodeStringUTF8: string too long for given type");
         }
 
@@ -252,12 +285,12 @@ namespace PeachCore::BinaryCodec::Utility{
         if constexpr(tp_IsBigEndian)
         {
             LengthT f_FinalLength = BSwap(static_cast<LengthT>(f_FinalEncodedStringLength));
-            memcpy(fp_ByteCode.data() + f_StringLengthOffset, &f_FinalLength, sizeof(LengthT));
+            memcpy(fp_Bytes.data() + f_StringLengthOffset, &f_FinalLength, sizeof(LengthT));
         }
         else 
         {
             LengthT f_FinalLength = static_cast<LengthT>(f_FinalEncodedStringLength);
-            memcpy(fp_ByteCode.data() + f_StringLengthOffset, &f_FinalLength, sizeof(LengthT));
+            memcpy(fp_Bytes.data() + f_StringLengthOffset, &f_FinalLength, sizeof(LengthT));
         }
     }
 
@@ -354,7 +387,6 @@ namespace PeachCore::BinaryCodec::Utility{
         ////////////////////////////////////////////// Get String Length //////////////////////////////////////////////
 
         LengthT f_StringLength = DecodeNumber<tp_IsBigEndian, LengthT>(fp_Bytes, fp_Offset);
-        size_t f_EndRegionIndex = fp_Offset + f_StringLength;
 
         ////////////////////////////////////////////// Safety Check Bounds //////////////////////////////////////////////
 
@@ -370,37 +402,53 @@ namespace PeachCore::BinaryCodec::Utility{
 
         ////////////////////////////////////////////// Decode String //////////////////////////////////////////////
 
-        for (size_t lv_CurrentOffset = 0; lv_CurrentOffset < f_StringLength; ++lv_CurrentOffset)
+        const char* fv_SegStart = reinterpret_cast<const char*>(fp_Bytes.data() + fp_Offset);
+        const char* fv_End      = fv_SegStart + f_StringLength;
+
+        while (true)
         {
-            size_t f_CurrentIndex = fp_Offset + lv_CurrentOffset;
-            char f_CurrentChar = static_cast<char>(fp_Bytes[f_CurrentIndex]);
+            const char* fv_Hit = reinterpret_cast<const char*>(memchr(fv_SegStart, '\\', fv_End - fv_SegStart));
 
-            if (f_CurrentChar == '\\' and f_CurrentIndex + 1 < f_EndRegionIndex) // Check for escape character and ensure it's not the last char
+            if (fv_Hit == nullptr)
             {
-                char f_NextChar = static_cast<char>(fp_Bytes[f_CurrentIndex + 1]);
+                fv_Hit = fv_End;
+            }
 
-                switch (f_NextChar)
+            // bulk insert clean segment
+            f_DecodedString.append(fv_SegStart, fv_Hit);
+
+            if (fv_Hit == fv_End)
+            {
+                break;
+            }
+
+            // fv_Hit points at '\\', peek the next byte
+            if (fv_Hit + 1 < fv_End)
+            {
+                switch (*(fv_Hit + 1))
                 {
                 case 'n':
                     f_DecodedString.push_back('\n');
-                    lv_CurrentOffset++;  // Skip the 'n' character in the stream
                     break;
                 case 't':
                     f_DecodedString.push_back('\t');
-                    lv_CurrentOffset++;  // Skip the 't' character in the stream
                     break;
                 case '\\':
                     f_DecodedString.push_back('\\');
-                    lv_CurrentOffset++;  // Skip the next '\'
                     break;
                 default:
-                    f_DecodedString.push_back(f_CurrentChar);  // If it's not a recognized escape sequence, add the backslash
+                    f_DecodedString.push_back('\\'); // unrecognised, preserve the backslash
+                    f_DecodedString.push_back(*(fv_Hit + 1));
                     break;
                 }
+
+                fv_SegStart = fv_Hit + 2; // skip both the '\\' and the escape char
             }
             else
             {
-                f_DecodedString.push_back(f_CurrentChar);
+                // trailing lone backslash at end of encoded region, preserve it
+                f_DecodedString.push_back('\\');
+                break;
             }
         }
 
@@ -461,7 +509,7 @@ namespace PeachCore::BinaryCodec::Utility{
             size_t& fp_Offset
         )
     {
-        Utility::DecodeStringUTF8<false, LengthT>(fp_Bytes, fp_Offset);
+        return Utility::DecodeStringUTF8<false, LengthT>(fp_Bytes, fp_Offset);
     }
 
     template<typename LengthT>
@@ -483,7 +531,7 @@ namespace PeachCore::BinaryCodec::Utility{
             size_t& fp_Offset
         )
     {
-        Utility::DecodeStringWithoutEscapeCharacters<false, LengthT>(fp_Bytes, fp_Offset);
+        return Utility::DecodeStringWithoutEscapeCharacters<false, LengthT>(fp_Bytes, fp_Offset);
     }
 
 }//namespace BinaryCodec::LittleEndian
@@ -531,7 +579,7 @@ namespace PeachCore::BinaryCodec::BigEndian{
             size_t& fp_Offset
         )
     {
-        Utility::DecodeStringUTF8<true, LengthT>(fp_Bytes, fp_Offset);
+        return Utility::DecodeStringUTF8<true, LengthT>(fp_Bytes, fp_Offset);
     }
 
     template<typename LengthT>
@@ -553,7 +601,7 @@ namespace PeachCore::BinaryCodec::BigEndian{
             size_t& fp_Offset
         )
     {
-        Utility::DecodeStringWithoutEscapeCharacters<true, LengthT>(fp_Bytes, fp_Offset);
+        return Utility::DecodeStringWithoutEscapeCharacters<true, LengthT>(fp_Bytes, fp_Offset);
     }
 
 }//namespace BinaryCodec::BigEndian

@@ -292,7 +292,7 @@ namespace PeachTests
         auto base    = logs / "stress_logger";
         auto infoLog = base / "info.log";
 
-        const std::size_t totalLogs = Logger::FLUSH_EVERY_N_LOGS * 3 + 17;
+        const std::size_t totalLogs = PEACH_LOGGER_FLUSH_EVERY_N_LOGS * 3 + 17;
 
         for (std::size_t i = 0; i < totalLogs; ++i)
         {
@@ -359,7 +359,7 @@ namespace PeachTests
         PEACH_LOGGER_TEST_ASSERT(testLogger, loggerOpt.has_value(), "Logger::Create should succeed");
         auto logger = std::move(*loggerOpt);
 
-        const int totalLogs = static_cast<int>(Logger::MAX_NUMBER_OF_LOGS) + 25;
+        const int totalLogs = static_cast<int>(PEACH_LOGGER_MAX_NUMBER_OF_LOGS) + 25;
 
         for (int i = 0; i < totalLogs; ++i)
         {
@@ -371,7 +371,7 @@ namespace PeachTests
 
         PEACH_LOGGER_TEST_ASSERT(
             testLogger,
-            size == Logger::MAX_NUMBER_OF_LOGS,
+            size == PEACH_LOGGER_MAX_NUMBER_OF_LOGS,
             "Snapshot buffer size should be capped at MAX_NUMBER_OF_LOGS"
         );
 
@@ -394,7 +394,7 @@ namespace PeachTests
             std::ofstream out(infoPath, std::ios::out | std::ios::trunc);
             PEACH_LOGGER_TEST_ASSERT(testLogger, out.is_open(), "Pre-create oversized info.log");
 
-            const std::size_t bigSize = Logger::MAX_LOG_FILE_SIZE_BYTES + 1024;
+            const std::size_t bigSize = PEACH_LOGGER_MAX_LOG_FILE_SIZE_BYTES + 1024;
             out.seekp(bigSize - 1);
             out.write("", 1);
         }
@@ -402,7 +402,7 @@ namespace PeachTests
         auto sizeBefore = fs::file_size(infoPath);
         PEACH_LOGGER_TEST_ASSERT(
             testLogger,
-            sizeBefore > Logger::MAX_LOG_FILE_SIZE_BYTES,
+            sizeBefore > PEACH_LOGGER_MAX_LOG_FILE_SIZE_BYTES,
             "info.log should initially be larger than MAX_LOG_FILE_SIZE_BYTES"
         );
 
@@ -413,7 +413,7 @@ namespace PeachTests
         auto sizeAfter = fs::file_size(infoPath);
         PEACH_LOGGER_TEST_ASSERT(
             testLogger,
-            sizeAfter <= Logger::MAX_LOG_FILE_SIZE_BYTES,
+            sizeAfter <= PEACH_LOGGER_MAX_LOG_FILE_SIZE_BYTES,
             "info.log should have been truncated on logger creation"
         );
 
@@ -504,11 +504,10 @@ namespace PeachTests
     inline void RunLoggerTests(const std::string& root, Logger* logger)
     {
         using PeachCore::Colours;
-        using PeachCore::Print;
 
         if (!logger)
         {
-            PeachCore::PrintError("RunLoggerTests called with nullptr logger!", Colours::Magenta);
+            PRINT("RunLoggerTests called with nullptr logger!", Colours::Magenta);
             return;
         }
 

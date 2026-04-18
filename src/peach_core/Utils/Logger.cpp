@@ -17,16 +17,6 @@
 
 #include <filesystem>
 
-static constexpr uint32_t FLUSH_EVERY_N_LOGS = 256u;
-static constexpr uint32_t MAX_LOG_FILE_SIZE_BYTES = 10u * 1024u * 1024u; // 10 MB
-
-static constexpr uint8_t FLUSH_TRACE_BIT = 1u << 0;
-static constexpr uint8_t FLUSH_DEBUG_BIT = 1u << 1;
-static constexpr uint8_t FLUSH_INFO_BIT = 1u << 2;
-static constexpr uint8_t FLUSH_WARNING_BIT = 1u << 3;
-static constexpr uint8_t FLUSH_ERROR_BIT = 1u << 4;
-static constexpr uint8_t FLUSH_FATAL_BIT = 1u << 5;
-
 namespace PeachCore
 {
     [[nodiscard]] static string //thank you chat-gpt uwu
@@ -68,6 +58,13 @@ namespace PeachCore
 }
 
 namespace PeachCore {
+
+    static constexpr uint8_t PEACH_LOGGER_FLUSH_TRACE_BIT = 1u << 0;
+    static constexpr uint8_t PEACH_LOGGER_FLUSH_DEBUG_BIT = 1u << 1;
+    static constexpr uint8_t PEACH_LOGGER_FLUSH_INFO_BIT = 1u << 2;
+    static constexpr uint8_t PEACH_LOGGER_FLUSH_WARNING_BIT = 1u << 3;
+    static constexpr uint8_t PEACH_LOGGER_FLUSH_ERROR_BIT = 1u << 4;
+    static constexpr uint8_t PEACH_LOGGER_FLUSH_FATAL_BIT = 1u << 5;
 
     Logger::~Logger() ///XXX: Just copy and pasted the flushalllogs method because they have the assert at the beginning and wont work with premature exit
     {
@@ -210,11 +207,11 @@ namespace PeachCore {
                 {
                     f_LogFile << f_LogEntry << "\n";
 
-                    if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
                     {
                         ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
                     }
-                    else if (pm_FlushMask & FLUSH_TRACE_BIT)
+                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_TRACE_BIT)
                     {
                         f_LogFile.flush();
                     }
@@ -254,11 +251,11 @@ namespace PeachCore {
                 {
                     f_LogFile << f_LogEntry << "\n";
 
-                    if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
                     {
                         ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
                     }
-                    else if (pm_FlushMask & FLUSH_DEBUG_BIT)
+                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_DEBUG_BIT)
                     {
                         f_LogFile.flush();
                     }
@@ -298,11 +295,11 @@ namespace PeachCore {
                 {
                     f_LogFile << f_LogEntry << "\n";
 
-                    if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
                     {
                         ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
                     }
-                    else if (pm_FlushMask & FLUSH_INFO_BIT)
+                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_INFO_BIT)
                     {
                         f_LogFile.flush();
                     }
@@ -346,11 +343,11 @@ namespace PeachCore {
                 {
                     f_LogFile << f_LogEntry << "\n";
 
-                    if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
                     {
                         ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
                     }
-                    else if (pm_FlushMask & FLUSH_WARNING_BIT)
+                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_WARNING_BIT)
                     {
                         f_LogFile.flush();
                     }
@@ -394,11 +391,11 @@ namespace PeachCore {
                 {
                     f_LogFile << f_LogEntry << "\n";
 
-                    if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
                     {
                         ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
                     }
-                    else if (pm_FlushMask & FLUSH_ERROR_BIT)
+                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_ERROR_BIT)
                     {
                         f_LogFile.flush();
                     }
@@ -442,11 +439,11 @@ namespace PeachCore {
                 {
                     f_LogFile << f_LogEntry << "\n";
 
-                    if (pm_LogSizeCounter++ >= FLUSH_EVERY_N_LOGS)
+                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
                     {
                         ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
                     }
-                    else if (pm_FlushMask & FLUSH_FATAL_BIT)
+                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_FATAL_BIT)
                     {
                         f_LogFile.flush();
                     }
@@ -541,7 +538,7 @@ namespace PeachCore {
         {
             auto f_LogFileSize = filesystem::file_size(f_FullPath, f_ErrorCode);
 
-            if (not f_ErrorCode and f_LogFileSize >= MAX_LOG_FILE_SIZE_BYTES)
+            if (not f_ErrorCode and f_LogFileSize >= PEACH_LOGGER_MAX_LOG_FILE_SIZE_BYTES)
             {
                 ////////////////////////////////////////////// truncate by reopening with ios::trunc //////////////////////////////////////////////
 

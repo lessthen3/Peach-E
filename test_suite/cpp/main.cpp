@@ -82,14 +82,14 @@ int
 
     try
     {
-        auto engine_manager = &PeachCore::GameManager::get_single();
+        // auto engine_manager = &PeachCore::GameManager::get_single();
 
-        engine_manager->InitializePeachEngineCustom
-        (
-            f_TestsRootDir,
-            PeachCore::ThreadName::NO_THREAD,
-            PeachCore::RendererType::Vulkan
-        );
+        // engine_manager->InitializePeachEngineCustom
+        // (
+        //     f_TestsRootDir,
+        //     PeachCore::ThreadName::NO_THREAD,
+        //     PeachCore::RendererType::Vulkan
+        // );
 
         ////////////////////////////////////////////// Serializer Tests //////////////////////////////////////////////
 
@@ -120,7 +120,7 @@ int
 
         //PeachTests::RunLoggerTests(f_TestsRootDir + "/logging", testing_logger.get());
 
-        engine_manager->ShutdownPeachEngine();
+        // engine_manager->ShutdownPeachEngine();
 
         return EXIT_SUCCESS;
     }

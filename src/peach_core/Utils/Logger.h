@@ -54,6 +54,10 @@ constexpr int FATAL_SEGMENTATION_FAULT = -6969;
 /// moody camel queue size uwu
 constexpr unsigned int MOODY_CAMEL_QUEUE_SIZE = 128;
 
+static constexpr uint32_t PEACH_LOGGER_MAX_NUMBER_OF_LOGS = 1024u;
+static constexpr uint32_t PEACH_LOGGER_FLUSH_EVERY_N_LOGS = 256u;
+static constexpr uint32_t PEACH_LOGGER_MAX_LOG_FILE_SIZE_BYTES = 10u * 1024u * 1024u; // 10 MB
+
 namespace PeachCore {
 
     using namespace std; //this should be here so i dont affect anybody who links against peach
@@ -239,9 +243,7 @@ namespace PeachCore {
         Logger(Logger&&) = default;
 
     public:
-        static constexpr uint32_t MAX_NUMBER_OF_LOGS = 1024u;
-
-        using LogBuffer = RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>;
+        using LogBuffer = RingBuffer<LogMessage, PEACH_LOGGER_MAX_NUMBER_OF_LOGS>;
 
         //////////////////////////////////////////////
         // Protected Constructor
@@ -340,7 +342,7 @@ namespace PeachCore {
         [[nodiscard]] bool
             UpdateActiveMask(const uint32_t fp_NewLogMask);
 
-        const RingBuffer<LogMessage, MAX_NUMBER_OF_LOGS>&
+        const RingBuffer<LogMessage, PEACH_LOGGER_MAX_NUMBER_OF_LOGS>&
             GetSnapshotBuffer()
             const noexcept
         {

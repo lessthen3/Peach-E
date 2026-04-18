@@ -13,7 +13,7 @@
 
 option(BUILD_PEACH_CORE_SHARED "Builds peach_core as a shared library" OFF) #build peach_core shared by default uwu
 
-option(BUILD_PEACH_TESTS "build test suite" OFF)
+option(BUILD_PEACH_TESTS "build test suite" ON)
 option(BUILD_PEACH_EDITOR "turns on build output for peach editor" ON)
 option(BUILD_PEACH_ENGINE "turns on build output for the executable peach engine, doesn't relate to peach_core" ON)
 

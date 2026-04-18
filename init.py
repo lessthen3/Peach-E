@@ -496,7 +496,7 @@ def main() -> bool:
     if args.J:
         f_MaxNumberOfJobs = args.J[0]
 
-        f_ExtraArgs.extend(["--", "-j", f_MaxNumberOfJobs])
+        f_ExtraArgs.extend(["--parallel", f_MaxNumberOfJobs])
 
     ############# Export compile commands? #############
 

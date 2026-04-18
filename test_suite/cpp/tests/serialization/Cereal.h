@@ -16,6 +16,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include <Utils/SerializerMacros.h>
 #include <Utils/Serializer.h>
 #include <Utils/Logger.h>
 
@@ -327,7 +328,7 @@ namespace PeachTests {
         size_t start = 0;
         ok = PEACH_UNPACK_BINARY_OFFSET(restored, bin, logger, start);
         assert(ok);
-        PeachCore::Print(format("start: {} and bin size: {}", start, bin.size()), Colours::BrightCyan);
+        PRINT(fmt::format("start: {} and bin size: {}", start, bin.size()), Colours::BrightCyan);
         // Make sure we consumed exactly all bytes (great sanity check for offset bugs)
         assert(start == bin.size());
 

@@ -244,15 +244,15 @@ namespace PeachCore::FileIO
 
         ////////////////////////////////////////////// Extract file extension assuming fmt::format "filename.ext" //////////////////////////////////////////////
 
-        size_t lastDotIndex = fp_ScriptFilePath.rfind('.');
+        size_t f_LastDotIndex = fp_ScriptFilePath.rfind('.');
 
-        if (lastDotIndex == string::npos)
+        if (f_LastDotIndex == string::npos)
         {
             logger->Error("Serialization Error: No file extension found", "Serializer");
             return false;
         }
 
-        string f_FileExtension = fp_ScriptFilePath.substr(lastDotIndex);
+        string f_FileExtension = fp_ScriptFilePath.substr(f_LastDotIndex);
 
         bool f_IsValidExtension = false;
 
