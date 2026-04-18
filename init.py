@@ -57,8 +57,8 @@ _g_ErrorPatterns = [
     re.compile(r'\bfatal\s+error\b',        re.IGNORECASE), # "fatal error:" — preprocessor, linker
     # re.compile(r'\bfailed\b',              re.IGNORECASE),  # ninja "FAILED: CMakeFiles/..." / MSBuild "Build FAILED."
 
-    re.compile(r'\blnk\d{4}\b',             re.IGNORECASE), # MSVC linker: LNK1181, LNK2019 etc — NOT bare "lnk"
-    re.compile(r'\b[Cc][2-9]\d{3}\b'),                      # MSVC compiler: C2065, C3861 — NOT "vec2" / "vec3"
+    re.compile(r'\blnk\d{4}\b',             re.IGNORECASE), # MSVC linker: LNK1181, LNK2019 etc
+    re.compile(r'\b[Cc][2-9]\d{3}\b'),                      # MSVC compiler: C2065, C3861 
     re.compile(r'\bld:\s+error\b',          re.IGNORECASE), # GNU ld errors
     re.compile(r'\bundefined\s+symbol\b',   re.IGNORECASE), # linker: undefined symbol
     re.compile(r'\bduplicate\s+symbol\b',         re.IGNORECASE), # linker: duplicate symbol

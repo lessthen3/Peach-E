@@ -20,20 +20,20 @@
 #ifdef PEACH_PLATFORM_WINDOWS
     #define NOMINMAX
     #define WIN32_LEAN_AND_MEAN
-
     #include <windows.h>
+
     //XXX: we do this to avoid weird stuff w unicode and ansi strings, LoadLibrary is just a macro and since its a preprocessor thing it can cause runtime trouble
     // UTF8 -> wide string helper for LoadLibraryW
-    inline HINSTANCE
-        LoadLibraryUTF8(const char* fp_Path)
+    static inline HINSTANCE
+        PEACH_LoadLibraryUTF8(const char* fp_Path)
     {
         int f_SizeNeeded = MultiByteToWideChar(CP_UTF8, 0, fp_Path, -1, NULL, 0);
-        wstring f_WidePath(f_SizeNeeded, 0);
+        std::wstring f_WidePath(f_SizeNeeded, 0);
         MultiByteToWideChar(CP_UTF8, 0, fp_Path, -1, &f_WidePath[0], f_SizeNeeded);
         return LoadLibraryW(f_WidePath.c_str()); 
     }
 
-    #define DYNLIB_LOAD(fp_Path) PeachCore::LoadLibraryUTF8(fp_Path)
+    #define DYNLIB_LOAD(fp_Path) ::PEACH_LoadLibraryUTF8(fp_Path)
     #define DYNLIB_GETSYM GetProcAddress
     #define DYNLIB_UNLOAD FreeLibrary
 #else
@@ -43,6 +43,7 @@
     #define DYNLIB_UNLOAD dlclose
 #endif
 
+
 // static internal linkage
 namespace PeachCore::DynamicLoader{
 
@@ -50,7 +51,7 @@ namespace PeachCore::DynamicLoader{
     static string 
         GetLastErrorAsString()
     {
-        #if defined(_WIN32) || defined(_WIN64) //wtf windows are u okay
+        #ifdef PEACH_PLATFORM_WINDOWS //wtf windows are u okay
             // Windows error message
             DWORD errorMessageID = ::GetLastError();
 

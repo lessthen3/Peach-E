@@ -1046,8 +1046,6 @@ if(BUILD_PEACH_TESTS)
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
         ) 
-
-        target_link_options(Peach_Tests PRIVATE /NODEFAULTLIB:LIBCMTD)
     endif(MSVC)
 
     ####################################### Link to Peach Core
