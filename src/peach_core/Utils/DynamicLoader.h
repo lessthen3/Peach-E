@@ -14,7 +14,8 @@
 #include "Logger.h"
 
 #ifdef PEACH_PLATFORM_WINDOWS
-    #define DYNLIB_HANDLE HINSTANCE //XXX: pretty much just a typedef -> void* but windows is a special boy >:(
+    struct HINSTANCE__; // forward declare the opaque struct from windef.h, we do this to avoid pulling windows.h into every TU through the include chain
+    #define DYNLIB_HANDLE HINSTANCE__* //XXX: pretty much just a typedef -> void* but windows is a special boy >:(
 #else
     #define DYNLIB_HANDLE void*
 #endif

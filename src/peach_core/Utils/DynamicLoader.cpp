@@ -8,7 +8,6 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#pragma once
 
 ///PeachCore
 #include "DynamicLoader.h"
