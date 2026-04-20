@@ -67,24 +67,17 @@ namespace PeachCore::DoubleBuffered {
 
     struct Transform2D
     {
+    private:
+        std::atomic<uint8_t> IsWritable = 0; //ik the alignment will still pad 4 bytes but this conveys intent better imo
+    public:
         Math::Transform2D Slots[2];
         std::atomic<uint32_t> WriteIndex{ 0 }; // which slot game thread is writing
 
-        // Main thread: get the slot currently being written to
-        [[nodiscard]] Math::Transform2D&
-            GetWriteSlot()
+        void
+            BeginWrite()
             noexcept
         {
-            return Slots[WriteIndex.load(std::memory_order_relaxed) & 1u];
-        }
-
-        // Render/physics thread: get the slot safe to read
-        // Always the slot the main thread is NOT currently writing
-        [[nodiscard]] const Math::Transform2D&
-            GetReadSlot()
-            const noexcept
-        {
-            return Slots[(WriteIndex.load(std::memory_order_acquire) + 1u) & 1u];
+            IsWritable.store(1u, std::memory_order_relaxed);
         }
 
         // Main thread: call at end of tick AFTER all transform writes for this frame are done
@@ -93,14 +86,17 @@ namespace PeachCore::DoubleBuffered {
             CommitWrite()
             noexcept
         {
-            WriteIndex.fetch_add(1u, std::memory_order_release);
+            //make sure changes are set before read slot tries to access, otherwise it'll be reading stale data, and read matrices can't be updated via their regular paths owo
+            GetWriteSlot().RegenerateLocalMatrix(); 
+            WriteIndex.fetch_add(IsWritable.load(std::memory_order_relaxed), std::memory_order_release);
+            IsWritable.store(0u, std::memory_order_relaxed); //unsigned 0 :O
         }
 
         [[nodiscard]] const glm::mat4&
             GetReadMatrix()
             const noexcept
         {
-            return GetReadSlot().GetLocalMatrix();
+            return GetReadSlot().GetLocalMatrixNoRegenerate();
         }
 
         [[nodiscard]] glm::vec2
@@ -122,6 +118,24 @@ namespace PeachCore::DoubleBuffered {
             const noexcept
         {
             return GetReadSlot().GetScale();
+        }
+
+    private:
+        // Main thread: get the slot currently being written to
+        [[nodiscard]] Math::Transform2D&
+            GetWriteSlot()
+            noexcept
+        {
+            return Slots[WriteIndex.load(std::memory_order_relaxed) & 1u];
+        }
+
+        // Render/physics thread: get the slot safe to read
+        // Always the slot the main thread is NOT currently writing
+        [[nodiscard]] const Math::Transform2D&
+            GetReadSlot()
+            const noexcept
+        {
+            return Slots[(WriteIndex.load(std::memory_order_acquire) + 1) & 1u];
         }
     };
 

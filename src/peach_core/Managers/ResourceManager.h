@@ -27,8 +27,8 @@
 
 #include "peach_api/NativeScriptDef.h"
 #include "peach_api/NodeDef.h"
-#include "Language-Support/DotnetRuntime.h"
-#include "Language-Support/LuaScriptRuntime.h"
+#include "Language-Support/dotnet/DotnetRuntime.h"
+#include "Language-Support/lua/LuaScriptRuntime.h"
 
 ///External
 #include <physfs/physfs.h>

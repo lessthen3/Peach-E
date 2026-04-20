@@ -19,8 +19,8 @@
 
 ///External
 #include <GL/glew.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 namespace PeachCore::OpenGL {
 
@@ -58,57 +58,57 @@ namespace PeachCore::OpenGL {
         /// Matrices 
 
         void 
-            SetUniform(const string& fp_UniformName, const glm::mat4& fp_Matrix) 
+            SetUniform(const string& fp_UniformName, const mat4s& fp_Matrix) 
         {
-            glUniformMatrix4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+            glUniformMatrix4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::mat3& fp_Matrix)
+            SetUniform(const string& fp_UniformName, const mat3s& fp_Matrix)
         {
-            glUniformMatrix3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+            glUniformMatrix3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::mat2& fp_Matrix)
+            SetUniform(const string& fp_UniformName, const mat2s& fp_Matrix)
         {
-            glUniformMatrix2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+            glUniformMatrix2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::mat2x3& fp_Matrix)
+            SetUniform(const string& fp_UniformName, const mat2x3s& fp_Matrix)
         {
-            glUniformMatrix2x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+            glUniformMatrix2x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::mat3x2& fp_Matrix)
+            SetUniform(const string& fp_UniformName, const mat3x2s& fp_Matrix)
         {
-            glUniformMatrix3x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+            glUniformMatrix3x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::mat2x4& fp_Matrix)
+            SetUniform(const string& fp_UniformName, const mat2x4s& fp_Matrix)
         {
-            glUniformMatrix2x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+            glUniformMatrix2x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::mat4x2& fp_Matrix)
+            SetUniform(const string& fp_UniformName, const mat4x2s& fp_Matrix)
         {
-            glUniformMatrix4x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+            glUniformMatrix4x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::mat3x4& fp_Matrix)
+            SetUniform(const string& fp_UniformName, const mat3x4s& fp_Matrix)
         {
-            glUniformMatrix3x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+            glUniformMatrix3x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE,(float*)fp_Matrix.raw);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::mat4x3& fp_Matrix)
+            SetUniform(const string& fp_UniformName, const mat4x3s& fp_Matrix)
         {
-            glUniformMatrix4x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, glm::value_ptr(fp_Matrix));
+            glUniformMatrix4x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
         }
 
         /// int vecs 
@@ -120,45 +120,19 @@ namespace PeachCore::OpenGL {
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::ivec2& fp_Value)
+            SetUniform(const string& fp_UniformName, const ivec2s& fp_Value)
         {
             glUniform2i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::ivec3& fp_Value)
+            SetUniform(const string& fp_UniformName, const ivec3s& fp_Value)
         {
             glUniform3i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z);
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::ivec4& fp_Value)
-        {
-            glUniform4i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z, fp_Value.w);
-        }
-
-        /// bool vecs 
-
-        void
-            SetUniform(const string& fp_UniformName, const bool fp_Value)
-        {
-            glUniform1i(pm_Uniforms.at(fp_UniformName), fp_Value);
-        }
-
-        void
-            SetUniform(const string& fp_UniformName, const glm::bvec2& fp_Value)
-        {
-            glUniform2i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y);
-        }
-
-        void
-            SetUniform(const string& fp_UniformName, const glm::bvec3& fp_Value)
-        {
-            glUniform3i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z);
-        }
-
-        void
-            SetUniform(const string& fp_UniformName, const glm::bvec4& fp_Value)
+            SetUniform(const string& fp_UniformName, const ivec4s& fp_Value)
         {
             glUniform4i(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z, fp_Value.w);
         }
@@ -172,19 +146,19 @@ namespace PeachCore::OpenGL {
         }
 
         void
-            SetUniform(const string& fp_UniformName, const glm::vec2& fp_Value)
+            SetUniform(const string& fp_UniformName, const vec2s& fp_Value)
         {
             glUniform2f(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y);
         }
 
         void 
-            SetUniform(const string& fp_UniformName, const glm::vec3& fp_Value) 
+            SetUniform(const string& fp_UniformName, const vec3s& fp_Value) 
         {
             glUniform3f(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z);
         }
 
         void 
-            SetUniform(const string& fp_UniformName, const glm::vec4& fp_Value) 
+            SetUniform(const string& fp_UniformName, const vec4s& fp_Value) 
         {
             glUniform4f(pm_Uniforms.at(fp_UniformName), fp_Value.x, fp_Value.y, fp_Value.z, fp_Value.w);
         }

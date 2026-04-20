@@ -11,7 +11,8 @@
 #pragma once
 
 ///PeachCore
-#include <glm/glm.hpp>
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 namespace PeachCore {
 
@@ -26,14 +27,14 @@ namespace PeachCore {
     struct Fog3D
     {
          bool pm_IsActive = true;
-         glm::vec4 pm_Colour;
+         vec4s pm_Colour = { 1.0f, 1.0f, 1.0f, 1.0f }; // Initialize with a struct literal
          float pm_Density = 1;
 
         ////////////////////////////////////////////// Constructor //////////////////////////////////////////////
 
          Fog3D() = default;
 
-         Fog3D(const bool fp_IsActive, const glm::vec4& fp_Colour, const float fp_Density)
+         Fog3D(const bool fp_IsActive, const vec4s& fp_Colour, const float fp_Density)
          {
              pm_IsActive = fp_IsActive;
              pm_Colour = fp_Colour;
@@ -55,7 +56,7 @@ namespace PeachCore {
              pm_IsActive = fp_IsActive;
         }
 
-         [[nodiscard]] glm::vec4
+         [[nodiscard]] vec4s
              GetColour() 
              const noexcept
          {
@@ -63,7 +64,7 @@ namespace PeachCore {
         }
 
          void 
-             SetColour(const glm::vec4& fp_Colour)
+             SetColour(const vec4s& fp_Colour)
          {
              pm_Colour = fp_Colour;
         }

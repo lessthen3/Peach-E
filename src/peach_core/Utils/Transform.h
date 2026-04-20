@@ -15,6 +15,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+///PeachCore
+#include "compiler_dep/PeachForceInline.h"
+
 namespace PeachCore::Math {
 
     struct Transform2D
@@ -25,8 +28,8 @@ namespace PeachCore::Math {
         glm::vec2 pm_Scale;
         glm::vec2 pm_Origin;    // pivot in local space (e.g. sprite center)
 
-        mutable glm::mat4 pm_LocalMatrix{ 1.0f };
-        mutable bool pm_IsDirty{ true }; //>W< used to track whether the matrix needs to be recalculated owo!, IMPORTANT: intialize to true since after construction just make sure its updated props
+        glm::mat4 pm_LocalMatrix; //don't needa set this because only one constructor, and it will set it through RegenerateLocalMatrix()
+        bool pm_IsDirty{ false }; //>W< used to track whether the matrix needs to be recalculated owo!, IMPORTANT: intialize to false  to make sure RegenerateLocalMatrix() hits its is dirty flag >w<
 
     public:
         Transform2D()
@@ -34,7 +37,9 @@ namespace PeachCore::Math {
             , pm_Rotation( 0.0f )
             , pm_Scale({ 1.0f, 1.0f })
             , pm_Origin({ 0.0f, 0.0f })
-        {}
+        {
+            RegenerateLocalMatrix();
+        }
 
         Transform2D
         (
@@ -47,7 +52,9 @@ namespace PeachCore::Math {
             , pm_Rotation(fp_RotationRadians)
             , pm_Scale(fp_Scale)
             , pm_Origin(fp_Origin) 
-        {}
+        {
+            RegenerateLocalMatrix();
+        }
 
         ////////////////////////////////////////////// Getters //////////////////////////////////////////////
 
@@ -134,9 +141,9 @@ namespace PeachCore::Math {
             return { -sin(pm_Rotation), cos(pm_Rotation) };   // rotate (0,1) by pm_Rotation
         }
 
-        const glm::mat4& 
+    [[nodiscard]] PEACH_FORCEINLINE const glm::mat4& 
             GetLocalMatrix()
-            const noexcept
+            noexcept
         {
             if(pm_IsDirty)
             {
@@ -152,9 +159,30 @@ namespace PeachCore::Math {
 
             return pm_LocalMatrix;
         }
+
+        PEACH_FORCEINLINE void
+            RegenerateLocalMatrix()
+            noexcept
+        {
+            pm_LocalMatrix = glm::mat4(1.0f);
+
+            pm_LocalMatrix = glm::translate(pm_LocalMatrix, glm::vec3(pm_Position, 0.0f));
+            pm_LocalMatrix = glm::rotate(pm_LocalMatrix, pm_Rotation, glm::vec3(0.0f, 0.0f, 1.0f));
+            pm_LocalMatrix = glm::scale(pm_LocalMatrix, glm::vec3(pm_Scale, 1.0f));
+            pm_LocalMatrix = glm::translate(pm_LocalMatrix, glm::vec3(-pm_Origin, 0.0f));
+
+            pm_IsDirty = false;
+        }
+
+        [[nodiscard]] PEACH_FORCEINLINE const glm::mat4&
+            GetLocalMatrixNoRegenerate()
+            const noexcept
+            {
+                return pm_LocalMatrix;
+            }
     };
 
-     struct Transform3D
+    struct Transform3D //standard TRS matrix
     {
     private:
         //API reachpoint vars for human friendly shtuff >w<
@@ -164,9 +192,9 @@ namespace PeachCore::Math {
         glm::vec3 pm_Scale{ 1.0f, 1.0f, 1.0f };
 
         //Intiailize as and identity matrices uwu owo!
-        mutable glm::mat4 pm_LocalMatrix{ 1.0f };
+        glm::mat4 pm_LocalMatrix{ 1.0f };
         //Deterimines whether local matrix needs to be updated on request owo
-        mutable bool  pm_IsDirty{ true }; // true so first GetLocalMatrix() always computes
+        bool  pm_IsDirty{ true }; // true so first GetLocalMatrix() always computes
 
     public:
         Transform3D() = default;
@@ -211,7 +239,7 @@ namespace PeachCore::Math {
 
         const glm::mat4&
             GetLocalMatrix()
-            const noexcept
+            noexcept
         {
             if (pm_IsDirty)
             {                                                                                                   // quat → rotation matrix
