@@ -258,8 +258,8 @@ elseif(PEACH_LINUX) #XXX: doing these later when i compile on my linux machine, 
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/debug/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/release/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/debug/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
@@ -276,8 +276,8 @@ elseif(PEACH_BSD) #Xxx: doing this took decades off my life ;w;
     ############ Windowing and Input
 
     STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/freebsd64/debug/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/freebsd64/release/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/freebsd64/debug/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
@@ -530,7 +530,6 @@ if(PEACH_PLATFORM_IS_WINDOWS)
 
     target_compile_definitions(peach_core PUBLIC
         GLEW_STATIC #needed for statically linking glew
-        PEACH_API_STATIC #used for compiling peach_api as a static lib uwu
     )
 
     if(MSVC)
@@ -549,7 +548,11 @@ endif(PEACH_PLATFORM_IS_WINDOWS)
 if(BUILD_PEACH_CORE_SHARED)
     target_compile_definitions(peach_core PRIVATE
         PEACH_BUILD_DYNAMIC
-    ) 
+    )     
+else()
+    target_compile_definitions(peach_core PRIVATE
+        PEACH_API_STATIC #used for compiling peach_api as a static lib uwu
+    )     
 endif(BUILD_PEACH_CORE_SHARED)
 
 ####################################### Executable Targets

@@ -11,8 +11,8 @@
 #pragma once
 
 ///PeachCore
-#include "../peach_api/PeachAPI.h"
-#include "../Utils/Logger.h"
+#include "peach_api/PeachAPI.h"
+#include "Utils/Logger.h"
 
 ///Lua
 extern "C"

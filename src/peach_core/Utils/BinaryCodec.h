@@ -198,12 +198,13 @@ namespace PeachCore::BinaryCodec::Utility{
         ////////////////////////////////////////////// Encode String Length //////////////////////////////////////////////
 
         size_t f_StringLengthOffset = fp_Bytes.size(); //length index, no -1 needed since we adding the length after we stored this owo
+        const size_t f_DataStartOffset = f_StringLengthOffset + sizeof(LengthT);
 
         //add space for slot since we gon write it after
-        fp_Bytes.resize(f_StringLengthOffset + sizeof(LengthT), 0); //needa resize her since we want elements here and the string write wont do that
+        fp_Bytes.resize(f_DataStartOffset, 0); //needa resize her since we want elements here and the string write wont do that
 
-        const size_t f_DataStartOffset = fp_Bytes.size();
-        fp_Bytes.reserve(f_DataStartOffset + fp_String.size()); //reserve space to avoid re alloc overhead and to allow simd opt on a fixed size container
+        //reserve is not really ideal, we bulk insert and letting the vector grow geometrically makes more sense since this encoding function will be called in a big loop or at least is meant to be
+        //fp_Bytes.reserve(f_DataStartOffset + fp_String.size()); //reserve space to avoid re alloc overhead and to allow simd opt on a fixed size container FIX THIS SHOULDNT RESERVEV
 
         ////////////////////////////////////////////// Write Character by Character //////////////////////////////////////////////
 
@@ -312,7 +313,8 @@ namespace PeachCore::BinaryCodec::Utility{
 
         ////////////////////////////////////////////// Reserve String Length Count + Bytes //////////////////////////////////////////////
         
-        fp_Bytes.reserve(fp_Bytes.size() + sizeof(LengthT) + fp_String.size()); //handles edge case to avoid double re alloc 
+        //don't try to outsmart the amoritized constant time growth, the re alloc is gonna happen regardless saving one is not worth missing a bunch and turning O(1) -> O(n)
+        //fp_Bytes.reserve(fp_Bytes.size() + sizeof(LengthT) + fp_String.size()); //handles edge case to avoid double re alloc  FIX THIS SHOULDNT RESERVEV
 
         ////////////////////////////////////////////// Encode String Length //////////////////////////////////////////////
 
@@ -391,7 +393,7 @@ namespace PeachCore::BinaryCodec::Utility{
         ////////////////////////////////////////////// Create String and Allocate Space //////////////////////////////////////////////
 
         std::string f_DecodedString;
-        f_DecodedString.reserve(f_StringLength); // Reserve space to optimize append operations
+        f_DecodedString.reserve(f_StringLength); // Reserve space to optimize append operations 
 
         ////////////////////////////////////////////// Decode String //////////////////////////////////////////////
 

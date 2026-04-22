@@ -10,7 +10,6 @@
 ********************************************************************/
 #pragma once
 
-#include <glm/glm.hpp>
 #include <string>
 #include <memory>
 
@@ -21,6 +20,10 @@
 
 #include <box2d/box2d.h>
 
+
+///cglm
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 namespace PeachCore {
 
@@ -51,7 +54,14 @@ namespace PeachCore {
 
         //IMPORTANT WE NEED TO ADD A METHO
 
-        void CreatePhysicsBody(b2WorldId fp_World, b2BodyId& fp_Body2D, const glm::vec2& fp_Position, bool fp_IsDynamic = true)
+        void 
+            CreatePhysicsBody
+            (
+                b2WorldId fp_World,
+                b2BodyId& fp_Body2D, 
+                const vec2s fp_Position, 
+                bool fp_IsDynamic = true
+            )
         {
             b2BodyDef f_BodyDefinition = b2DefaultBodyDef();
             f_BodyDefinition.type = fp_IsDynamic ? b2_dynamicBody : b2_staticBody;
@@ -61,7 +71,14 @@ namespace PeachCore {
             pm_IsValid = true; //you arent allowed to access this manually anywhere
         }
 
-        void CreateBoxCollisionShape2D(b2WorldId fp_World, const glm::vec2& fp_Position, const glm::vec2& fp_Size, bool fp_IsDynamic = true)
+        void 
+            CreateBoxCollisionShape2D
+            (
+                b2WorldId fp_World,
+                const vec2s fp_Position, 
+                const vec2s fp_Size, 
+                bool fp_IsDynamic = true
+            )
         {
             if(pm_IsValid) //Cleans up body if creating a new one using the recommended method by Box2D docs
             {
@@ -77,7 +94,14 @@ namespace PeachCore {
             b2CreatePolygonShape(pm_Body2D, &CreateShapeDefinition(), &f_Box);
         }
 
-        void CreateCircleCollisionShape2D(b2WorldId fp_World, const glm::vec2& fp_Position, const float fp_Radius, bool fp_IsDynamic = true)
+        void 
+            CreateCircleCollisionShape2D
+            (
+                b2WorldId fp_World, 
+                const vec2s fp_Position, 
+                const float fp_Radius, 
+                bool fp_IsDynamic = true
+            )
         {
             if(pm_IsValid) //Cleans up body if creating a new one using the recommended method by Box2D docs
             {
@@ -95,7 +119,15 @@ namespace PeachCore {
             b2CreateCircleShape(pm_Body2D, &CreateShapeDefinition(), &f_Circle);
         }
 
-        void CreateCapsuleShape(b2WorldId fp_World, const glm::vec2& fp_Center1, const glm::vec2& fp_Center2, const float fp_Radius, bool fp_IsDynamic = true) //YEEEEEEEEEEEEEEE V3 FEATURE
+        void 
+            CreateCapsuleShape
+            (
+                b2WorldId fp_World,
+                const vec2s fp_Center1, 
+                const vec2s fp_Center2, 
+                const float fp_Radius,
+                bool fp_IsDynamic = true
+            ) //YEEEEEEEEEEEEEEE V3 FEATURE
         {
             if (pm_IsValid) //Cleans up body if creating a new one using the recommended method by Box2D docs
             {
@@ -104,8 +136,7 @@ namespace PeachCore {
                 //need to destroy attached joints manually
             }
             //calculates the midpoint between the two capsule centers
-            glm::vec2 f_Midpoint = glm::vec2((fp_Center1.x + fp_Center2.x) / 2, 
-                                                                 (fp_Center1.y + fp_Center2.y) / 2 );
+            vec2s f_Midpoint = { (fp_Center1.x + fp_Center2.x) / 2, (fp_Center1.y + fp_Center2.y) / 2 };
 
             CreatePhysicsBody(fp_World, pm_Body2D, f_Midpoint, fp_IsDynamic);
 

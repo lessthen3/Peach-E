@@ -18,12 +18,12 @@ namespace PeachCore {
     struct Camera2D
     {
     private:
-        glm::vec2 m_ViewportSize{ 1280.0f, 720.0f }; // pixels
+        vec2s m_ViewportSize{ { 1280.0f, 720.0f } }; // pixels
         float m_Zoom{ 1.0f };     // 1.0 = 1 world unit = 1 pixel
 
-        glm::mat4 m_Projection{ 1.0f };
-        glm::mat4 m_View{ 1.0f };
-        glm::mat4 m_ViewProjection{ 1.0f };
+        mat4s m_Projection = GLMS_MAT4_IDENTITY_INIT;
+        mat4s m_View = GLMS_MAT4_IDENTITY_INIT;
+        mat4s m_ViewProjection = GLMS_MAT4_IDENTITY_INIT;
 
         bool m_ProjDirty{ true };
         bool m_ViewDirty{ true };
@@ -34,7 +34,7 @@ namespace PeachCore {
         explicit
             Camera2D
         (
-            const glm::vec2& fp_ViewportSize, 
+            const vec2s fp_ViewportSize, 
             float fp_Zoom = 1.0f
         ) 
             : 
@@ -58,7 +58,7 @@ namespace PeachCore {
         }
 
         void 
-            SetViewportSize(const glm::vec2& fp_Size)
+            SetViewportSize(const vec2s fp_Size)
             noexcept
         {
             m_ViewportSize = fp_Size;
@@ -73,7 +73,7 @@ namespace PeachCore {
             m_ProjDirty = true;
         }
 
-        glm::vec2 
+        vec2s 
             GetViewportSize() 
             const noexcept 
         { 
@@ -89,7 +89,7 @@ namespace PeachCore {
 
         // --- matrices ---
 
-        const glm::mat4& 
+        const mat4s& 
             GetProjection() 
             noexcept
         {
@@ -145,7 +145,7 @@ namespace PeachCore {
 
     struct Plane
     {
-        glm::vec3 m_Normal;
+        vec3s m_Normal;
         float m_Distance;
 
         // Constructor to initialize and normalize the plane

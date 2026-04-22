@@ -14,20 +14,21 @@
 #include "PeachTexture.h"
 
 ///STL
-#include <glm/glm.hpp>
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 namespace PeachCore {
 
-    static const glm::vec4 DEFAULT_COLOUR = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    static const vec4s DEFAULT_COLOUR = (1.0f, 1.0f, 1.0f, 1.0f);
 
     struct PeachMaterial
     {
         uint64_t Texture = 0;
         float pm_Reflectance = 0;
 
-        glm::vec4 pm_AmbientColour{ DEFAULT_COLOUR };
-        glm::vec4 pm_DiffuseColour{ DEFAULT_COLOUR };
-        glm::vec4 pm_SpecularColour{ DEFAULT_COLOUR };
+        vec4s pm_AmbientColour{ DEFAULT_COLOUR };
+        vec4s pm_DiffuseColour{ DEFAULT_COLOUR };
+        vec4s pm_SpecularColour{ DEFAULT_COLOUR };
 
         ////////////////////////////////////////////// Constructor //////////////////////////////////////////////
 
@@ -37,9 +38,9 @@ namespace PeachCore {
          (
              const uint64_t fp_Texture, 
              const float fp_Reflectance,
-             const glm::vec4& fp_AmbientColour, 
-             const glm::vec4& fp_DiffuseColour, 
-             const glm::vec4& fp_SpecularColour
+             const vec4s& fp_AmbientColour, 
+             const vec4s& fp_DiffuseColour,
+             const vec4s& fp_SpecularColour
          )
              :
              Texture(fp_Texture),
@@ -52,21 +53,21 @@ namespace PeachCore {
         ////////////////////////////////////////////// Setter and Getters //////////////////////////////////////////////
 
          void 
-             SetAmbientColour(const glm::vec4& fp_AmbientColour)
+             SetAmbientColour(const vec4s& fp_AmbientColour)
              noexcept
          {
             pm_AmbientColour = fp_AmbientColour;
         }
 
          void 
-             SetDiffuseColour(const glm::vec4& fp_DiffuseColour)
+             SetDiffuseColour(const vec4s& fp_DiffuseColour)
              noexcept
          {
             pm_DiffuseColour = fp_DiffuseColour;
         }
 
          void
-             SetSpecularColour(const glm::vec4& fp_SpecularColour)
+             SetSpecularColour(const vec4s& fp_SpecularColour)
              noexcept
          {
              pm_SpecularColour = fp_SpecularColour;
@@ -86,21 +87,21 @@ namespace PeachCore {
              Texture = fp_Texture;
          }
 
-         [[nodiscard]] const glm::vec4&
+         [[nodiscard]] vec4s
              GetDiffuseColour()
              const noexcept
          {
              return pm_DiffuseColour;
          }
 
-         [[nodiscard]] const glm::vec4&
+         [[nodiscard]] vec4s
              GetSpecularColour() 
              const noexcept
          {
             return pm_SpecularColour;
         }
 
-         [[nodiscard]] const glm::vec4&
+         [[nodiscard]] vec4s
              GetAmbientColour()
              const noexcept
          {

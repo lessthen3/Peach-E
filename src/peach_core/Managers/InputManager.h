@@ -17,8 +17,9 @@
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_gamepad.h>
 
-///GLM
-#include <glm/glm.hpp>
+///cglm
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 namespace PeachCore {
 
@@ -115,19 +116,19 @@ namespace PeachCore {
     struct MouseInput
     {
         array<InputState, 5> MouseButtonsDown; //not sure if this is right, it works for most configs of mice since the 5 button layout is common but idk not standard
-        glm::vec2 Position = glm::vec2(0);
-        glm::vec2 Delta = glm::vec2(0);     // For motion
-        glm::vec2 Scroll = glm::vec2(0);       // For scroll
+        vec2s Position = { 0.0f, 0.0f };
+        vec2s Delta = { 0.0f, 0.0f };   // For motion
+        vec2s Scroll = { 0.0f, 0.0f };      // For scroll
     };
 
     struct JoystickInput
     {
-        glm::vec2 StickPosition = glm::vec2(0);
+        vec2s StickPosition = { 0.0f, 0.0f };
     };
 
     struct GamepadInput
     {
-        glm::vec2 StickPosition = glm::vec2(0);
+        vec2s StickPosition = { 0.0f, 0.0f };
 
         //ThreadsafeVec2() : x(0.0f), y(0.0f) {}
 
@@ -140,7 +141,7 @@ namespace PeachCore {
         float Rotation = 0.0f;
         float Tilt = 0.0f;
 
-        glm::vec2 Position = glm::vec2(0);
+        vec2s Position = { 0.0f, 0.0f };
     };
 
     struct TouchInput
@@ -295,7 +296,7 @@ namespace PeachCore {
             WasReleased(const string& fp_ActionName)
             const noexcept;
 
-        [[nodiscard]] inline glm::vec2
+        [[nodiscard]] inline vec2s
             GetCurrentMousePosition()
             const noexcept
         {

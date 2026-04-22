@@ -24,11 +24,19 @@
 
 namespace PeachCore::OpenGL {
 
+    constexpr size_t NUMBER_OF_OPENGL_SHADER_TYPES = 6;
+
+    constexpr size_t VERTEX_SHADER_INDEX = 0;
+    constexpr size_t FRAGMENT_SHADER_INDEX = 1;
+    constexpr size_t COMPUTE_SHADER_INDEX = 2;
+    constexpr size_t GEOMETRY_SHADER_INDEX = 3;
+    constexpr size_t TESS_CONTROL_SHADER_INDEX = 4;
+    constexpr size_t TESS_EVAL_SHADER_INDEX = 5;
+
     class ShaderProgram 
     {
     private:
-        unordered_map<string, GLuint> pm_Shaders; //stores references to all shader IDs that have been registered with the OpenGL::ShaderProgram
-        unordered_map<string, GLuint> pm_Uniforms; //stores all information relevant to program uniforms
+        unordered_map<string, GLint> pm_Uniforms; //stores all information relevant to program uniforms
 
         string pm_ProgramName;
 
@@ -40,7 +48,7 @@ namespace PeachCore::OpenGL {
 
         ShaderProgram(const ShaderProgram&) = delete;
         ShaderProgram& operator=(const ShaderProgram&) = delete;
-        ShaderProgram(ShaderProgram&& other) noexcept = default; // Implement this
+        ShaderProgram(ShaderProgram&& other) noexcept = delete; 
 
     public:
         ShaderProgram
@@ -60,55 +68,55 @@ namespace PeachCore::OpenGL {
         void 
             SetUniform(const string& fp_UniformName, const mat4s& fp_Matrix) 
         {
-            glUniformMatrix4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
+            glUniformMatrix4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, fp_Matrix.raw[0]);
         }
 
         void
             SetUniform(const string& fp_UniformName, const mat3s& fp_Matrix)
         {
-            glUniformMatrix3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
+            glUniformMatrix3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, fp_Matrix.raw[0]);
         }
 
         void
             SetUniform(const string& fp_UniformName, const mat2s& fp_Matrix)
         {
-            glUniformMatrix2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
+            glUniformMatrix2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, fp_Matrix.raw[0]);
         }
 
         void
             SetUniform(const string& fp_UniformName, const mat2x3s& fp_Matrix)
         {
-            glUniformMatrix2x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
+            glUniformMatrix2x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, fp_Matrix.raw[0]);
         }
 
         void
             SetUniform(const string& fp_UniformName, const mat3x2s& fp_Matrix)
         {
-            glUniformMatrix3x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
+            glUniformMatrix3x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, fp_Matrix.raw[0]);
         }
 
         void
             SetUniform(const string& fp_UniformName, const mat2x4s& fp_Matrix)
         {
-            glUniformMatrix2x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
+            glUniformMatrix2x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, fp_Matrix.raw[0]);
         }
 
         void
             SetUniform(const string& fp_UniformName, const mat4x2s& fp_Matrix)
         {
-            glUniformMatrix4x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
+            glUniformMatrix4x2fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, fp_Matrix.raw[0]);
         }
 
         void
             SetUniform(const string& fp_UniformName, const mat3x4s& fp_Matrix)
         {
-            glUniformMatrix3x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE,(float*)fp_Matrix.raw);
+            glUniformMatrix3x4fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, fp_Matrix.raw[0]);
         }
 
         void
             SetUniform(const string& fp_UniformName, const mat4x3s& fp_Matrix)
         {
-            glUniformMatrix4x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, (float*)fp_Matrix.raw);
+            glUniformMatrix4x3fv(pm_Uniforms.at(fp_UniformName), 1, GL_FALSE, fp_Matrix.raw[0]);
         }
 
         /// int vecs 
@@ -237,6 +245,7 @@ namespace PeachCore::OpenGL {
         void
             Link
             (
+                const vector<GLint>& fp_ShaderIDs,
                 Logger* fp_RenderingLogger
             );
 
@@ -249,20 +258,6 @@ namespace PeachCore::OpenGL {
         ///////////////////////////////////////////////
         // Create Shaders
         ///////////////////////////////////////////////
-
-        bool
-            CreateVertexShader
-            (
-                const string& fp_ShaderCode,
-                Logger* fp_RenderingLogger
-            );
-
-        bool
-            CreateFragmentShader
-            (
-                const string& fp_ShaderCode,
-                Logger* fp_RenderingLogger
-            );
 
         int
             CreateShader //creates, compiles and attaches desired shader type to current shaderprogram

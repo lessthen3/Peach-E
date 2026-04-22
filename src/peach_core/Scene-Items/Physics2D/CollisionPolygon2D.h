@@ -22,7 +22,8 @@
 #include <box2d/box2d.h>
 
 ///GLM
-#include <glm/glm.hpp>
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 namespace PeachCore {
 
@@ -124,7 +125,7 @@ namespace PeachCore {
             (
                 b2WorldId fp_World, 
                 b2BodyId& fp_Body2D, 
-                const glm::vec2& fp_Position, 
+                const vec2s& fp_Position, 
                 const bool fp_IsDynamic = true
             )
         {
@@ -218,21 +219,22 @@ namespace PeachCore {
 
         // Function to ensure vertices are wound counter-clockwise in Box2D
         vector<b2Vec2> 
-            AssertWindingOrderCCW(const vector<glm::vec2>& vertices)
+            AssertWindingOrderCCW(const vector<vec2s>& fp_Vertices) //idek if i needa convert really should be the same alignment and padding a memcpy should be fine tbh but C++ type system ig w/e
         {
             vector<b2Vec2> box2dVertices;
-            for (const auto& vertex : vertices)
+
+            for (const auto& lv_Vertex : fp_Vertices)
             {
-                box2dVertices.push_back(b2Vec2(vertex.x, vertex.y));
+                box2dVertices.emplace_back(lv_Vertex.x, lv_Vertex.y);
             }
 
             // Ensure counter-clockwise winding
             float area = 0.0f;
-            for (size_t i = 0; i < box2dVertices.size(); ++i)
+            for (size_t lv_Index = 0; lv_Index < box2dVertices.size(); ++lv_Index)
             {
-                size_t j = (i + 1) % box2dVertices.size();
-                area += box2dVertices[i].x * box2dVertices[j].y;
-                area -= box2dVertices[i].y * box2dVertices[j].x;
+                size_t j = (lv_Index + 1) % box2dVertices.size();
+                area += box2dVertices[lv_Index].x * box2dVertices[j].y;
+                area -= box2dVertices[lv_Index].y * box2dVertices[j].x;
             }
 
             // If area is negative, vertices are wound clockwise and need to be reversed

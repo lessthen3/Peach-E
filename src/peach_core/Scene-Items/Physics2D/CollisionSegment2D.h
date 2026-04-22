@@ -15,7 +15,10 @@
 
 #include <vector>
 #include <string>
-#include <glm/glm.hpp>
+
+///cglm
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 namespace PeachCore {
 
@@ -58,7 +61,7 @@ namespace PeachCore {
                 return;
             }
 
-            glm::vec2 f_LastPoint, f_CurrentPoint;
+            vec2s f_LastPoint, f_CurrentPoint;
             int f_ParallelSegmentsVisitedCount = 0; //counts the amount of segments visited in a row that are straight
 
             //DOES THIS WHOLE THING NEED TO BE IN A WHILE LOOP ????? CAN I MODIFY THIS WHILE LOOPING IS THIS A GOOD LANGUAGE LIKE C#
@@ -90,7 +93,7 @@ namespace PeachCore {
 
 
     private:
-        vector<glm::vec2> pm_ListOfPoints;
+        vector<vec2s> pm_ListOfPoints;
         string pm_SegmentID;
 
     };

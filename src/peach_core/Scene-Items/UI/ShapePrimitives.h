@@ -22,7 +22,8 @@
 #include <stdint.h>
 
 ///GLM
-#include <glm/glm.hpp>
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 /*
 the way this class works is that we create shape primitives for hit detection, however we always pass a quad to the shader for rendering,
@@ -94,7 +95,7 @@ especially for something that is heavily iterated on like overall aesthetic of a
  *     are never ORed, sequential values are correct.
  *
  *   sizeof(ShapePrimitive) breakdown:
- *     largest member  = TriangleShape (3x glm::vec2 = 24 bytes)
+ *     largest member  = TriangleShape (3x vec2s = 24 bytes)
  *     variant overhead = 8 bytes (discriminant + alignment padding)
  *     total           ≈ 32 bytes
  *
@@ -162,8 +163,8 @@ namespace PeachCore::PUI {
         // Both centers in *local* space — add fp_Origin at call time.
         // Capsule = Minkowski sum of line segment + circle of Radius.
         // Typical vertical capsule: LocalCenter1 = {0, -HalfLen}, LocalCenter2 = {0, +HalfLen}
-        glm::vec2 LocalCenter1{ 0.f,  0.5f };
-        glm::vec2 LocalCenter2{ 0.f, -0.5f };
+        vec2s LocalCenter1{ 0.f,  0.5f };
+        vec2s LocalCenter2{ 0.f, -0.5f };
         float     Radius = 0.f;
     };
 
@@ -171,9 +172,9 @@ namespace PeachCore::PUI {
     {
         // Vertices in *local* space, CCW winding (required for IsWithin).
         // Default: equilateral with centroid at origin-ish.
-        glm::vec2 A{ 0.f,  1.f };
-        glm::vec2 B{ 1.f, -1.f };
-        glm::vec2 C{ -1.f, -1.f };
+        vec2s A{ 0.f,  1.f };
+        vec2s B{ 1.f, -1.f };
+        vec2s C{ -1.f, -1.f };
     };
 
     struct PolygonShape
@@ -181,7 +182,7 @@ namespace PeachCore::PUI {
         // Vertices in *local* space, CCW winding REQUIRED — call AssertWindingCCW()
         // after construction. Convex polygons only for IsWithin. For concave UI shapes,
         // decompose at load time (editor does this) and store as multiple PolygonShapes.
-        std::vector<glm::vec2> Vertices;
+        std::vector<vec2s> Vertices;
 
         // Computes signed area via shoelace, flips winding in-place if CW.
         // Call after constructing from external data (e.g. editor polygon tool).
@@ -199,8 +200,8 @@ namespace PeachCore::PUI {
 
             for (size_t lv_I = 0; lv_I < Vertices.size(); ++lv_I)
             {
-                const glm::vec2& fv_Curr = Vertices[lv_I];
-                const glm::vec2& fv_Next = Vertices[(lv_I + 1) % Vertices.size()];
+                const vec2s& fv_Curr = Vertices[lv_I];
+                const vec2s& fv_Next = Vertices[(lv_I + 1) % Vertices.size()];
                 f_SignedArea += (fv_Curr.x * fv_Next.y) - (fv_Next.x * fv_Curr.y);
             }
 
@@ -239,18 +240,18 @@ namespace PeachCore::PUI {
         IsWithin
         (
             const ShapePrimitive& fp_Shape,
-            const glm::vec2& fp_Origin,
-            const glm::vec2& fp_TestPoint
+            const vec2s& fp_Origin,
+            const vec2s& fp_TestPoint
         )
         noexcept;
 
     // GetAABB — returns {x, y, width, height} in world space.
     // Used for layout, dirty-region culling, focus rings, tooltips.
-    [[nodiscard]] glm::vec4
+    [[nodiscard]] vec4s
         GetAABB
         (
             const ShapePrimitive& fp_Shape,
-            const glm::vec2& fp_Origin
+            const vec2s& fp_Origin
         )
         noexcept;
 
@@ -262,7 +263,7 @@ namespace PeachCore::PUI {
 
     // GetLocalVertices — debug/editor only, returns logical outline vertices.
     // Returns heap-allocated vector — this is a cold-path query, that's fine.
-    [[nodiscard]] std::vector<glm::vec2>
+    [[nodiscard]] std::vector<vec2s>
         GetLocalVertices(const ShapePrimitive& fp_Shape)
         noexcept;
 

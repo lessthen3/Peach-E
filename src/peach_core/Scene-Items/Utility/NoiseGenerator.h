@@ -16,7 +16,9 @@
 #include <random>
 #include <cmath>
 
-#include <glm/glm.hpp>
+///cglm
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 ///PeachCore
 #include "Utils/Math.h"
@@ -83,7 +85,14 @@ namespace PeachCore {
 
         static float fade(float t) { return t * t * t * (t * (t * 6 - 15) + 10); }
 
-        static float grad(int hash, float x, float y, float z) 
+        static float 
+            grad
+            (
+                int hash, 
+                float x,
+                float y, 
+                float z
+            ) 
         {
             int h = hash & 15;
             float u = h < 8 ? x : y;
@@ -97,7 +106,17 @@ namespace PeachCore {
          * @param persistence: How much does each layer's volume drop? (default 0.5f)
          * @param lacunarity: How much does each layer's frequency jump? (default 2.0f)
          */
-        [[nodiscard]] float fractal(float x, float y, int octaves, float persistence = 0.5f, float lacunarity = 2.0f) const {
+        [[nodiscard]] float 
+            fractal
+            (
+                float x, 
+                float y, 
+                int octaves, 
+                float persistence = 0.5f,
+                float lacunarity = 2.0f
+            ) 
+            const 
+        {
             float total = 0.0f;
             float frequency = 1.0f;
             float amplitude = 1.0f;
@@ -121,15 +140,23 @@ namespace PeachCore {
         * @param r: The "second layer" of distortion
         * @return A beautifully swirled noise value
         */
-        [[nodiscard]] float warped(float x, float y, float strength = 4.0f) const {
+        [[nodiscard]] float 
+            warped
+            (
+                float x, 
+                float y, 
+                float strength = 4.0f
+            ) 
+            const 
+        {
             // 1. Create a "distorted" coordinate (q)
-            glm::vec2 q = {
+            vec2s q = {
                 fractal(x + 0.0f, y + 0.0f, 3),
                 fractal(x + 5.2f, y + 1.3f, 3) // Offsets to prevent symmetry
             };
 
             // 2. Create a "second-order" distorted coordinate (r)
-            glm::vec2 r = {
+            vec2s r = {
                 fractal(x + strength * q.x + 1.7f, y + strength * q.y + 9.2f, 3),
                 fractal(x + strength * q.x + 8.3f, y + strength * q.y + 2.8f, 3)
             };

@@ -18,7 +18,6 @@
 
 namespace PeachCore::OpenGL {
 
-
     ShaderProgram::~ShaderProgram() //cleaning up should be kosher since OpenGL runs single threaded anyways owo
     {
         if (pm_ProgramID != 0) //delete program if it has been set only
@@ -42,31 +41,25 @@ namespace PeachCore::OpenGL {
         pm_ProgramID = glCreateProgram();
 
         string f_VertexSourceCode, f_FragmentSourceCode;
-        bool f_IsVertexShaderValid = false;
-        bool f_IsFragmentShaderValid = false;
 
         ///vertex shader
         if (not ReadFileIntoString(fp_VertexSourceFilePath, f_VertexSourceCode, logger))
         {
             logger->Error("Unable to read vertex shader code into a string", "OpenGL::ShaderProgram: " + pm_ProgramName);
         }
-        else if (CreateVertexShader(f_VertexSourceCode, logger))
-        {
-            f_IsVertexShaderValid = true;
-        }
         ///fragment shader
         if (not ReadFileIntoString(fp_FragmentSourceFilePath, f_FragmentSourceCode, logger))
         {
             logger->Error("Unable to read fragment shader code into a string", "OpenGL::ShaderProgram: " + pm_ProgramName);
         }
-        else if (CreateFragmentShader(f_FragmentSourceCode, logger))
-        {
-            f_IsFragmentShaderValid = true;
-        }
 
-        if (f_IsVertexShaderValid and f_IsFragmentShaderValid)
+        GLint f_VertexShaderID = CreateShader(f_VertexSourceCode, GL_VERTEX_SHADER, logger);
+        GLint f_FragmentShaderID = CreateShader(f_FragmentSourceCode, GL_FRAGMENT_SHADER, logger);
+        
+
+        if (f_VertexShaderID and f_FragmentShaderID) //CreateShader returns 0 if it fails so this will work fine
         {
-            Link(logger);
+            Link({f_VertexShaderID, f_FragmentShaderID}, logger);
         }
         else
         {
@@ -130,12 +123,13 @@ namespace PeachCore::OpenGL {
     void
         ShaderProgram::Link
         (
+            const vector<GLint>& fp_ShaderIDs,
             Logger* logger
         )
     {
-        for (auto& shader : pm_Shaders)
+        for (auto& lv_ShaderID : fp_ShaderIDs)
         {
-            glAttachShader(pm_ProgramID, shader.second);
+            glAttachShader(pm_ProgramID, lv_ShaderID);
         }
 
         glLinkProgram(pm_ProgramID);
@@ -160,10 +154,10 @@ namespace PeachCore::OpenGL {
             );
         }
 
-        for (auto& shader : pm_Shaders)
+        for (auto& lv_ShaderID : fp_ShaderIDs)
         {
-            glDetachShader(pm_ProgramID, shader.second);
-            glDeleteShader(shader.second);  // Delete the shader as it's no longer needed
+            glDetachShader(pm_ProgramID, lv_ShaderID);
+            glDeleteShader(lv_ShaderID);  // Delete the shader as it's no longer needed
         }
 
         glValidateProgram(pm_ProgramID);
@@ -180,8 +174,6 @@ namespace PeachCore::OpenGL {
         }
 
         AutoCaptureActiveUniforms(logger);
-
-        pm_Shaders.clear(); //don't need the contents anymore since they are stored inside the GL context currently
     }
 
     void
@@ -202,15 +194,15 @@ namespace PeachCore::OpenGL {
             glGetActiveUniform(pm_ProgramID, GLuint(lv_Index), sizeof(name) - 1, &name_len, &num, &type, name);
 
             name[name_len] = 0;
-            GLuint location = glGetUniformLocation(pm_ProgramID, name);
+            GLint f_UniformLocation = glGetUniformLocation(pm_ProgramID, name);
 
             const char* f_temp = name;
 
-            pm_Uniforms.insert({ f_temp, location });
+            pm_Uniforms.insert({ f_temp, f_UniformLocation });
 
             fp_RenderingLogger->Debug
             (
-                fmt::format("Uniform #: {}, Type(GLenum): {}, Name: {}, Location(GLuint): {}", lv_Index, type, f_temp, location),
+                fmt::format("Uniform #: {}, Type(GLenum): {}, Name: {}, Location(GLint): {}", lv_Index, type, f_temp, f_UniformLocation),
                 fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
             );
         }
@@ -219,44 +211,6 @@ namespace PeachCore::OpenGL {
     ///////////////////////////////////////////////
     // Create Shaders
     ///////////////////////////////////////////////
-
-    bool
-        ShaderProgram::CreateVertexShader
-        (
-            const string& fp_ShaderCode,
-            Logger* fp_RenderingLogger
-        )
-    {
-        int f_VertexShaderID = CreateShader(fp_ShaderCode, GL_VERTEX_SHADER, fp_RenderingLogger);
-
-        if (not f_VertexShaderID)
-        {
-            return false;
-        }
-
-        pm_Shaders.insert({ "VertexShader", f_VertexShaderID });
-
-        return true;
-    }
-
-    bool
-        ShaderProgram::CreateFragmentShader
-        (
-            const string& fp_ShaderCode,
-            Logger* fp_RenderingLogger
-        )
-    {
-        int f_FragmentShaderID = CreateShader(fp_ShaderCode, GL_FRAGMENT_SHADER, fp_RenderingLogger);
-
-        if (not f_FragmentShaderID)
-        {
-            return false;
-        }
-
-        pm_Shaders.insert({ "FragmentShader", f_FragmentShaderID });
-
-        return true;
-    }
 
     int
         ShaderProgram::CreateShader //creates, compiles and attaches desired shader type to current shaderprogram
@@ -293,6 +247,7 @@ namespace PeachCore::OpenGL {
                 fmt::format("Shader compilation error: {}", infoLog), 
                 fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
             );
+
             return 0; // Or handle the error appropriately
         }
 

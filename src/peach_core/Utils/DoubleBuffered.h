@@ -92,14 +92,14 @@ namespace PeachCore::DoubleBuffered {
             IsWritable.store(0u, std::memory_order_relaxed); //unsigned 0 :O
         }
 
-        [[nodiscard]] const glm::mat4&
+        [[nodiscard]] const mat4s&
             GetReadMatrix()
             const noexcept
         {
             return GetReadSlot().GetLocalMatrixNoRegenerate();
         }
 
-        [[nodiscard]] glm::vec2
+        [[nodiscard]] vec2s
             GetPosition()
             const noexcept
         {
@@ -113,7 +113,7 @@ namespace PeachCore::DoubleBuffered {
             return GetReadSlot().GetRotation();
         }
 
-        [[nodiscard]] glm::vec2
+        [[nodiscard]] vec2s
             GetScale()
             const noexcept
         {

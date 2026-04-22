@@ -191,7 +191,7 @@ namespace PeachCore {
         unordered_map<string, b2BodyId> pm_Bodies;
         unordered_map<string, b2Vec2*> pm_CurrentPositionOfAllBodies;
 
-        glm::vec2 pm_WorldOrigin = glm::vec2(0.0f, 0.0f); // Current world origin in meters
+        vec2s pm_WorldOrigin = { 0.0f, 0.0f }; // Current world origin in meters
         //This conversion maps [0 pixels, 5000 pixels] --> [0 meters, 50 meters] which aligns well with the size of current monitors and Box2D's preferred size range
         const float PIXELS_PER_METER = 100.0f;  // Pixels to meters conversion factor, 100 pixels : 1 meter
 
@@ -243,7 +243,7 @@ namespace PeachCore {
             CheckIfWorldOriginNeedsToBeShifted() //checks if the player character has moved too far outside of the physics world, and shifts the origin to adjust for weird behaviour caused by sizing mistmatch
         {
             // Example: Check player's distance from origin
-            glm::vec2 f_PlayerPosition = GetBodyPosition("player"); //measured in pixels, getbodyposition gets the position we stored when the collision object was added idk we'll figure it out
+            vec2s f_PlayerPosition = GetBodyPosition("player"); //measured in pixels, getbodyposition gets the position we stored when the collision object was added idk we'll figure it out
 
             //if (glm::length(f_PlayerPosition) > PHYSICS_ORIGIN_MAXIMUM_PLAYER_DISTANCE) //measured in pixels
             //{
@@ -279,15 +279,15 @@ namespace PeachCore {
 
         //DOUBLE CHECK THIS METHOD FOR PROPER FUNCTIONING, UNTESTED!
         // Get the position of a body
-        glm::vec2
+        vec2s
             GetBodyPosition(const string& fp_ID)
         {
             if (pm_Bodies.find(fp_ID) != pm_Bodies.end())
             {
                 b2Vec2 f_CurrentBodyPosition = b2Body_GetPosition(pm_Bodies[fp_ID]);
-                return glm::vec2(f_CurrentBodyPosition.x, f_CurrentBodyPosition.y);
+                return { f_CurrentBodyPosition.x, f_CurrentBodyPosition.y };
             }
-            return glm::vec2();
+            return { 0.0f, 0.0f };
         }
 
         unordered_map<string, b2Vec2*>&
@@ -348,7 +348,14 @@ namespace PeachCore {
         }
 
         // Attaches generic user-defined sensors in place of a traditional isonfloor or equivalent method. I feel this approach is not complicated and gives more power to designers
-        b2ShapeId AttachSensor(b2BodyId& fp_Body, string& fp_SensorType, const glm::vec2& fp_Position, const glm::vec2& fp_Size)
+        b2ShapeId 
+            AttachSensor
+            (
+                b2BodyId& fp_Body, 
+                string& fp_SensorType, 
+                const vec2s fp_Position, 
+                const vec2s fp_Size
+            )
         {
             b2Polygon f_Box = b2MakeBox(fp_Position.x, fp_Position.y);
 
