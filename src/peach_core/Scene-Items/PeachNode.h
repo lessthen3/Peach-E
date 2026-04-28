@@ -13,13 +13,11 @@
 ///STL
 #include <string>
 #include <vector>
-#include <memory>
+#include <algorithm>
 
 ///PeachCore
 #include "peach_api/StatusCodes.h"
 #include "peach_api/NodeDef.h"
-
-#include "Utils/Logger.h"
 
 #include "Utils/DoubleBuffered.h"
 
@@ -43,18 +41,18 @@ namespace PeachCore {
             m_ParentNode(PEACH_NODE_NULL_ID)
         {}
 
-        string m_PeachName; //used to identify node uniquely, is a string so that users can just type: "node.remove("myNodeName")"
+        std::string m_PeachName; //used to identify node uniquely, is a string so that users can just type: "node.remove("myNodeName")"
 
-        const struct PEACH_NodeID m_ID; //can only be set at object creation uwu
+        const PEACH_NodeID m_ID; //can only be set at object creation uwu
         PEACH_NodeFlags m_Flags;
-        struct PEACH_NodeID m_ParentNode; //default initialized to it's own ID so that if a node is its own parent we know its a loner (;w;)
+        PEACH_NodeID m_ParentNode; //default initialized to it's own ID so that if a node is its own parent we know its a loner (;w;)
 
     protected:
-        vector<PEACH_NodeID> pm_Children; //don't need to explicitly clean this up since the destructors will clean up everything properly when the owning node exits scope
+        std::vector<PEACH_NodeID> pm_Children; //don't need to explicitly clean this up since the destructors will clean up everything properly when the owning node exits scope
 
     public:
 
-        [[nodiscard]] virtual const vector<PEACH_NodeID>&
+        [[nodiscard]] virtual const std::vector<PEACH_NodeID>&
             GetChildren()
             const noexcept
         {
@@ -78,7 +76,7 @@ namespace PeachCore {
         [[nodiscard]] virtual inline bool
             HasPeachNode(PEACH_NodeID fp_DesiredNode)
         {
-            return find(pm_Children.begin(), pm_Children.end(), fp_DesiredNode) == pm_Children.end(); // Check if the element was found
+            return std::find(pm_Children.begin(), pm_Children.end(), fp_DesiredNode) == pm_Children.end(); // Check if the element was found
         }
     };
 
@@ -247,7 +245,7 @@ namespace PeachCore::PUI {
     struct TextStyle
     {
         float CurrentFontSize = 0.0f;
-        string TypefaceName;
+        std::string TypefaceName;
         bool IsMonoSpaced = true;
     };
 

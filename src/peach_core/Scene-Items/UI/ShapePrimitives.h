@@ -17,6 +17,7 @@
 #include <vector>
 #include <variant>
 #include <type_traits>
+#include <algorithm>
 
 ///CSTDL
 #include <stdint.h>
@@ -163,8 +164,8 @@ namespace PeachCore::PUI {
         // Both centers in *local* space — add fp_Origin at call time.
         // Capsule = Minkowski sum of line segment + circle of Radius.
         // Typical vertical capsule: LocalCenter1 = {0, -HalfLen}, LocalCenter2 = {0, +HalfLen}
-        vec2s LocalCenter1{ 0.f,  0.5f };
-        vec2s LocalCenter2{ 0.f, -0.5f };
+        vec2s LocalCenter1{ {0.f,  0.5f} };
+        vec2s LocalCenter2{ {0.f, -0.5f} };
         float     Radius = 0.f;
     };
 
@@ -172,9 +173,9 @@ namespace PeachCore::PUI {
     {
         // Vertices in *local* space, CCW winding (required for IsWithin).
         // Default: equilateral with centroid at origin-ish.
-        vec2s A{ 0.f,  1.f };
-        vec2s B{ 1.f, -1.f };
-        vec2s C{ -1.f, -1.f };
+        vec2s A{ {0.f,  1.f} };
+        vec2s B{ {1.f, -1.f} };
+        vec2s C{ {-1.f, -1.f} };
     };
 
     struct PolygonShape

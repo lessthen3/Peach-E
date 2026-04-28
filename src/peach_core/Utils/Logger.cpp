@@ -550,7 +550,7 @@ namespace PeachCore {
                     return false;
                 }
 
-                pm_LogFiles[fp_FileName] = move(f_LogFile);
+                pm_LogFiles[fp_FileName] = std::move(f_LogFile);
 
                 ////////////////////////////////////////////// Success! //////////////////////////////////////////////
 
@@ -568,7 +568,7 @@ namespace PeachCore {
             return false;
         }
 
-        pm_LogFiles[fp_FileName] = move(f_LogFile);
+        pm_LogFiles[fp_FileName] = std::move(f_LogFile);
 
         ////////////////////////////////////////////// Success! //////////////////////////////////////////////
 

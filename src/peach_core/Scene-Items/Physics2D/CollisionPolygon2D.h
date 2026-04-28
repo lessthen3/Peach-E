@@ -10,13 +10,9 @@
 ********************************************************************/
 #pragma once
 
-///PeachCore
-#include "Utils/Logger.h"
-
 ///STL
 #include <vector>
-#include <list>
-#include <stdexcept>
+#include <algorithm>
 
 ///Box2D
 #include <box2d/box2d.h>
@@ -218,10 +214,10 @@ namespace PeachCore {
         //}
 
         // Function to ensure vertices are wound counter-clockwise in Box2D
-        vector<b2Vec2> 
-            AssertWindingOrderCCW(const vector<vec2s>& fp_Vertices) //idek if i needa convert really should be the same alignment and padding a memcpy should be fine tbh but C++ type system ig w/e
+        std::vector<b2Vec2> 
+            AssertWindingOrderCCW(const std::vector<vec2s>& fp_Vertices) //idek if i needa convert really should be the same alignment and padding a memcpy should be fine tbh but C++ type system ig w/e
         {
-            vector<b2Vec2> box2dVertices;
+            std::vector<b2Vec2> box2dVertices;
 
             for (const auto& lv_Vertex : fp_Vertices)
             {
@@ -240,16 +236,16 @@ namespace PeachCore {
             // If area is negative, vertices are wound clockwise and need to be reversed
             if (area < 0.0f)
             {
-                reverse(box2dVertices.begin(), box2dVertices.end());
+                std::reverse(box2dVertices.begin(), box2dVertices.end());
             }
 
             return box2dVertices;
         }
 
-        vector<b2Vec2> 
-            RemoveCollinearPoints(vector<b2Vec2>& fp_Vertices) 
+        std::vector<b2Vec2> 
+            RemoveCollinearPoints(std::vector<b2Vec2>& fp_Vertices) 
         {
-            vector<b2Vec2> result;
+            std::vector<b2Vec2> result;
 
             for (size_t i = 0; i < fp_Vertices.size(); ++i)
             {

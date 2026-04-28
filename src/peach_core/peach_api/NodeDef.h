@@ -24,8 +24,7 @@ extern "C"
 {
 #endif
 
-    typedef enum PEACH_NodeFlags //fuck the type system when it comes to flags uwu
-    {
+    typedef enum { //fuck the type system when it comes to flags uwu
         PEACH_FLAGS_NONE = 0,
 
         PEACH_FLAGS_IS_PAUSABLE = (1u << 0),
@@ -37,8 +36,7 @@ extern "C"
     } PEACH_NodeFlags;
 
     //XXX: this is used for indexing into the tuple on SceneTree to determine which plf::colony will be accessed so these absolutely need to agree w the c++ internals owo
-    typedef enum PEACH_NodeType // this doesnt really need to be a bit mask tbh idk, future me uwu: fixed it owo
-    {
+    typedef enum { // this doesnt really need to be a bit mask tbh idk, future me uwu: fixed it owo
         PEACH_TYPE_RENDER_2D = 0,
         PEACH_TYPE_RENDER_3D = 1u,
         PEACH_TYPE_PHYSICS_2D = 2u,
@@ -50,17 +48,15 @@ extern "C"
         PEACH_TYPE_BLANK = 8u
     } PEACH_NodeType;
 
-    typedef struct PEACH_NodeID
-    {
+    typedef struct{
         uint32_t Index;
         uint32_t Generation;
-
         PEACH_NodeType Type;
     } PEACH_NodeID;
     
-    // C comparison function — works from C, Lua, C#, whatever
+    //small helped if u want owo
     static inline int
-        PEACH_NodeID_Equal
+        PEACH_IsNodesEqual
         (
             PEACH_NodeID fp_A,
             PEACH_NodeID fp_B
@@ -75,7 +71,7 @@ extern "C"
 
 #ifdef __cplusplus
 
-    inline constexpr struct PEACH_NodeID PEACH_NODE_NULL_ID = { 0, 0, PEACH_TYPE_BLANK }; //Represents no ID, or invalid ID
+    inline constexpr PEACH_NodeID PEACH_NODE_NULL_ID = { 0, 0, PEACH_TYPE_BLANK }; //Represents no ID, or invalid ID
 
     // free function operator== for std::find, std::vector comparison etc.
     [[nodiscard]] inline bool

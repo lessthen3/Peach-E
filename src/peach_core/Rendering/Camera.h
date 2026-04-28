@@ -11,7 +11,8 @@
 #pragma once
 
 ///PeachCore
-#include "Scene-Items/PeachNode.h"
+#include "Utils/DoubleBuffered.h"
+#include "cglm/struct/mat4.h"
 
 namespace PeachCore {
 
@@ -69,7 +70,7 @@ namespace PeachCore {
             SetZoom(float fp_Zoom)
             noexcept
         {
-            m_Zoom = glm::max(fp_Zoom, 0.0001f); // avoid divide-by-zero zoom
+            m_Zoom = glm_max(fp_Zoom, 0.0001f); // avoid divide-by-zero zoom
             m_ProjDirty = true;
         }
 
@@ -102,37 +103,37 @@ namespace PeachCore {
                 float top = m_ViewportSize.y / m_Zoom;
 
                 // 2D, depth not super important; just use [-1,1]
-                m_Projection = glm::ortho(left, right, bottom, top, -1.0f, 1.0f);
+                m_Projection = glms_ortho(left, right, bottom, top, -1.0f, 1.0);
 
                 m_ProjDirty = false;
             }
             return m_Projection;
         }
 
-        const glm::mat4& 
+        const mat4s& 
             GetView() 
             noexcept
         {
-            const glm::mat4& f_CameraWorld = pm_Transform.GetReadMatrix(); // Ask Transform2D for matrix; it will recompute if dirty, Camera view is the inverse of its world transform
+            // Ask Transform2D for matrix; it will recompute if dirty, Camera view is the inverse of its world transform
 
-            if (m_ViewDirty)
-            {
-                m_View = glm::inverse(f_CameraWorld);
+            // if (m_ViewDirty)
+            // {
+                m_View = glms_mat4_inv(pm_Transform.GetReadMatrix());
                 m_ViewDirty = false;
-            }
+            // }
 
             return m_View;
         }
 
-        const glm::mat4& 
+        const mat4s& 
             GetViewProjection()
             noexcept
         {
-            m_ViewProjection = GetProjection() * GetView();
+            m_ViewProjection = glms_mat4_mul(GetProjection(), GetView());
             return m_ViewProjection;
         }
 
-        glm::vec2 
+        vec2s 
             GetWorldPosition() 
             const noexcept
         {
@@ -149,7 +150,7 @@ namespace PeachCore {
         float m_Distance;
 
         // Constructor to initialize and normalize the plane
-        Plane(const glm::vec3& fp_Normal, float fp_Distance)
+        Plane(const vec3s fp_Normal, float fp_Distance)
             : m_Normal(fp_Normal), m_Distance(fp_Distance)
         {
             Normalize();
@@ -158,17 +159,24 @@ namespace PeachCore {
         inline void 
             Normalize()
         {
-            float f_Magnitude = glm::length(m_Normal);
-            m_Normal = m_Normal / f_Magnitude;
-            m_Distance = m_Distance / f_Magnitude;
+            float f_Magnitude = glms_vec3_norm(m_Normal);
+
+            if (f_Magnitude < 1e-8f) // degenerate, don't divide
+            {
+                return; 
+            } 
+
+            float f_InverseMagnitude = 1.0f / f_Magnitude;
+            m_Normal = glms_vec3_scale(m_Normal, f_InverseMagnitude);
+            m_Distance *= f_InverseMagnitude;
         }
 
         // Calculate the signed distance from the plane to a point
         inline float 
-            DistanceToPoint(const glm::vec3& fp_TestPoint) 
+            DistanceToPoint(const vec3s fp_TestPoint) 
             const
         {
-            return glm::dot(m_Normal, fp_TestPoint) + m_Distance;
+            return glms_vec3_dot(m_Normal, fp_TestPoint) + m_Distance;
         }
     };
 
@@ -177,7 +185,7 @@ namespace PeachCore {
         Plane m_FrustumPlanes[6];
 
         void 
-            UpdateFrustum(const glm::mat4& fp_ProjViewMatrix)
+            UpdateFrustum(const mat4 fp_ProjViewMatrix)
         {
             // Left Plane
             m_FrustumPlanes[0].m_Normal.x = fp_ProjViewMatrix[0][3] + fp_ProjViewMatrix[0][0];
@@ -224,21 +232,21 @@ namespace PeachCore {
 
 
         bool
-            IsBoxVisible(const glm::vec3& min, const glm::vec3& max) //used for checking if a bounding box encapsulating the object is inside the frustum
+            IsBoxVisible(const vec3s fp_Min, const vec3s fp_Max) //used for checking if a bounding box encapsulating the object is inside the frustum
             const
         {
             for (int lv_Index = 0; lv_Index < 6; lv_Index++)
             {
                 if 
                 (
-                    m_FrustumPlanes[lv_Index].DistanceToPoint(min) < 0 and
-                    m_FrustumPlanes[lv_Index].DistanceToPoint(glm::vec3(max.x, min.y, min.z)) < 0 and
-                    m_FrustumPlanes[lv_Index].DistanceToPoint(glm::vec3(min.x, max.y, min.z)) < 0 and
-                    m_FrustumPlanes[lv_Index].DistanceToPoint(glm::vec3(max.x, max.y, min.z)) < 0 and
-                    m_FrustumPlanes[lv_Index].DistanceToPoint(glm::vec3(min.x, min.y, max.z)) < 0 and
-                    m_FrustumPlanes[lv_Index].DistanceToPoint(glm::vec3(max.x, min.y, max.z)) < 0 and
-                    m_FrustumPlanes[lv_Index].DistanceToPoint(glm::vec3(min.x, max.y, max.z)) < 0 and
-                    m_FrustumPlanes[lv_Index].DistanceToPoint(max) < 0
+                    m_FrustumPlanes[lv_Index].DistanceToPoint(fp_Min) < 0 and
+                    m_FrustumPlanes[lv_Index].DistanceToPoint({{fp_Max.x, fp_Min.y, fp_Min.z}}) < 0 and
+                    m_FrustumPlanes[lv_Index].DistanceToPoint({{fp_Min.x, fp_Max.y, fp_Min.z}}) < 0 and
+                    m_FrustumPlanes[lv_Index].DistanceToPoint({{fp_Max.x, fp_Max.y, fp_Min.z}}) < 0 and
+                    m_FrustumPlanes[lv_Index].DistanceToPoint({{fp_Min.x, fp_Min.y, fp_Max.z}}) < 0 and
+                    m_FrustumPlanes[lv_Index].DistanceToPoint({{fp_Max.x, fp_Min.y, fp_Max.z}}) < 0 and
+                    m_FrustumPlanes[lv_Index].DistanceToPoint({{fp_Min.x, fp_Max.y, fp_Max.z}}) < 0 and
+                    m_FrustumPlanes[lv_Index].DistanceToPoint(fp_Max) < 0
                 )
                 {
                     return false; // :^)
@@ -251,11 +259,11 @@ namespace PeachCore {
     struct Camera3D
     {
     private:
-        glm::vec3 pm_Position; //keeps track of current position of the camera
-        glm::vec3 pm_Forwards; //always points forwards relative to the camera
-        glm::vec3 pm_Upwards; //always point upwards relative to the camera
-        glm::vec3 pm_Sideways; //always points perpindicular to forwards and upwards
-        glm::vec3 pm_GlobalUp; //contains information about the vector that defines the worldspace's basis up vector
+        vec3s pm_Position; //keeps track of current position of the camera
+        vec3s pm_Forwards; //always points forwards relative to the camera
+        vec3s pm_Upwards; //always point upwards relative to the camera
+        vec3s pm_Sideways; //always points perpindicular to forwards and upwards
+        vec3s pm_GlobalUp; //contains information about the vector that defines the worldspace's basis up vector
 
     public:
         // Euler Angles
@@ -264,18 +272,18 @@ namespace PeachCore {
 
         // Camera options
         float m_FOV;
+        float m_AspectRatio;
         float m_NearClippingPlane;
         float m_FarClippingPlane;
-        float m_AspectRatio;
 
         // Matrices
-        glm::mat4 m_ModelViewMatrix;
-        glm::mat4 m_ProjectionMatrix;
+        mat4s m_ModelViewMatrix;
+        mat4s m_ProjectionMatrix;
 
         Camera3D
         (
-            glm::vec3 position, 
-            glm::vec3 up, 
+            vec3s position, 
+            vec3s up, 
             float yaw, 
             float pitch, 
             float fov, 
@@ -285,14 +293,14 @@ namespace PeachCore {
         )
             : 
             pm_Position(position),
+            pm_Forwards({{0.0f, 0.0f, -1.0f}}),
             pm_GlobalUp(up), 
             m_HorizontalRotation(yaw), 
             m_VerticalRotation(pitch),
             m_FOV(fov),
             m_AspectRatio(aspect),
             m_NearClippingPlane(nearP),
-            m_FarClippingPlane(farP),
-            pm_Forwards(glm::vec3(0.0f, 0.0f, -1.0f))
+            m_FarClippingPlane(farP)
         {
             UpdateCameraOrientationVectors();
             UpdateCameraMatrices();
@@ -301,20 +309,16 @@ namespace PeachCore {
         void
             UpdateCameraOrientationVectors() //book keeping for the camera orientation vectors
         {
-            glm::vec3 f_Front // Calculate the new front vector
-            (
-                {
-                    cos(glm::radians(m_HorizontalRotation)) * cos(glm::radians(m_VerticalRotation)),
-                    sin(glm::radians(m_VerticalRotation)),
-                    sin(glm::radians(m_HorizontalRotation)) * cos(glm::radians(m_VerticalRotation))
-                }
-            );
+            vec3s f_Front =
+            {{
+                cosf(m_HorizontalRotation) * cosf(m_VerticalRotation),
+                sinf(m_VerticalRotation),
+                sinf(m_HorizontalRotation) * cosf(m_VerticalRotation)
+            }};
 
-            pm_Forwards = glm::normalize(f_Front);
-
-            // Recalculate the right and up vector
-            pm_Sideways = glm::normalize(glm::cross(f_Front, pm_GlobalUp));
-            pm_Upwards = glm::normalize(glm::cross(pm_Sideways, f_Front));
+            pm_Forwards = glms_vec3_normalize(f_Front);
+            pm_Sideways = glms_vec3_normalize(glms_vec3_cross(pm_Forwards, pm_GlobalUp));
+            pm_Upwards  = glms_vec3_normalize(glms_vec3_cross(pm_Sideways, pm_Forwards));
 
             UpdateCameraMatrices();
         }
@@ -322,28 +326,28 @@ namespace PeachCore {
         void 
             UpdateCameraMatrices()
         {
-            m_ModelViewMatrix = glm::lookAt(pm_Position, pm_Position + pm_Forwards, pm_Upwards);
-            m_ProjectionMatrix = glm::perspective(glm::radians(m_FOV), m_AspectRatio, m_NearClippingPlane, m_FarClippingPlane);
+            m_ModelViewMatrix = glms_lookat(pm_Position, glms_vec3_add(pm_Position, pm_Forwards), pm_Upwards);
+            m_ProjectionMatrix = glms_perspective(m_FOV, m_AspectRatio, m_NearClippingPlane, m_FarClippingPlane);
         }
 
         void
-            Move(const glm::vec3& fp_Delta)
+            Move(const vec3s fp_Delta)
         {
-            pm_Position += fp_Delta;
+            pm_Position = glms_vec3_add(pm_Position, fp_Delta);
         }
 
-        glm::vec3
+        vec3s
             GetPosition()
             const noexcept
         {
             return pm_Position;
         }
 
-        glm::vec3
+        vec3s
             GetRotation()
             const noexcept
         {
-            return glm::vec3();
+            return {{0.0f, 0.0f, 0.0f}};
         }
     };
 }

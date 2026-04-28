@@ -39,7 +39,6 @@ def ensure_tool_installed(fp_ToolName: str) -> bool:
     if which(fp_ToolName) is None:
         print(CreateColouredText(f"[ERROR]: Required tool '{fp_ToolName}' not found in PATH", "red"))
         return False
-    
     else:
         return True
 
@@ -444,6 +443,18 @@ def main() -> bool:
         help=CreateColouredText('Adds verbose and will add additional flags depending on generator', 'bright magenta')
     )
 
+    parser.add_argument(
+        '--use_clang',
+        action='store_true',
+        help=CreateColouredText('Compiles with clang on compatible platforms', 'bright magenta')
+    )
+
+    parser.add_argument(
+        '--use_gcc',
+        action='store_true',
+        help=CreateColouredText('Compiles with gcc on compatible platforms', 'bright magenta')
+    )
+
     args = parser.parse_args()
 
     ############# Validate Build Config #############
@@ -527,6 +538,28 @@ def main() -> bool:
             return False
 
         print(CreateColouredText(f"[INFO]: Auto-detected platform: {f_ToolchainKey} ~ nya~", "bright cyan"))
+
+    ############# Compiler Identification #############
+
+    if args.use_clang:
+
+        if f_CurrentPlatform == "Windows":
+            print(CreateColouredText("[ERROR]: can't use clang/clang++ on windows, aborting build process", "red"))
+    
+        if not ensure_tool_installed("clang") and not ensure_tool_installed("clang++"):
+            return False
+
+        f_ExtraBuildConfigs.extend(["-DCMAKE_C_COMPILER=clang", "-DCMAKE_CXX_COMPILER=clang++"])
+
+    elif args.use_gcc:
+
+        if f_CurrentPlatform == "Windows":
+            print(CreateColouredText("[ERROR]: can't use gcc/g++ on windows, aborting build process", "red"))
+
+        if not ensure_tool_installed("gcc") and not ensure_tool_installed("g++"):
+            return False
+
+        f_ExtraBuildConfigs.extend(["-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++"])
 
     ############# Get Current Working Directory #############
 

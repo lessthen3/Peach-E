@@ -37,7 +37,9 @@ int
             (
                 f_RootPath, 
                 PeachCore::ThreadName::ALL_THREADS ^ PeachCore::ThreadName::PhysicsThread, 
-                f_RenderingBackend
+                f_RenderingBackend,
+                800,
+                600
             )
         )
         {

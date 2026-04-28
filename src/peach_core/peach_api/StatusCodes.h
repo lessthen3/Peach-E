@@ -15,8 +15,8 @@
 extern "C"
 {
 #endif
-    typedef enum PEACH_STATUS_CODE //only C23 supports the : int64_t definition which is not great for compatibility
-    {
+    typedef enum{ //only C23 supports the : int64_t definition which is not great for compatibility
+        
         PEACH_OK = 1,
         PEACH_ERROR_INTERNAL_API_FAILURE,
 
@@ -44,7 +44,7 @@ extern "C"
 
         PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN
 
-    } StatusCodes;
+    } PEACH_STATUS_CODE;
 
 #ifdef __cplusplus
 }

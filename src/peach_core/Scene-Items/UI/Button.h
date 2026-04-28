@@ -44,7 +44,7 @@ namespace PeachCore::PUI {
         // Hit test — just thread through to the free function.
        // The Node's position is whatever your layout system puts in here.
         [[nodiscard]] bool
-            IsWithin(const glm::vec2& fp_WorldOrigin, const glm::vec2& fp_TestPoint) //compiler will inline the inner function, but the weight is too heavy for the entire function to be inlined tbh
+            IsWithin(const vec2s fp_WorldOrigin, const vec2s fp_TestPoint) //compiler will inline the inner function, but the weight is too heavy for the entire function to be inlined tbh
             const noexcept
         {
             return PUI::IsWithin(m_Shape, fp_WorldOrigin, fp_TestPoint);

@@ -19,7 +19,7 @@
 
 namespace PeachCore {
 
-    static const vec4s DEFAULT_COLOUR = (1.0f, 1.0f, 1.0f, 1.0f);
+    static const vec4s DEFAULT_COLOUR = {{1.0f, 1.0f, 1.0f, 1.0f}};
 
     struct PeachMaterial
     {

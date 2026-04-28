@@ -248,3 +248,100 @@ endif()
 
 set(PEACH_TARGET_PLATFORM ${PEACH_TARGET_PLATFORM} CACHE STRING "Peach target platform" FORCE)
 message(STATUS "PeachToolchain: targeting ${PEACH_TARGET_PLATFORM} ~ nya~ ^O^")
+
+function(peach_apply_platform_definitions fp_Target fp_Visibility)
+    
+   # validate visibility arg
+    if(NOT fp_Visibility STREQUAL "PUBLIC" AND NOT fp_Visibility STREQUAL "PRIVATE" AND NOT fp_Visibility STREQUAL "INTERFACE")
+        message(FATAL_ERROR "[Peach] peach_apply_platform_definitions: invalid visibility '${fp_Visibility}', must be PUBLIC, PRIVATE, or INTERFACE")
+    endif()
+
+    if(PEACH_WINDOWS)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_WINDOWS
+            PEACH_PLATFORM_DESKTOP
+            PEACH_ARCH_X64
+        )
+
+    elseif(PEACH_WINDOWS_ARM64)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_WINDOWS
+            PEACH_PLATFORM_DESKTOP
+            PEACH_ARCH_ARM64
+        )
+
+    elseif(PEACH_MACOS)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_MACOS
+            PEACH_PLATFORM_APPLE
+            PEACH_PLATFORM_DESKTOP
+            PEACH_ARCH_ARM64 # universal binary covers both but arm64 is primary
+        )
+
+    elseif(PEACH_IOS)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_IOS
+            PEACH_PLATFORM_APPLE
+            PEACH_PLATFORM_MOBILE
+            PEACH_ARCH_ARM64
+        )
+
+    elseif(PEACH_TVOS)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_TVOS
+            PEACH_PLATFORM_APPLE
+            PEACH_ARCH_ARM64
+        )
+
+    elseif(PEACH_LINUX)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_LINUX
+            PEACH_PLATFORM_DESKTOP
+            PEACH_ARCH_X64
+        )
+
+    elseif(PEACH_BSD)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_BSD
+            PEACH_PLATFORM_FREEBSD
+            PEACH_PLATFORM_DESKTOP
+            PEACH_ARCH_X64
+        )
+
+    elseif(PEACH_HAIKU)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_HAIKU
+            PEACH_PLATFORM_DESKTOP
+            PEACH_ARCH_X64
+        )
+
+    elseif(PEACH_ANDROID)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_ANDROID
+            PEACH_PLATFORM_MOBILE
+            PEACH_ARCH_ARM64
+        )
+
+    elseif(PEACH_WASM)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_WASM
+            PEACH_PLATFORM_WEB
+            PEACH_ARCH_WASM32 #ik that wasm3 or w/e is 64 bit idfk owo uwu
+        )
+
+    elseif(PEACH_VITA)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_VITA
+            PEACH_PLATFORM_HANDHELD
+            PEACH_ARCH_ARMV7
+        )
+
+    elseif(PEACH_SWITCH)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_SWITCH
+            PEACH_PLATFORM_HANDHELD
+            PEACH_ARCH_ARM64
+        )
+
+    endif()
+endfunction()

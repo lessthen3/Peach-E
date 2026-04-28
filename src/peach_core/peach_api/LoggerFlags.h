@@ -20,7 +20,7 @@ extern "C"
 
     typedef uint32_t PEACH_LOGGER_FLAGS;
 
-    typedef enum PeachLoggerBits
+    typedef enum
     {
         // low byte is active mask
         PEACH_TRACE_LOG = (uint32_t)(1u << 0),

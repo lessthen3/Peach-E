@@ -21,6 +21,11 @@
 #include <cglm/cglm.h>
 #include <cglm/struct.h>
 
+///STL
+#include <atomic>
+#include <array>
+#include <vector>
+
 namespace PeachCore {
 
     constexpr float JOYSTICK_MAX_STICK_VALUE = SDL_JOYSTICK_AXIS_MAX;
@@ -116,19 +121,19 @@ namespace PeachCore {
     struct MouseInput
     {
         array<InputState, 5> MouseButtonsDown; //not sure if this is right, it works for most configs of mice since the 5 button layout is common but idk not standard
-        vec2s Position = { 0.0f, 0.0f };
-        vec2s Delta = { 0.0f, 0.0f };   // For motion
-        vec2s Scroll = { 0.0f, 0.0f };      // For scroll
+        vec2s Position = { {0.0f, 0.0f} };
+        vec2s Delta = { {0.0f, 0.0f} };   // For motion
+        vec2s Scroll = { {0.0f, 0.0f} };      // For scroll
     };
 
     struct JoystickInput
     {
-        vec2s StickPosition = { 0.0f, 0.0f };
+        vec2s StickPosition = { {0.0f, 0.0f} };
     };
 
     struct GamepadInput
     {
-        vec2s StickPosition = { 0.0f, 0.0f };
+        vec2s StickPosition = { {0.0f, 0.0f} };
 
         //ThreadsafeVec2() : x(0.0f), y(0.0f) {}
 
@@ -141,7 +146,7 @@ namespace PeachCore {
         float Rotation = 0.0f;
         float Tilt = 0.0f;
 
-        vec2s Position = { 0.0f, 0.0f };
+        vec2s Position = { {0.0f, 0.0f} };
     };
 
     struct TouchInput

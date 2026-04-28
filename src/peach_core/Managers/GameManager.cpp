@@ -250,23 +250,23 @@ namespace PeachCore
     {
         if (not PHYSFS_init(fp_RootPath))
         {
-            main_logger->Fatal("Failed to initialize PhysFS: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager");
+            main_logger->Fatal(fmt::format("Failed to initialize PhysFS: {}", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager");
             return false;
         }
         // Set the writable directory to the repo root
         else if (not PHYSFS_setWriteDir(fp_RootPath))
         {
-            main_logger->Fatal("Failed to set write directory: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager");
+            main_logger->Fatal(fmt::format("Failed to set write directory: {}", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager");
             return false;
         }
         // Mount the root directory for asset loading
         else if (not PHYSFS_mount(fp_RootPath, nullptr, 1))
         {
-            main_logger->Fatal("Failed to set search path: " + static_cast<string>(PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager");
+            main_logger->Fatal(fmt::format("Failed to set search path: {}", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager");
             return false;
         }
 
-        main_logger->Debug("PhysFS initialized at root: " + static_cast<string>(fp_RootPath), "GameManager");
+        main_logger->Debug(fmt::format("PhysFS initialized at root: {}", fp_RootPath), "GameManager");
         return true;
     }
 
@@ -733,7 +733,7 @@ namespace PeachCore
             SDL_DestroyWindow(SDL_GetWindowFromID(lv_Window)); //WARNING DO NOT CLOSE WINDOW HERE SEND A REQUEST TO THE RENDERING MANAGER FOR THAT
         }
 
-        glm::vec2 f_MousePos = InputManager::get_single().GetCurrentMousePosition();
+        vec2s f_MousePos = InputManager::get_single().GetCurrentMousePosition();
 
         PRINT(fmt::format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
     }

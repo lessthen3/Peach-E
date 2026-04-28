@@ -160,7 +160,7 @@ namespace PeachCore::OpenGL {
     void
         Viewport::RenderViewport
         (
-            const glm::vec2& fp_Position
+            const vec2s fp_Position
         )
     {
         glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);

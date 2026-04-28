@@ -12,7 +12,7 @@
 
 ///PeachCore
 #include <Managers/ResourceManager.h>
-#include <Language-Support/DotnetRuntime.h>
+#include <Language-Support/dotnet/DotnetRuntime.h>
 
 // Lua runtime for *editor tools* (compiling scripts)
 extern "C"
