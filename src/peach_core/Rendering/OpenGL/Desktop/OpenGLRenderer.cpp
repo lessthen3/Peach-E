@@ -24,9 +24,13 @@ namespace PeachCore::OpenGL {
         const bool fp_Is3DEnabled
     )
     {
+        //TODO: these are for viewport setup which ill do later owo
+        PEACH_TO_DO_UNUSED(fp_InitialWindowWidth);
+        PEACH_TO_DO_UNUSED(fp_InitialWindowHeight);
+
         if (not fp_RenderingLogger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
         {
-            PRINT_ERROR("Tried to initialize PeachRenderer with a nullptr for the Rendering Logger doofus");
+            PEACH_PRINT_ERROR("Tried to initialize PeachRenderer with a nullptr for the Rendering Logger doofus");
             throw runtime_error("Ending program execution immediately since no valid logger was found"); //idk how else to stop the rest of initialization
         }
 
@@ -77,6 +81,7 @@ namespace PeachCore::OpenGL {
     void
         Renderer::DeleteTexture(const uint32_t fp_TextureID)
     {
+        PEACH_TO_DO_UNUSED(fp_TextureID);
         //glDeleteBuffers(fp_TextureID);
     }
 
@@ -99,20 +104,20 @@ namespace PeachCore::OpenGL {
     //    }
     //}
 
-    void
-        Renderer::SetupInstancedArray
-        (
-            uint32_t instanceVBO,
-            const vector<float>& instanceData,
-            uint32_t attributeIndex,
-            uint32_t size,
-            uint32_t instanceDataLength,
-            int offset
-        )
-        const
-    {
+    // void
+    //     Renderer::SetupInstancedArray
+    //     (
+    //         uint32_t instanceVBO,
+    //         const vector<float>& instanceData,
+    //         uint32_t attributeIndex,
+    //         uint32_t size,
+    //         uint32_t instanceDataLength,
+    //         int offset
+    //     )
+    //     const
+    // {
 
-    }
+    // }
 
     // Example usage: suppose you want to pass a model matrix per instance
     // You would call setupInstancedArray four times, one for each row of the matrix, because glVertexAttribPointer can only handle up to 4 float components at a time.
@@ -123,8 +128,8 @@ namespace PeachCore::OpenGL {
 
     }
 
-    static void
-        SetTextureFiltering
+    static void 
+        SetTextureFiltering [[maybe_unused]]
         (
             GLuint fp_TextureID,
             TextureFiltering fp_Filter

@@ -11,10 +11,11 @@
 #ifdef PEACH_RENDERER_VULKAN
 
 #include "VulkanShaderProgram.h"
+#include "PipelineFactory.h"
 
 namespace PeachCore::Vulkan {
 
-    [[nodiscard]] static VkPipelineLayout 
+    VkPipelineLayout 
         CreatePipelineLayout
         (
             VkDevice device,

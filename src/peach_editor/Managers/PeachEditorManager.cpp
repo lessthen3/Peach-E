@@ -8,7 +8,7 @@
  *
  *      Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
-#include "PeachEditorManager.h"
+// #include "PeachEditorManager.h"
 
 namespace PeachEditor {
 

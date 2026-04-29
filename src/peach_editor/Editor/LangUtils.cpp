@@ -37,7 +37,7 @@ namespace PeachEditor::Dotnet
 
         if (not logger)
         {
-            PRINT_ERROR("Tried passing a nullptr ref to logger inside GetDotnetVersion() from DotnetUtils.h");
+            PEACH_PRINT_ERROR("Tried passing a nullptr ref to logger inside GetDotnetVersion() from DotnetUtils.h");
             return false;
         }
         else if (not fp_DotnetVersionString)
@@ -121,7 +121,7 @@ namespace PeachEditor::Dotnet
 
         if (not logger)
         {
-            PRINT_ERROR("Tried passing a nullptr ref to logger inside GenerateProjectFiles() from DotnetUtils.h");
+            PEACH_PRINT_ERROR("Tried passing a nullptr ref to logger inside GenerateProjectFiles() from DotnetUtils.h");
             return false;
         }
 
@@ -341,7 +341,7 @@ namespace PeachEditor::Dotnet
 
         if (not logger)
         {
-            PRINT_ERROR("Tried passing a nullptr ref to logger inside GetHostFxrLocalPath() from LangUtils.cpp");
+            PEACH_PRINT_ERROR("Tried passing a nullptr ref to logger inside GetHostFxrLocalPath() from LangUtils.cpp");
             return false;
         }
         else if (not fp_HostFxrString)
@@ -384,6 +384,10 @@ namespace PeachEditor::Lua
             PeachCore::Logger* logger
         )
     {
+        PEACH_TO_DO_UNUSED(fp_ScriptName);
+        PEACH_TO_DO_UNUSED(fp_NodeType);
+        PEACH_TO_DO_UNUSED(fp_ScriptFilePath);
+        PEACH_TO_DO_UNUSED(logger);
 
         return true;
     }
@@ -421,7 +425,7 @@ namespace PeachEditor::Lua
 
         if (not logger)
         {
-            PRINT_ERROR("Tried passing a nullptr ref to logger inside Lua::CompileProjectScripts()");
+            PEACH_PRINT_ERROR("Tried passing a nullptr ref to logger inside Lua::CompileProjectScripts()");
             return false;
         }
 

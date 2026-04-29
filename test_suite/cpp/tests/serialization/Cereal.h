@@ -328,7 +328,7 @@ namespace PeachTests {
         size_t start = 0;
         ok = PEACH_UNPACK_BINARY_OFFSET(restored, bin, logger, start);
         assert(ok);
-        PRINT(fmt::format("start: {} and bin size: {}", start, bin.size()), Colours::BrightCyan);
+        PEACH_PRINT_FMT(PEACH_COL_BRIGHT_CYAN, "start: {} and bin size: {}", start, bin.size());
         // Make sure we consumed exactly all bytes (great sanity check for offset bugs)
         assert(start == bin.size());
 

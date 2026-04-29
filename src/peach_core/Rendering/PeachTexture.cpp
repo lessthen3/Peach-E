@@ -20,10 +20,14 @@ namespace PeachCore {
     }
 
     void 
-        PeachTexture::DefineTileSize(const int tileWidth, const int tileHeight)
+        PeachTexture::DefineTileSize
+        (
+            const uint32_t fp_TileWidth, 
+            const uint32_t fp_TileHeight
+        )
     {
-        pm_TileWidth = tileWidth;
-        pm_TileHeight = tileHeight;
+        pm_TileWidth = fp_TileWidth;
+        pm_TileHeight = fp_TileHeight;
         CalculateTileUVs();
     }
 
@@ -48,22 +52,24 @@ namespace PeachCore {
         }
     }
 
-    vector<tuple<float, float, float, float>> 
+    std::vector<std::tuple<float, float, float, float>> 
         PeachTexture::GetTileUVs()
         const
     {
         return pm_TileUVs;
     }
 
-    tuple<float, float, float, float> 
-        PeachTexture::GetTileUV(const int tileIndex) 
+    std::tuple<float, float, float, float> 
+        PeachTexture::GetTileUV(const size_t fp_TileIndex) 
         const 
     {
-        if (tileIndex < 0 || tileIndex >= pm_TileUVs.size())
+        if (fp_TileIndex >= pm_TileUVs.size())
         {
-            throw out_of_range("Tile index is out of range.");
+            // throw std::out_of_range("Tile index is out of range.");
+            std::exit(-69);
         }
-        return pm_TileUVs[tileIndex];
+
+        return pm_TileUVs[fp_TileIndex];
     }
 
     int 

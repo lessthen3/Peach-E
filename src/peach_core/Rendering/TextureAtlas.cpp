@@ -56,7 +56,7 @@ namespace PeachCore {
     //}
 
     bool 
-        TextureAtlas::SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight)
+        TextureAtlas::SetUVs(const uint32_t fp_DesiredTileWidth, const uint32_t fp_DesiredTileHeight)
     {
         if (not pm_Texture.IsValid())
         {
@@ -115,19 +115,19 @@ namespace PeachCore {
         return m_Tiles[fp_TileIndex];
     }
 
-    tuple<float, float, float, float> 
-        TextureAtlas::GetTileUV(const int index) 
-        const 
-    {
-        //return pm_Texture.GetTileUV(index);  // Delegate to Texture2D to fetch UVs
-        return { 0,0,0,0 };
-    }
+    // std::tuple<float, float, float, float> 
+    //     TextureAtlas::GetTileUV(const size_t fp_Index) 
+    //     const 
+    // {
+    //     //return pm_Texture.GetTileUV(index);  // Delegate to Texture2D to fetch UVs
+    //     return { 0,0,0,0 };
+    // }
 
     bool 
-        TextureAtlas::IsValidTileIndex(int fp_Index) 
+        TextureAtlas::IsValidTileIndex(const size_t fp_Index) 
         const
     {
-        if (fp_Index < 0 || fp_Index >= m_Tiles.size())
+        if (fp_Index >= m_Tiles.size())
         {
             //TODO: should push this logger warning/error to the rendering manager in the rendering thread
             //LogManager::MainLogger().LogAndPrint("Attempted to access invalid index number for tile set list", m_Name, "warn");

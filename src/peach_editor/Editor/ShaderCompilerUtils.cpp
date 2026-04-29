@@ -39,6 +39,10 @@ namespace PeachEditor::ShaderCompilerUtils {
             PeachCore::Logger* logger
         )
     {
+        PEACH_TO_DO_UNUSED(fp_ShaderSourcePath);
+        PEACH_TO_DO_UNUSED(fp_OutputPath);
+        PEACH_TO_DO_UNUSED(fp_ShaderStage);
+
         logger->Error("CompileGLSLToSPIRV not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
@@ -51,6 +55,9 @@ namespace PeachEditor::ShaderCompilerUtils {
             PeachCore::Logger* logger
         )
     {
+        PEACH_TO_DO_UNUSED(fp_InputSpvPath);
+        PEACH_TO_DO_UNUSED(fp_OutputSpvPath);
+
         logger->Error("OptimizeSPIRV not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
@@ -62,6 +69,8 @@ namespace PeachEditor::ShaderCompilerUtils {
             PeachCore::Logger* logger
         )
     {
+        PEACH_TO_DO_UNUSED(fp_SpvPath);
+
         logger->Error("ValidateSPIRV not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
@@ -74,6 +83,9 @@ namespace PeachEditor::ShaderCompilerUtils {
             PeachCore::Logger* logger
         )
     {
+        PEACH_TO_DO_UNUSED(fp_SpvPath);
+        PEACH_TO_DO_UNUSED(fp_OutputPath);
+
         logger->Error("CrossCompileToMSL not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
@@ -86,6 +98,9 @@ namespace PeachEditor::ShaderCompilerUtils {
         PeachCore::Logger* logger
     )
     {
+        PEACH_TO_DO_UNUSED(fp_SpvPath);
+        PEACH_TO_DO_UNUSED(fp_OutputPath);
+
         logger->Error("CrossCompileToHLSL not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
@@ -99,6 +114,10 @@ namespace PeachEditor::ShaderCompilerUtils {
         PeachCore::Logger* logger
     )
     {
+        PEACH_TO_DO_UNUSED(fp_ShaderSourcePath);
+        PEACH_TO_DO_UNUSED(fp_OutputDirectory);
+        PEACH_TO_DO_UNUSED(fp_ShaderStage);
+
         logger->Error("CompileFullShaderPipeline not yet implemented on this platform", "ShaderCompilerUtils");
         return false;
     }
@@ -234,7 +253,7 @@ namespace PeachEditor::ShaderCompilerUtils {
         //check for nullptrs
         if (not logger)
         {
-            PRINT_ERROR("Tried to pass nullptr reference to logger during ReflectDescriptorBindings(), nothing was done.");
+            PEACH_PRINT_ERROR("Tried to pass nullptr reference to logger during ReflectDescriptorBindings(), nothing was done.");
             return false;
         }
         else if (not fp_BindingInfo)
@@ -289,7 +308,7 @@ namespace PeachEditor::ShaderCompilerUtils {
         //check for nullptrs
         if (not logger)
         {
-            PRINT_ERROR("Tried to pass nullptr reference to logger during ReflectPushConstants(), nothing was done.");
+            PEACH_PRINT_ERROR("Tried to pass nullptr reference to logger during ReflectPushConstants(), nothing was done.");
             return false;
         }
         else if (not fp_PushConstants)

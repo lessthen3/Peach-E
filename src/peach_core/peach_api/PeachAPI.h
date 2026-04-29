@@ -13,11 +13,12 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+///c std lib
 #include <stddef.h>
-#include <stdint.h> //idrc about supporting C standards from before i was born lmfao, C99+ only fuck you if you use C89 still ISO standard is C11 idgaf ab ur old ahh ABI
+//idrc about supporting C standards from before i was born lmfao, C99+ only fuck you if you use C89 still ISO standard is C11 idgaf ab ur old ahh ABI
 
 #include "StatusCodes.h"
-#include "LoggerFlags.h"
+// #include "LoggerFlags.h"
 #include "NodeDef.h"
 
 //////////////////////////////////////////////////////////// C++ --> C compatibility preprocessor defs ////////////////////////////////////////////////////////////

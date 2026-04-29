@@ -10,16 +10,23 @@
 ********************************************************************/
 #pragma once
 
-#include "Scene-Items/Physics2D/CollisionSegment2D.h"
-#include "Scene-Items/Physics2D/CollisionPolygon2D.h"
-#include "Scene-Items/Physics2D/CollisionShape2D.h"
+///cglm
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
+///Box2D
+#include <box2d/box2d.h>
+
+///moodycamel
 #include <moody_camel/readerwriterqueue.h>
 
+///STL
 #include <unordered_map>
-
 #include <semaphore>
 #include <latch>
+
+///PeachCore
+#include "Utils/Logger.h"
 
 namespace PeachCore {
 
@@ -191,11 +198,12 @@ namespace PeachCore {
         unordered_map<string, b2BodyId> pm_Bodies;
         unordered_map<string, b2Vec2*> pm_CurrentPositionOfAllBodies;
 
-        vec2s pm_WorldOrigin = { 0.0f, 0.0f }; // Current world origin in meters
+        // vec2s pm_WorldOrigin = {{0.0f, 0.0f}}; // Current world origin in meters
+
         //This conversion maps [0 pixels, 5000 pixels] --> [0 meters, 50 meters] which aligns well with the size of current monitors and Box2D's preferred size range
         const float PIXELS_PER_METER = 100.0f;  // Pixels to meters conversion factor, 100 pixels : 1 meter
 
-        const float PHYSICS_ORIGIN_MAXIMUM_PLAYER_DISTANCE = ConvertMetersToPixels(2000); //should be under 2km, converts 2km to pixels
+        // const float PHYSICS_ORIGIN_MAXIMUM_PLAYER_DISTANCE = ConvertMetersToPixels(2000); //should be under 2km, converts 2km to pixels
 
     public:
 
@@ -243,7 +251,7 @@ namespace PeachCore {
             CheckIfWorldOriginNeedsToBeShifted() //checks if the player character has moved too far outside of the physics world, and shifts the origin to adjust for weird behaviour caused by sizing mistmatch
         {
             // Example: Check player's distance from origin
-            vec2s f_PlayerPosition = GetBodyPosition("player"); //measured in pixels, getbodyposition gets the position we stored when the collision object was added idk we'll figure it out
+            // vec2s f_PlayerPosition = GetBodyPosition("player"); //measured in pixels, getbodyposition gets the position we stored when the collision object was added idk we'll figure it out
 
             //if (glm::length(f_PlayerPosition) > PHYSICS_ORIGIN_MAXIMUM_PLAYER_DISTANCE) //measured in pixels
             //{
@@ -272,6 +280,7 @@ namespace PeachCore {
         void
             Step(const float fp_TimeStep, const int fp_VelocityIterations = 8, const int fp_PositionIterations = 3)
         {
+            PEACH_TO_DO_UNUSED(fp_PositionIterations);
             //pm_World->Step(fp_TimeStep, fp_VelocityIterations, fp_PositionIterations);
             b2World_Step(pm_World, fp_TimeStep, fp_VelocityIterations);
         }
@@ -285,9 +294,9 @@ namespace PeachCore {
             if (pm_Bodies.find(fp_ID) != pm_Bodies.end())
             {
                 b2Vec2 f_CurrentBodyPosition = b2Body_GetPosition(pm_Bodies[fp_ID]);
-                return { f_CurrentBodyPosition.x, f_CurrentBodyPosition.y };
+                return {{f_CurrentBodyPosition.x, f_CurrentBodyPosition.y}};
             }
-            return { 0.0f, 0.0f };
+            return {{0.0f, 0.0f}};
         }
 
         unordered_map<string, b2Vec2*>&
@@ -330,7 +339,7 @@ namespace PeachCore {
             /* vector<b2JointId> f_ListOfJointIDs;
              f_ListOfJointIDs.reserve(f_JointCount);*/
 
-            int f_ShapeReturnCount = b2Body_GetShapes(fp_Body, f_ListOfShapeIDs.data(), f_ShapeCount);
+            // int f_ShapeReturnCount = b2Body_GetShapes(fp_Body, f_ListOfShapeIDs.data(), f_ShapeCount);
             // int f_JointReturnCount = b2Body_GetJoints(fp_Body, f_ListOfJointIDs.data(), f_JointCount);
 
              //CREATE NEW FILTER FOR ALL JOINTS AND SHAPES TO OBTAIN
@@ -340,7 +349,7 @@ namespace PeachCore {
             f_NewFilter.maskBits = fp_CollisionLayerMask;
 
             //LOOP THROUGH ALL SHAPES ATTACHED TO THE BODY PASSED IN
-            for (int index = 0; index < f_ListOfShapeIDs.size() - 1; index++) //currently only handles shapes
+            for (size_t index = 0; index < f_ListOfShapeIDs.size() - 1; index++) //currently only handles shapes
             {
                 b2ShapeId f_CurrentShapeID = f_ListOfShapeIDs[index];
                 b2Shape_SetFilter(f_CurrentShapeID, f_NewFilter);
@@ -357,6 +366,8 @@ namespace PeachCore {
                 const vec2s fp_Size
             )
         {
+            PEACH_TO_DO_UNUSED(fp_Size);
+            
             b2Polygon f_Box = b2MakeBox(fp_Position.x, fp_Position.y);
 
             b2ShapeDef f_ShapeDefinition = b2DefaultShapeDef();

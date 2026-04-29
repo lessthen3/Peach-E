@@ -23,9 +23,6 @@
 #include <sstream>
 #include <iomanip>
 
-/// fmt
-#include <fmt/format.h>
-
 ///Peach-E
 #include "FileIO.h" //already includes Logger.h idk just guessing the compiler is smart enough not to double glue the header into the TU but w/e
 #include "BinaryCodec.h"
@@ -266,7 +263,20 @@ namespace PeachCore {
             }
 
             [[nodiscard]] bool
-                ShiftForward(T& fp_Out)
+                TryShiftForward(T& fp_Out)
+            {
+                if (IsEmpty())
+                {
+                    return false;
+                }
+
+                fp_Out =  pm_Vector[pm_Position++];
+
+                return true;
+            }
+
+            bool
+                ShiftForwardDiscard(T& fp_Out)
             {
                 if (IsEmpty())
                 {
@@ -395,7 +405,7 @@ namespace PeachCore {
             {
                 //////////////////// Iterate Current Character ////////////////////
 
-                if (not fp_SourceCode.ShiftForward(f_CurrentChar)) //idk only way i get nullptr is if vector iterator is at the end
+                if (not fp_SourceCode.TryShiftForward(f_CurrentChar)) //idk only way i get nullptr is if vector iterator is at the end
                 {
                     break;
                 }
@@ -602,7 +612,7 @@ namespace PeachCore {
 
                     // Shift to the next character to start capturing the string, not the opening quote
 
-                    if (not fp_SourceCode.ShiftForward(f_CurrentChar)) //invalid string, unterminated UwU!
+                    if (not fp_SourceCode.TryShiftForward(f_CurrentChar)) //invalid string, unterminated UwU!
                     {
                         logger->Error("Unterminated string literal, brother! Error occured at line number: " + to_string(f_CurrentLineNumber), "Lexer");
                         return false;
@@ -610,7 +620,7 @@ namespace PeachCore {
 
                     while (f_CurrentChar != '"')
                     {
-                        if (f_CurrentChar == '\\' and fp_SourceCode.ShiftForward(f_CurrentChar))
+                        if (f_CurrentChar == '\\' and fp_SourceCode.TryShiftForward(f_CurrentChar))
                         {
                             switch (f_CurrentChar)
                             {
@@ -638,7 +648,7 @@ namespace PeachCore {
                             f_CurrentStringLiteral += f_CurrentChar;
                         }
 
-                        if (not fp_SourceCode.ShiftForward(f_CurrentChar)) //invalid string, unterminated UwU!
+                        if (not fp_SourceCode.TryShiftForward(f_CurrentChar)) //invalid string, unterminated UwU!
                         {
                             logger->Error(fmt::format("Unterminated string literal, brother! Error occured at line number: {}", f_CurrentLineNumber), "Lexer");
                             return false;
@@ -731,7 +741,7 @@ namespace PeachCore {
         {
             if (not fp_JSONString)
             {
-                PRINT_ERROR("Passed nullptr reference to string, ToString() is not possible exiting function call immediately");
+                PEACH_PRINT_ERROR("Passed nullptr reference to string, ToString() is not possible exiting function call immediately");
                 return false;
             }
 
@@ -739,7 +749,7 @@ namespace PeachCore {
 
             if (not ToStringStream(fp_JSON, f_TempString))
             {
-                PRINT_ERROR("Unable to stringify JSON");
+                PEACH_PRINT_ERROR("Unable to stringify JSON");
                 return false;
             }
 
@@ -904,7 +914,7 @@ namespace PeachCore {
         {
             string f_StringJSON;
             ToString(&f_StringJSON, fp_JSON);
-            PRINT(f_StringJSON, Colours::BrightWhite);
+            PEACH_PRINT(f_StringJSON, PEACH_COL_BRIGHT_WHITE);
         }
 
         //////////////////////////////////////////////
@@ -1309,9 +1319,9 @@ namespace PeachCore {
                         item = Extract<Elem>(lv_VectorVal);
                     }
                 }
-                catch (const exception& e)
+                catch (const exception& fp_Exception)
                 {
-                    logger->Error(fmt::format("Deserialization failed in FromJSONArray (type: '{}'): {}", typeid(Elem).name(), e.what()), "FromJSONArray");
+                    logger->Error(fmt::format("Deserialization failed in FromJSONArray (type: '{}'): {}", typeid(Elem).name(), fp_Exception.what()), "FromJSONArray");
                     return false;
                 }
 
@@ -1337,7 +1347,7 @@ namespace PeachCore {
                 vector<uint8_t>& fp_BinaryWriteVector
             ) 
         {
-            auto f_Visitor = [&fp_BinaryWriteVector](const char* fp_Name, auto&& fp_Value)
+            auto f_Visitor = [&fp_BinaryWriteVector](const char* fp_Name [[maybe_unused]], auto&& fp_Value) 
             {
                 using FieldType = decay_t<decltype(fp_Value)>; //makes things look prettier
 
@@ -1854,7 +1864,7 @@ namespace PeachCore {
             string f_CurrentKey;
             Token f_CurrentToken;
 
-            fp_Tokens.ShiftForward(f_CurrentToken); //look for ':'
+            fp_Tokens.ShiftForwardDiscard(f_CurrentToken); //look for ':'
 
             while (f_CurrentToken.m_Type != TokenType::CloseBracket) //this will break out of the loop if it parses towards ENDF for invalid JSONS in the worst cases
             {
@@ -1865,7 +1875,7 @@ namespace PeachCore {
                 }
 
                 f_CurrentKey = std::move(f_CurrentToken.m_Value);
-                fp_Tokens.ShiftForward(f_CurrentToken); //look for ':'
+                fp_Tokens.ShiftForwardDiscard(f_CurrentToken); //look for ':'
 
                 if (f_CurrentToken.m_Type != TokenType::DoubleDot)
                 {
@@ -1873,7 +1883,7 @@ namespace PeachCore {
                     return false;
                 }
 
-                fp_Tokens.ShiftForward(f_CurrentToken); //look for value associated with key
+                fp_Tokens.ShiftForwardDiscard(f_CurrentToken); //look for value associated with key
 
                 if (not ParseValue(fp_Tokens, f_CurrentToken, fp_JSONObject, f_CurrentKey, logger))
                 {
@@ -1881,7 +1891,7 @@ namespace PeachCore {
                     return false;
                 }
 
-                fp_Tokens.ShiftForward(f_CurrentToken); //look for comma or close bracket
+                fp_Tokens.ShiftForwardDiscard(f_CurrentToken); //look for comma or close bracket
 
                 if (f_CurrentToken.m_Type == TokenType::CloseBracket)
                 {
@@ -1894,7 +1904,7 @@ namespace PeachCore {
                     return false;
                 }
 
-                fp_Tokens.ShiftForward(f_CurrentToken); // consume comma, and look for next key value pair
+                fp_Tokens.ShiftForwardDiscard(f_CurrentToken); // consume comma, and look for next key value pair
             }
 
             if (f_CurrentToken.m_Type != TokenType::CloseBracket)
@@ -1916,7 +1926,7 @@ namespace PeachCore {
         {
             Token f_CurrentToken;
 
-            fp_Tokens.ShiftForward(f_CurrentToken); //look for ':'
+            fp_Tokens.ShiftForwardDiscard(f_CurrentToken); //look for ':'
 
             while (f_CurrentToken.m_Type != TokenType::CloseSquareBracket) //this will break out of the loop if it parses towards ENDF for invalid JSONS in the worst cases
             {
@@ -1926,7 +1936,7 @@ namespace PeachCore {
                     return false;
                 }
 
-                fp_Tokens.ShiftForward(f_CurrentToken); //shift to find comma
+                fp_Tokens.ShiftForwardDiscard(f_CurrentToken); //shift to find comma
 
                 if (f_CurrentToken.m_Type == TokenType::CloseSquareBracket) // check for end of array before we check for comma
                 {
@@ -1939,7 +1949,7 @@ namespace PeachCore {
                     return false;
                 }
 
-                fp_Tokens.ShiftForward(f_CurrentToken); //shift past the comma to find the next value
+                fp_Tokens.ShiftForwardDiscard(f_CurrentToken); //shift past the comma to find the next value
             }
 
             if (f_CurrentToken.m_Type != TokenType::CloseSquareBracket)
@@ -2074,7 +2084,7 @@ namespace PeachCore {
         {
             Token f_CurrentToken;
 
-            if (not fp_Tokens.ShiftForward(f_CurrentToken)) //get first val
+            if (not fp_Tokens.TryShiftForward(f_CurrentToken)) //get first val
             {
                 logger->Error("Empty Token array was fed into ParseJSON()", "Lexer");
                 return false;
@@ -2086,14 +2096,14 @@ namespace PeachCore {
                 {
                     JSONObject f_Object;
                     ParseObject(fp_Tokens, f_Object, logger);
-                    fp_JSON = std::move(JSONValue(f_Object));
+                    fp_JSON = JSONValue(std::move(f_Object));
                 }
                 break;
                 case TokenType::OpenSquareBracket:
                 {
                     JSONArray f_Array;
                     ParseArray(fp_Tokens, f_Array, logger);
-                    fp_JSON = std::move(JSONValue(f_Array));
+                    fp_JSON = JSONValue(std::move(f_Array));
                 }
                 break;
                 default:

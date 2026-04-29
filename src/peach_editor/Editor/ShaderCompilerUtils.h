@@ -21,8 +21,6 @@
 #include <Rendering/Vulkan/PipelineFactory.h>
 
 ///STL
-#include <unordered_map>
-#include <optional>
 #include <string>
 
 namespace PeachEditor::ShaderCompilerUtils
@@ -53,7 +51,7 @@ namespace PeachEditor::ShaderCompilerUtils
         vector<string> SampledImages;
     };
 
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         CompileGLSLToSPIRV
         (
             const string& fp_ShaderSourcePath,
@@ -62,7 +60,7 @@ namespace PeachEditor::ShaderCompilerUtils
             PeachCore::Logger* logger
         );
 
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         OptimizeSPIRV
         (
             const string& fp_InputSpvPath,
@@ -71,14 +69,14 @@ namespace PeachEditor::ShaderCompilerUtils
         );
 
     // validate SPIRV using spirv-val
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         ValidateSPIRV
         (
             const string& fp_SpvPath,
             PeachCore::Logger* logger
         );
 
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         CrossCompileToMSL
         (
             const string& fp_SpvPath,
@@ -86,7 +84,7 @@ namespace PeachEditor::ShaderCompilerUtils
             PeachCore::Logger* logger
         );
 
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         CrossCompileToHLSL
         (
             const string& fp_SpvPath,
@@ -95,7 +93,7 @@ namespace PeachEditor::ShaderCompilerUtils
         );
 
     // runs the full pipeline, compile -> validate -> optimize
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         CompileFullShaderPipeline
         (
             const string& fp_ShaderSourcePath,
@@ -104,7 +102,7 @@ namespace PeachEditor::ShaderCompilerUtils
             PeachCore::Logger* logger
         );
 
-    [[nodiscard]] static CompilationResult
+    [[nodiscard]] CompilationResult
         CompileShaderFromSource
         (
             const string& fp_RawSource,
@@ -115,7 +113,7 @@ namespace PeachEditor::ShaderCompilerUtils
             const bool fp_IsOptimized = true
         );
 
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         DisassembleSPIRV
         (
             const vector<uint32_t>& fp_SpirvBytecode,
@@ -123,10 +121,10 @@ namespace PeachEditor::ShaderCompilerUtils
             PeachCore::Logger* logger
         );
 
-    static ShaderReflectionInfo
+    [[nodiscard]] ShaderReflectionInfo
         ReflectInputsOutputs(const vector<uint32_t>& fp_SpirvBytecode);
 
-    static bool
+    bool
         ReflectDescriptorBindings
         (
             vector<PeachCore::Vulkan::DescriptorBindingInfo>* fp_BindingInfo,
@@ -134,7 +132,7 @@ namespace PeachEditor::ShaderCompilerUtils
             PeachCore::Logger* logger
         );
 
-    static bool
+     bool
         ReflectPushConstants
         (
             vector<PeachCore::Vulkan::PushConstantInfo>* fp_PushConstants,

@@ -11,31 +11,34 @@
 #pragma once
 
 ///PeachCore
-#include "Utils/Logger.h"
 
 ///STL
 #include <tuple>
 #include <vector>
+#include <string>
+
+///CSTD
+#include <stdint.h>
 
 namespace PeachCore {
 
     class PeachTexture
     {
     public:
-        int m_Width = -1;
-        int m_Height = -1;
+        uint32_t m_Width = 0;
+        uint32_t m_Height = 0;
 
-        string m_Name;
+        std::string m_Name;
 
     private:
-        int pm_TileWidth = -1;
-        int pm_TileHeight = -1;
+        uint32_t pm_TileWidth = -1;
+        uint32_t pm_TileHeight = -1;
 
         uint64_t pm_TextureID = 0;
 
         bool pm_IsValid = false; //used for tracking whether LoadTexture() was successful/ if a texture is currently loaded
 
-        vector<tuple<float, float, float, float>> pm_TileUVs; // UV coordinates for each tile
+        std::vector<std::tuple<float, float, float, float>> pm_TileUVs; // UV coordinates for each tile
 
     public:
         PeachTexture(const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight);
@@ -44,16 +47,16 @@ namespace PeachCore {
 
         // Define tile size and calculate UVs for spritesheets
         void 
-            DefineTileSize(const int tileWidth, const int tileHeight);
+            DefineTileSize(const uint32_t fp_TileWidth, const uint32_t fp_TileHeight);
         void 
             CalculateTileUVs();        
 
-        vector<tuple<float, float, float, float>> 
+        std::vector<std::tuple<float, float, float, float>> 
             GetTileUVs()
             const;
 
-        tuple<float, float, float, float> 
-            GetTileUV(const int tileIndex) 
+        std::tuple<float, float, float, float> 
+            GetTileUV(const size_t fp_TileIndex) 
             const;
 
         int 

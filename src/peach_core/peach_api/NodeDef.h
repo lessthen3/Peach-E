@@ -54,17 +54,6 @@ extern "C"
         PEACH_NodeType Type;
     } PEACH_NodeID;
     
-    //small helped if u want owo
-    static inline int
-        PEACH_IsNodesEqual
-        (
-            PEACH_NodeID fp_A,
-            PEACH_NodeID fp_B
-        )
-    {
-        return fp_A.Index == fp_B.Index && fp_A.Generation == fp_B.Generation && fp_A.Type == fp_B.Type;
-    }
-
 #ifdef __cplusplus
 }/*__cplusplus*/
 #endif
@@ -83,6 +72,21 @@ extern "C"
         noexcept
     {
         return fp_A.Index == fp_B.Index and fp_A.Generation == fp_B.Generation and fp_A.Type == fp_B.Type;
+    }
+
+#else
+
+    #define PEACH_NODE_NULL_ID {0, 0, PEACH_TYPE_BLANK} //closest ill get to constexpr in C17 owo
+
+    //small helped if u want owo
+    static inline int
+        PEACH_IsNodesEqual
+        (
+            const PEACH_NodeID fp_A,
+            const PEACH_NodeID fp_B
+        )
+    {
+        return fp_A.Index == fp_B.Index && fp_A.Generation == fp_B.Generation && fp_A.Type == fp_B.Type;
     }
 
 #endif /*__cplusplus*/

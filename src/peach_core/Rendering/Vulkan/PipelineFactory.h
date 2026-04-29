@@ -24,11 +24,9 @@
 
 namespace PeachCore::Vulkan
 {
-    using std::string;
-
     struct DescriptorBindingInfo
     {
-        string Name;
+        std::string Name;
         uint32_t Binding;
         uint32_t Set;
         VkDescriptorType Type;
@@ -36,7 +34,7 @@ namespace PeachCore::Vulkan
 
     struct PushConstantInfo
     {
-        string Name;
+        std::string Name;
         uint32_t Offset;
         uint32_t Size;
         VkShaderStageFlags StageFlags;

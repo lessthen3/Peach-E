@@ -8,9 +8,7 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#pragma once
-
-#include "SceneTree.h"
+// #include "SceneTree.h"
 
 namespace PeachCore {
 

@@ -26,7 +26,8 @@ namespace PeachCore::PUI {
             PEACH_LOGGER_FLAGS fp_LoggerFlags
         )
     {
-
+        PEACH_TO_DO_UNUSED(fp_LoggerName);
+        PEACH_TO_DO_UNUSED(fp_LoggerFlags);
         return nullptr;
     }
 
@@ -37,13 +38,13 @@ namespace PeachCore::PUI {
             vector<ParsedArgument>& fp_ParsedArguments
         )
     {
-        for (int lv_Index = 0; lv_Index < fp_CommandString.size(); lv_Index++)
+        for (size_t lv_Index = 0; lv_Index < fp_CommandString.size(); lv_Index++)
         {
             char fv_CurrentChar = fp_CommandString[lv_Index];
 
             if (fv_CurrentChar != '-')
             {
-                PRINT_ERROR(fmt::format("[POORLY FORMED COMMAND]: expected '-' but found '{}' instead", fv_CurrentChar));
+                pm_MainConsoleScreen.StringDisplayBuffer->Push(fmt::format("[POORLY FORMED COMMAND]: expected '-' but found '{}' instead", fv_CurrentChar));
                 return false;
             }
 
@@ -66,7 +67,7 @@ namespace PeachCore::PUI {
 
             if (not pm_CommandList.contains(fv_Command))
             {
-                PRINT_ERROR(fmt::format("[INVALID COMMAND]: '{}'", fv_Command));
+                pm_MainConsoleScreen.StringDisplayBuffer->Push((fmt::format("[INVALID COMMAND]: '{}'", fv_Command)));
                 return false;
             }
 
@@ -118,6 +119,6 @@ namespace PeachCore::PUI {
             const string& fp_DesiredTab
         )
     {
-
+        PEACH_TO_DO_UNUSED(fp_DesiredTab);
     }
 }

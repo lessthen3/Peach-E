@@ -52,7 +52,7 @@ namespace PeachEditor::ResourceManagement{
         string                SourcePath;
     };
 
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         WriteSPIRVToFile
         (
             const vector<uint32_t>& fp_SpirvBytecode,
@@ -61,7 +61,7 @@ namespace PeachEditor::ResourceManagement{
             PeachCore::Logger* logger
         );
 
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         LoadRawShaderSource
         (
             string* fp_SourceCode,
@@ -69,7 +69,7 @@ namespace PeachEditor::ResourceManagement{
             PeachCore::Logger* logger
         );
 
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         LoadTextureFFS
         (
             const string& fp_FilePath,
@@ -77,7 +77,7 @@ namespace PeachEditor::ResourceManagement{
             PeachCore::Logger* logger
         );
 
-    [[nodiscard]] static bool
+    [[nodiscard]] bool
         EncodeTexture
         (
             const RawTextureData& fp_TextureData,

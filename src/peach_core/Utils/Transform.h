@@ -15,7 +15,7 @@
 #include <cglm/struct.h>
 
 ///PeachCore
-#include "compiler_dep/PeachForceInline.h"
+#include "PeachForceInline.h"
 
 namespace PeachCore::Math {
 
@@ -32,10 +32,10 @@ namespace PeachCore::Math {
 
     public:
         Transform2D()
-            : pm_Position({ 0.0f, 0.0f })
+            : pm_Position({{ 0.0f, 0.0f }})
             , pm_Rotation( 0.0f )
-            , pm_Scale({ 1.0f, 1.0f })
-            , pm_Origin({ 0.0f, 0.0f })
+            , pm_Scale({{ 1.0f, 1.0f }})
+            , pm_Origin({{ 0.0f, 0.0f }})
         {
             RegenerateLocalMatrix();
         }
@@ -58,9 +58,9 @@ namespace PeachCore::Math {
         ////////////////////////////////////////////// Getters //////////////////////////////////////////////
 
         vec2s GetPosition() const noexcept { return pm_Position; }
-        float                 GetRotation() const noexcept { return pm_Rotation; }   // radians
-        vec2s GetScale()    const noexcept { return pm_Scale; }
-        vec2s GetOrigin()   const noexcept { return pm_Origin; }
+        float GetRotation() const noexcept { return pm_Rotation; }   // radians
+        vec2s GetScale()    const noexcept { return pm_Scale;    } 
+        vec2s GetOrigin()   const noexcept { return pm_Origin;   }
 
         ////////////////////////////////////////////// Setters //////////////////////////////////////////////
 
@@ -130,14 +130,14 @@ namespace PeachCore::Math {
             Right()  // (local +X) vector in world space
             const noexcept
         {
-            return { cos(pm_Rotation), sin(pm_Rotation) };
+            return {{cos(pm_Rotation), sin(pm_Rotation)}};
         }
         
         vec2s 
             Up()  // (local +Y) vector in world space
             const noexcept
         {
-            return { -sin(pm_Rotation), cos(pm_Rotation) };   // rotate (0,1) by pm_Rotation
+            return {{-sin(pm_Rotation), cos(pm_Rotation)}};   // rotate (0,1) by pm_Rotation
         }
 
     [[nodiscard]] PEACH_FORCEINLINE const mat4s& 
@@ -158,10 +158,10 @@ namespace PeachCore::Math {
         {
             pm_LocalMatrix = GLMS_MAT4_IDENTITY_INIT;
 
-            pm_LocalMatrix = glms_translate(pm_LocalMatrix, { pm_Position.x, pm_Position.y, 0.0f });
-            pm_LocalMatrix = glms_rotate(pm_LocalMatrix, pm_Rotation, { 0.0f, 0.0f, 1.0f });
-            pm_LocalMatrix = glms_scale(pm_LocalMatrix, { pm_Scale.x, pm_Scale.y, 1.0f });
-            pm_LocalMatrix = glms_translate(pm_LocalMatrix, { -pm_Origin.x, -pm_Origin.y, 0.0f });
+            pm_LocalMatrix = glms_translate(pm_LocalMatrix, {{pm_Position.x, pm_Position.y, 0.0f}});
+            pm_LocalMatrix = glms_rotate(pm_LocalMatrix, pm_Rotation, {{0.0f, 0.0f, 1.0f}});
+            pm_LocalMatrix = glms_scale(pm_LocalMatrix, {{pm_Scale.x, pm_Scale.y, 1.0f}});
+            pm_LocalMatrix = glms_translate(pm_LocalMatrix, {{-pm_Origin.x, -pm_Origin.y, 0.0f}});
 
             pm_IsDirty = false;
         }
@@ -179,9 +179,9 @@ namespace PeachCore::Math {
     private:
         //API reachpoint vars for human friendly shtuff >w<
 
-        vec3s pm_Position{ {0.0f, 0.0f, 0.0f} };
-        versors pm_Rotation{ { 0.0f, 0.0f, 0.0f, 1.0f } }; // identity quat: [x,y,z,w] per cglm v0.4.0+
-        vec3s pm_Scale{ { 1.0f, 1.0f, 1.0f } };
+        vec3s pm_Position{{0.0f, 0.0f, 0.0f}};
+        versors pm_Rotation{{ 0.0f, 0.0f, 0.0f, 1.0f }}; // identity quat: [x,y,z,w] per cglm v0.4.0+
+        vec3s pm_Scale{{ 1.0f, 1.0f, 1.0f }};
 
         //Intiailize as and identity matrices uwu owo!
         mat4s pm_LocalMatrix = GLMS_MAT4_IDENTITY_INIT;
@@ -236,7 +236,7 @@ namespace PeachCore::Math {
             Forward() 
             const noexcept
         {
-            vec3s f_Local = { { 0.0f, 0.0f, -1.0f } };
+            vec3s f_Local = {{ 0.0f, 0.0f, -1.0f }};
             return glms_quat_rotatev(pm_Rotation, f_Local);
         }
 
@@ -244,7 +244,7 @@ namespace PeachCore::Math {
             Right() 
             const noexcept
         {
-            vec3s f_Local = { { 1.0f, 0.0f, 0.0f } };
+            vec3s f_Local = {{ 1.0f, 0.0f, 0.0f }};
             return glms_quat_rotatev(pm_Rotation, f_Local);
         }
 
@@ -252,7 +252,7 @@ namespace PeachCore::Math {
             Up() 
             const noexcept
         {
-            vec3s f_Local = { { 0.0f, 1.0f, 0.0f } };
+            vec3s f_Local = {{ 0.0f, 1.0f, 0.0f }};
             return glms_quat_rotatev(pm_Rotation, f_Local);
         }
 

@@ -20,6 +20,8 @@ namespace PeachCore {
             latch& fp_InitLatch
         )
     {
+        PEACH_TO_DO_UNUSED(fp_InitialVolume);
+
         if (not InitializeAudioEngine(fp_LogOutputDirectory))
         {
 
@@ -81,7 +83,7 @@ namespace PeachCore {
 
         if (not audio_logger)
         {
-            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: AudioManager failed to initialize the audio_thread logger >w<");
+            PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: AudioManager failed to initialize the audio_thread logger >w<");
             return false;
         }
 
@@ -151,11 +153,11 @@ namespace PeachCore {
     }
 
     [[nodiscard]] shared_ptr<AudioCommandPipe>
-        AudioManager::GetAudioCommandQueue(Logger* const logger)
+        AudioManager::GetAudioCommandQueue(Logger*const logger)
     {
         if (not logger)
         {
-            PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
+            PEACH_PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
             return nullptr;
         }
         else if (not pm_IsInitialized)
@@ -176,11 +178,14 @@ namespace PeachCore {
         AudioManager::ProcessCommand(const AudioCommand& fp_AudioCommand)
     {
         //ye
+        PEACH_TO_DO_UNUSED(fp_AudioCommand);
     }
 
     void 
-        AudioManager::OnResourceTransfer(const ResourceTransfer& rt)
+        AudioManager::OnResourceTransfer(const ResourceTransfer& fp_ResourceTransfer)
     {
+        PEACH_TO_DO_UNUSED(fp_ResourceTransfer);
+
         //if (not holds_alternative<unique_ptr<AudioData>>(rt.Payload))
         //{
         //    return;

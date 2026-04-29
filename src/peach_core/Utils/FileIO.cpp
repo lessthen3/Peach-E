@@ -12,9 +12,17 @@
 ///PeachCore
 #include "FileIO.h"
 
-///STL
-#include <filesystem>
-#include <fmt/format.h>
+#ifdef PEACH_PLATFORM_WINDOWS
+#   define NOMINMAX
+#   define WIN32_LEAN_AND_MEAN
+#   include <windows.h>
+#   include <io.h>
+#else
+#   include <unistd.h>
+#   include <fcntl.h>
+#endif
+
+#include <fstream>
 
 namespace PeachCore::FileIO
 {
@@ -35,7 +43,7 @@ namespace PeachCore::FileIO
 
         if (not logger)
         {
-            PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during WriteToBinary()");
+            PEACH_PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during WriteToBinary()");
             return false;
         }
 
@@ -95,7 +103,7 @@ namespace PeachCore::FileIO
 
         if (not logger) //check for nullptr ref passed to ReadBinaryIntoVector
         {
-            PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during ReadBinaryIntoVector()");
+            PEACH_PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during ReadBinaryIntoVector()");
             return false;
         }
 
@@ -179,7 +187,7 @@ namespace PeachCore::FileIO
     {
         if (not logger)
         {
-            PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during WriteToJSON()");
+            PEACH_PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during WriteToJSON()");
             return false;
         }
 
@@ -230,7 +238,7 @@ namespace PeachCore::FileIO
 
         if (not logger)
         {
-            PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during ReadFileIntoCharBuffer()");
+            PEACH_PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during ReadFileIntoCharBuffer()");
             return false;
         }
 

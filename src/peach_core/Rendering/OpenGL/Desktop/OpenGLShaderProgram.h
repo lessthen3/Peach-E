@@ -197,22 +197,21 @@ namespace PeachCore::OpenGL {
         // Texture Uniform Setter
         //////////////////////////////////////////////
 
-        void
-            SetTexture
-            (
-                const string& fp_UniformName,
-                int fp_TextureID,
-                int fp_TextureUnit
-            );
+        // void
+        //     SetTexture
+        //     (
+        //         const string& fp_UniformName,
+        //         int fp_TextureID,
+        //         int fp_TextureUnit
+        //     );
 
-#ifdef PEACH_DEBUG
+#ifdef PEACH_DEBUG //XXX: don't really need this now but better to catch calls to it in rel owo
         void
             PrintShaderProgramUniformList()
         {
             for (auto& lv_Uniform : pm_Uniforms)
             {
-                cout << "Uniform Name: " << lv_Uniform.first << "\n";
-                cout << "Uniform Location: " << lv_Uniform.second << "\n";
+                PEACH_PRINT_FMT(PEACH_COL_BRIGHT_GREEN, "Uniform Name: {}, Uniform Location: {}", lv_Uniform.first, lv_Uniform.second);
             }
         }
 #endif

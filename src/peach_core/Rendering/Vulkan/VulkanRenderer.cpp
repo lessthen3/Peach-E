@@ -26,7 +26,7 @@ namespace PeachCore::Vulkan {
     {
         if (not fp_RenderingLogger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
         {
-            PRINT_ERROR("Tried to initialize VulkanRenderer with a nullptr for the Rendering Logger doofus, Ending program execution immediately since no valid logger was found");
+            PEACH_PRINT_ERROR("Tried to initialize VulkanRenderer with a nullptr for the Rendering Logger doofus, Ending program execution immediately since no valid logger was found");
             return false;
         }
 
@@ -128,7 +128,7 @@ namespace PeachCore::Vulkan {
             &pm_RenderData.CurrentSwapchainImageIndex
         );
 
-        PRINT("acquired image index: " + std::to_string(pm_RenderData.CurrentSwapchainImageIndex) + " currentframe: " + to_string(pm_RenderData.CurrentFrameCycle), Colours::Magenta);
+        PEACH_PRINT_FMT(PEACH_COL_MAGENTA, "acquired image index: {}, currentframe: {}", pm_RenderData.CurrentSwapchainImageIndex, pm_RenderData.CurrentFrameCycle);
 
         if (result != VK_SUCCESS and result != VK_SUBOPTIMAL_KHR)
         {
@@ -219,7 +219,7 @@ namespace PeachCore::Vulkan {
         {
             // Bind pipeline and issue draw
             VkPipeline pipeline = it_GraphicsPipeline->second;
-            VkPipelineLayout layout = pm_RenderData.PipelineLayouts.at(it_GraphicsPipeline->first);
+            // VkPipelineLayout layout = pm_RenderData.PipelineLayouts.at(it_GraphicsPipeline->first);
 
             pm_Init.Dispatch.cmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 

@@ -13,7 +13,7 @@
 
 option(BUILD_PEACH_CORE_SHARED "Builds peach_core as a shared library" OFF) #build peach_core shared by default uwu
 
-option(BUILD_PEACH_TESTS "build test suite" ON)
+option(BUILD_PEACH_TESTS "build test suite" OFF)
 option(BUILD_PEACH_EDITOR "turns on build output for peach editor" ON)
 option(BUILD_PEACH_ENGINE "turns on build output for the executable peach engine, doesn't relate to peach_core" ON)
 
@@ -112,6 +112,13 @@ set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make 
 
 ####################################### peach_core src includes
 
+# disable third party warnings OwO, idk just trusting em
+if(MSVC)
+    set(WARNING_OFF_FLAG "/W0")
+else()
+    set(WARNING_OFF_FLAG "-w") #just assuming clang or gcc if not msvc
+endif()
+
 file(GLOB LUA_SOURCES 
     third_party/peach_core/source_include/lua/*.c
 )
@@ -176,21 +183,11 @@ if(PEACH_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID OR 
     )
 
     # disable third party warnings OwO, idk just trusting em
-    if(MSVC)
-        # MSVC uses /W0 to disable all warnings
-        set_source_files_properties(
-            ${VKBOOTSTRAP_SOURCES}
-            ${VOLK_SOURCES}
-            PROPERTIES COMPILE_FLAGS "/W0"
-        )
-    else()
-        # GCC and Clang use -w
-        set_source_files_properties(
-            ${VKBOOTSTRAP_SOURCES}
-            ${VOLK_SOURCES}
-            PROPERTIES COMPILE_FLAGS "-w"
-        )
-    endif(MSVC)
+    set_source_files_properties(
+        ${VKBOOTSTRAP_SOURCES}
+        ${VOLK_SOURCES}
+        PROPERTIES COMPILE_FLAGS ${WARNING_OFF_FLAG}
+    )
     
 endif(PEACH_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID OR PEACH_WINDOWS_ARM64)
 
@@ -223,33 +220,17 @@ source_group("third_party/fmt" FILES ${FMT_SOURCES})
 source_group("third_party/monocypher" FILES ${MONOCYPHER_SOURCES})
 
 # disable third party warnings OwO, idk just trusting em
-if(MSVC)
-    # MSVC uses /W0 to disable all warnings
-    set_source_files_properties(
-        ${PHYSFS_SOURCES}
-        ${LUA_SOURCES}
-        ${LZ4_SOURCES}
-        ${CLIPPER2_SOURCES}
-        ${BOX2D_SOURCES}
-        ${JOLT_SOURCES}
-        ${FMT_SOURCES}
-        ${MONOCYPHER_SOURCES}
-        PROPERTIES COMPILE_FLAGS "/W0"
-    )
-else()
-    # GCC and Clang use -w
-    set_source_files_properties(
-        ${PHYSFS_SOURCES}
-        ${LUA_SOURCES}
-        ${LZ4_SOURCES}
-        ${CLIPPER2_SOURCES}
-        ${BOX2D_SOURCES}
-        ${JOLT_SOURCES}
-        ${FMT_SOURCES}
-        ${MONOCYPHER_SOURCES}
-        PROPERTIES COMPILE_FLAGS "-w"
-    )
-endif()
+set_source_files_properties(
+    ${PHYSFS_SOURCES}
+    ${LUA_SOURCES}
+    ${LZ4_SOURCES}
+    ${CLIPPER2_SOURCES}
+    ${BOX2D_SOURCES}
+    ${JOLT_SOURCES}
+    ${FMT_SOURCES}
+    ${MONOCYPHER_SOURCES}
+    PROPERTIES COMPILE_FLAGS ${WARNING_OFF_FLAG}
+)
 
 ####################################### helper macro for reducing repeated boiler plate for static linking uwu
 
@@ -559,6 +540,10 @@ if(BUILD_PEACH_EDITOR)
         )
     endif(PEACH_MACOS)
 
+    target_include_directories(Peach_Editor PRIVATE
+        ${PROJECT_SOURCE_DIR}/src/peach_editor/ #again because its prettier owo
+    )
+
     set_target_properties(Peach_Editor PROPERTIES POSITION_INDEPENDENT_CODE ON) #make Peach_Editor PIC friendly UwU
 
     ####################################### pseudo source cmake include owo
@@ -586,7 +571,7 @@ if(BUILD_PEACH_EDITOR)
         ${BC7ENC_RDO_SOURCES}
     )
 
-    target_include_directories(Peach_Editor PRIVATE
+    target_include_directories(Peach_Editor SYSTEM PRIVATE
         third_party/peach_editor/source_include
         third_party/peach_editor/weird_source_include/spirv_cross        # root hpp files
         third_party/peach_editor/weird_source_include/spirv_cross/include # vendored spirv-headers
@@ -596,6 +581,15 @@ if(BUILD_PEACH_EDITOR)
     source_group("third_party/lodepng" FILES ${LODEPNG_SOURCES})
     source_group("third_party/spirv_cross" FILES ${SPIRV_CROSS_SOURCES})
     source_group("third_party/bc7enc_rdo" FILES ${BC7ENC_RDO_SOURCES})
+
+    # disable third party warnings OwO, idk just trusting em
+    set_source_files_properties(
+        ${TINYXML2_SOURCES}
+        ${LODEPNG_SOURCES}
+        ${SPIRV_CROSS_SOURCES}
+        ${BC7ENC_RDO_SOURCES}
+        PROPERTIES COMPILE_FLAGS ${WARNING_OFF_FLAG} #WARNING off flag is always set since peach_core is always built by default owo
+    )
 
     if(PEACH_MACOS)
         if(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")

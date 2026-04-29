@@ -15,11 +15,9 @@
 ///External
 #include <volk/volk.h> //THIS NEEDS TO BE FIRST DONT MOVE UWU
 #include <vk-bootstrap/VkBootstrap.h>
-#include "PipelineFactory.h"
 
 ///PeachCore
 #include "Utils/Logger.h"
-#include "Utils/Serializer.h"
 
 namespace PeachCore::Vulkan { //namespacing this because it doesnt need to be a class, just a file w shader utilization tools
 
@@ -79,7 +77,7 @@ namespace PeachCore::Vulkan { //namespacing this because it doesnt need to be a 
     {
         Pipeline pm_GraphicsPipe;
 
-        bool
+        [[nodiscard]] bool
             BakePipelineData
             (
                 const string& fp_Name,

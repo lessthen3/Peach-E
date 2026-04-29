@@ -8,8 +8,8 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#ifndef PEACH_NATIVE_SCRIPT_DEF_H
-#define PEACH_NATIVE_SCRIPT_DEF_H
+#ifndef PEACH_NATIVE_SCRIPT_DEF_HG
+#define PEACH_NATIVE_SCRIPT_DEF_HG
 
 #include "NodeDef.h"
 #include <stdint.h>
@@ -27,7 +27,7 @@ extern "C" {
     typedef void (*PEACH_OnConstantUpdateFn)(PEACH_NodeID fp_NodeID, double fp_FixedDelta, void* fp_UserData);
     typedef void (*PEACH_OnShutdownFn)      (PEACH_NodeID fp_NodeID, void* fp_UserData);
 
-    typedef struct PEACH_ScriptDef
+    typedef struct
     {
         PEACH_OnInitializeFn     OnInitialize;
         PEACH_OnUpdateFn         OnUpdate;
@@ -43,4 +43,5 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#endif
+
+#endif /*PEACH_NATIVE_SCRIPT_DEF_HG*/

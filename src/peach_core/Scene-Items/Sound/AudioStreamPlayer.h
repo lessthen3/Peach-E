@@ -14,13 +14,11 @@
 
 namespace PeachCore{
 
-    using namespace std;
-
     struct AudioStreamPlayer
     {
-        void PlaySoundOnce(const string& soundFile); //SUSUSUSUSUSUSUSUSSSYYYY FUNCTION (is PlaySound a predefined funciton in openal?)
-        string GetCurrentTrack() const;
-        void SetCurrentTrack(const string& track);
+        void PlaySoundOnce(const std::string& soundFile); //SUSUSUSUSUSUSUSUSSSYYYY FUNCTION (is PlaySound a predefined funciton in openal?)
+        std::string GetCurrentTrack() const;
+        void SetCurrentTrack(const std::string& track);
 
         //idk get bpm of current track, probably uneccesary but could be useful for rhythm games where users can import custom audio files, and then can generate a bpm map for it
         float

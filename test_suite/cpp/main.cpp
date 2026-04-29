@@ -16,10 +16,12 @@
 #define BUILD_PEACH_SERIALIZER_TEST ////////////////////////////////////////////// Here just for a bit for testing the testing suite UwU
 
 #ifdef BUILD_PEACH_SERIALIZER_TEST
-#include "tests/serialization/Cereal.h"
+#   include "tests/serialization/Cereal.h"
 #endif
 
-#include "tests/logging/LoggerTest.h"
+#ifdef BUILD_PEACH_LOGGER_TEST
+#   include "tests/logging/LoggerTest.h"
+#endif 
 
 static inline constexpr void
     ReplaceChar(std::string* fp_String, char fp_OldChar, char fp_NewChar)
@@ -34,9 +36,9 @@ static inline constexpr void
 }
 
 int 
-    main(int fp_ArgCount, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao
+    main(int, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao
 {
-    std::cout << "Hello World!\n"; //Used this to test the projects first start up uwu
+    // std::cout << "Hello World!\n"; //Used this to test the projects first start up uwu
 
     ////////////////////////////////////////////// Lazily Look for Tests Directory from Executable Build Aritfact Directory //////////////////////////////////////////////
 
@@ -52,7 +54,7 @@ int
 
     if (mf_TopLevelDir.empty())
     {
-        PRINT("Failed to find the top-level directory 'Peach-E'!", PeachCore::Colours::Magenta);
+        PEACH_PRINT("Failed to find the top-level directory 'Peach-E'!", PEACH_COL_MAGENTA);
         return EXIT_FAILURE;
     }
 
@@ -72,7 +74,7 @@ int
 
     if (not testing_logger)
     {
-        PRINT_ERROR("Initialization error: Was not able to initialize PeachTests' main logger");
+        PEACH_PRINT_ERROR("Initialization error: Was not able to initialize PeachTests' main logger");
         return EXIT_FAILURE;
     }
 
@@ -94,13 +96,13 @@ int
         ////////////////////////////////////////////// Serializer Tests //////////////////////////////////////////////
 
 #ifdef BUILD_PEACH_SERIALIZER_TEST
-        PRINT("\n====================================================== Starting Serializer Test ======================================================", PeachCore::Colours::BrightMagenta);
+        PEACH_PRINT("\n====================================================== Starting Serializer Test ======================================================", PEACH_COL_BRIGHT_MAGENTA);
 
         //PeachTests::RunSerializerPODTests(f_TestsRootDir + "/serialization", testing_logger.get());
         PeachTests::RunSerializerPODBinaryTests(testing_logger.get());
 
-        PRINT("====================================================== Ending Serializer Test ======================================================", PeachCore::Colours::BrightMagenta);
-#endif
+        PEACH_PRINT("====================================================== Ending Serializer Test ======================================================", PEACH_COL_BRIGHT_MAGENTA);
+#endif /*BUILD_PEACH_SERIALIZER_TEST*/
 
         //uint32_t I = static_cast<uint32_t>( - 1);
 
@@ -116,19 +118,21 @@ int
 
 #ifdef BUILD_PEACH_VULKAN_TEXTURE_TEST
 
-#endif
+#endif /*BUILD_PEACH_VULKAN_TEXTURE_TEST*/
+
+#ifdef BUILD_PEACH_LOGGER_TEST
 
         //PeachTests::RunLoggerTests(f_TestsRootDir + "/logging", testing_logger.get());
 
         // engine_manager->ShutdownPeachEngine();
+#endif /*BUILD_PEACH_LOGGER_TEST*/
 
         return EXIT_SUCCESS;
     }
 
     catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
     {
-        PRINT_ERROR(std::format("Unhandled exception: {}", Exception.what()));
-
+        PEACH_PRINT_ERROR_FMT("Unhandled exception: {}", Exception.what());
         return EXIT_FAILURE;
     }
 }

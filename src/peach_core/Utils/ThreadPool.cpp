@@ -11,6 +11,7 @@
 #include "ThreadPool.h"
 
 #include <fmt/format.h>
+#include "Logger.h"
 
 namespace PeachCore{
 
@@ -20,7 +21,7 @@ namespace PeachCore{
         {
             lock_guard<mutex> lock(m_QueueMutex);
             m_Stop = true;
-            PRINT("Shutting down thread pool", Colours::BrightBlue);
+            PEACH_PRINT("Shutting down thread pool", PEACH_COL_BRIGHT_BLUE);
             m_Condition.notify_all();
         }
 
@@ -37,14 +38,13 @@ namespace PeachCore{
         ThreadPool::ProcessTasks()
     {
         lock_guard<mutex> lock(m_QueueMutex);
-        cout << "Processing Tasks" << endl;
 
         // Move event tasks to the main queue with highest priority
         while (not pm_EventTaskBatches.empty())
         {
             auto& batch = pm_EventTaskBatches.front();
 
-            cout << "Moving Event Batch of size: " << batch.size() << " to main queue" << endl;
+            PEACH_PRINT_FMT(PEACH_COL_BRIGHT_GREEN, "Moving Event Batch of size: {} to main queue", batch.size());
 
             pm_EventTaskBatches.pop();
 
@@ -58,7 +58,7 @@ namespace PeachCore{
         {
             while (not queue.empty())
             {
-                cout << "Moving One-Time Task at priority: " << priority << " to main queue" << endl;
+                // cout << "Moving One-Time Task at priority: " << priority << " to main queue" << endl;
                 m_Tasks[priority].push(queue.front());
                 queue.pop();
             }
@@ -70,7 +70,7 @@ namespace PeachCore{
         {
             while (not queue.empty())
             {
-                cout << "Moving Continuous Task at priority: " << priority << " to main queue" << endl;
+                // cout << "Moving Continuous Task at priority: " << priority << " to main queue" << endl;
 
                 m_Tasks[priority].push(queue.front());
                 queue.pop();
@@ -92,13 +92,13 @@ namespace PeachCore{
             bool eventTasksPending = false;
             {
                 unique_lock<mutex> lock(m_QueueMutex);
-                PRINT("Worker waiting for tasks", Colours::White);
-                m_Condition.wait(lock, [this] { return m_Stop or not AreTasksEmpty() or not pm_EventTaskBatches.empty(); });
-                PRINT("Worker woke up", Colours::White);
 
+                m_Condition.wait(lock, [this] { return m_Stop or not AreTasksEmpty() or not pm_EventTaskBatches.empty(); });
+
+                
                 if (m_Stop and AreTasksEmpty())
                 {
-                    PRINT("Stopping worker as no tasks are left", Colours::White);
+                    PEACH_PRINT("Stopping worker as no tasks are left", PEACH_COL_BRIGHT_WHITE);
                     break;
                 }
 
@@ -106,7 +106,7 @@ namespace PeachCore{
                 if (not pm_EventTaskBatches.empty())
                 {
                     auto& batch = pm_EventTaskBatches.front();
-                    PRINT(fmt::format("Processing Event Batch of size: {}", batch.size()), Colours::White);
+                    PEACH_PRINT_FMT(PEACH_COL_BRIGHT_WHITE, "Processing Event Batch of size: {}", batch.size());
                     pm_EventTaskBatches.pop();
 
                     for (auto& task : batch)
@@ -120,7 +120,7 @@ namespace PeachCore{
                 }
                 else if (eventTasksPending)
                 {
-                    PRINT("Waiting for other threads to finish event tasks", Colours::White);
+                    // PRINT("Waiting for other threads to finish event tasks", Colours::White);
                     eventTasksPending = false; // Reset pending flag after handling
                     m_Condition.wait(lock, [this] { return pm_EventTaskBatches.empty() && AreTasksEmpty(); });
                 }
@@ -130,8 +130,8 @@ namespace PeachCore{
                     {
                         if (not queue.empty())
                         {
-                            PRINT(fmt::format("Worker taking task from priority: {}", priority), Colours::White);
-                            f_Task = move(queue.front());
+                            // PRINT(fmt::format("Worker taking task from priority: {}", priority), Colours::White);
+                            f_Task = std::move(queue.front());
                             queue.pop();
                             currentPriority = priority;
                             break;
@@ -142,7 +142,7 @@ namespace PeachCore{
                 // Synchronize event tasks processing
                 if (not f_Task and enforceHardEventSync.load(memory_order_acquire))
                 {
-                    PRINT("Worker waiting for synchronization", Colours::White);
+                    // PRINT("Worker waiting for synchronization", Colours::White);
                     m_IdleThreadCount++;
 
                     if (m_IdleThreadCount == m_MaxThreads)
@@ -157,7 +157,7 @@ namespace PeachCore{
 
             if (f_Task)
             {
-                PRINT("Worker executing task", Colours::White);
+                // PRINT("Worker executing task", Colours::White);
                 f_Task(); // Execute the task
             }
 

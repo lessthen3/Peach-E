@@ -22,7 +22,7 @@
 #include <stdint.h>
 
 /// compiler stupidity
-#include "compiler_dep/PeachForceInline.h"
+#include "PeachForceInline.h"
 
 // Add these to your platform defines header
 #if defined(_MSC_VER)

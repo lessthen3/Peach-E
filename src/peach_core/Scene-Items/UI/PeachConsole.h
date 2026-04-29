@@ -13,7 +13,6 @@
 //idk if this should be a ui node its more utility that is meant to be paired w a ui but can just be standalone tbh it has useful parsing logic that can be repurposed into anything really owo
 
 ///STL
-#include <memory>
 #include <variant>
 
 ///PeachCore
@@ -48,10 +47,12 @@ namespace PeachCore::PUI {
         {}
     };
 
+    using ConsoleStringBuffer = RingBuffer<string, STRING_DISPLAY_BUFFER_MAX_SIZE>;
+
     struct PeachConsoleTab
     {
         string Name;
-        RingBuffer<string, STRING_DISPLAY_BUFFER_MAX_SIZE> pm_StringDisplayBuffer;
+        unique_ptr<ConsoleStringBuffer> StringDisplayBuffer = make_unique<ConsoleStringBuffer>();
     };
 
     //////////////////////////////////////////////
@@ -64,8 +65,7 @@ namespace PeachCore::PUI {
         bool pm_IsScrollToBottom{ false }; //scroll to bottom whenever new log appears or command is input
         bool pm_ShouldEchoCommand{ true }; //echos command input when true uwu
 
-        unordered_map<string, Logger> pm_Loggers;
-
+        unordered_map<string, unique_ptr<Logger>> pm_Loggers;
         unordered_map<string, PeachConsoleCommand> pm_CommandList;
 
         PeachConsoleTab pm_MainConsoleScreen;

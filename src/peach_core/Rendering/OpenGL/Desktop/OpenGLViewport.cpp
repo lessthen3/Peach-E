@@ -12,8 +12,6 @@
 
 #include "OpenGLViewport.h"
 
-#include <fmt/format.h>
-
 namespace PeachCore::OpenGL {
 
     static const vector<float> VERTICES =
@@ -48,34 +46,41 @@ namespace PeachCore::OpenGL {
         // Get Reference to Current Renderer
         ////////////////////////////////////////////////
 
+        if(not fp_RenderingLogger)
+        {
+            PEACH_PRINT_ERROR("Passed nullptr ref to logger into OpenGL::Viewport::SetupViewport()");
+            return false;
+        }
+
+        rendering_logger = fp_RenderingLogger;
+
         if (not fp_Renderer)
         {
-            //handle error here
+            rendering_logger->Error(fmt::format("Passed nullptr reference to OpenGL::Renderer, setup was not successful owo"), "OpenGL::Viewport");
             return false;
         }
 
         pm_Render = fp_Renderer;
-        rendering_logger = fp_RenderingLogger;
 
         ////////////////////////////////////////////////
         // Viewport Shader UwU
         ////////////////////////////////////////////////
 
-        if (not pm_ViewportShader)
+        if (not fp_ViewportShader)
         {
             rendering_logger->Error("Passed nullptr viewport shader", "OpenGL::Viewport");
             return false;
         }
 
         pm_ViewportShader = std::move(fp_ViewportShader);
-        PRINT(fmt::format("The program ID for the Viewport Shader is: {}", pm_ViewportShader->GetProgramID()), Colours::Magenta);
+        PEACH_PRINT_FMT(PEACH_COL_MAGENTA, "The program ID for the Viewport Shader is: {}", pm_ViewportShader->GetProgramID());
 
         ////////////////////////////////////////////////
         // Generate Buffers
         ////////////////////////////////////////////////
 
         pm_VAO = pm_Render->Generate2DBuffers(VERTICES, INDICES);
-        PRINT(fmt::format("The VAO ID for the Viewport Shader is: {}", pm_VAO), Colours::Magenta);
+        PEACH_PRINT_FMT(PEACH_COL_MAGENTA, "The VAO ID for the Viewport Shader is: {}", pm_VAO);
 
         ////////////////////////////////////////////////
         // Create Render Texture
@@ -83,7 +88,7 @@ namespace PeachCore::OpenGL {
 
         if (not CreateRenderTexture(pm_CurrentViewportWidth, pm_CurrentViewportHeight))
         {
-            PRINT_ERROR("Was not able to create render texture");
+            PEACH_PRINT_ERROR("Was not able to create render texture");
             return false;
         }
 
@@ -97,6 +102,9 @@ namespace PeachCore::OpenGL {
             const unsigned int fp_Height
         )
     {
+        pm_CurrentViewportWidth = fp_Width;
+        pm_CurrentViewportHeight = fp_Height;
+
         glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
 
         ////////////////////////////////////////////////
@@ -160,9 +168,12 @@ namespace PeachCore::OpenGL {
     void
         Viewport::RenderViewport
         (
-            const vec2s fp_Position
+            const int32_t fp_PosX,
+            const int32_t fp_PosY
         )
     {
+        // static_assert(std::same_as<T, int32_t>, "Viewport::RenderViewport only accepts signed 32 bit integers for viewport position owo!");
+
         glBindFramebuffer(GL_FRAMEBUFFER, pm_FrameBuffer);
 
         glClearColor(1.0f, 0.3f, 0.3f, 1.0f);  // Red background
@@ -173,7 +184,7 @@ namespace PeachCore::OpenGL {
         //glEnable(GL_SCISSOR_TEST);
         //glScissor(0, 0, fp_Width, fp_Height); // Set this to the area you want to clear
 
-        glViewport(fp_Position.x, fp_Position.y, pm_CurrentViewportWidth, pm_CurrentViewportHeight);
+        glViewport(fp_PosX, fp_PosY, pm_CurrentViewportWidth, pm_CurrentViewportHeight);
 
         //pm_Render->DrawShapePrimitive(*pm_ViewportShader, pm_VAO);
         //glDisable(GL_SCISSOR_TEST);

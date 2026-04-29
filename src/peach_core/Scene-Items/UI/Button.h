@@ -38,7 +38,8 @@ namespace PeachCore::PUI {
             ShapePrimitive fp_Shape = RectShape{}  // pass any shape directly
         )
             : 
-            Node(fp_Index, fp_Generation, fp_Flags, NodeType::Button)
+            Node(fp_Index, fp_Generation, fp_Flags, NodeType::Button),
+            m_Shape(fp_Shape)
         {}
 
         // Hit test — just thread through to the free function.

@@ -243,7 +243,7 @@ namespace PeachEditor::ResourceManagement{
         //always check for nullptrs kids >O<
         if (not logger)
         {
-            PRINT_ERROR("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during WriteSPIRVToFile()");
+            PEACH_PRINT_ERROR("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during WriteSPIRVToFile()");
             return false;
         }
         // Ensure directory exists
@@ -294,7 +294,7 @@ namespace PeachEditor::ResourceManagement{
         //check for nullptr for logger ref
         if (not logger)
         {
-            PRINT_ERROR("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during LoadRawShaderSource()");
+            PEACH_PRINT_ERROR("ShaderCompilerUtils Error: Tried to pass nullptr reference to logger during LoadRawShaderSource()");
             return false;
         }
         //more nullptr checking
@@ -395,7 +395,7 @@ namespace PeachEditor::ResourceManagement{
     {
         if (not logger)
         {
-            PRINT_ERROR("EncodeTexture: nullptr logger passed, bailing out >O<");
+            PEACH_PRINT_ERROR("EncodeTexture: nullptr logger passed, bailing out >O<");
             return false;
         }
         else if (fp_TextureData.PixelData.empty())

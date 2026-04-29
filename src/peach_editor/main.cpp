@@ -9,6 +9,9 @@
  *      Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
 #include "Managers/PeachEditorManager.h"
+#include "Managers/ProjectManager.h"
+
+#include "Utils/PeachPanic.h"
 
 //#include <Jolt/Jolt.h>
 //#include <Jolt/RegisterTypes.h>
@@ -36,8 +39,10 @@ static inline constexpr void
 // MAIN FUNCTION BABY
 //////////////////////////////////////////////
 int 
-    main(int fp_ArgCount, const char* fp_ArgVector[])
+    main(int, const char* fp_ArgVector[])
 {
+    PEACH_PANIC_IF(false, "This is a test for panic owo");
+
     // // freetype smoke test
     // {
     //     FT_Library f_FtLibrary;
@@ -45,11 +50,11 @@ int
 
     //     if (f_FtError)
     //     {
-    //         PeachCore::PRINT_ERROR("FreeType init FAILED");
+    //        PEACH_PRINT_ERROR("FreeType init FAILED");
     //     }
     //     else
     //     {
-    //         PeachCore::Print("FreeType init OK", PeachCore::Colours::BrightGreen);
+    //         PEACH_PRINT("FreeType init OK", PEACH_COL_BRIGHT_GREEN);
     //         FT_Done_FreeType(f_FtLibrary);
     //     }
     // }
@@ -59,7 +64,7 @@ int
     //     msdfgen::Shape f_Shape;
     //     msdfgen::Contour& f_Contour = f_Shape.addContour();
     //     f_Contour.addEdge(msdfgen::EdgeHolder(msdfgen::Point2(0, 0), msdfgen::Point2(1, 0)));
-    //     PeachCore::Print("msdfgen-core OK", PeachCore::Colours::BrightGreen);
+    //     PEACH_PRINT("msdfgen-core OK", PEACH_COL_BRIGHT_GREEN);
     // }
 
     // // msdfgen-ext smoke test
@@ -68,11 +73,11 @@ int
 
     //     if (not f_Ft)
     //     {
-    //         PeachCore::PRINT_ERROR("msdfgen-ext FreeType init FAILED");
+    //         PEACH_PRINT_ERROR("msdfgen-ext FreeType init FAILED");
     //     }
     //     else
     //     {
-    //         PeachCore::Print("msdfgen-ext init OK", PeachCore::Colours::BrightGreen);
+    //         PEACH_PRINT("msdfgen-ext init OK", PEACH_COL_BRIGHT_GREEN);
     //         msdfgen::deinitializeFreetype(f_Ft);
     //     }
     // }
@@ -81,7 +86,7 @@ int
     //    JPH::RegisterDefaultAllocator();
     //    JPH::Factory::sInstance = new JPH::Factory();
     //    JPH::RegisterTypes();
-    //    PeachCore::Print("Jolt init OK", PeachCore::Colours::BrightGreen);
+    //    PEACH_PRINT("Jolt init OK", PEACH_COL_BRIGHT_GREEN);
     //    JPH::UnregisterTypes();
     //    delete JPH::Factory::sInstance;
     //    JPH::Factory::sInstance = nullptr;
@@ -91,11 +96,11 @@ int
     //{
     //    b2WorldDef f_WorldDef = b2DefaultWorldDef();
     //    b2WorldId f_WorldId = b2CreateWorld(&f_WorldDef);
-    //    PeachCore::Print("box2d init OK", PeachCore::Colours::BrightGreen);
+    //    PEACH_PRINT("box2d init OK", PEACH_COL_BRIGHT_GREEN);
     //    b2DestroyWorld(f_WorldId);
     //}
 
-    PRINT(fp_ArgVector[0], PeachCore::Colours::BrightMagenta); //COOL AF
+    PEACH_PRINT(fp_ArgVector[0], PEACH_COL_BRIGHT_MAGENTA); //COOL AF
 
     //WARNING: WE ONLY USE THIS FOR DEVELOPMENT, FOR DEPLOYMENT WE NEED THIS DIRECTORY TO BE THE BASE DIR OF THE EXECUTABLE
     // Get the full path of the executable
@@ -110,7 +115,7 @@ int
 
     if (mf_TopLevelDir.empty())
     {
-        PRINT("Failed to find the top-level directory 'Peach-E'!", PeachCore::Colours::Magenta);
+        PEACH_PRINT("Failed to find the top-level directory 'Peach-E'!", PEACH_COL_MAGENTA);
         return EXIT_FAILURE;
     }
 
@@ -132,7 +137,7 @@ int
 
         if (not peach_editor->InitializePeachEditor(mf_PeachERootPath))
         {
-            PRINT_ERROR("Failed to initialize Peach Editor properly uwu");
+            PEACH_PRINT_ERROR("Failed to initialize Peach Editor properly uwu");
             return EXIT_FAILURE;
         }
 
@@ -142,7 +147,7 @@ int
     }
     catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
     {
-        PRINT_ERROR(fmt::format("Unhandled exception: {}", Exception.what()));
+        PEACH_PRINT_ERROR_FMT("Unhandled exception: {}", Exception.what());
         return EXIT_FAILURE;
     }
 }

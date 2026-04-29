@@ -14,14 +14,11 @@
 
 ///PeachCore
 #include "PeachNode.h"
-#include "Utils/Serializer.h"
-#include "Utils/ChunkedPool.h"
-
-#include "UI/PeachConsole.h"
+#include "Utils/Logger.h"
 
 ///STL
 #include <queue>
-#include <variant>
+#include <unordered_map>
 
 /// Future STL?
 #include <plf_colony/plf_colony.h>
@@ -61,17 +58,17 @@ namespace PeachCore {
         ~SceneTree() = default;
 
     private:
-        string pm_SceneName; // >w< rawr
+        std::string pm_SceneName; // >w< rawr
         bool pm_IsPaused = false; //stops all PeachNodes that are pausable
 
         SceneNodeStorage pm_SceneNodes;
 
         //idk for hash collisions we need a system of adding numbers like godot seems like the easiest thing to do owo
-        unordered_map<string, PEACH_NodeID> pm_StringToNodeID; //used for when node names are changed by user, to help between the engine ID tracking and the user identifying the node
+        std::unordered_map<std::string, PEACH_NodeID> pm_StringToNodeID; //used for when node names are changed by user, to help between the engine ID tracking and the user identifying the node
 
-        queue<PEACH_NodeID> pm_PeachNodesQueuedForRemoval; //this holds the lower 56 bits only since the index is all we care ab in the vector uwu
+        std::queue<PEACH_NodeID> pm_PeachNodesQueuedForRemoval; //this holds the lower 56 bits only since the index is all we care ab in the vector uwu
 
-        shared_ptr<Logger> scene_logger = nullptr;
+        std::shared_ptr<Logger> scene_logger = nullptr;
 
         // ObjectID : SceneTreeItem : Associated Update Package, used for updating all relevant data at the same time
         //map<string, PeachNode, UpdateActiveDrawableData> m_MapOfAllCurrentlyActivePeachNodes;
@@ -129,6 +126,8 @@ namespace PeachCore {
         [[nodiscard]] PEACH_STATUS_CODE
             QueueNodeForRemoval(const PEACH_NodeID fp_NodeID)
         {
+            PEACH_TO_DO_UNUSED(fp_NodeID);
+
             //if (fp_NodeID.Index >= pm_SceneNodes[fp_NodeID.Type]) //check for bounds since the user passes this
             //{
             //    scene_logger->Error(fmt::format("Attempted to remove a peach node with invalid ID: {}, Node ID is out of bounds oof", fp_NodeID), "SceneTree"); //print node id for identification however the index bits are the relevant part aka the high 56 bits uwu
@@ -153,23 +152,25 @@ namespace PeachCore {
             return PEACH_OK;
         }
 
-        [[nodiscard]] PEACH_STATUS_CODE
-            ReparentPeachNode //returns true if operation was successful, returns false otherwise
-            (
-                const PEACH_NodeID fp_OriginalParent,
-                const PEACH_NodeID fp_NewParent,
-                const PEACH_NodeID fp_ChildNode
-            )
-        {
-            //uint64_t 
+        // [[nodiscard]] PEACH_STATUS_CODE
+        //     ReparentPeachNode //returns true if operation was successful, returns false otherwise
+        //     (
+        //         const PEACH_NodeID fp_OriginalParent,
+        //         const PEACH_NodeID fp_NewParent,
+        //         const PEACH_NodeID fp_ChildNode
+        //     )
+        // {
+        //     //uint64_t 
 
-            return PEACH_OK;
-        }
+        //     return PEACH_OK;
+        // }
 
         PEACH_NodeID
             DuplicateNode(const PEACH_NodeID fp_DesiredNode)
         {
+            PEACH_TO_DO_UNUSED(fp_DesiredNode);
 
+            return PEACH_NODE_NULL_ID;
         }
 
         PEACH_STATUS_CODE
@@ -184,20 +185,21 @@ namespace PeachCore {
         PEACH_STATUS_CODE
             IsNodeInTree(PEACH_NodeID fp_DesiredNode)
         {
+            PEACH_TO_DO_UNUSED(fp_DesiredNode);
 
             return PEACH_OK;
         }
 
-        bool
-            RenameNode 
-            (
-                const PEACH_NodeID fp_DesiredNode, 
-                const string& fp_NodeName
-            )
-        {
+        // bool
+        //     RenameNode 
+        //     (
+        //         const PEACH_NodeID fp_DesiredNode, 
+        //         const string& fp_NodeName
+        //     )
+        // {
 
-            return true;
-        }
+        //     return true;
+        // }
 
         void 
             Pause()
@@ -223,13 +225,13 @@ namespace PeachCore {
         void
             CleanSceneTree()
         {
-            while (not pm_PeachNodesQueuedForRemoval.empty())
-            {
-                PEACH_NodeID f_NodeID = pm_PeachNodesQueuedForRemoval.front(); //Only index bits are pushed into the removal queue uwu
-                pm_PeachNodesQueuedForRemoval.pop();
+            // while (not pm_PeachNodesQueuedForRemoval.empty())
+            // {
+            //     PEACH_NodeID f_NodeID = pm_PeachNodesQueuedForRemoval.front(); //Only index bits are pushed into the removal queue uwu
+            //     pm_PeachNodesQueuedForRemoval.pop();
 
-                //RemoveEntireTree(std::move(pm_PeachNodes[f_NodeID]));
-            }
+            //     //RemoveEntireTree(std::move(pm_PeachNodes[f_NodeID]));
+            // }
         }
 
         //[[nodiscard]] plf::colony<RenderNode2D>::iterator
@@ -265,6 +267,7 @@ namespace PeachCore {
 
             for (const PEACH_NodeID lv_ChildNodeID : fp_ParentNode->GetChildren()) //dont need to perform bounds checks since the nodeid can only be added if it satisfies the vector bounds at creation uwu
             {
+                PEACH_TO_DO_UNUSED(lv_ChildNodeID);
                 //RemoveEntireTree(std::move(pm_PeachNodes[GetNodeIndex(lv_ChildNodeID)]));//needa get index bits again since the child nodes are full ID's and not the lower 56 bits uwu
             }
 

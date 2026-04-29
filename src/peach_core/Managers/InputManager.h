@@ -195,9 +195,9 @@ namespace PeachCore {
                 KeyboardEvent.WasKeyPressed.fill({ false, false });
                 KeyboardEvent.WasKeyReleased.fill({ false, false });
             }
-            catch (exception fp_Exception)
+            catch (const exception& fp_Exception)
             {
-                logger->Error("failed to fill array with fresh values for keyboard events", "InputManager::InputSnapshot::Clear");
+                logger->Error(fmt::format("failed to fill array with fresh values for keyboard events, exception: {}", fp_Exception.what()), "InputManager::InputSnapshot::Clear");
             }
 
         }

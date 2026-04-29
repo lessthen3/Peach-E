@@ -25,7 +25,7 @@ namespace PeachCore::OpenGL {
             CleanUp();
         }
 
-        PRINT(fmt::format("Destroyed program ID: {} for shader program named: {} ", pm_ProgramID, pm_ProgramName), Colours::BrightMagenta);
+        PEACH_PRINT_FMT(PEACH_COL_BRIGHT_MAGENTA, "Destroyed program ID: {} for shader program named: {} ", pm_ProgramID, pm_ProgramName);
     }
 
 
@@ -105,16 +105,16 @@ namespace PeachCore::OpenGL {
     // Texture Uniform Setter
     //////////////////////////////////////////////
 
-    void
-        ShaderProgram::SetTexture
-        (
-            const string& fp_UniformName,
-            int fp_TextureID,
-            int fp_TextureUnit
-        )
-    {
+    // void
+    //     ShaderProgram::SetTexture
+    //     (
+    //         const string& fp_UniformName,
+    //         int fp_TextureID,
+    //         int fp_TextureUnit
+    //     )
+    // {
 
-    }
+    // }
 
     //////////////////////////////////////////////
     // Shader Linker 

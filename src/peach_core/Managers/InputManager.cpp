@@ -29,7 +29,7 @@ namespace PeachCore {
 
         if (not input_logger)
         {
-            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: InputManager failed to initialize the input_logger >O<");
+            PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: InputManager failed to initialize the input_logger >O<");
             return false;
         }
 
@@ -93,6 +93,8 @@ namespace PeachCore {
             case DeviceType::Stylus:
                 //placeholder
                 break;
+            default:
+                break;
             }
         }
 
@@ -150,6 +152,8 @@ namespace PeachCore {
                     return true;
                 }
                 break;
+            default:
+                break;
             }
         }
 
@@ -180,11 +184,11 @@ namespace PeachCore {
             //////////////////// Mouse Input Handling ////////////////////
 
             case SDL_EVENT_MOUSE_MOTION:
-                pm_CurrentFrameInput.MouseEvent.Delta = { wv_Event.motion.xrel, wv_Event.motion.yrel };
-                pm_CurrentFrameInput.MouseEvent.Position = { wv_Event.motion.x, wv_Event.motion.y };
+                pm_CurrentFrameInput.MouseEvent.Delta = {{wv_Event.motion.xrel, wv_Event.motion.yrel}};
+                pm_CurrentFrameInput.MouseEvent.Position = {{wv_Event.motion.x, wv_Event.motion.y}};
                 break;
             case SDL_EVENT_MOUSE_WHEEL:
-                pm_CurrentFrameInput.MouseEvent.Scroll = { wv_Event.wheel.x, wv_Event.wheel.y };
+                pm_CurrentFrameInput.MouseEvent.Scroll = {{wv_Event.wheel.x, wv_Event.wheel.y}};
                 break;
             case SDL_EVENT_MOUSE_BUTTON_DOWN:
                 pm_CurrentFrameInput.MouseEvent.MouseButtonsDown[wv_Event.button.button] = { true, false };
@@ -225,7 +229,7 @@ namespace PeachCore {
 
                 if (pm_ConnectedStyluses.contains(f_PenID))
                 {
-                    pm_ConnectedStyluses[f_PenID].Input.Position = { wv_Event.pmotion.x, wv_Event.pmotion.y };
+                    pm_ConnectedStyluses[f_PenID].Input.Position = {{wv_Event.pmotion.x, wv_Event.pmotion.y}};
                 }
 
                 break;
@@ -258,6 +262,11 @@ namespace PeachCore {
                         break;
 
                     case SDL_PEN_AXIS_SLIDER:
+                        break;
+                    case SDL_PEN_AXIS_COUNT:
+                        break;
+
+                    default: //XXX: dont really need default here since we handle all cases but just feels right owo
                         break;
                     }
                 }
@@ -354,7 +363,7 @@ namespace PeachCore {
                     float x = SDL_GetGamepadAxis(it->second.ID, SDL_GAMEPAD_AXIS_LEFTX) / JOYSTICK_MAX_STICK_VALUE;
                     float y = SDL_GetGamepadAxis(it->second.ID, SDL_GAMEPAD_AXIS_LEFTY) / JOYSTICK_MAX_STICK_VALUE;
 
-                    it->second.Input.StickPosition = { x, y };
+                    it->second.Input.StickPosition = {{x, y}};
                 }
 
                 break;

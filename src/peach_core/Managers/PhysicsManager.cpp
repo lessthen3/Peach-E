@@ -19,7 +19,7 @@ namespace PeachCore {
 
         if (not physics_logger)
         {
-            PRINT_ERROR("PhysicsManager failed to initialize the physics_thread logger >w<");
+            PEACH_PRINT_ERROR("PhysicsManager failed to initialize the physics_thread logger >w<");
             return false;
         }
 
@@ -43,6 +43,9 @@ namespace PeachCore {
             return false;
         }
 
+        PEACH_TO_DO_UNUSED(fp_GravityX);
+        PEACH_TO_DO_UNUSED(fp_GravityY);
+
         pm_IsInitialized = true;
 
         return true;
@@ -59,7 +62,7 @@ namespace PeachCore {
     {
         if (not InitializePhysicsEngine2D(fp_LogOutputDirectory, fp_GravityX, fp_GravityY))
         {
-            PRINT_ERROR("Failed to Initialize Physics Thread!");
+            PEACH_PRINT_ERROR("Failed to Initialize Physics Thread!");
             return;
         }
 
@@ -106,7 +109,7 @@ namespace PeachCore {
     {
         if (not InitializePhysicsEngine3D(fp_LogOutputDirectory))
         {
-            PRINT_ERROR("Failed to Initialize Physics Thread!");
+            PEACH_PRINT_ERROR("Failed to Initialize Physics Thread!");
             return;
         }
 
@@ -133,6 +136,9 @@ namespace PeachCore {
             size_t fp_Steps
         )
     {
+        PEACH_TO_DO_UNUSED(fp_Dt);
+        PEACH_TO_DO_UNUSED(fp_Steps);
+
         pm_PhysicsSemaphore.release();
     }
 
@@ -148,7 +154,7 @@ namespace PeachCore {
     {
         if (not logger)
         {
-            PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
+            PEACH_PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
             return nullptr;
         }
         else if (not pm_IsInitialized)
@@ -158,7 +164,7 @@ namespace PeachCore {
         }
         else if (pm_PhysicsCommandQueue.use_count() >= 2)
         {
-            logger->Warning("AudioManager has already issued a reference to the audio command queue, fuck off", "AudioManager");
+            logger->Warning("AudioManager has already issued a reference to the audio command queue, fuck off OwO", "AudioManager");
             return nullptr;
         }
 

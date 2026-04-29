@@ -10,11 +10,14 @@
 ********************************************************************/
 #include "AudioStreamPlayer.h"
 
+#include "Utils/PeachPrint.h"
+
 namespace PeachCore
 {
     void
-        AudioStreamPlayer::PlaySoundOnce(const string& fp_SoundFile)
+        AudioStreamPlayer::PlaySoundOnce(const std::string& fp_SoundFile)
     {
+        PEACH_TO_DO_UNUSED(fp_SoundFile);
         //unique_lock<shared_mutex> lock(mutex_);
         //ALuint f_Buffer, f_Source;
         //alGenBuffers(1, &f_Buffer);
@@ -34,7 +37,7 @@ namespace PeachCore
         //pm_Sources.push_back(f_Source);
     }
 
-    string
+    std::string
         AudioStreamPlayer::GetCurrentTrack()
         const
     {
@@ -44,8 +47,10 @@ namespace PeachCore
     }
 
     void
-        AudioStreamPlayer::SetCurrentTrack(const string& track) //this doesnt need a lock since the command queue tells audiomanager to do this
+        AudioStreamPlayer::SetCurrentTrack(const std::string& fp_TrackName) //this doesnt need a lock since the command queue tells audiomanager to do this
     {
+        PEACH_TO_DO_UNUSED(fp_TrackName);
+
         //pm_CurrentTrack = track;
     }
 

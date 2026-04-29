@@ -26,6 +26,8 @@ using namespace std; //can do this here since it's not included anywhere uwu
 PEACH_API PEACH_STATUS_CODE
     PEACH_LogInfo(const char* fp_LogMessage, const char* fp_Sender)
 {
+    PEACH_TO_DO_UNUSED(fp_LogMessage);
+    PEACH_TO_DO_UNUSED(fp_Sender);
     //PeachCore::GameManager::get_single().m_UserLogger->Info(fp_LogMessage, fp_Sender);
 
     return PEACH_OK;
@@ -48,6 +50,7 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE
     PEACH_QueueRemovalByID(const PEACH_NodeID fp_PeachNodeID)
 {
+    PEACH_TO_DO_UNUSED(fp_PeachNodeID);
     //return PeachCore::GameManager::get_single().GetCurrentScene()->QueueNodeForRemoval(fp_PeachNodeID);
 
     return PEACH_OK;
@@ -62,7 +65,8 @@ PEACH_API PEACH_STATUS_CODE
         return PEACH_ERROR_NULLPTR_REF_PASSED;
     }
 
-    fp_DuplicatedNodeContainer->Index = 69; //OwO
+    PEACH_TO_DO_UNUSED(fp_OriginalNode);
+    PEACH_TO_DO_UNUSED(fp_DuplicatedNodeContainer);
 
     return PEACH_OK;
 }
@@ -70,6 +74,9 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE 
     PEACH_ChangeNodeName(const PEACH_NodeID fp_NodeID, const char* fp_NewName)
 {
+
+    PEACH_TO_DO_UNUSED(fp_NodeID);
+    PEACH_TO_DO_UNUSED(fp_NewName);
 
     return PEACH_OK;
 }
@@ -80,6 +87,9 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE 
     PEACH_MoveNode2D(const PEACH_NodeID fp_NodeID, const float fp_Dx, const float fp_Dy)
 {
+    PEACH_TO_DO_UNUSED(fp_NodeID);
+    PEACH_TO_DO_UNUSED(fp_Dx);
+    PEACH_TO_DO_UNUSED(fp_Dy);
 
     return PEACH_OK;
 }
@@ -87,6 +97,8 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE 
     PEACH_RotateNode2D(const PEACH_NodeID fp_NodeID, const float fp_Rotation)
 {
+    PEACH_TO_DO_UNUSED(fp_NodeID);
+    PEACH_TO_DO_UNUSED(fp_Rotation);
 
     return PEACH_OK;
 }
@@ -95,12 +107,17 @@ PEACH_API PEACH_STATUS_CODE
     PEACH_ScaleNode2D(const PEACH_NodeID fp_NodeID, const float fp_Scale)
 {
 
+    PEACH_TO_DO_UNUSED(fp_NodeID);
+    PEACH_TO_DO_UNUSED(fp_Scale);
+
     return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
     PEACH_SetNodeVisibility(const PEACH_NodeID fp_NodeID, const bool fp_Visibility)
 {
+    PEACH_TO_DO_UNUSED(fp_NodeID);
+    PEACH_TO_DO_UNUSED(fp_Visibility);
 
     return PEACH_OK;
 }
@@ -110,6 +127,7 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE 
     PEACH_StreamSound(const PEACH_NodeID fp_NodeID)
 {
+    PEACH_TO_DO_UNUSED(fp_NodeID);
 
     return PEACH_OK;
 }
@@ -117,13 +135,14 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE 
     PEACH_PlaySound(const PEACH_NodeID fp_NodeID)
 {
-
+    PEACH_TO_DO_UNUSED(fp_NodeID);
     return PEACH_OK;
 }
 
 PEACH_API PEACH_STATUS_CODE 
     PEACH_SelectAudioOutputDevice(const PEACH_NodeID fp_NodeID)
 {
+    PEACH_TO_DO_UNUSED(fp_NodeID);
 
     return PEACH_OK;
 }
@@ -131,7 +150,7 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE 
     PEACH_SelectAudioInputDevice(const PEACH_NodeID fp_NodeID)
 {
-
+    PEACH_TO_DO_UNUSED(fp_NodeID);
     return PEACH_OK;
 }
 
@@ -168,6 +187,8 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE
     PEACH_GetLastErrorAsString(size_t fp_BufferSize, char* fp_CharBuffer)
 {
+    PEACH_TO_DO_UNUSED(fp_BufferSize);
+    PEACH_TO_DO_UNUSED(fp_CharBuffer);
 
     return PEACH_OK;
 }

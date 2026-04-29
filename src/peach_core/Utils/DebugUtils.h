@@ -16,10 +16,7 @@
 
 //FOR CREATING SANDBOX ENVIRONMENTS AND ISOLATING CERTAIN PARTS OF THE EXECUTION
 
-#include "Logger.h"
 #include <unordered_map>
-#include <map>
-#include <memory>
 #include <utility>
 
 
@@ -51,8 +48,7 @@
 
 #endif
 
-namespace PeachCore {
-namespace DebugUtils{
+namespace PeachCore::DebugUtils {
 
     struct AllocationRecord 
     {
@@ -66,42 +62,42 @@ namespace DebugUtils{
     {
     public:
 
-        template<typename T, typename... Args>
-        unique_ptr<T>
-            CreateAndRegisterUniquePtr(const char* fp_Filename, uint32_t fp_LineNumber, Args&&... args)
-        {
-            size_t f_TypeSize = sizeof(T);
+        // template<typename T, typename... Args>
+        // unique_ptr<T>
+        //     CreateAndRegisterUniquePtr(const char* fp_Filename, uint32_t fp_LineNumber, Args&&... args)
+        // {
+        //     size_t f_TypeSize = sizeof(T);
 
-            //idk do some more stuff idec
-           return make_unique<T>(forward<Args>(args)...);
-        }
+        //     //idk do some more stuff idec
+        //    return make_unique<T>(forward<Args>(args)...);
+        // }
 
-        template<typename T, typename... Args>
-        shared_ptr<T>
-            CreateAndRegisterSharedPtr(const char* fp_Filename, uint32_t fp_LineNumber, Args&&... args)
-        {
-            size_t f_TypeSize = sizeof(T);
+        // template<typename T, typename... Args>
+        // shared_ptr<T>
+        //     CreateAndRegisterSharedPtr(const char* fp_Filename, uint32_t fp_LineNumber, Args&&... args)
+        // {
+        //     size_t f_TypeSize = sizeof(T);
 
-            //idk do some more stuff idec
-            return make_shared<T>(forward<Args>(args)...);
-        }
+        //     //idk do some more stuff idec
+        //     return make_shared<T>(forward<Args>(args)...);
+        // }
 
-        template<typename T, typename... Args>
-        T*
-            CreateAndRegisterRawPtr(const char* fp_Filename, uint32_t fp_LineNumber, Args&&... args)
-        {
-            size_t f_TypeSize = sizeof(T);
+        // template<typename T, typename... Args>
+        // T*
+        //     CreateAndRegisterRawPtr(const char* fp_Filename, uint32_t fp_LineNumber, Args&&... args)
+        // {
+        //     size_t f_TypeSize = sizeof(T);
 
-            //idk do some more stuff idec
-            return new T(forward<Args>(args)...);
-        }
+        //     //idk do some more stuff idec
+        //     return new T(forward<Args>(args)...);
+        // }
 
-        void
-            DeleteAndUnregisterRawPtr(void* ptr)
-        {
-            deregister_allocation(ptr);
-            delete ptr;
-        }
+        // void
+        //     DeleteAndUnregisterRawPtr(void* ptr)
+        // {
+        //     deregister_allocation(ptr);
+        //     delete ptr;
+        // }
 
         void register_allocation(void* ptr, size_t size, const char* file, int line) 
         {
@@ -113,13 +109,13 @@ namespace DebugUtils{
             allocations.erase(ptr);
         }
 
-        void print_leaks() 
-        {
-            for (const auto& [ptr, record] : allocations)
-            {
-                cout << "[LEAK] " << record.size << " bytes at " << record.file << ":" << record.line << "\n";
-            }
-        }
+        // void print_leaks() 
+        // {
+        //     for (const auto& [ptr, record] : allocations)
+        //     {
+        //         cout << "[LEAK] " << record.size << " bytes at " << record.file << ":" << record.line << "\n";
+        //     }
+        // }
 
         size_t
             GetTotalSizeOfAllocationTable()
@@ -136,7 +132,7 @@ namespace DebugUtils{
         }
 
     private:
-        unordered_map<void*, AllocationRecord> allocations;
+        std::unordered_map<void*, AllocationRecord> allocations;
     };
 
     // One table per thread, no locks required
@@ -156,5 +152,4 @@ namespace DebugUtils{
         ::operator delete(ptr);
     }
 
-}//namespace DebugUtils
-}//namespace PeachCore
+}//namespace PeachCore::DebugUtils

@@ -12,41 +12,19 @@
 
 #define PEACH_LOGGER_DEFAULT_FLAGS PEACH_ALL_LOGS | PEACH_FLUSH_ERROR | PEACH_FLUSH_FATAL
 
-#ifdef PEACH_DEBUG //TEMPORARY JUST HERE FOR NOW TESTING THE IDEA, SINCE DEBUG DOESNT ALWAYS MEAN USING TERMINAL
-    #define PEACH_USING_OS_TERMINAL
-#endif
-
-#define PEACH_FILENAME ::PeachCore::PeachExtractFilename(__FILE__)
-
-#define PEACH_ASSERT(fp_Condition, fp_Message)                                              \
-    do                                                                                      \
-    {                                                                                       \
-        if (!(fp_Condition))                                                                \
-        {                                                                                   \
-            std::fprintf(                                                                   \
-                stderr,                                                                     \
-                "[PEACH_ASSERT FAILED] %s\n  Condition : %s\n  Location  : %s:%d\n",       \
-                (fp_Message), #fp_Condition, PEACH_FILENAME, __LINE__                      \
-            );                                                                              \
-            std::exit(-69420);                                                                   \
-        }                                                                                   \
-    } while (false)
-
 /// STL
 #include <string>
-#include <iostream>
-#include <fstream>
-
-#include <unordered_map>
-#include <memory>
-
 #include <thread>
-#include <optional>
 #include <source_location>
+#include <vector>
 
 ///PeachCore
 #include "RingBuffer.h"
 #include "peach_api/LoggerFlags.h"
+
+///fmt
+#include "PeachPrint.h"
+#include "PeachForceInline.h"
 
 
 constexpr int FATAL_SEGMENTATION_FAULT = -6969;
@@ -64,142 +42,10 @@ namespace PeachCore {
 
 #if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
 
-    bool
+    [[nodiscard]] bool
         EnableWindowsConsoleColours();
 
 #endif
-
- #ifdef PEACH_USING_OS_TERMINAL
-
-    enum class Colours : int
-    {
-        Black,
-        Red,
-        Green,
-        Yellow,
-        Blue,
-        Magenta,
-        Cyan,
-        White,
-
-        BrightBlack,
-        BrightRed,
-        BrightGreen,
-        BrightYellow,
-        BrightBlue,
-        BrightMagenta,
-        BrightCyan,
-        BrightWhite
-    };
-
-    [[nodiscard]] constexpr string
-        CreateColouredText
-        (
-            const string& fp_SampleText,
-            const Colours fp_DesiredColour
-        )
-    {
-        switch (fp_DesiredColour)
-        {
-            //////////////////// Regular Colours ////////////////////
-
-        case Colours::Black: return "\x1B[30m" + fp_SampleText + "\033[0m";
-
-        case Colours::Red: return "\x1B[31m" + fp_SampleText + "\033[0m";
-
-        case Colours::Green: return "\x1B[32m" + fp_SampleText + "\033[0m";
-
-        case Colours::Yellow: return "\x1B[33m" + fp_SampleText + "\033[0m";
-
-        case Colours::Blue: return "\x1B[34m" + fp_SampleText + "\033[0m";
-
-        case Colours::Magenta: return "\x1B[35m" + fp_SampleText + "\033[0m";
-
-        case Colours::Cyan: return "\x1B[36m" + fp_SampleText + "\033[0m";
-
-        case Colours::White: return "\x1B[37m" + fp_SampleText + "\033[0m";
-
-
-            //////////////////// Bright Colours ////////////////////
-
-        case Colours::BrightBlack: return "\x1B[90m" + fp_SampleText + "\033[0m";
-
-        case Colours::BrightRed: return "\x1B[91m" + fp_SampleText + "\033[0m";
-
-        case Colours::BrightGreen: return "\x1B[92m" + fp_SampleText + "\033[0m";
-
-        case Colours::BrightYellow: return "\x1B[93m" + fp_SampleText + "\033[0m";
-
-        case Colours::BrightBlue: return "\x1B[94m" + fp_SampleText + "\033[0m";
-
-        case Colours::BrightMagenta: return "\x1B[95m" + fp_SampleText + "\033[0m";
-
-        case Colours::BrightCyan: return "\x1B[96m" + fp_SampleText + "\033[0m";
-
-        case Colours::BrightWhite: return "\x1B[97m" + fp_SampleText + "\033[0m";
-
-            //////////////////// Just Return the Input Text Unaltered Otherwise ////////////////////
-
-        default: return fp_SampleText;
-        }
-    }
-
-
-    #define PRINT(fp_Message, fp_DesiredColour) std::cout << ::PeachCore::CreateColouredText(fp_Message, fp_DesiredColour) << "\n"
-    #define PRINT_ERROR(fp_Message) std::cerr << ::PeachCore::CreateColouredText(fp_Message, ::PeachCore::Colours::Red) << "\n"
-
-#else
-
-    #define PRINT(fp_Message, fp_DesiredColour)
-    #define PRINT_ERROR(fp_Message)
-
- #endif
-
-    constexpr const char*
-        PeachExtractFilename(const char* fp_Path)
-    {
-        const char* f_LastSlash = fp_Path;
-
-        for (const char* lv_Cur = fp_Path; *lv_Cur != '\0'; ++lv_Cur)
-        {
-            if (*lv_Cur == '/' || *lv_Cur == '\\')
-            {
-                f_LastSlash = lv_Cur + 1;
-            }
-        }
-
-        return f_LastSlash;
-    }
-
-    constexpr std::string_view
-        PeachExtractSignature(const char* fp_FunctionSignature)
-    {
-        std::string_view f_StringView(fp_FunctionSignature);
-
-        // 1. Find the start of the arguments '('
-        size_t f_EndIndex = f_StringView.find('(');
-
-        if (f_EndIndex == std::string_view::npos)
-        {
-            return f_StringView;
-        }
-
-        // 2. Look backwards from '(' to find the first space (skipping return type)
-        // We want the part between the last space and the '('
-        size_t f_StartIndex = 0;
-
-        for (size_t lv_Index = f_EndIndex; lv_Index > 0; --lv_Index)
-        {
-            if (f_StringView[lv_Index - 1] == ' ')
-            {
-                f_StartIndex = lv_Index;
-                break;
-            }
-        }
-
-        // 3. Slice it: "void __cdecl Namespace::Class::Func(int)" -> "Namespace::Class::Func"
-        return f_StringView.substr(f_StartIndex, f_EndIndex - f_StartIndex);
-    }
 
     //////////////////////////////////////////////
     // LogMessage Struct
@@ -224,6 +70,8 @@ namespace PeachCore {
     // Logger Class
     //////////////////////////////////////////////
 
+    struct LogManager; //just trust he's gonna come ma boy w a keg
+
     class Logger
     {
         //////////////////////////////////////////////
@@ -242,6 +90,8 @@ namespace PeachCore {
         */
         Logger(Logger&&) = default;
 
+        friend LogManager;
+
     public:
         using LogBuffer = RingBuffer<LogMessage, PEACH_LOGGER_MAX_NUMBER_OF_LOGS>;
 
@@ -255,9 +105,8 @@ namespace PeachCore {
         // Protected Class Members
         //////////////////////////////////////////////
     protected:
-        unordered_map<string, ofstream> pm_LogFiles;
-
-        unique_ptr<LogBuffer> pm_SnapshotBuffer = nullptr;
+        array<FILE*, 6> pm_LogFileHandles; //only 6 log levels, one slot per log file owo
+        LogBuffer pm_SnapshotBuffer; //no heap alloc since Logger can only be instantiated on the heap since private ctor and factory functions owo
 
         string pm_LoggerName = "No_Logger_Name";
         string pm_CurrentWorkingDirectory = "nothing";
@@ -276,63 +125,6 @@ namespace PeachCore {
         //////////////////////////////////////////////
     public:
 
-        [[nodiscard]] static optional<Logger>
-            Create
-            (
-                const string& fp_DesiredLoggerName,
-                const PEACH_LOGGER_FLAGS fp_Flags,
-                const string& fp_DesiredOutputDirectory = ""
-            )
-        {
-            Logger f_CreatedLogger;
-
-            if (not f_CreatedLogger.Initialize(fp_DesiredLoggerName, fp_DesiredOutputDirectory, fp_Flags))
-            {
-                PRINT_ERROR("Unable to initialize logger named: " + fp_DesiredLoggerName);
-                return nullopt;
-            }
-
-            return f_CreatedLogger; //NRVO
-        }
-
-        [[nodiscard]] static unique_ptr<Logger>
-            CreateUnique
-            (
-                const string& fp_DesiredLoggerName,
-                const PEACH_LOGGER_FLAGS fp_Flags,
-                const string& fp_DesiredOutputDirectory = ""
-            )
-        {
-            unique_ptr<Logger> f_CreatedLogger(new Logger()); //this is dumb but std doesn't like my private constructor uwu!
-
-            if (not f_CreatedLogger->Initialize(fp_DesiredLoggerName, fp_DesiredOutputDirectory, fp_Flags))
-            {
-                PRINT_ERROR("Unable to initialize logger named: " + fp_DesiredLoggerName);
-                return nullptr;
-            }
-
-            return f_CreatedLogger;
-        }
-
-        [[nodiscard]] static shared_ptr<Logger>
-            CreateShared
-            (
-                const string& fp_DesiredLoggerName,
-                const PEACH_LOGGER_FLAGS fp_Flags,
-                const string& fp_DesiredOutputDirectory = ""
-            )
-        {
-            shared_ptr<Logger> f_CreatedLogger(new Logger()); //this is dumb but std doesn't like my private constructor uwu!
-
-            if (not f_CreatedLogger->Initialize(fp_DesiredLoggerName, fp_DesiredOutputDirectory, fp_Flags))
-            {
-                PRINT_ERROR("Unable to initialize logger named: " + fp_DesiredLoggerName);
-                return nullptr;
-            }
-
-            return f_CreatedLogger;
-        }
-
         [[nodiscard]] bool
             UpdateThreadOwner //the owning thread must update and pass off the logger to be considered valid otherwise it wont uwu
             (
@@ -342,23 +134,11 @@ namespace PeachCore {
         [[nodiscard]] bool
             UpdateActiveMask(const uint32_t fp_NewLogMask);
 
-        const RingBuffer<LogMessage, PEACH_LOGGER_MAX_NUMBER_OF_LOGS>&
+        const LogBuffer&
             GetSnapshotBuffer()
             const noexcept
         {
-            return *pm_SnapshotBuffer;
-        }
-
-
-        //////////////////// Flush All Logs ////////////////////
-
-        [[nodiscard]] bool
-            FlushAllLogs();
-
-        [[nodiscard]] bool
-            ValidateLogMsg(const uint8_t fp_LogLevel)
-        {
-            return (AssertThreadAccess("ValidateLogMsg") and pm_ActiveLogMask & fp_LogLevel); //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
+            return pm_SnapshotBuffer;
         }
 
         //////////////////////////////////////////////////////////// Logging Functions  ////////////////////////////////////////////////////////////
@@ -419,6 +199,12 @@ namespace PeachCore {
                 const string& fp_DesiredOutputDirectory,
                 const PEACH_LOGGER_FLAGS fp_Flags
             );
+
+        [[nodiscard]] PEACH_FORCEINLINE bool
+            ValidateLogMsg(const uint8_t fp_LogLevel)
+        {
+            return (AssertThreadAccess("ValidateLogMsg") and pm_ActiveLogMask & fp_LogLevel); //return early without logging if loglevel isnt active or hasnt been initialized or if accessed from the wrong thread
+        }
 
         [[nodiscard]] bool
             CreateLogFile

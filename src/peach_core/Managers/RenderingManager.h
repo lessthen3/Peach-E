@@ -12,6 +12,7 @@
 
 ///PeachCore
 #include "ResourceManager.h"
+#include "peach_api/StatusCodes.h"
 
 //////// Rendering Backends ////////
 
@@ -37,17 +38,10 @@
 
 //////// Rendering Primitives ////////
 
-#include "../Rendering/PeachMaterial.h"
-#include "../Rendering/PeachTexture.h"
+
 
 //////// Input ////////
 
-#include "InputManager.h"
-
-#include "../Scene-Items/PeachNode.h"
-#include "../Scene-Items/SceneTree.h"
-
-#include "../Scene-Items/UI/PeachConsole.h"
 
 namespace PeachCore {
 
@@ -224,9 +218,6 @@ namespace PeachCore {
                 const uint32_t fp_InitialWindowWidth,
                 const uint32_t fp_InitialWindowHeight
             );
-
-        [[nodiscard]] bool
-            PresentFrameVK();
     public:
 #endif
 
@@ -342,12 +333,12 @@ namespace PeachCore {
 
         }
 
-        inline const vec2s
-            Lerp(const vec2s fp_Start, const vec2s fp_End, const vec2s fp_Rate)
-            const noexcept
-        {
-            return {{0.0f, 0.0f}};
-        }
+        // inline const vec2s
+        //     Lerp(const vec2s fp_Start, const vec2s fp_End, const vec2s fp_Rate)
+        //     const noexcept
+        // {
+        //     return {{0.0f, 0.0f}};
+        // }
 
         [[nodiscard]] bool
             Initialize

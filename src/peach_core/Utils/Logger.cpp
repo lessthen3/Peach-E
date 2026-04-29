@@ -9,23 +9,60 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "Logger.h"
+#include "Managers/LogManager.h"
 
 #include <chrono>
 #include <iomanip>
 #include <sstream>
-#include <fmt/format.h>
 
 #include <filesystem>
 
-namespace PeachCore
-{
-    [[nodiscard]] static string //thank you chat-gpt uwu
+constexpr uint8_t TRACE_LOG_INDEX = 0;
+constexpr uint8_t DEBUG_LOG_INDEX = 1;
+constexpr uint8_t INFO_LOG_INDEX = 2;
+constexpr uint8_t WARNING_LOG_INDEX = 3;
+constexpr uint8_t ERROR_LOG_INDEX = 4;
+constexpr uint8_t FATAL_LOG_INDEX = 5;
+
+//just static functions that the header includes for relevance ig idfk
+namespace PeachCore{
+
+#if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
+#   define NOMINMAX
+#   define WIN32_LEAN_AND_MEAN
+#   include <windows.h>
+
+    bool
+        EnableWindowsConsoleColours()
+    {
+        DWORD f_ConsoleMode;
+        HANDLE f_OutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
+
+        if (GetConsoleMode(f_OutputHandle, &f_ConsoleMode))
+        {
+            SetConsoleMode(f_OutputHandle, f_ConsoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+            return true;
+        }
+        else
+        {
+            PEACH_PRINT_ERROR("Was not able to set console mode to allow windows to display ANSI escape codes");
+            return false;
+        }
+    }
+
+#endif /*defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)*/
+
+}
+
+namespace PeachCore{ //static internaly linked functions owo
+
+    [[nodiscard]] PEACH_FORCEINLINE static string
         GetCurrentTimestamp()
     {
         const auto now = chrono::system_clock::now();
         auto time_t_now = chrono::system_clock::to_time_t(now);
 
-        tm local_time{};
+        tm local_time{}; //what a fucked type name wtf C, the unbridled c programmer urge to name things in the stupidest fucking way lmfao
 
 #if defined(_WIN32) || defined(_WIN64) //needa do this since localtime() isnt threadsafe uwu
         localtime_s(&local_time, &time_t_now);
@@ -44,20 +81,66 @@ namespace PeachCore
         return f_AssembledTimeString.str();
     }
 
-    static constexpr uint8_t
+    [[nodiscard]] PEACH_FORCEINLINE static constexpr uint8_t
         ExtractLevelMask(uint32_t fp_Flags) noexcept
     {
         return static_cast<uint8_t>(fp_Flags & 0xFF);
     }
 
-    static constexpr uint8_t
+    [[nodiscard]] PEACH_FORCEINLINE static constexpr uint8_t
         ExtractFlushMask(uint32_t fp_Flags) noexcept
     {
         return static_cast<uint8_t>((fp_Flags >> 8) & 0xFF);
     }
+
+    [[nodiscard]] PEACH_FORCEINLINE static constexpr const char*
+        PeachExtractFilename(const char* fp_Path)
+    {
+        const char* f_LastSlash = fp_Path;
+
+        for (const char* lv_Cur = fp_Path; *lv_Cur != '\0'; ++lv_Cur)
+        {
+            if (*lv_Cur == '/' || *lv_Cur == '\\')
+            {
+                f_LastSlash = lv_Cur + 1;
+            }
+        }
+
+        return f_LastSlash;
+    }
+
+    [[nodiscard]] PEACH_FORCEINLINE static constexpr std::string_view
+        PeachExtractSignature(const char* fp_FunctionSignature)
+    {
+        std::string_view f_StringView(fp_FunctionSignature);
+
+        // 1. Find the start of the arguments '('
+        size_t f_EndIndex = f_StringView.find('(');
+
+        if (f_EndIndex == std::string_view::npos)
+        {
+            return f_StringView;
+        }
+
+        // 2. Look backwards from '(' to find the first space (skipping return type)
+        // We want the part between the last space and the '('
+        size_t f_StartIndex = 0;
+
+        for (size_t lv_Index = f_EndIndex; lv_Index > 0; --lv_Index)
+        {
+            if (f_StringView[lv_Index - 1] == ' ')
+            {
+                f_StartIndex = lv_Index;
+                break;
+            }
+        }
+
+        // 3. Slice it: "void __cdecl Namespace::Class::Func(int)" -> "Namespace::Class::Func"
+        return f_StringView.substr(f_StartIndex, f_EndIndex - f_StartIndex);
+    }
 }
 
-namespace PeachCore {
+namespace PeachCore{
 
     static constexpr uint8_t PEACH_LOGGER_FLUSH_TRACE_BIT = 1u << 0;
     static constexpr uint8_t PEACH_LOGGER_FLUSH_DEBUG_BIT = 1u << 1;
@@ -87,7 +170,7 @@ namespace PeachCore {
     {
         if (not AssertThreadAccess("UpdateThreadOwner")) //can't log here since it's only triggered by improper thread usage which will trigger asserthreadacess again
         {
-            PRINT_ERROR(fmt::format("Tried to call UpdateThreadOwner from a thread that didn't own logger named: {}", pm_LoggerName));
+            PEACH_PRINT_ERROR_FMT("Tried to call UpdateThreadOwner from a thread that didn't own logger named: {}", pm_LoggerName);
             return false;
         }
 
@@ -114,33 +197,19 @@ namespace PeachCore {
             return false;
         }
 
-        ////////////////////////////////////////////// clear every file //////////////////////////////////////////////
-
-        pm_LogFiles.clear();
-
         ////////////////////////////////////////////// Reset Mask //////////////////////////////////////////////
 
         pm_ActiveLogMask = 0;
 
         ////////////////////////////////////////////// Create Log files based off of Current active mask uwu //////////////////////////////////////////////
 
-        static const unordered_map<uint8_t, const string> f_LogLevels = //this is fine being static since its not mutable so reading from multiple threads is kosher
-        {
-            {PEACH_TRACE_LOG, "trace.log"},
-            {PEACH_DEBUG_LOG, "debug.log"},
-            {PEACH_INFO_LOG, "info.log"},
-            {PEACH_WARNING_LOG, "warning.log"},
-            {PEACH_ERROR_LOG, "error.log"},
-            {PEACH_FATAL_LOG, "fatal.log"}
-        };
-
-        for (const auto& [lv_LogEnum, lv_LogStringName] : f_LogLevels)
+        for (size_t lv_CurrentLogFileIndex = 0; lv_CurrentLogFileIndex < 6; lv_CurrentLogFileIndex++)
         {
             if (fp_NewLogMask & lv_LogEnum)
             {
                 if (not CreateLogFile(pm_CurrentWorkingDirectory, lv_LogStringName))
                 {
-                    PRINT_ERROR("Failed to create log file named: " + lv_LogStringName);
+                    PEACH_PRINT_ERROR_FMT("Failed to create log file named: {}", lv_LogStringName);
                     return false;
                 }
 
@@ -149,29 +218,6 @@ namespace PeachCore {
         }
 
         ////////////////////////////////////////////// Success! //////////////////////////////////////////////
-
-        return true;
-    }
-
-    //////////////////// Flush All Logs ////////////////////
-
-    bool
-        Logger::FlushAllLogs()
-    {
-        if (not AssertThreadAccess("FlushAllLogs"))
-        {
-            return false;
-        }
-
-        for (auto& lv_LogFile : pm_LogFiles)
-        {
-            if (lv_LogFile.second.is_open())
-            {
-                lv_LogFile.second.flush();
-            }
-        }
-
-        pm_LogSizeCounter = 0; //reset since all logs have been flushed
 
         return true;
     }
@@ -197,12 +243,10 @@ namespace PeachCore {
                     fp_Message
                 );
 
-            pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_TRACE_LOG);
+            pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_TRACE_LOG);
 
             if (pm_LogToFile)
             {
-                ofstream& f_LogFile = pm_LogFiles.at("trace.log"); //safe to call at() here since its synced at all times w pm_ActiveMask
-
                 if (f_LogFile.is_open())
                 {
                     f_LogFile << f_LogEntry << "\n";
@@ -218,7 +262,7 @@ namespace PeachCore {
                 }
             }
 
-            PRINT(f_LogEntry, Colours::BrightWhite);
+            PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_WHITE);
         }
     }
 
@@ -241,12 +285,10 @@ namespace PeachCore {
                     fp_Message
                 );
 
-            pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_DEBUG_LOG);
+            pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_DEBUG_LOG);
 
             if (pm_LogToFile)
             {
-                ofstream& f_LogFile = pm_LogFiles.at("debug.log"); // Log to specific log file >W<
-
                 if (f_LogFile.is_open())
                 {
                     f_LogFile << f_LogEntry << "\n";
@@ -262,7 +304,7 @@ namespace PeachCore {
                 }
             }
 
-            PRINT(f_LogEntry, Colours::BrightBlue);
+            PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_BLUE);
         }
     }
 
@@ -285,11 +327,10 @@ namespace PeachCore {
                     fp_Message
                 );
 
-            pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_INFO_LOG);
+            pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_INFO_LOG);
 
             if (pm_LogToFile)
             {
-                ofstream& f_LogFile = pm_LogFiles.at("info.log"); // Log to specific file and all-logs file
 
                 if (f_LogFile.is_open())
                 {
@@ -306,7 +347,7 @@ namespace PeachCore {
                 }
             }
 
-            PRINT(f_LogEntry, Colours::BrightGreen);
+            PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_GREEN);
         }
     }
 
@@ -333,12 +374,10 @@ namespace PeachCore {
                 fp_Message
             );
 
-            pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_WARNING_LOG);
+            pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_WARNING_LOG);
 
             if (pm_LogToFile)
             {
-                ofstream& f_LogFile = pm_LogFiles.at("warning.log"); // Log to specific file and all-logs file
-
                 if (f_LogFile.is_open())
                 {
                     f_LogFile << f_LogEntry << "\n";
@@ -354,7 +393,7 @@ namespace PeachCore {
                 }
             }
 
-            PRINT(f_LogEntry, Colours::BrightYellow);
+            PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_YELLOW);
         }
     }
 
@@ -381,12 +420,10 @@ namespace PeachCore {
                 fp_Message
             );
 
-            pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_ERROR_LOG);
+            pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_ERROR_LOG);
 
             if (pm_LogToFile)
             {
-                ofstream& f_LogFile = pm_LogFiles.at("error.log"); // Log to specific file and all-logs file
-
                 if (f_LogFile.is_open())
                 {
                     f_LogFile << f_LogEntry << "\n";
@@ -402,7 +439,7 @@ namespace PeachCore {
                 }
             }
 
-            PRINT_ERROR(f_LogEntry);
+            PEACH_PRINT_ERROR(f_LogEntry);
         }
     }
 
@@ -429,12 +466,10 @@ namespace PeachCore {
                 fp_Message
             );
 
-            pm_SnapshotBuffer->Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_FATAL_LOG);
+            pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_FATAL_LOG);
 
             if (pm_LogToFile)
             {
-                ofstream& f_LogFile = pm_LogFiles.at("fatal.log"); // Log to specific file and all-logs file
-
                 if (f_LogFile.is_open())
                 {
                     f_LogFile << f_LogEntry << "\n";
@@ -450,7 +485,7 @@ namespace PeachCore {
                 }
             }
 
-            PRINT(f_LogEntry, Colours::Magenta);
+            PEACH_PRINT(f_LogEntry, PEACH_COL_MAGENTA);
         }
     }
 
@@ -480,17 +515,13 @@ namespace PeachCore {
 
         pm_FlushMask = ExtractFlushMask(fp_Flags);
 
-        ////////////////////////////////////////////// Initialize Snapshot Ring Buffer //////////////////////////////////////////////
-
-        pm_SnapshotBuffer = make_unique<LogBuffer>();
-
         ////////////////////////////////////////////// Ensure log directory exists //////////////////////////////////////////////
 
         if (not filesystem::exists(pm_CurrentWorkingDirectory))
         {
             if (fp_Flags & PEACH_DONT_CREATE_DIRECTORY)
             {
-                PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: Failed to find valid log output directory");
+                PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: Failed to find valid log output directory");
                 return false;
             }
 
@@ -500,7 +531,7 @@ namespace PeachCore {
             }
             catch (const exception& f_Exception)
             {
-                PRINT_ERROR(fmt::format("Failed to create desired log output directory with exception: '{}'", f_Exception.what()));
+                PEACH_PRINT_ERROR_FMT("Failed to create desired log output directory with exception: '{}'", f_Exception.what());
                 return false;
             }
         }
@@ -509,7 +540,7 @@ namespace PeachCore {
 
         if (not UpdateActiveMask(fp_Flags))
         {
-            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: Failed to create required log files for logger named: " + pm_LoggerName);
+            PEACH_PRINT_ERROR_FMT("[CRITICAL_LOGGING_ERROR]: Failed to create required log files for logger named: {}", pm_LoggerName);
             return false;
         }
 
@@ -546,7 +577,7 @@ namespace PeachCore {
 
                 if (not f_LogFile.is_open())
                 {
-                    PRINT_ERROR(fmt::format("Failed to truncate oversized log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName));
+                    PEACH_PRINT_ERROR_FMT("Failed to truncate oversized log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName);
                     return false;
                 }
 
@@ -564,7 +595,7 @@ namespace PeachCore {
 
         if (not f_LogFile.is_open())
         {
-            PRINT_ERROR(fmt::format("Failed to open log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName));
+            PEACH_PRINT_ERROR_FMT("Failed to open log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName);
             return false;
         }
 
@@ -587,7 +618,7 @@ namespace PeachCore {
         }
     }
 
-    [[nodiscard]] bool ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
+    PEACH_FORCEINLINE bool ///XXX: Force inline here since it's only used within this TU
         Logger::AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the Logger instance
         const
     {
@@ -600,7 +631,7 @@ namespace PeachCore {
         f_UckCPlusPlus << this_thread::get_id();
         string f_CallerThreadID = f_UckCPlusPlus.str();
 
-        PRINT_ERROR(fmt::format("Logger name: '{}' called method '{}' from the wrong thread, [Caller Thread ID]: {}", pm_LoggerName, fp_FunctionName, f_CallerThreadID));
+        PEACH_PRINT_ERROR_FMT("Logger name: '{}' called method '{}' from the wrong thread, [Caller Thread ID]: {}", pm_LoggerName, fp_FunctionName, f_CallerThreadID);
 
         return false;
     }
@@ -618,39 +649,4 @@ namespace PeachCore {
 
         pm_LogSizeCounter = 0; //reset since all logs have been flushed
     }
-}
-
-//just static functions that the header includes for relevance ig idfk
-namespace PeachCore{
-
-#ifdef PEACH_PLATFORM_WINDOWS
-    #define NOMINMAX
-    #define WIN32_LEAN_AND_MEAN
-
-    #include <windows.h>
-#endif
-
-
-#if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
-
-    bool
-        EnableWindowsConsoleColours()
-    {
-        DWORD f_ConsoleMode;
-        HANDLE f_OutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
-
-        if (GetConsoleMode(f_OutputHandle, &f_ConsoleMode))
-        {
-            SetConsoleMode(f_OutputHandle, f_ConsoleMode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
-            return true;
-        }
-        else
-        {
-            cerr << ("Was not able to set console mode to allow windows to display ANSI escape codes") << "\n";
-            return false;
-        }
-    }
-
-#endif
-
 }

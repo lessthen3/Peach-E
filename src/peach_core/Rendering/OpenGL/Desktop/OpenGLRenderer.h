@@ -97,17 +97,17 @@ namespace PeachCore::OpenGL {
         //        const string& fp_ShaderProgramName
         //    );
 
-        void
-            SetupInstancedArray
-            (
-                uint32_t instanceVBO,
-                const vector<float>& instanceData,
-                uint32_t attributeIndex,
-                uint32_t size,
-                uint32_t instanceDataLength,
-                int offset
-            )
-            const;
+        // void
+        //     SetupInstancedArray
+        //     (
+        //         uint32_t instanceVBO,
+        //         const vector<float>& instanceData,
+        //         uint32_t attributeIndex,
+        //         uint32_t size,
+        //         uint32_t instanceDataLength,
+        //         int offset
+        //     )
+        //     const;
 
         // Example usage: suppose you want to pass a model matrix per instance
         // You would call setupInstancedArray four times, one for each row of the matrix, because glVertexAttribPointer can only handle up to 4 float components at a time.

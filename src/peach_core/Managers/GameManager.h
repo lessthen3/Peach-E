@@ -20,6 +20,8 @@
 #include "PhysicsManager.h"
 #include "NetworkManager.h"
 
+#include "Scene-Items/SceneTree.h"
+
 #include <thread>
 
 #ifndef __cpp_lib_jthread
@@ -209,14 +211,6 @@ namespace PeachCore {
     // Private Methods
     //////////////////////////////////////////////
     private:
-
-        static void
-            SegFaultHandler(int fp_Signal) //primitive segfault handler
-        {
-            PRINT_ERROR(fmt::format("[!] Crash signal received: {}, __FATAL__SEGMENTATION__FAULT__", fp_Signal));
-            // possibly notify watchdog or dump stack trace
-            exit(FATAL_SEGMENTATION_FAULT); //clean exit so everything calls their destructors
-        }
 
         //////////////////////////////////////// Thread Methods ////////////////////////////////////////
 

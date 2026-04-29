@@ -61,7 +61,8 @@ namespace PeachCore::OpenGL {
         void
             RenderViewport
             (
-                const vec2s fp_Position
+                const int32_t fp_PosX,
+                const int32_t fp_PosY
             );
 
     private:

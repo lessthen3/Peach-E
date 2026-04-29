@@ -16,12 +16,12 @@
 
 namespace PeachCore {
 
-    using namespace std;
-
     template<typename T, size_t pm_MaxCapacity>
     class RingBuffer 
     {
         static_assert(pm_MaxCapacity > 0, "RingBuffer size must be greater than 0");
+        static_assert((pm_MaxCapacity & (pm_MaxCapacity - 1)) == 0, "RingBuffer size must be a power of 2");
+
 
     public:
         constexpr RingBuffer() = default;
@@ -97,7 +97,7 @@ namespace PeachCore {
         {
             if (IsEmpty())
             {
-                throw underflow_error("Cannot pop from empty RingBuffer");
+                throw std::underflow_error("Cannot pop from empty RingBuffer");
             }
 
             // We remove the oldest element, oldest is at FrontIndex() so we just reduce size.
@@ -109,7 +109,7 @@ namespace PeachCore {
         {
             if (IsEmpty())
             {
-                throw underflow_error("Cannot access front of empty RingBuffer");
+                throw std::underflow_error("Cannot access front of empty RingBuffer");
             }
 
             return pm_Buffer[FrontIndex()];
@@ -121,7 +121,7 @@ namespace PeachCore {
         {
             if (IsEmpty())
             {
-                throw underflow_error("Cannot access front of empty RingBuffer");
+                throw std::underflow_error("Cannot access front of empty RingBuffer");
             }
 
             return pm_Buffer[FrontIndex()];
@@ -132,7 +132,7 @@ namespace PeachCore {
         {
             if (IsEmpty())
             {
-                throw out_of_range("RingBuffer::Back: buffer is empty");
+                throw std::out_of_range("RingBuffer::Back: buffer is empty");
             }
 
             return pm_Buffer[BackIndex()];
@@ -144,7 +144,7 @@ namespace PeachCore {
         {
             if (IsEmpty())
             {
-                throw out_of_range("RingBuffer::Back: buffer is empty");
+                throw std::out_of_range("RingBuffer::Back: buffer is empty");
             }
 
             return pm_Buffer[BackIndex()];
@@ -155,10 +155,10 @@ namespace PeachCore {
         {
             if (fp_Index >= pm_Size)
             {
-                throw out_of_range("RingBuffer::At: index out of range");
+                throw std::out_of_range("RingBuffer::At: index out of range");
             }
 
-            return pm_Buffer[(FrontIndex() + fp_Index) % pm_MaxCapacity];
+            return pm_Buffer[(FrontIndex() + fp_Index) & pm_IndexMask];
         }
 
         [[nodiscard]] const T& 
@@ -167,10 +167,10 @@ namespace PeachCore {
         {
             if (fp_Index >= pm_Size)
             {
-                throw out_of_range("RingBuffer::At: index out of range");
+                throw std::out_of_range("RingBuffer::At: index out of range");
             }
 
-            return pm_Buffer[(FrontIndex() + fp_Index) % pm_MaxCapacity];
+            return pm_Buffer[(FrontIndex() + fp_Index) & pm_IndexMask];
         }
 
         [[nodiscard]] constexpr size_t 
@@ -202,9 +202,11 @@ namespace PeachCore {
         }
 
     private:
-        array<T, pm_MaxCapacity> pm_Buffer{};
+        std::array<T, pm_MaxCapacity> pm_Buffer{};
         size_t pm_Head = 0;   // index of next write
         size_t pm_Size = 0;   // number of valid elements
+
+        static constexpr size_t pm_IndexMask = pm_MaxCapacity - 1;
 
     private:
         ////////////////// helpers //////////////////
@@ -212,21 +214,21 @@ namespace PeachCore {
         [[nodiscard]] size_t
             FrontIndex() const noexcept
         {
-            // Oldest element
-            return (pm_Head + pm_MaxCapacity - pm_Size) % pm_MaxCapacity;
+            // (pm_Head - pm_Size) wraps correctly under unsigned arithmetic, then mask
+            return (pm_Head - pm_Size) & pm_IndexMask;
         }
 
         [[nodiscard]] size_t
             BackIndex() const noexcept
         {
             // Most recently inserted element
-            return (pm_Head + pm_MaxCapacity - 1) % pm_MaxCapacity;
+            return (pm_Head - 1) & pm_IndexMask;
         }
 
         void
             AdvanceHead() noexcept
         {
-            pm_Head = (pm_Head + 1) % pm_MaxCapacity;
+            pm_Head = (pm_Head + 1) & pm_IndexMask;
             if (pm_Size < pm_MaxCapacity)
             {
                 ++pm_Size;

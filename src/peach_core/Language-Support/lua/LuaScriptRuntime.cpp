@@ -10,6 +10,8 @@
 ********************************************************************/
 #include "LuaScriptRuntime.h"
 
+#include "peach_api/PeachAPI.h"
+
 namespace PeachCore::Lua {
 
     // --- C wrapper that Lua can call ---
@@ -34,7 +36,7 @@ namespace PeachCore::Lua {
     {
         if (not fp_Logger)
         {
-            PRINT_ERROR("Tried to pass nullptr ref for Logger -> Lua::ScriptRuntime UwU");
+            PEACH_PRINT_ERROR("Tried to pass nullptr ref for Logger -> Lua::ScriptRuntime UwU");
             return false;
         }
 
@@ -96,7 +98,7 @@ namespace PeachCore::Lua {
     }
 
     bool 
-        ScriptRuntime::CallOnEnter(ScriptInstance& fp_ScriptInstance, PEACH_NodeID nodeID)
+        ScriptRuntime::CallOnEnter(ScriptInstance& fp_ScriptInstance)
     {
         if (not pm_LuaState or fp_ScriptInstance.TableRef == LUA_NOREF)
         {

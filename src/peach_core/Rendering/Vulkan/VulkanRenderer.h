@@ -28,7 +28,7 @@
 #include <unordered_map>
 
 ///PUI
-#include "Scene-Items/UI/Button.h"
+// #include "Scene-Items/UI/Button.h"
 
 constexpr uint32_t MINIMUM_SWAPCHAIN_SIZE = 2;
 
@@ -262,8 +262,8 @@ namespace PeachCore::Vulkan{
             uint32_t CurrentFrameCycle = 0; //used for cycling available resources independent of swapchain image
             uint32_t CurrentSwapchainImageIndex = 0;
 
-            int CurrentWindowWidth = 0;
-            int CurrentWindowHeight = 0;
+            uint32_t CurrentWindowWidth = 0;
+            uint32_t CurrentWindowHeight = 0;
 
             //bool WasSwapchainRecreatedLastFrame = false;
         };

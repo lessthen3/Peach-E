@@ -19,10 +19,10 @@ namespace PeachCore {
 
     //////////////////// Grab and Load Default Texture into Memory UwU ////////////////////
 
-    [[nodiscard]] static unique_ptr<unsigned char>
-        LoadDefaultTexture()
+    [[maybe_unused]] [[nodiscard]] static unique_ptr<unsigned char>
+        LoadDefaultTexture() 
     {
-        int f_Width = 0, f_Height = 0, f_Channels = 0;
+        [[maybe_unused]] int f_Width = 0, f_Height = 0, f_Channels = 0;
 
         unique_ptr<unsigned char> f_Pixels = nullptr;
 
@@ -69,7 +69,7 @@ namespace PeachCore {
 
         if (not rendering_logger)
         {
-            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: RenderingManager failed to initialize the render_thread logger >w<");
+            PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: RenderingManager failed to initialize the render_thread logger >w<");
             return false;
         }
 
@@ -118,7 +118,7 @@ namespace PeachCore {
             //case RENDER_UPDATE_POSITION_OP: /*UpdatePos(cmd.node_id, UnpackVec2(cmd.operand));*/ break;
             //case RENDER_DONT_DRAW_OP: /*DrawNode(cmd.node_id);*/ break;
             default:
-                PRINT_ERROR("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!");
+                PEACH_PRINT_ERROR("invalid opcode found for rendering manager! WHAT ARE YE DOIN SON?!?!");
                 break;
             }
         }
@@ -238,11 +238,11 @@ namespace PeachCore {
 
             if (f_RenderAccumulator >= RENDER_FRAME_TIME_STEP)
             {
-                PresentFrameGL(); // swap buffers etc.
+                PEACH_TO_DO_UNUSED(PresentFrameGL()); // swap buffers etc.
                 f_RenderAccumulator -= RENDER_FRAME_TIME_STEP;
             }
 
-            ProcessCommands(); //TODO: write a heuristic to figure out the best way to stream assets since we dont wanna fully drain the pipeline everytime but also tbh doesnt matter that much uwu
+            PEACH_TO_DO_UNUSED(ProcessCommands()); //TODO: write a heuristic to figure out the best way to stream assets since we dont wanna fully drain the pipeline everytime but also tbh doesnt matter that much uwu
 
             // sleep whatever is left in the budget after all work is done
             float f_Remaining = RENDER_FRAME_TIME_STEP - chrono::duration<float>(chrono::high_resolution_clock::now() - f_CurrentTime).count();
@@ -264,38 +264,38 @@ namespace PeachCore {
         return true;
     }
 
-        PEACH_STATUS_CODE
-            RenderingManager::InitializeOpenGL
-            (
-                const uint32_t fp_InitialWindowWidth,
-                const uint32_t fp_InitialWindowHeight
-            )
+    PEACH_STATUS_CODE
+        RenderingManager::InitializeOpenGL
+        (
+            const uint32_t fp_InitialWindowWidth,
+            const uint32_t fp_InitialWindowHeight
+        )
+    {
+        if (pm_IsOpenGLInitialized)
         {
-            if (pm_IsOpenGLInitialized)
-            {
-                rendering_logger->Warning("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager");
-                return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL;
-            }
-
-            rendering_logger->Debug("main SDL window successfully created", "RenderingManager");
-
-            pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, rendering_logger, true);
-
-            if (glewInit() != GLEW_OK)
-            {
-                rendering_logger->Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager");
-                //SDL_DestroyWindow(pm_MainWindow);
-                return PEACH_ERROR_FAILED_INITIALIZE_GLEW;
-            }
-
-            rendering_logger->Debug("GLEW initialized properly", "RenderingManager");
-
-            rendering_logger->Info("Successfully initialized OpenGL!", "RenderingManager");
-
-            pm_IsOpenGLInitialized = true;
-
-            return PEACH_OK;
+            rendering_logger->Warning("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager");
+            return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL;
         }
+
+        rendering_logger->Debug("main SDL window successfully created", "RenderingManager");
+
+        pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, rendering_logger, true);
+
+        if (glewInit() != GLEW_OK)
+        {
+            rendering_logger->Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager");
+            //SDL_DestroyWindow(pm_MainWindow);
+            return PEACH_ERROR_FAILED_INITIALIZE_GLEW;
+        }
+
+        rendering_logger->Debug("GLEW initialized properly", "RenderingManager");
+
+        rendering_logger->Info("Successfully initialized OpenGL!", "RenderingManager");
+
+        pm_IsOpenGLInitialized = true;
+
+        return PEACH_OK;
+    }
 
 #endif
 
@@ -352,11 +352,30 @@ namespace PeachCore {
 
             if (f_RenderAccumulator >= RENDER_FRAME_TIME_STEP)
             {
-                PresentFrameVK(); // swap buffers etc.
+                //////////////////// Submit Draw Calls ////////////////////
+
+                uint32_t f_StatusCode = pm_VulkanRenderer->BeginFrame();
+                if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
+                {
+                    PEACH_PRINT_ERROR_FMT("BeginFrame() failed exit, StatusCode: {}", f_StatusCode);
+                }
+
+                f_StatusCode = pm_VulkanRenderer->DrawFrame();
+                if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
+                {
+                    PEACH_PRINT_ERROR_FMT("DrawFrame() failed exit, StatusCode: {}", f_StatusCode);
+                }
+
+                f_StatusCode = pm_VulkanRenderer->EndFrame();
+                if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
+                {
+                    PEACH_PRINT_ERROR_FMT("EndFrame() failed exit, StatusCode: {}", f_StatusCode);
+                }
+
                 f_RenderAccumulator -= RENDER_FRAME_TIME_STEP;
             }
 
-            ProcessCommands(); //TODO: write a heuristic to figure out the best way to stream assets since we dont wanna fully drain the pipeline everytime but also tbh doesnt matter that much uwu
+            PEACH_TO_DO_UNUSED(ProcessCommands()); //TODO: write a heuristic to figure out the best way to stream assets since we dont wanna fully drain the pipeline everytime but also tbh doesnt matter that much uwu
 
             // sleep whatever is left in the budget after all work is done
             float f_Remaining = RENDER_FRAME_TIME_STEP - chrono::duration<float>(chrono::high_resolution_clock::now() - f_CurrentTime).count();
@@ -395,35 +414,6 @@ namespace PeachCore {
         rendering_logger->Info("Success! VulkanRenderer initialized properly, full rendering capabilities should be ready UwU", "RenderingManager");
 
         return true; // >w<
-    }
-
-    bool
-        RenderingManager::PresentFrameVK() //just assuming vulkan for now but this is where the backend magic happens
-    {
-        //////////////////// Submit Draw Calls ////////////////////
-
-        uint32_t f_StatusCode = pm_VulkanRenderer->BeginFrame();
-        if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
-        {
-            PRINT_ERROR(fmt::format("BeginFrame() failed exit, StatusCode: {}", f_StatusCode));
-            return false;
-        }
-
-        f_StatusCode = pm_VulkanRenderer->DrawFrame();
-        if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
-        {
-            PRINT_ERROR(fmt::format("DrawFrame() failed exit, StatusCode: {}", f_StatusCode));
-            return false;
-        }
-
-        f_StatusCode = pm_VulkanRenderer->EndFrame();
-        if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
-        {
-            PRINT_ERROR(fmt::format("EndFrame() failed exit, StatusCode: {}", f_StatusCode));
-            return false;
-        }
-
-        return true;
     }
 
 #endif

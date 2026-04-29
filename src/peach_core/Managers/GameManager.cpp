@@ -9,6 +9,7 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "GameManager.h"
+#include "InputManager.h"
 
 #include <csignal>
 
@@ -69,6 +70,16 @@ namespace PeachCore {
     }
 }
 
+namespace PeachCore{
+    static void
+        SegFaultHandler(int fp_Signal) //primitive segfault handler
+    {
+        PEACH_PRINT_ERROR_FMT("[!] Crash signal received: {}, __FATAL__SEGMENTATION__FAULT__", fp_Signal);
+        // possibly notify watchdog or dump stack trace
+        exit(FATAL_SEGMENTATION_FAULT); //clean exit so everything calls their destructors
+    }
+}
+
 namespace PeachCore
 {
     /*
@@ -103,7 +114,7 @@ namespace PeachCore
 
         if(not fp_IsSegfaultHandled)
         {
-            signal(SIGSEGV, GameManager::SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
+            signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
         }
 
         //////////////////// Required Threads Variable for Knowing Which Threads to Shutdown or Whatever ////////////////////
@@ -122,7 +133,7 @@ namespace PeachCore
 
         if (not main_logger)
         {
-            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: GameManager failed to initialize the main_thread logger >w<");
+            PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: GameManager failed to initialize the main_thread logger >w<");
             return false;
         }
 
@@ -208,7 +219,9 @@ namespace PeachCore
     {
         //////////////////// Use Peach-E default Segfault Handler ////////////////////
 
-        signal(SIGSEGV, GameManager::SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
+        signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
+
+        PEACH_TO_DO_UNUSED(fp_RootPath);
 
         return true;
     }
@@ -290,16 +303,13 @@ namespace PeachCore
         //otherwise we just leave it be
 
         //always going to require resource thread for loading peachey
-        pm_ResourceThread = std::move
+        pm_ResourceThread = thread
         (
-            thread
-            (
-                &ResourceManager::ResourceLoop,
-                std::ref(ResourceManager::get_single()),
-                f_LogDir,
-                fp_RootPath,
-                std::ref(pm_ResourceInitializationLatch)
-            )
+            &ResourceManager::ResourceLoop,
+            std::ref(ResourceManager::get_single()),
+            f_LogDir,
+            fp_RootPath,
+            std::ref(pm_ResourceInitializationLatch)
         );
 
         pm_ResourceInitializationLatch.wait(); //wait for resource thread to initialize before going further w any other threads uwu
@@ -311,19 +321,16 @@ namespace PeachCore
 #ifdef PEACH_RENDERER_VULKAN
             if(fp_RenderingBackend == RendererType::Vulkan)
             {
-                pm_RenderThread = std::move
+                pm_RenderThread = thread
                 (
-                    thread
-                    (
-                        &RenderingManager::RenderLoopVK,
-                        std::ref(RenderingManager::get_single()),
-                        f_LogDir,
-                        std::ref(pm_ThreadInitializationLatch),
-                        pm_MainWindow,
-                        fp_InitialWindowWidth,
-                        fp_InitialWindowHeight,
-                        10
-                    )
+                    &RenderingManager::RenderLoopVK,
+                    std::ref(RenderingManager::get_single()),
+                    f_LogDir,
+                    std::ref(pm_ThreadInitializationLatch),
+                    pm_MainWindow,
+                    fp_InitialWindowWidth,
+                    fp_InitialWindowHeight,
+                    10
                 );
             }
 #endif
@@ -331,19 +338,16 @@ namespace PeachCore
 #ifdef PEACH_RENDERER_OPENGL
             if (fp_RenderingBackend == RendererType::OpenGL)
             {
-                pm_RenderThread = std::move
+                pm_RenderThread = thread
                 (
-                    thread
-                    (
-                        &RenderingManager::RenderLoopGL,
-                        std::ref(RenderingManager::get_single()),
-                        f_LogDir,
-                        std::ref(pm_ThreadInitializationLatch),
-                        pm_MainWindow,
-                        fp_InitialWindowWidth,
-                        fp_InitialWindowHeight,
-                        10
-                    )
+                    &RenderingManager::RenderLoopGL,
+                    std::ref(RenderingManager::get_single()),
+                    f_LogDir,
+                    std::ref(pm_ThreadInitializationLatch),
+                    pm_MainWindow,
+                    fp_InitialWindowWidth,
+                    fp_InitialWindowHeight,
+                    10
                 );
             }
 #endif
@@ -351,17 +355,14 @@ namespace PeachCore
 #ifdef PEACH_RENDERER_METAL
             if (fp_RenderingBackend == RendererType::Metal)
             {
-                pm_RenderThread = std::move
+                pm_RenderThread = thread
                 (
-                    thread
-                    (
-                        &RenderingManager::RenderLoopMetal,
-                        std::ref(RenderingManager::get_single()),
-                        f_LogDir,
-                        std::ref(pm_ThreadInitializationLatch),
-                        pm_MainWindow,
-                        10
-                    )
+                    &RenderingManager::RenderLoopMetal,
+                    std::ref(RenderingManager::get_single()),
+                    f_LogDir,
+                    std::ref(pm_ThreadInitializationLatch),
+                    pm_MainWindow,
+                    10
                 );
             }
 #endif
@@ -375,16 +376,13 @@ namespace PeachCore
 
         if (pm_RequiredThreads & ThreadName::AudioThread)
         {
-            pm_AudioThread = std::move
+            pm_AudioThread = thread
             (
-                thread
-                (
-                    &AudioManager::AudioLoop,
-                    std::ref(AudioManager::get_single()),
-                    f_LogDir,
-                    0.0f,
-                    std::ref(pm_ThreadInitializationLatch)
-                )
+                &AudioManager::AudioLoop,
+                std::ref(AudioManager::get_single()),
+                f_LogDir,
+                0.0f,
+                std::ref(pm_ThreadInitializationLatch)
             );
         }
         else
@@ -396,15 +394,12 @@ namespace PeachCore
 
         if (pm_RequiredThreads & ThreadName::NetworkThread)
         {
-            pm_NetworkThread = std::move
+            pm_NetworkThread = thread
             (
-                thread
-                (
-                    &NetworkManager::NetworkLoop,
-                    std::ref(NetworkManager::get_single()),
-                    f_LogDir,
-                    std::ref(pm_ThreadInitializationLatch)
-                )
+                &NetworkManager::NetworkLoop,
+                std::ref(NetworkManager::get_single()),
+                f_LogDir,
+                std::ref(pm_ThreadInitializationLatch)
             );
         }
         else
@@ -418,30 +413,25 @@ namespace PeachCore
         {
             if(fp_Is3D)
             {
-                pm_PhysicsThread = std::move
+                pm_PhysicsThread = thread
                 (
-                    thread
-                    (
-                        &PhysicsManager::PhysicsLoop3D,
-                        std::ref(PhysicsManager::get_single()),
-                        f_LogDir,
-                        std::ref(pm_ThreadInitializationLatch)
-                    )
+                    &PhysicsManager::PhysicsLoop3D,
+                    std::ref(PhysicsManager::get_single()),
+                    f_LogDir,
+                    std::ref(pm_ThreadInitializationLatch)
                 );
+                
             }
             else
             {
-                pm_PhysicsThread = std::move
+                pm_PhysicsThread = thread
                 (
-                    thread
-                    (
-                        &PhysicsManager::PhysicsLoop2D,
-                        std::ref(PhysicsManager::get_single()),
-                        f_LogDir,
-                        std::ref(pm_ThreadInitializationLatch),
-                        0.0f,    // fp_GravityX
-                        -9.8f    // fp_GravityY
-                    )
+                    &PhysicsManager::PhysicsLoop2D,
+                    std::ref(PhysicsManager::get_single()),
+                    f_LogDir,
+                    std::ref(pm_ThreadInitializationLatch),
+                    0.0f,    // fp_GravityX
+                    -9.8f    // fp_GravityY
                 );
             }
         }
@@ -450,7 +440,7 @@ namespace PeachCore
             pm_ThreadInitializationLatch.count_down();
         }
 
-        PRINT("Hello World!\n", Colours::Blue); //>w<
+        PEACH_PRINT("Hello World!\n", PEACH_COL_BLUE); //>w<
         main_logger->Warning("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
         main_logger->Trace("Success! This Built Correctly", "Peach-E");
 
@@ -544,6 +534,10 @@ namespace PeachCore
             const uint8_t fp_RequiredScriptRuntimes
         )
     {
+        PEACH_TO_DO_UNUSED(fp_BootConfPath); //ACTUALLY ASSIGN THIS OWO
+
+
+
         //if (fp_RequiredScriptRuntimes & ScriptRuntimeType::Dotnet and not ResourceManager::get_single().LoadDotNetRuntime(fp_BootConfPath, pm_DotnetContext))
         //{
 
@@ -579,9 +573,9 @@ namespace PeachCore
 
         auto f_CurrentTime = chrono::high_resolution_clock::now();
 
-        auto network_manager = &NetworkManager::get_single();
+        [[maybe_unused]] auto network_manager = &NetworkManager::get_single(); 
         auto physics_manager = &PhysicsManager::get_single();
-        auto resource_manager = &ResourceManager::get_single();
+        [[maybe_unused]] auto resource_manager = &ResourceManager::get_single();
 
         ///TODO: log whenever frametime is running late in debug
         while (m_IsRunning.load(std::memory_order_acquire))
@@ -704,12 +698,14 @@ namespace PeachCore
         GameManager::CallUpdate(double fp_MilisecondsSinceLastCall)
     {
         //process shit by calling the python/lua/dotnet runtime on the Update() functions defined inside the scripts
+        PEACH_TO_DO_UNUSED(fp_MilisecondsSinceLastCall);
     }
 
     void
         GameManager::CallConstantUpdate(double fp_FixedDeltaTime)
     {
-        //process shit by calling the python/lua/dotnet runtime on the Update()/ConstantUpdate() functions defined inside the scripts
+        //process shit by calling the python/lua/dotnet runtime on the Update()/ConstantUpdate() functions defined inside the script
+        PEACH_TO_DO_UNUSED(fp_FixedDeltaTime);
     }
 
     //////////////////////////////////////////////
@@ -735,7 +731,7 @@ namespace PeachCore
 
         vec2s f_MousePos = InputManager::get_single().GetCurrentMousePosition();
 
-        PRINT(fmt::format("mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y), Colours::Green);
+        PEACH_PRINT_FMT(PEACH_COL_GREEN, "mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y);
     }
     //////////////////////////////////////////////
     // Peach API Functions

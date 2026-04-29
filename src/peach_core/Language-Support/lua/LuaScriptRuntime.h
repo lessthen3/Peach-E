@@ -11,7 +11,6 @@
 #pragma once
 
 ///PeachCore
-#include "peach_api/PeachAPI.h"
 #include "Utils/Logger.h"
 
 ///Lua
@@ -74,8 +73,7 @@ namespace PeachCore::Lua {
         bool
             CallOnEnter
             (
-                ScriptInstance& fp_ScriptInstance,
-                PEACH_NodeID fp_NodeID
+                ScriptInstance& fp_ScriptInstance
             );
 
         bool

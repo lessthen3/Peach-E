@@ -11,7 +11,7 @@
 #include <Managers/GameManager.h>
 
 int 
-    main(int fp_ArgCount, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao
+    main(int, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao
 {
     try
     {
@@ -57,9 +57,9 @@ int
 
         return EXIT_SUCCESS;
     }
-    catch (const std::exception& Exception) ///Try to ensure all destructors are called especially close() on LogManager
+    catch (const std::exception& cv_Exception) ///Try to ensure all destructors are called especially close() on LogManager
     {
-        PRINT_ERROR(fmt::format("Unhandled exception: {}", Exception.what()));
+        PEACH_PRINT_ERROR_FMT("Unhandled exception: {}", cv_Exception.what());
 
         return EXIT_FAILURE;
     }

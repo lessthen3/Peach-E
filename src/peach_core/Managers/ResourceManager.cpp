@@ -12,6 +12,15 @@
 #include "Utils/DynamicLoader.cpp"
 #include "peach_api/NodeDef.h"
 
+namespace PeachCore{
+    // [[nodiscard]] static inline bool
+    //     ValidateFilePath()
+    // {
+
+    //     return true;
+    // }
+}
+
 namespace PeachCore {
 
     bool
@@ -27,7 +36,7 @@ namespace PeachCore {
 
         if(not resource_logger)
         {
-            PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: ResourceManager failed to initialize the resource_thread logger >w<");
+            PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: ResourceManager failed to initialize the resource_thread logger >w<");
             return false;
         }
 
@@ -96,7 +105,7 @@ namespace PeachCore {
     void
         ResourceManager::ProcessCommand(LoadCommand* fp_Command)
     {
-        bool f_ContainsCommands = false;
+        // bool f_ContainsCommands = false;
 
         if(not fp_Command)
         {
@@ -104,7 +113,7 @@ namespace PeachCore {
         }
 
 
-        f_ContainsCommands = true;
+        // f_ContainsCommands = true;
 
         switch (fp_Command->OP)
         {
@@ -160,12 +169,10 @@ namespace PeachCore {
         
     }
     
-    [[nodiscard]] bool
-        LoadPeachBinHeader(const string& fp_BinaryPath)
+    bool
+        ResourceManager::LoadPeachBinHeader(const string& fp_BinaryPath)
     {
-
-
-
+        PEACH_TO_DO_UNUSED(fp_BinaryPath);
         return true;
     }
 
@@ -173,10 +180,10 @@ namespace PeachCore {
     // Queue Retrieval
     //////////////////////////////////////////////
 
-    [[nodiscard]] shared_ptr<LoadCommandPipe>
+    shared_ptr<LoadCommandPipe>
         ResourceManager::GetLoadCommandQueue
         (
-            Logger* const logger
+            Logger*const logger
         ) //this is supposed to be called from the main thread so cant use the resource_logger here for thread reasons
     {
         if (not pm_IsInitialized)
@@ -199,7 +206,7 @@ namespace PeachCore {
     [[nodiscard]] shared_ptr<ResourcePipe>
         ResourceManager::GetAudioResourceLoadingQueue
         (
-            Logger* const logger
+            Logger*const logger
         ) //this is supposed to be called from the audio thread so cant use the resource_logger here for thread reasons
     {
         if (not pm_IsInitialized)
@@ -240,17 +247,12 @@ namespace PeachCore {
     // Runtime Loading
     //////////////////////////////////////////////
 
-    [[nodiscard]] static inline bool
-        ValidateFilePath()
-    {
-
-        return true;
-    }
-
     bool
         ResourceManager::LoadLuaBytecodeFB(const string& fp_ResPath)
     {
-        size_t offset = 0;
+        PEACH_TO_DO_UNUSED(fp_ResPath);
+        
+        // size_t offset = 0;
 
         //while (offset + 2 <= data.size()) 
         //{
@@ -425,6 +427,8 @@ namespace PeachCore {
             const uint64_t fp_DestinationNode
         )
     {
+        PEACH_TO_DO_UNUSED(fp_ResPath);
+        PEACH_TO_DO_UNUSED(fp_DestinationNode);
 
         return true;
     }
@@ -432,6 +436,8 @@ namespace PeachCore {
     bool 
         ResourceManager::LoadWavFFS(const string& fp_WavFilePath)
     {
+        PEACH_TO_DO_UNUSED(fp_WavFilePath);
+
     //    ifstream file(filename, ios::binary);
     //    if (!file) 
     //    {
@@ -575,12 +581,14 @@ namespace PeachCore {
     }
 
     bool
-        LoadOpenGLShaderFFS
+        ResourceManager::LoadOpenGLShaderFFS
         (
             const string& fp_ShaderFilePath,
             const uint64_t fp_DestinationNode
         )
     {
+        PEACH_TO_DO_UNUSED(fp_ShaderFilePath);
+        PEACH_TO_DO_UNUSED(fp_DestinationNode);
 
         return true;
     }
@@ -606,7 +614,12 @@ namespace PeachCore {
         if (not f_GetDef)
         {
             resource_logger->Error(fmt::format("Plugin missing PEACH_GetScriptDef symbol: {}", fp_PluginFilePath), "ResourceManager");
-            DynamicLoader::UnloadLibrary(f_Handle, resource_logger.get());
+
+            if(not DynamicLoader::UnloadLibrary(f_Handle, resource_logger.get()))
+            {
+                resource_logger->Error(fmt::format("Failed to unload native script instance with file path: {}", fp_PluginFilePath), "ResourceManager");
+            }
+
             return false;
         }
 
@@ -621,14 +634,14 @@ namespace PeachCore {
     bool
         ResourceManager::LoadSceneFFS(const string& fp_FilePath)
     {
-
+        PEACH_TO_DO_UNUSED(fp_FilePath);
         return true;
     }
 
     bool
         ResourceManager::LoadSceneFB(const string& fp_ResPath)
     {
-
+        PEACH_TO_DO_UNUSED(fp_ResPath);
         return true;
     }
 
@@ -736,7 +749,7 @@ namespace PeachCore {
         if (f_NewState != f_InitialPathState)
         {
             CompareStates(f_InitialPathState, f_NewState);
-            f_InitialPathState = move(f_NewState);
+            f_InitialPathState = std::move(f_NewState);
         }
     }
 }

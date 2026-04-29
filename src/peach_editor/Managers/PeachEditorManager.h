@@ -10,12 +10,11 @@
 ********************************************************************/
 #pragma once
 
+///PeachCore owo
 #include <Managers/GameManager.h>
 
-#include "ProjectManager.h"
-
-#include "../Editor/ShaderCompilerUtils.h"
-#include "../Editor/LangUtils.h"
+///PeachEditor uwu 
+#include "Editor/LangUtils.h"
 
 namespace PeachEditor {
 
@@ -87,7 +86,7 @@ namespace PeachEditor {
 
             if (not main_editor_logger)
             {
-                PRINT_ERROR("Initialization error: Was not able to initialize PeachEditorManager's main logger");
+                PEACH_PRINT_ERROR("Initialization error: Was not able to initialize PeachEditorManager's main logger");
                 return false;
             }
 
@@ -136,6 +135,8 @@ namespace PeachEditor {
                 const string& fp_TargetDirectory
             )
         {
+            PEACH_TO_DO_UNUSED(fp_ProjectName);
+            PEACH_TO_DO_UNUSED(fp_TargetDirectory);
 
             return true;
         }

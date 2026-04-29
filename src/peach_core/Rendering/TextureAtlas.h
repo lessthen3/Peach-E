@@ -10,7 +10,6 @@
 ********************************************************************/
 #pragma once
 
-#include "../Utils/Logger.h"
 #include "PeachTexture.h"
 
 #include <vector>
@@ -20,10 +19,10 @@ namespace PeachCore {
 
     struct Tile
     {
-        tuple<float, float, float, float> m_UVCoords;
+        std::tuple<float, float, float, float> m_UVCoords;
         //b2Body* m_PhysicsBody = nullptr;  // Pointer to the Box2D body associated with this tile, if any
 
-        Tile(const tuple<float, float, float, float>& fp_UVCoords)
+        Tile(const std::tuple<float, float, float, float>& fp_UVCoords)
         {
             m_UVCoords = fp_UVCoords;
         }//can use a reference here since the lifetime of the attached Texture2D is directly linked to the TileSet
@@ -42,7 +41,11 @@ namespace PeachCore {
 
     //Constructor and Destructor
     public:
-        TextureAtlas() = default;
+        TextureAtlas(PeachTexture&& fp_Texture) 
+        : 
+            pm_Texture(std::move(fp_Texture))
+        {}
+        
         ~TextureAtlas(); //pm_Texture automatically de-referenced off stack
                           //All tiles will be cleaned up in destructor definition, and then deallocated off the stack
 
@@ -62,20 +65,20 @@ namespace PeachCore {
             SetCurrentTexture(const uint32_t fp_TextureHandle);
 
         bool
-            SetUVs(const int fp_DesiredTileWidth, const int fp_DesiredTileHeight);
+            SetUVs(const uint32_t fp_DesiredTileWidth, const uint32_t fp_DesiredTileHeight);
 
         bool
             CreateTilesFromTexture2D();
 
-        vector<Tile> m_Tiles;
+        std::vector<Tile> m_Tiles;
 
     private:
-        tuple<float, float, float, float>
-            GetTileUV(const int index)
-            const;
+        // std::tuple<float, float, float, float>
+        //     GetTileUV(const size_t index)
+        //     const;
 
         bool
-            IsValidTileIndex(int fp_Index)
+            IsValidTileIndex(const size_t fp_Index)
             const;
     };
 
