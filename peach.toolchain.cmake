@@ -28,40 +28,40 @@ endif()
 
 ############# derive convenience flags from PEACH_TARGET_PLATFORM #############
 
-set(PEACH_WINDOWS       OFF CACHE BOOL "" FORCE)
-set(PEACH_WINDOWS_ARM64 OFF CACHE BOOL "" FORCE)
-set(PEACH_MACOS         OFF CACHE BOOL "" FORCE)
-set(PEACH_IOS           OFF CACHE BOOL "" FORCE)
-set(PEACH_TVOS          OFF CACHE BOOL "" FORCE)
-set(PEACH_LINUX         OFF CACHE BOOL "" FORCE)
-set(PEACH_BSD           OFF CACHE BOOL "" FORCE)
-set(PEACH_HAIKU         OFF CACHE BOOL "" FORCE)
-set(PEACH_ANDROID       OFF CACHE BOOL "" FORCE)
-set(PEACH_WASM          OFF CACHE BOOL "" FORCE)
-set(PEACH_VITA          OFF CACHE BOOL "" FORCE)
-set(PEACH_SWITCH        OFF CACHE BOOL "" FORCE)
+set(PEACH_WINDOWS_X64       OFF CACHE BOOL "" FORCE)
+set(PEACH_WINDOWS_ARM64     OFF CACHE BOOL "" FORCE)
+set(PEACH_MACOS             OFF CACHE BOOL "" FORCE)
+set(PEACH_IOS               OFF CACHE BOOL "" FORCE)
+set(PEACH_TVOS              OFF CACHE BOOL "" FORCE)
+set(PEACH_LINUX             OFF CACHE BOOL "" FORCE)
+set(PEACH_BSD               OFF CACHE BOOL "" FORCE)
+set(PEACH_HAIKU             OFF CACHE BOOL "" FORCE)
+set(PEACH_ANDROID           OFF CACHE BOOL "" FORCE)
+set(PEACH_WASM              OFF CACHE BOOL "" FORCE)
+set(PEACH_VITA              OFF CACHE BOOL "" FORCE)
+set(PEACH_SWITCH            OFF CACHE BOOL "" FORCE)
 
 
 ############# category flags #############
 
-set(PEACH_PLATFORM_IS_DESKTOP  OFF CACHE BOOL "" FORCE)
-set(PEACH_PLATFORM_IS_MOBILE   OFF CACHE BOOL "" FORCE)
-set(PEACH_PLATFORM_IS_HANDHELD OFF CACHE BOOL "" FORCE)
-set(PEACH_PLATFORM_IS_WEB      OFF CACHE BOOL "" FORCE)
-set(PEACH_PLATFORM_IS_APPLE    OFF CACHE BOOL "" FORCE)
-set(PEACH_PLATFORM_IS_UNIX     OFF CACHE BOOL "" FORCE)
+set(PEACH_PLATFORM_IS_DESKTOP     OFF CACHE BOOL "" FORCE)
+set(PEACH_PLATFORM_IS_MOBILE      OFF CACHE BOOL "" FORCE)
+set(PEACH_PLATFORM_IS_HANDHELD    OFF CACHE BOOL "" FORCE)
+set(PEACH_PLATFORM_IS_WEB         OFF CACHE BOOL "" FORCE)
+set(PEACH_PLATFORM_IS_APPLE       OFF CACHE BOOL "" FORCE)
+set(PEACH_PLATFORM_IS_UNIX        OFF CACHE BOOL "" FORCE)
 set(PEACH_PLATFORM_IS_WINDOWS     OFF CACHE BOOL "" FORCE)
 
 
 ############# windows native #############
 
-if(PEACH_TARGET_PLATFORM STREQUAL "windows")
+if(PEACH_TARGET_PLATFORM STREQUAL "windows-x64")
     set(CMAKE_SYSTEM_NAME Windows)
     set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
-    set(PEACH_WINDOWS            ON CACHE BOOL "" FORCE)
-    set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
-    set(PEACH_PLATFORM_IS_WINDOWS     ON CACHE BOOL "" FORCE)
+    set(PEACH_WINDOWS_X64            ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_DESKTOP    ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_WINDOWS    ON CACHE BOOL "" FORCE)
 
     message(STATUS "Mmm, Windows detected, kitten! 😏")
 
@@ -71,10 +71,9 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "windows-arm64")
     set(CMAKE_SYSTEM_NAME Windows)
     set(CMAKE_SYSTEM_PROCESSOR ARM64)
 
-    set(PEACH_WINDOWS             ON CACHE BOOL "" FORCE)
     set(PEACH_WINDOWS_ARM64       ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
-    set(PEACH_PLATFORM_IS_WINDOWS     ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_WINDOWS ON CACHE BOOL "" FORCE)
 
     message(STATUS "Windows ARM64 detected, kitten on a surface pro~ 💅")
 
@@ -256,7 +255,7 @@ function(peach_apply_platform_definitions fp_Target fp_Visibility)
         message(FATAL_ERROR "[Peach] peach_apply_platform_definitions: invalid visibility '${fp_Visibility}', must be PUBLIC, PRIVATE, or INTERFACE")
     endif()
 
-    if(PEACH_WINDOWS)
+    if(PEACH_WINDOWS_X64)
         target_compile_definitions(${fp_Target} ${fp_Visibility}
             PEACH_PLATFORM_WINDOWS
             PEACH_PLATFORM_DESKTOP

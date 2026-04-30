@@ -159,7 +159,7 @@ else()
     )
 endif(PEACH_PLATFORM_IS_APPLE)
 
-if(PEACH_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID OR PEACH_WINDOWS_ARM64)
+if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
 
     file(GLOB VOLK_SOURCES
         third_party/peach_core/plat_dep_source_include/volk/volk.c
@@ -189,7 +189,7 @@ if(PEACH_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID OR 
         PROPERTIES COMPILE_FLAGS ${WARNING_OFF_FLAG}
     )
     
-endif(PEACH_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID OR PEACH_WINDOWS_ARM64)
+endif(PEACH_PLATFORM_IS_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
 
 target_sources(peach_core PRIVATE
     ${PHYSFS_SOURCES}
@@ -247,7 +247,7 @@ endmacro()
 
 ####################################### Static Linkage
 
-if(PEACH_WINDOWS)
+if(PEACH_WINDOWS_X64)
     # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64"
 
     ############ GL extensions for legacy systems
@@ -263,6 +263,25 @@ if(PEACH_WINDOWS)
     STATIC_IMPORT(SDL3 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64/release/SDL3-static.lib"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64/debug/SDL3-static.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
+    )
+
+elseif(PEACH_WINDOWS_ARM64)
+    # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64"
+
+    ############ GL extensions for legacy systems
+
+    STATIC_IMPORT(glew 
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/win64_arm/release/libglew32.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/win64_arm/debug/libglew32d.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
+    )
+
+    ############ Windowing and Input
+
+    STATIC_IMPORT(SDL3 
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64_arm/release/SDL3-static.lib"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64_arm/debug/SDL3-static.lib"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
@@ -435,7 +454,7 @@ elseif(PEACH_MACOS OR PEACH_IOS OR PEACH_TVOS)
         PEACH_RENDERER_METAL
     )
 
-elseif(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU)
+elseif(PEACH_PLATFORM_IS_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU)
     target_compile_definitions(peach_core PUBLIC
         PEACH_RENDERER_VULKAN
         PEACH_RENDERER_OPENGL
@@ -460,13 +479,13 @@ target_compile_definitions(peach_core PUBLIC
     SDL_MAIN_HANDLED
 )
 
-if(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
+if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
 
     target_compile_definitions(peach_core PRIVATE #needs to be private otherwise will leak into the editor which needs vulkan.h for cross 
         VK_NO_PROTOTYPES
     ) # IMPORTANT: tells volk to not use the default vulkan loader
 
-endif(PEACH_WINDOWS OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
+endif(PEACH_PLATFORM_IS_WINDOWS OR PEACH_LINUX OR PEACH_BSD OR PEACH_HAIKU OR PEACH_ANDROID)
 
 if(PEACH_VITA)
     target_compile_definitions(peach_core PUBLIC #vita can't do SIMD w Box2D too old ;w;
@@ -606,7 +625,7 @@ if(BUILD_PEACH_EDITOR)
     endif(PEACH_MACOS)
 
     # tell astcenc which ISA to build for based on our platform
-    if(PEACH_WINDOWS OR PEACH_LINUX OR PEACH_BSD)
+    if(PEACH_WINDOWS_X64 OR PEACH_LINUX OR PEACH_BSD)
         set(ASTCENC_ISA_SSE41 ON CACHE BOOL "" FORCE)
     endif()
 
@@ -675,7 +694,7 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### Import static libs
 
-    if(PEACH_WINDOWS)
+    if(PEACH_WINDOWS_X64)
 
         ############ Pretty Fonts
 
@@ -724,6 +743,52 @@ if(BUILD_PEACH_EDITOR)
         STATIC_IMPORT(shaderc 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64/release_v20260330/shaderc_combined.lib" 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64/debug_v20260330/shaderc_combined.lib" 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
+        )
+
+    elseif(PEACH_WINDOWS_ARM64)
+
+        ############ Pretty Fonts
+
+        STATIC_IMPORT(freetype 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64_arm/release/freetype.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64_arm/debug/freetyped.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
+        )
+
+        STATIC_IMPORT(msdfgen_core 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64_arm/release/msdfgen-core.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64_arm/debug/msdfgen-core.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
+        )
+
+        STATIC_IMPORT(msdfgen_ext 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64_arm/release/msdfgen-ext.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64_arm/debug/msdfgen-ext.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
+        )
+
+        ############# Asset Importing
+
+        STATIC_IMPORT(assimp 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64_arm/release_v20260430/assimp-vc145-mt.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64_arm/debug_v20260430/assimp-vc145-mtd.lib"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
+        )
+
+        ############ dotnet stuff
+
+        STATIC_IMPORT(nethost 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64_arm/release/libnethost.lib" #juicy static linkage UwU
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/win64_arm/debug/nethost.lib" #debug dll
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet10"
+        )
+
+        ############ shaderc
+
+        STATIC_IMPORT(shaderc 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64_arm/release_v20260330/shaderc_combined.lib" 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64_arm/debug_v20260330/shaderc_combined.lib" 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
@@ -890,7 +955,7 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### Compiler Options and Definitions
 
-    if(PEACH_WINDOWS)
+    if(PEACH_PLATFORM_IS_WINDOWS)
         target_compile_definitions(Peach_Editor PRIVATE
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:NETHOST_USE_AS_STATIC> #need this for nethost to be used statically
         )
@@ -1042,7 +1107,13 @@ if(CMAKE_GENERATOR MATCHES "Visual Studio" AND BUILD_PEACH_EDITOR)
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Peach_Editor)
     message(STATUS "Setting Peach_Editor as the default startup project for VS2022")
     
-    set(NETHOST_DLL_PATH "$<SHELL_PATH:${CMAKE_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/debug>")
+    if(PEACH_WINDOWS_X64)
+        set(NETHOST_DLL_PATH "$<SHELL_PATH:${CMAKE_SOURCE_DIR}/third_party/peach_editor/dotnet/win64/debug>")
+    elseif(PEACH_WINDOWS_ARM64)
+        set(NETHOST_DLL_PATH "$<SHELL_PATH:${CMAKE_SOURCE_DIR}/third_party/peach_editor/dotnet/win64_arm/debug>")
+    else()
+        message(FATAL "unsupported visual studio ISA found, im assuming you're on windows right?")
+    endif()
 
     set_property(TARGET Peach_Editor PROPERTY VS_DEBUGGER_ENVIRONMENT 
         "$<$<CONFIG:Debug>:PATH=${NETHOST_DLL_PATH};%PATH%>"

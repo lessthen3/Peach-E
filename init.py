@@ -524,7 +524,7 @@ def main() -> bool:
         f_MachineArch = platform.machine().lower()
 
         if f_CurrentPlatform == "Windows":
-            f_ToolchainKey = "windows-arm64" if "arm" in f_MachineArch else "windows" #python is weird mang
+            f_ToolchainKey = "windows-arm64" if "arm" in f_MachineArch else "windows-x64" #python is weird mang
         elif f_CurrentPlatform == "Darwin":
             f_ToolchainKey = "macos"
         elif f_CurrentPlatform == "Linux":
@@ -569,15 +569,18 @@ def main() -> bool:
 
     if(f_CurrentPlatform == "Windows"): #only needed for windows so far since the lib sizes are ridiculous
 
-        assimp_dir = f_BaseDir + "/third_party/peach_editor/assimp/win64"
+        f_ShadercDir = f_BaseDir + "/third_party/peach_editor/shaderc_combined/win64"
+        f_AssimpDir = f_BaseDir + "/third_party/peach_editor/assimp/win64"
 
-        if not unpack_versioned_dep(assimp_dir, "debug_v"): #the compressed deps are always named using debug_v* or release_v*
+        if f_ToolchainKey == "windows-arm64":
+            f_ShadercDir += "_arm"
+            f_AssimpDir += "_arm"
+
+        if not unpack_versioned_dep(f_AssimpDir, "debug_v"): #the compressed deps are always named using debug_v* or release_v*
             return False
-        if not unpack_versioned_dep(assimp_dir, "release_v"):
+        if not unpack_versioned_dep(f_AssimpDir, "release_v"):
             return False
         
-        f_ShadercDir = f_BaseDir + "/third_party/peach_editor/shaderc_combined/win64"
-
         if not unpack_versioned_dep(f_ShadercDir, "debug_v"): #the compressed deps are always named using debug_v* or release_v*
             return False
         if not unpack_versioned_dep(f_ShadercDir, "release_v"):
