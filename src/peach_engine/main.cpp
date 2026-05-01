@@ -8,7 +8,7 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#include <Managers/GameManager.h>
+#include <managers/GameManager.h>
 
 int 
     main(int, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao

@@ -1,3 +1,13 @@
+
+
+okay so ran vulkan thru wsl2 ubuntu and failing to acquire he next image happens on swapchain recreation
+
+dunno if thats a vm thing or if its a real problem but should have a way to deal w that owo 
+
+cause rn begin frame doesnt finish and draw frame keeps tryna do smth and it cant actually recreate the swapchain so we stuck
+endlessly failing to render so thats no bueno >w<
+
+
 - mixing <cstdint> and <stdint.h> might lead to some fixed size bug issues regarding serialization I should look into that owo
 
 

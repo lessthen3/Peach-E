@@ -21,7 +21,7 @@
 #include <cglm/struct.h>
 
 ///PeachCore
-#include "Utils/Math.h"
+#include "utils/Math.h"
 
 namespace PeachCore {
 

@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "Utils/Logger.h"
+// #include "utils/Logger.h"
 
 ///DotNet
 
@@ -25,6 +25,7 @@
 
 ///STL
 #include <vector>
+#include <string>
 
 namespace PeachCore {
 
@@ -36,7 +37,7 @@ namespace PeachCore {
         void* OnExit = nullptr;
         void* ManagedInstance = nullptr; // ← the object created via Activator.CreateInstance
 
-        string ScriptName;
+        std::string ScriptName;
     };
 
     struct DotnetContext
@@ -57,10 +58,10 @@ namespace PeachCore {
         load_assembly_and_get_function_pointer_fn CallOnConstantUpdate = nullptr;
         load_assembly_and_get_function_pointer_fn CallOnExit = nullptr;
 
-        string RuntimePath;
-        string MainAssembyPath;
+        std::string RuntimePath;
+        std::string MainAssembyPath;
 
-        vector<ScriptInstance> Scripts;
+        std::vector<ScriptInstance> Scripts;
 
         bool IsInitialized = false;
     };

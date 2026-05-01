@@ -13,7 +13,7 @@
 #include <string>
 #include <memory>
 
-#include "../../Utils/Logger.h"
+#include "../../utils/Logger.h"
 #include "../PeachNode.h"
 
 #include "Sensor2D.h"

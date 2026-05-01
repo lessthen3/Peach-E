@@ -29,6 +29,8 @@
 #elif defined(PEACH_PLATFORM_LINUX)
 #   include <fstream>
 #   include <string>
+#   include <unistd.h>
+#   include <sys/wait.h>
     
     static bool 
         PEACH_IsDebuggerAttached()
@@ -109,7 +111,7 @@ namespace PeachCore{
     }
 
     int 
-        LauncherMain(int argc, char* argv[])
+        LauncherMain(int, char* argv[])
     {
         #if defined(PEACH_PLATFORM_WINDOWS)
 
@@ -141,7 +143,7 @@ namespace PeachCore{
             
             return f_ExitCode;
 
-        #elif defined(PEACH_PLATFORM_UNIX)
+        #elif defined(PEACH_PLATFORM_LINUX) || defined(PEACH_PLATFORM_APPLE) || defined(PEACH_PLATFORM_FREEBSD)
 
             pid_t f_Pid = fork();
         

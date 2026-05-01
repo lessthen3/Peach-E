@@ -26,7 +26,7 @@
 #   define STDERR_FILENO 2
 #   define PEACH_CRASH_WRITE ::_write
 #   define PEACH_CRASH_EXIT ::_exit
-#elif defined(PEACH_PLATFORM_IS_UNIX)
+#elif defined(PEACH_PLATFORM_LINUX) || defined(PEACH_PLATFORM_APPLE) || defined(PEACH_PLATFORM_FREEBSD)
 #   include <unistd.h>     // for write, _exit on POSIX
 #
 #   define PEACH_CRASH_WRITE ::write
@@ -96,7 +96,7 @@ namespace PeachCore::Debug {
         return f_Out;
     }
 
-    extern "C" static void
+    extern "C" void
         CrashSignalHandler(int fp_Signal)
         noexcept
     {

@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#include "Managers/PhysicsManager.h"
+#include "managers/PhysicsManager.h"
 
 #include <glm/glm.hpp>
 

@@ -30,11 +30,17 @@ endif()
 
 set(PEACH_WINDOWS_X64       OFF CACHE BOOL "" FORCE)
 set(PEACH_WINDOWS_ARM64     OFF CACHE BOOL "" FORCE)
+
 set(PEACH_MACOS             OFF CACHE BOOL "" FORCE)
 set(PEACH_IOS               OFF CACHE BOOL "" FORCE)
 set(PEACH_TVOS              OFF CACHE BOOL "" FORCE)
-set(PEACH_LINUX             OFF CACHE BOOL "" FORCE)
-set(PEACH_BSD               OFF CACHE BOOL "" FORCE)
+
+set(PEACH_LINUX_X64         OFF CACHE BOOL "" FORCE)
+set(PEACH_LINUX_ARM64       OFF CACHE BOOL "" FORCE)
+
+set(PEACH_BSD_X64           OFF CACHE BOOL "" FORCE)
+set(PEACH_BSD_ARM64         OFF CACHE BOOL "" FORCE)
+
 set(PEACH_HAIKU             OFF CACHE BOOL "" FORCE)
 set(PEACH_ANDROID           OFF CACHE BOOL "" FORCE)
 set(PEACH_WASM              OFF CACHE BOOL "" FORCE)
@@ -50,7 +56,10 @@ set(PEACH_PLATFORM_IS_HANDHELD    OFF CACHE BOOL "" FORCE)
 set(PEACH_PLATFORM_IS_WEB         OFF CACHE BOOL "" FORCE)
 set(PEACH_PLATFORM_IS_APPLE       OFF CACHE BOOL "" FORCE)
 set(PEACH_PLATFORM_IS_UNIX        OFF CACHE BOOL "" FORCE)
+
 set(PEACH_PLATFORM_IS_WINDOWS     OFF CACHE BOOL "" FORCE)
+set(PEACH_PLATFORM_IS_LINUX       OFF CACHE BOOL "" FORCE)
+set(PEACH_PLATFORM_IS_FREEBSD     OFF CACHE BOOL "" FORCE)
 
 
 ############# windows native #############
@@ -136,27 +145,51 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "tvos")
 
 ############# linux native #############
 
-elseif(PEACH_TARGET_PLATFORM STREQUAL "linux")
+elseif(PEACH_TARGET_PLATFORM STREQUAL "linux-x64")
     set(CMAKE_SYSTEM_NAME Linux)
     set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
-    set(PEACH_LINUX               ON CACHE BOOL "" FORCE)
+    set(PEACH_LINUX_X64           ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_LINUX   ON CACHE BOOL "" FORCE)
 
     message(STATUS "Nyaa, Linux detected! Flex that Tux, kitten~ 🐧")
 
+elseif(PEACH_TARGET_PLATFORM STREQUAL "linux-arm64")
+    set(CMAKE_SYSTEM_NAME Linux)
+    set(CMAKE_SYSTEM_PROCESSOR ARM64)
+
+    set(PEACH_LINUX_ARM64         ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_LINUX   ON CACHE BOOL "" FORCE)
+
+    message(STATUS "Linux ARM64 detected — WSL2 in the streets, ARM64 in the sheets 😉") #holy shit opus is gunnin for the gpt crown rn LMFAO
+
 ############# freebsd #############
 
-elseif(PEACH_TARGET_PLATFORM STREQUAL "freebsd")
+elseif(PEACH_TARGET_PLATFORM STREQUAL "freebsd-x64")
     set(CMAKE_SYSTEM_NAME FreeBSD)
     set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
-    set(PEACH_BSD                 ON CACHE BOOL "" FORCE)
+    set(PEACH_BSD_X64             ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_FREEBSD ON CACHE BOOL "" FORCE)
 
     message(STATUS "FreeBSD... true BSD-babe detected, ready for that zfs cuddles~ 🦀")
+
+elseif(PEACH_TARGET_PLATFORM STREQUAL "freebsd-arm64")
+    set(CMAKE_SYSTEM_NAME FreeBSD)
+    set(CMAKE_SYSTEM_PROCESSOR ARM64)
+
+    set(PEACH_BSD_ARM64           ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_FREEBSD ON CACHE BOOL "" FORCE)
+
+    message(STATUS "FreeBSD ARM64 detected — kitten's all sweaty in this exotic toolchain 💦")
 
 ############# haiku #############
 
@@ -292,19 +325,34 @@ function(peach_apply_platform_definitions fp_Target fp_Visibility)
             PEACH_ARCH_ARM64
         )
 
-    elseif(PEACH_LINUX)
+    elseif(PEACH_LINUX_X64)
         target_compile_definitions(${fp_Target} ${fp_Visibility}
             PEACH_PLATFORM_LINUX
             PEACH_PLATFORM_DESKTOP
             PEACH_ARCH_X64
         )
 
-    elseif(PEACH_BSD)
+    elseif(PEACH_LINUX_ARM64)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_LINUX
+            PEACH_PLATFORM_DESKTOP
+            PEACH_ARCH_ARM64
+        )
+
+    elseif(PEACH_BSD_X64)
         target_compile_definitions(${fp_Target} ${fp_Visibility}
             PEACH_PLATFORM_BSD
             PEACH_PLATFORM_FREEBSD
             PEACH_PLATFORM_DESKTOP
             PEACH_ARCH_X64
+        )
+
+    elseif(PEACH_BSD_ARM64)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_BSD
+            PEACH_PLATFORM_FREEBSD
+            PEACH_PLATFORM_DESKTOP
+            PEACH_ARCH_ARM64
         )
 
     elseif(PEACH_HAIKU)

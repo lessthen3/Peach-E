@@ -16,9 +16,9 @@
 #include <vector>
 #include <unordered_map>
 
-#include <Utils/SerializerMacros.h>
-#include <Utils/Serializer.h>
-#include <Utils/Logger.h>
+#include <utils/SerializerMacros.h>
+#include <utils/Serializer.h>
+#include <utils/Logger.h>
 
 using namespace PeachCore;
 

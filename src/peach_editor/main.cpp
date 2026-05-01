@@ -8,10 +8,10 @@
  *
  *      Peach Editor is a free open source editor for Peach-E
 ********************************************************************/
-#include "Managers/PeachEditorManager.h"
-#include "Managers/ProjectManager.h"
+#include "managers/PeachEditorManager.h"
+#include "managers/ProjectManager.h"
 
-#include "Utils/PeachPanic.h"
+#include "utils/PeachPanic.h"
 
 //#include <Jolt/Jolt.h>
 //#include <Jolt/RegisterTypes.h>

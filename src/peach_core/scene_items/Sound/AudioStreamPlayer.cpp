@@ -10,7 +10,7 @@
 ********************************************************************/
 #include "AudioStreamPlayer.h"
 
-#include "Utils/PeachPrint.h"
+#include "utils/PeachPrint.h"
 
 namespace PeachCore
 {

@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#include "Scene-Items/PeachNode.h"
+#include "scene_items/PeachNode.h"
 #include "ShapePrimitives.h"
 
 namespace PeachCore::PUI {

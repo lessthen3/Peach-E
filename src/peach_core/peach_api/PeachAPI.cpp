@@ -9,7 +9,7 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "PeachAPI.h"
-#include "Managers/GameManager.h"
+#include "managers/GameManager.h"
 
 using namespace std; //can do this here since it's not included anywhere uwu
 

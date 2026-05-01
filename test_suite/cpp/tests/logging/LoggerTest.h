@@ -18,7 +18,7 @@
 
 #include <iostream> // only used if logger is nullptr in asserts
 
-#include <Utils/Logger.h>
+#include <utils/Logger.h>
 
 namespace PeachTests
 {

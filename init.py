@@ -528,9 +528,9 @@ def main() -> bool:
         elif f_CurrentPlatform == "Darwin":
             f_ToolchainKey = "macos"
         elif f_CurrentPlatform == "Linux":
-            f_ToolchainKey = "linux"
+            f_ToolchainKey = "linux-arm64" if "arm" in f_MachineArch else "linux-x64" #python is weird mang
         elif f_CurrentPlatform == "FreeBSD":
-            f_ToolchainKey = "freebsd"
+            f_ToolchainKey = "freebsd-arm64" if "arm" in f_MachineArch else "freebsd-x64" #python is weird mang
         elif f_CurrentPlatform == "Haiku":
             f_ToolchainKey = "haiku"
         else:

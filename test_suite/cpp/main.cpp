@@ -10,7 +10,7 @@
 ********************************************************************/
 #define PEACH_USING_OS_TERMINAL //needa do this since logger is header only atm
 
-#include <Managers/GameManager.h>
+#include <managers/GameManager.h>
 
 
 #define BUILD_PEACH_SERIALIZER_TEST ////////////////////////////////////////////// Here just for a bit for testing the testing suite UwU
