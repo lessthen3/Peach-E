@@ -3,7 +3,7 @@ Peach-E is a modern, cross-platform, open source 2D/3D game engine built with C+
 
 Peach-E is and __will always be 100% free__. No stupid licensing garbage and no royalties. Built by a game developer, for game developers of any skill level.
 
-Currently you can target Windows(x64 + arm64), MacOS(arm64 + X64), Linux(x64 + arm64), and FreeBSD(x64). Native support for Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
+Currently you can target Windows(x64 + arm64), MacOS(arm64 + x64), Linux(x64 + arm64), and FreeBSD(x64). Native support for Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
 
 Peach-E can be used headless with C++, or via the peach_api headers which utilizes a C calling convention so linking against C, Rust or whatever uses the calling convention is supported.
 
@@ -37,7 +37,7 @@ Features:
 
 🍑 __Physics:__ Box2D (v3.1.1) for 2D, Jolt (v5.5.0) for 3D
 
-🍑 __Native support for Windows(x64), MacOS, and Linux__ _(Windows ARM, FreeBSD, Haiku, iOS, iPadOS, tvOS, Android, PS Vita, and web are a WIP)_
+🍑 __Native support for Windows, MacOS, Linux, and FreeBSD__ _(Haiku, iOS, iPadOS, tvOS, Android, PS Vita, and web are a WIP)_
 
 🍑 __Quality of life nodes__ for easily integrating in-game consoles and logging support out of the box
 
