@@ -3,7 +3,7 @@ Peach-E is a modern, cross-platform, open source 2D/3D game engine built with C+
 
 Peach-E is and __will always be 100% free__. No stupid licensing garbage and no royalties. Built by a game developer, for game developers of any skill level.
 
-Currently you can target Windows(x64), MacOS(ARM64), Linux(x64), and FreeBSD(x64). Native support for Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, Windows ARM and PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
+Currently you can target Windows(x64 + arm64), MacOS(arm64 + X64), Linux(x64 + arm64), and FreeBSD(x64). Native support for Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
 
 Peach-E can be used headless with C++, or via the peach_api headers which utilizes a C calling convention so linking against C, Rust or whatever uses the calling convention is supported.
 
@@ -91,10 +91,17 @@ That's it. Plain and simple.
 ## Platforms Successfully Tested
 
 ```ini
-os= Windows
+os= Windows 10
 arch= x86_64
 compiler= msvc 193 static
 hardware= ryzen 5950x + rx 9070xt
+```
+
+```ini
+os= Windows 11
+arch= aarch64
+compiler= msvc 195 static
+hardware= snapdragon X plus X1P42100, iGPU Adreno X1-45
 ```
 
 ```ini
@@ -108,8 +115,15 @@ hardware= macbook pro m4 pro, mac mini m4
 os= Ubuntu 22.04 LTS, Arch idk the version
 arch= x86_64
 compiler= clang 19
-compiler= gcc 12(? idk i forget the version)
+compiler= gcc/g++ 13.30
 hardware= [ryzen 5950x + rx 9070xt], [ryzen 7 7745hx + rtx 4070]
+```
+
+```ini
+os= Ubuntu via wsl2
+arch= aarch64
+compiler= gcc/g++ 13.30
+hardware= snapdragon X plus X1P42100, iGPU Adreno X1-45
 ```
 
 ```ini
