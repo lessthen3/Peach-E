@@ -52,5 +52,5 @@
 #endif /*PEACH_USING_OS_TERMINAL*/
 
 
-//XXX: meant to be grepable owo
+//XXX: meant to be grepable owo, avoids the -Wunused spam from clang/gcc
 #define PEACH_TO_DO_UNUSED(fp_Action) (void)(fp_Action)

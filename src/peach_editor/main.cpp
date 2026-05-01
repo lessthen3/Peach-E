@@ -41,7 +41,7 @@ static inline constexpr void
 int 
     main(int, const char* fp_ArgVector[])
 {
-    PEACH_PANIC_IF(false, "This is a test for panic owo");
+    // PEACH_PANIC_IF(false, "This is a test for panic owo");
 
     // // freetype smoke test
     // {

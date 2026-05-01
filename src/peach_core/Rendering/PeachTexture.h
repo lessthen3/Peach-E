@@ -31,8 +31,8 @@ namespace PeachCore {
         std::string m_Name;
 
     private:
-        uint32_t pm_TileWidth = -1;
-        uint32_t pm_TileHeight = -1;
+        uint32_t pm_TileWidth = 0;
+        uint32_t pm_TileHeight = 0;
 
         uint64_t pm_TextureID = 0;
 

@@ -15,6 +15,8 @@
 
 ///STL
 #include <memory>
+#include <mutex>
+#include <vector>
 
 namespace PeachCore{
 
@@ -22,32 +24,34 @@ namespace PeachCore{
     {
     private:
         std::vector<Logger*> pm_GlobalLoggerRegistry;
+        std::mutex pm_RegistryMutex;
+        LogManager() = default;
+        friend class Logger;
 
-        // Called from Logger ctor; Logger is a friend so it can call this.
+    private:
+
         void
             RegisterLogger(Logger* fp_Logger)
         {
-            std::lock_guard<std::mutex> f_Lock(s_RegistryMutex);
-            s_Registry.push_back(fp_Logger);
+            std::lock_guard<std::mutex> f_Lock(pm_RegistryMutex);
+            pm_GlobalLoggerRegistry.push_back(fp_Logger);
         }
 
         void
-            UnregisterLogger(Logger* fp_Logger) noexcept
+            UnregisterLogger(Logger* fp_Logger) 
+            noexcept
         {
-            std::lock_guard<std::mutex> f_Lock(s_RegistryMutex);
-            auto f_It = std::find(s_Registry.begin(), s_Registry.end(), fp_Logger);
-            if (f_It != s_Registry.end())
+            std::lock_guard<std::mutex> f_Lock(pm_RegistryMutex);
+
+            auto f_LoggerIterator = std::find(pm_GlobalLoggerRegistry.begin(), pm_GlobalLoggerRegistry.end(), fp_Logger);
+
+            if (f_LoggerIterator != pm_GlobalLoggerRegistry.end())
             {
-                s_Registry.erase(f_It);
+                pm_GlobalLoggerRegistry.erase(f_LoggerIterator);
             }
         }
-
-    friend class Logger;
     
     public:
-
-        LogManager() = default;
-
         static LogManager& get_single()
         {
             static LogManager log_manager;
@@ -61,7 +65,7 @@ namespace PeachCore{
 
     public:
 
-        [[nodiscard]] static unique_ptr<Logger>
+        [[nodiscard]] unique_ptr<Logger>
             CreateUniqueLogger
             (
                 const string& fp_DesiredLoggerName,
@@ -77,10 +81,12 @@ namespace PeachCore{
                 return nullptr;
             }
 
+            RegisterLogger(f_CreatedLogger.get()); //only register on success owo
+
             return f_CreatedLogger;
         }
 
-        [[nodiscard]] static shared_ptr<Logger>
+        [[nodiscard]] shared_ptr<Logger>
             CreateSharedLogger
             (
                 const string& fp_DesiredLoggerName,
@@ -96,7 +102,15 @@ namespace PeachCore{
                 return nullptr;
             }
 
+            RegisterLogger(f_CreatedLogger.get()); //only register on success owo
+
             return f_CreatedLogger;
+        }
+
+        static void
+            ForceFlushAllLogggers()
+        {
+
         }
     };
 }

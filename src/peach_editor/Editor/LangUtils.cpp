@@ -10,6 +10,8 @@
 ********************************************************************/
 #include "LangUtils.h"
 
+#include <fstream>
+
 namespace PeachEditor::Dotnet
 {
     bool

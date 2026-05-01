@@ -22,12 +22,12 @@
 
 #ifdef PEACH_DEBUG
 
-    #define PEACH_UNIQUE_PTR(T, ...) ::PeachCore::DebugUtils::CreateAndRegisterUniquePtr<T>(__FILE__, __LINE__, __VA_ARGS__)
-    #define PEACH_SHARED_PTR(T, ...) ::PeachCore::DebugUtils::CreateAndRegisterSharedPtr<T>(__FILE__, __LINE__, __VA_ARGS__)
+    #define PEACH_UNIQUE_PTR(T, ...) ::PeachCore::Debug::CreateAndRegisterUniquePtr<T>(__FILE__, __LINE__, __VA_ARGS__)
+    #define PEACH_SHARED_PTR(T, ...) ::PeachCore::Debug::CreateAndRegisterSharedPtr<T>(__FILE__, __LINE__, __VA_ARGS__)
     #define TRACK_RAW_PTR(ptr)
 
-    #define PEACH_NEW(T, ...) ::PeachCore::DebugUtils::CreateAndRegisterRawPtr<T>(__FILE__, __LINE__, __VA_ARGS__)
-    #define PEACH_DELETE(ptr) ::PeachCore::DebugUtils::DeleteAndUnregisterRawPtr(ptr)
+    #define PEACH_NEW(T, ...) ::PeachCore::Debug::CreateAndRegisterRawPtr<T>(__FILE__, __LINE__, __VA_ARGS__)
+    #define PEACH_DELETE(ptr) ::PeachCore::Debug::DeleteAndUnregisterRawPtr(ptr)
 
     #define PEACH_VECTOR(T) std::vector<T>
     #define PEACH_MAP(Tx, Ty) std::map<Tx, Ty>
@@ -48,7 +48,7 @@
 
 #endif
 
-namespace PeachCore::DebugUtils {
+namespace PeachCore::Debug {
 
     struct AllocationRecord 
     {

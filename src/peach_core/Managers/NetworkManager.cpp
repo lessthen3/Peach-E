@@ -18,7 +18,7 @@ namespace PeachCore {
             const string& fp_LogOutputDirectory
         )
     {
-        network_logger = Logger::CreateUnique("NetworkLogger", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
+        network_logger = LogManager::get_single().CreateUniqueLogger("NetworkLogger", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
 
         if (not network_logger)
         {

@@ -123,13 +123,16 @@ namespace PeachCore
 
         //////////////////// Enable ANSI colour codes for windows console grumble grumble ////////////////////
 
-        #if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
-            EnableWindowsConsoleColours();
-        #endif
+#if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
+        if (not PEACH_EnableWindowsConsoleColours())
+        {
+
+        }
+#endif
 
         ////////////////////////////////////////////// Initialize Main Thread Logger //////////////////////////////////////////////
 
-        main_logger = Logger::CreateUnique("GameManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_RootPath + "/logs");
+        main_logger = LogManager::get_single().CreateUniqueLogger("GameManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_RootPath + "/logs");
 
         if (not main_logger)
         {

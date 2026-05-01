@@ -21,6 +21,7 @@
 #include <assimp/postprocess.h>
 
 #include <filesystem>
+#include <fstream>
 
 namespace PeachEditor::ResourceManagement{
 

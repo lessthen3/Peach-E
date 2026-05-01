@@ -37,9 +37,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 17) #needed for box2d owo
 set(CMAKE_C_STANDARD_REQUIRED ON)
 
-####################################### Random Globals
+####################################### Project folders >w<
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON) #dunno where else to put this owo
+set_property(GLOBAL PROPERTY USE_FOLDERS ON) 
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "other/cmake")
+
+####################################### Build warnings owo
 
 if(MSVC)
     add_compile_options(/W4) # /W4 is the standard "high" warning level for MSVC
@@ -497,6 +500,8 @@ if(PEACH_PLATFORM_IS_WINDOWS)
 
     target_compile_definitions(peach_core PUBLIC
         GLEW_STATIC #needed for statically linking glew
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN
     )
 
     if(MSVC)
@@ -507,6 +512,7 @@ if(PEACH_PLATFORM_IS_WINDOWS)
         
         target_compile_options(peach_core PUBLIC 
             /utf-8
+            /Zc:preprocessor
         )
     endif(MSVC)
 
@@ -610,6 +616,8 @@ if(BUILD_PEACH_EDITOR)
         PROPERTIES COMPILE_FLAGS ${WARNING_OFF_FLAG} #WARNING off flag is always set since peach_core is always built by default owo
     )
 
+    ####################################### tell astcenc which ISA to build for based on our platform
+
     if(PEACH_MACOS)
         if(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
             set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
@@ -622,11 +630,13 @@ if(BUILD_PEACH_EDITOR)
             set(ASTCENC_ISA_SSE41 ON  CACHE BOOL "" FORCE)
             set(ASTCENC_ISA_SSE2  ON  CACHE BOOL "" FORCE)
         endif(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
-    endif(PEACH_MACOS)
-
-    # tell astcenc which ISA to build for based on our platform
-    if(PEACH_WINDOWS_X64 OR PEACH_LINUX OR PEACH_BSD)
+    elseif(PEACH_WINDOWS_X64 OR PEACH_LINUX OR PEACH_BSD)
         set(ASTCENC_ISA_SSE41 ON CACHE BOOL "" FORCE)
+    elseif(PEACH_WINDOWS_ARM64)
+        set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE41 OFF CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
     endif()
 
     set(ASTCENC_CLI OFF CACHE BOOL "" FORCE) # dont build the command line tool
@@ -634,6 +644,35 @@ if(BUILD_PEACH_EDITOR)
     set(ASTCENC_DYNAMIC_RUNTIME OFF CACHE BOOL "" FORCE)
 
     add_subdirectory(third_party/peach_editor/source_include/astcenc)
+
+    ####################################### astenc project folder visual declutter OwO UwU
+
+    foreach(f_CTestTarget 
+        Experimental 
+        Nightly 
+        Continuous 
+        NightlyMemoryCheck
+    )
+        if(TARGET ${f_CTestTarget})
+            set_property(TARGET ${f_CTestTarget} PROPERTY FOLDER "other/astenc/ctests")
+        endif()
+    endforeach()
+
+    foreach(f_AstcTarget 
+        astcenc-neon-static
+        astcenc-sse4.1-static 
+        astcenc-avx2-static 
+        astcenc-sse2-static
+        astcenc-native-static    
+        astcenc-none-static
+    )
+        if(TARGET ${f_AstcTarget})
+            set_target_properties(${f_AstcTarget} PROPERTIES FOLDER "other/astenc")
+
+        endif()
+    endforeach()
+
+    ####################################### Set astenc target properties
 
     if(PEACH_MACOS)
         foreach(f_AstcTarget
@@ -672,24 +711,23 @@ if(BUILD_PEACH_EDITOR)
 
     if(MSVC)
         foreach(f_AstcTarget 
+            astcenc-neon-static
             astcenc-sse4.1-static 
             astcenc-avx2-static 
             astcenc-sse2-static
+            astcenc-native-static    
             astcenc-none-static
         )
             if(TARGET ${f_AstcTarget})
                 set_property(TARGET ${f_AstcTarget} PROPERTY MSVC_RUNTIME_LIBRARY
                     MultiThreaded$<$<CONFIG:Debug>:Debug>
                 )
-                
-                set_target_properties(${f_AstcTarget} PROPERTIES FOLDER "third_party")
-
             endif()
         endforeach()
     endif()
 
     target_link_libraries(Peach_Editor PRIVATE
-        $<IF:$<STREQUAL:${PEACH_TARGET_PLATFORM},macos>,astcenc-neon-static,astcenc-sse4.1-static>
+        $<IF:$<OR:$<BOOL:${PEACH_MACOS}>,$<BOOL:${PEACH_WINDOWS_ARM64}>>,astcenc-neon-static,astcenc-sse4.1-static>
     )
 
     ####################################### Import static libs
@@ -721,12 +759,6 @@ if(BUILD_PEACH_EDITOR)
         STATIC_IMPORT(assimp 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/release_v143/assimp-vc143-mt.lib"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/debug_v143/assimp-vc143-mtd.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
-
-        STATIC_IMPORT(assimp_draco 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/release_v143/draco.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/debug_v143/dracod.lib"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
         )
 
@@ -787,8 +819,8 @@ if(BUILD_PEACH_EDITOR)
         ############ shaderc
 
         STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64_arm/release_v20260330/shaderc_combined.lib" 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64_arm/debug_v20260330/shaderc_combined.lib" 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64_arm/release_v20260430/shaderc_combined.lib" 
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64_arm/debug_v20260430/shaderc_combined.lib" 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
@@ -818,12 +850,6 @@ if(BUILD_PEACH_EDITOR)
         STATIC_IMPORT(assimp 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libassimp.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
-
-        STATIC_IMPORT(assimp_draco 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libdraco.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libdraco.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
         )
 
@@ -874,12 +900,6 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
         )
 
-        STATIC_IMPORT(assimp_draco 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64/libdraco.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64/libdraco.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
-
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
@@ -927,12 +947,6 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
         )
 
-        STATIC_IMPORT(assimp_draco 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libdraco.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libdraco.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
-
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
@@ -964,6 +978,7 @@ if(BUILD_PEACH_EDITOR)
             target_compile_options(Peach_Editor PRIVATE
                 $<$<CONFIG:Debug>:/MTd>
                 $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+                /Zc:preprocessor
             ) 
 
             target_link_options(Peach_Editor PRIVATE 
@@ -990,7 +1005,6 @@ if(BUILD_PEACH_EDITOR)
 
         #asset importing, we'll just write an importer for the internal assimp format for modders since assimp isnt fully portable across all targetted platforms
         assimp
-        assimp_draco
 
         #font stuff
         msdfgen_ext
@@ -1043,8 +1057,8 @@ if(BUILD_PEACH_ENGINE)
         target_compile_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+            /Zc:preprocessor
         ) 
-
     endif(MSVC)
 
     ####################################### Link Peach Engine to Peach Core

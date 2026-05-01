@@ -25,7 +25,7 @@ namespace PeachCore {
     {
         //////////////////// Initialize Logger ////////////////////
 
-        input_logger = Logger::CreateUnique("InputManager", fp_LogFlags, fp_LogOutputDirectory);
+        input_logger = LogManager::get_single().CreateUniqueLogger("InputManager", fp_LogFlags, fp_LogOutputDirectory);
 
         if (not input_logger)
         {

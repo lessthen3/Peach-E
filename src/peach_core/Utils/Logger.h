@@ -10,13 +10,14 @@
 ********************************************************************/
 #pragma once
 
-#define PEACH_LOGGER_DEFAULT_FLAGS PEACH_ALL_LOGS | PEACH_FLUSH_ERROR | PEACH_FLUSH_FATAL
+#define PEACH_LOGGER_DEFAULT_FLAGS PEACH_ALL_LOGS | PEACH_FLUSH_ERROR
 
 /// STL
 #include <string>
 #include <thread>
 #include <source_location>
 #include <vector>
+#include <mutex>
 
 ///PeachCore
 #include "RingBuffer.h"
@@ -30,22 +31,22 @@
 constexpr int FATAL_SEGMENTATION_FAULT = -6969;
 
 /// moody camel queue size uwu
-constexpr unsigned int MOODY_CAMEL_QUEUE_SIZE = 128;
+constexpr unsigned int MOODY_CAMEL_QUEUE_SIZE = 128u;
 
 static constexpr uint32_t PEACH_LOGGER_MAX_NUMBER_OF_LOGS = 1024u;
 static constexpr uint32_t PEACH_LOGGER_FLUSH_EVERY_N_LOGS = 256u;
 static constexpr uint32_t PEACH_LOGGER_MAX_LOG_FILE_SIZE_BYTES = 10u * 1024u * 1024u; // 10 MB
 
+#if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
+
+[[nodiscard]] bool
+    PEACH_EnableWindowsConsoleColours();
+
+#endif
+
 namespace PeachCore {
 
     using namespace std; //this should be here so i dont affect anybody who links against peach
-
-#if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
-
-    [[nodiscard]] bool
-        EnableWindowsConsoleColours();
-
-#endif
 
     //////////////////////////////////////////////
     // LogMessage Struct
@@ -84,16 +85,12 @@ namespace PeachCore {
         Logger& operator=(const Logger&) = delete;
         Logger& operator=(Logger&&) = delete;
 
-        /*
-            needed for stack allocated Create(), allows for nrvo and also is kosher since move constructors play w the strict ownership model that is the foundation of the thread owning system uwu
-            so the pattern is using optional return a nrvo Logger, and the thread thats using it calls Create() so this_thread::thread::id works properly ^_^
-        */
         Logger(Logger&&) = default;
 
         friend LogManager;
 
     public:
-        using LogBuffer = RingBuffer<LogMessage, PEACH_LOGGER_MAX_NUMBER_OF_LOGS>;
+        using LogBuffer = RingBuffer<LogMessage, PEACH_LOGGER_MAX_NUMBER_OF_LOGS>; //XXX: can stack alloc since logger can only be created on da heap owo
 
         //////////////////////////////////////////////
         // Protected Constructor
@@ -105,7 +102,7 @@ namespace PeachCore {
         // Protected Class Members
         //////////////////////////////////////////////
     protected:
-        array<FILE*, 6> pm_LogFileHandles; //only 6 log levels, one slot per log file owo
+        array<FILE*, 6> pm_LogFileHandles{nullptr, nullptr, nullptr, nullptr, nullptr, nullptr}; //only 6 log levels, one slot per log file owo
         LogBuffer pm_SnapshotBuffer; //no heap alloc since Logger can only be instantiated on the heap since private ctor and factory functions owo
 
         string pm_LoggerName = "No_Logger_Name";
@@ -119,6 +116,8 @@ namespace PeachCore {
         bool pm_LogToFile = true;
 
         uint32_t pm_LogSizeCounter = 0;
+
+        std::mutex pm_LogFileMutex;
 
         //////////////////////////////////////////////
         // Public Methods
@@ -209,18 +208,29 @@ namespace PeachCore {
         [[nodiscard]] bool
             CreateLogFile
             (
-                const string& fp_FilePath,
-                const string& fp_FileName
+                const std::string& fp_FilePath,
+                const std::string& fp_FileName,
+                uint8_t fp_LevelIndex
             );
 
         void
-            CloseOpenLogFiles();
+            CloseOpenLogFiles()
+            noexcept;
 
         [[nodiscard]] bool ///XXX: used for testing, this method should never call exit() for a production release, since all logging is hidden away from the game engine dev
             AssertThreadAccess(const string& fp_FunctionName) //we don't require a lock since this method guarantees only one thread is operating on any data within the Logger instance
             const;
 
         void
-            ForceFlushAllLogs(); //called by functions that already do an AssertThreadAccess call in them uwu this is to avoid double calling OwO!
+            FlushAllLocked()
+            noexcept; //locks the mutex so that on panic we dont get any weird UB
+            
+        void
+            WriteLogEntry
+            (
+                const uint8_t fp_LevelIndex, 
+                const uint8_t fp_FlushBit,
+                const std::string& fp_Entry
+            );
     };
 }

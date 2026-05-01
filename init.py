@@ -173,7 +173,7 @@ def WriteBuildSummaryMarkdown(fp_BaseDir: str, fp_PrintErrors: bool, fp_PrintWar
 
 ############# Main CMake Function #############
 
-def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_ExtraArgs: list, fp_ExtraConfigs: list) -> bool:
+def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_ExtraBuildArgs: list, fp_ExtraConfigs: list) -> bool:
 
     f_GeneratorMap = {
         "vs2026": "Visual Studio 18 2026",
@@ -249,7 +249,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
         try:
             print(CreateColouredText(f"[INFO]: Running CMake single config build for {fp_BuildType}...", "green"))
 
-            run_command_with_live_output(['cmake', '--build', 'build'] + fp_ExtraArgs)
+            run_command_with_live_output(['cmake', '--build', 'build'] + fp_ExtraBuildArgs)
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText(f"[ERROR]: CMake single config {fp_BuildType} build process failed!", "red"))
@@ -265,7 +265,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Debug...", "green"))
 
-            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Debug'] + fp_ExtraArgs)
+            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Debug'] + fp_ExtraBuildArgs)
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake debug build process failed!", "red"))
@@ -279,7 +279,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
         try:
             print(CreateColouredText("[INFO]: Running CMake build for Release...", "green"))
 
-            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Release'] + fp_ExtraArgs)
+            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Release'] + fp_ExtraBuildArgs)
 
         except subprocess.CalledProcessError as err:
             print(CreateColouredText("[ERROR]: CMake release build process failed!", "red"))
@@ -485,8 +485,8 @@ def main() -> bool:
 
     ############# Extra args and cmake configs owo #############
 
-    f_ExtraArgs = []
-    f_ExtraBuildConfigs = []
+    f_ExtraBuildArgs = []
+    f_ExtraGenerationConfigs = []
 
     ############# Check for Generator #############
         
@@ -500,19 +500,19 @@ def main() -> bool:
 
     if args.verbose:
         if f_DesiredGenerator == "vs2022":
-            f_ExtraArgs += ['--verbose', '--', '-verbosity:diagnostic']
+            f_ExtraBuildArgs += ['--verbose', '--', '-verbosity:diagnostic']
 
     ############# Thread Limiter #############
 
     if args.J:
         f_MaxNumberOfJobs = args.J[0]
 
-        f_ExtraArgs.extend(["--parallel", f_MaxNumberOfJobs])
+        f_ExtraBuildArgs.extend(["--parallel", f_MaxNumberOfJobs])
 
     ############# Export compile commands? #############
 
     if args.export_commands:
-        f_ExtraBuildConfigs.append('-DCMAKE_EXPORT_COMPILE_COMMANDS=ON')        
+        f_ExtraGenerationConfigs.append('-DCMAKE_EXPORT_COMPILE_COMMANDS=ON')        
 
     ############# Target Platform Config #############
 
@@ -549,7 +549,7 @@ def main() -> bool:
         if not ensure_tool_installed("clang") and not ensure_tool_installed("clang++"):
             return False
 
-        f_ExtraBuildConfigs.extend(["-DCMAKE_C_COMPILER=clang", "-DCMAKE_CXX_COMPILER=clang++"])
+        f_ExtraGenerationConfigs.extend(["-DCMAKE_C_COMPILER=clang", "-DCMAKE_CXX_COMPILER=clang++"])
 
     elif args.use_gcc:
 
@@ -559,7 +559,7 @@ def main() -> bool:
         if not ensure_tool_installed("gcc") and not ensure_tool_installed("g++"):
             return False
 
-        f_ExtraBuildConfigs.extend(["-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++"])
+        f_ExtraGenerationConfigs.extend(["-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++"])
 
     ############# Get Current Working Directory #############
 
@@ -588,7 +588,7 @@ def main() -> bool:
 
     ############# Run Build Fingers Crossed >w< #############
 
-    build_result = run_cmake(f_BuildType, f_DesiredGenerator, f_ToolchainKey, f_ExtraArgs, f_ExtraBuildConfigs)
+    build_result = run_cmake(f_BuildType, f_DesiredGenerator, f_ToolchainKey, f_ExtraBuildArgs, f_ExtraGenerationConfigs)
 
     ############# Provide Printout #############
 

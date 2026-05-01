@@ -11,6 +11,7 @@
 #include "ResourceManager.h"
 #include "Utils/DynamicLoader.cpp"
 #include "peach_api/NodeDef.h"
+#include <fstream>
 
 namespace PeachCore{
     // [[nodiscard]] static inline bool
@@ -32,7 +33,7 @@ namespace PeachCore {
     {
         //////////////////// Resource Logger Initialization ////////////////////
 
-        resource_logger = Logger::CreateUnique("ResourceThread", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
+        resource_logger = LogManager::get_single().CreateUniqueLogger("ResourceThread", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
 
         if(not resource_logger)
         {

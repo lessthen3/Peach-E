@@ -16,6 +16,8 @@
 
 #include <sstream>
 
+#include <Utils/FileIO.h> //TODO: move shader soure loading out of here since resource manager should just pass the loaded string owo
+
 namespace PeachCore::OpenGL {
 
     ShaderProgram::~ShaderProgram() //cleaning up should be kosher since OpenGL runs single threaded anyways owo
@@ -32,29 +34,37 @@ namespace PeachCore::OpenGL {
     ShaderProgram::ShaderProgram
     (
         const string& fp_ShaderName,
-        const string& fp_VertexSourceFilePath,
-        const string& fp_FragmentSourceFilePath,
+        const string& fp_VertexSource,
+        const string& fp_FragmentSource,
         Logger* logger
     )
     {
         pm_ProgramName = fp_ShaderName;
         pm_ProgramID = glCreateProgram();
 
-        string f_VertexSourceCode, f_FragmentSourceCode;
+        //string f_VertexSourceCode, f_FragmentSourceCode;
+        //f_FileExtension != ".fs" and f_FileExtension != ".vs" and f_FileExtension != ".glsl" and f_FileExtension != ".frag" and f_FileExtension != ".vert"
+        /////vertex shader
+        //if (not FileIO::ReadFileIntoString(fp_VertexSourceFilePath, f_VertexSourceCode, logger))
+        //{
+        //    logger->Error
+        //    (
+        //        fmt::format("Vertex shader failed to load at file path: {}", fp_VertexSourceFilePath),
+        //        fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
+        //    );
+        //}
+        /////fragment shader
+        //if (not ReadFileIntoString(fp_FragmentSourceFilePath, f_FragmentSourceCode, logger))
+        //{
+        //    logger->Error
+        //    (
+        //        fmt::format("Fragment shader failed to load at file path: {}", fp_VertexSourceFilePath),
+        //        fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
+        //    );
+        //}
 
-        ///vertex shader
-        if (not ReadFileIntoString(fp_VertexSourceFilePath, f_VertexSourceCode, logger))
-        {
-            logger->Error("Unable to read vertex shader code into a string", "OpenGL::ShaderProgram: " + pm_ProgramName);
-        }
-        ///fragment shader
-        if (not ReadFileIntoString(fp_FragmentSourceFilePath, f_FragmentSourceCode, logger))
-        {
-            logger->Error("Unable to read fragment shader code into a string", "OpenGL::ShaderProgram: " + pm_ProgramName);
-        }
-
-        GLint f_VertexShaderID = CreateShader(f_VertexSourceCode, GL_VERTEX_SHADER, logger);
-        GLint f_FragmentShaderID = CreateShader(f_FragmentSourceCode, GL_FRAGMENT_SHADER, logger);
+        GLint f_VertexShaderID = CreateShader(fp_VertexSource, GL_VERTEX_SHADER, logger);
+        GLint f_FragmentShaderID = CreateShader(fp_FragmentSource, GL_FRAGMENT_SHADER, logger);
         
 
         if (f_VertexShaderID and f_FragmentShaderID) //CreateShader returns 0 if it fails so this will work fine
@@ -257,64 +267,6 @@ namespace PeachCore::OpenGL {
     //////////////////////////////////////////////
     // Utility Functions
     //////////////////////////////////////////////
-
-    bool
-        ShaderProgram::ReadFileIntoString
-        (
-            const string& fp_ScriptFilePath,
-            string& fp_SourceCode,
-            Logger* fp_RenderingLogger
-        )
-        const
-    {
-        size_t f_LastDotIndex = fp_ScriptFilePath.rfind('.');  // Extract file extension assuming fmt::format "filename.ext"
-
-        if (f_LastDotIndex == string::npos)
-        {
-            fp_RenderingLogger->Error
-            (
-                fmt::format("No file extension found for GLSL Shader at specified filepath: {}", fp_ScriptFilePath),
-                fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
-            );
-            return false;
-        }
-
-        string f_FileExtension = fp_ScriptFilePath.substr(f_LastDotIndex);
-
-        if (f_FileExtension != ".fs" and f_FileExtension != ".vs" and f_FileExtension != ".glsl" and f_FileExtension != ".frag" and f_FileExtension != ".vert")
-        {
-            fp_RenderingLogger->Error
-            (
-                fmt::format("Invalid file extension found when GLSL Shader was expected at specified filepath: {}", fp_ScriptFilePath), 
-                fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
-            );
-            return false;
-        }
-
-        ifstream f_FileStream(fp_ScriptFilePath);
-
-        if (not f_FileStream)
-        {
-            fp_RenderingLogger->Error
-            (
-                fmt::format("Shader failed to load at file path: {}", fp_ScriptFilePath),
-                fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
-            );
-            return false;
-        }
-
-        stringstream f_Buffer;
-        f_Buffer << f_FileStream.rdbuf();
-        fp_SourceCode = f_Buffer.str();
-
-        fp_RenderingLogger->Debug
-        (
-            fmt::format("Shader successfully loaded at file path: {}", fp_ScriptFilePath), 
-            fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
-        );
-
-        return true;
-    }
 
 }//namespace PeachCore::OpenGL
 

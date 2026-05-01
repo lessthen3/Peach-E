@@ -17,6 +17,9 @@
 ///PeachCore
 #include "PeachForceInline.h"
 
+///CSTD
+#include <cmath>
+
 namespace PeachCore::Math {
 
     struct Transform2D

@@ -17,9 +17,10 @@
 
 ///PeachCore
 //#include "../Rendering/VulkanShaderProgram.h"
-#include "Utils/Serializer.h"
-#include "Utils/DynamicLoader.h"
-#include "Utils/NullResources.h"
+#include "utils/Serializer.h"
+#include "utils/DynamicLoader.h"
+#include "utils/NullResources.h"
+#include "LogManager.h"
 
 //////////////////////////////////////////////
 // Language Support
@@ -27,8 +28,8 @@
 
 #include "peach_api/NativeScriptDef.h"
 #include "peach_api/NodeDef.h"
-#include "Language-Support/dotnet/DotnetRuntime.h"
-#include "Language-Support/lua/LuaScriptRuntime.h"
+#include "language_support/dotnet/DotnetRuntime.h"
+#include "language_support/lua/LuaScriptRuntime.h"
 
 ///External
 #include <physfs/physfs.h>

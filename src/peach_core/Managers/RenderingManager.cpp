@@ -65,7 +65,7 @@ namespace PeachCore {
     {
         //////////////////// Initialize Logger ////////////////////
 
-        rendering_logger = Logger::CreateShared("RenderingManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
+        rendering_logger = LogManager::get_single().CreateSharedLogger("RenderingManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
 
         if (not rendering_logger)
         {

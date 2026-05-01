@@ -24,16 +24,35 @@ constexpr uint8_t WARNING_LOG_INDEX = 3;
 constexpr uint8_t ERROR_LOG_INDEX = 4;
 constexpr uint8_t FATAL_LOG_INDEX = 5;
 
+constexpr uint8_t PEACH_LOGGER_FLUSH_TRACE_BIT = 1u << 0;
+constexpr uint8_t PEACH_LOGGER_FLUSH_DEBUG_BIT = 1u << 1;
+constexpr uint8_t PEACH_LOGGER_FLUSH_INFO_BIT = 1u << 2;
+constexpr uint8_t PEACH_LOGGER_FLUSH_WARNING_BIT = 1u << 3;
+constexpr uint8_t PEACH_LOGGER_FLUSH_ERROR_BIT = 1u << 4;
+
+struct LogLevelInfo
+{
+    uint8_t Level;     // bitmask value (1, 2, 4, 8, 16, 32)
+    uint8_t Index;     // array index (0, 1, 2, 3, 4, 5)
+    const char* Filename; //only literals will be in .rodata so w/e
+};
+
+static constexpr std::array<LogLevelInfo, 6> s_LogLevels =
+{{
+    { PEACH_TRACE_LOG,   TRACE_LOG_INDEX,   "trace.log"   },
+    { PEACH_DEBUG_LOG,   DEBUG_LOG_INDEX,   "debug.log"   },
+    { PEACH_INFO_LOG,    INFO_LOG_INDEX,    "info.log"    },
+    { PEACH_WARNING_LOG, WARNING_LOG_INDEX, "warning.log" },
+    { PEACH_ERROR_LOG,   ERROR_LOG_INDEX,   "error.log"   },
+    { PEACH_FATAL_LOG,   FATAL_LOG_INDEX,   "fatal.log"   }
+}};
 //just static functions that the header includes for relevance ig idfk
-namespace PeachCore{
 
 #if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
-#   define NOMINMAX
-#   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
 
     bool
-        EnableWindowsConsoleColours()
+        PEACH_EnableWindowsConsoleColours()
     {
         DWORD f_ConsoleMode;
         HANDLE f_OutputHandle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -52,7 +71,7 @@ namespace PeachCore{
 
 #endif /*defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)*/
 
-}
+
 
 namespace PeachCore{ //static internaly linked functions owo
 
@@ -142,23 +161,10 @@ namespace PeachCore{ //static internaly linked functions owo
 
 namespace PeachCore{
 
-    static constexpr uint8_t PEACH_LOGGER_FLUSH_TRACE_BIT = 1u << 0;
-    static constexpr uint8_t PEACH_LOGGER_FLUSH_DEBUG_BIT = 1u << 1;
-    static constexpr uint8_t PEACH_LOGGER_FLUSH_INFO_BIT = 1u << 2;
-    static constexpr uint8_t PEACH_LOGGER_FLUSH_WARNING_BIT = 1u << 3;
-    static constexpr uint8_t PEACH_LOGGER_FLUSH_ERROR_BIT = 1u << 4;
-    static constexpr uint8_t PEACH_LOGGER_FLUSH_FATAL_BIT = 1u << 5;
-
     Logger::~Logger() ///XXX: Just copy and pasted the flushalllogs method because they have the assert at the beginning and wont work with premature exit
     {
-        for (auto& lv_LogFile : pm_LogFiles)
-        {
-            if (lv_LogFile.second.is_open())
-            {
-                lv_LogFile.second.flush();
-            }
-        }  // Ensure all logs are flushed before destruction
-
+        LogManager::get_single().UnregisterLogger(this);
+        FlushAllLocked();
         CloseOpenLogFiles(); //Closes any files that are open to prevent introducing vulnerabilities in privileged environments
     }
 
@@ -192,10 +198,7 @@ namespace PeachCore{
 
         ////////////////////////////////////////////// flush all logs before making any changes //////////////////////////////////////////////
 
-        if (not FlushAllLogs())
-        {
-            return false;
-        }
+        FlushAllLocked();
 
         ////////////////////////////////////////////// Reset Mask //////////////////////////////////////////////
 
@@ -203,17 +206,17 @@ namespace PeachCore{
 
         ////////////////////////////////////////////// Create Log files based off of Current active mask uwu //////////////////////////////////////////////
 
-        for (size_t lv_CurrentLogFileIndex = 0; lv_CurrentLogFileIndex < 6; lv_CurrentLogFileIndex++)
+        for (LogLevelInfo lv_CurrentLogLevelFlag : s_LogLevels) //active mask is low 8 bits so this is fine owo
         {
-            if (fp_NewLogMask & lv_LogEnum)
+            if (fp_NewLogMask & lv_CurrentLogLevelFlag.Level)
             {
-                if (not CreateLogFile(pm_CurrentWorkingDirectory, lv_LogStringName))
+                if (not CreateLogFile(pm_CurrentWorkingDirectory, lv_CurrentLogLevelFlag.Filename, lv_CurrentLogLevelFlag.Index))
                 {
-                    PEACH_PRINT_ERROR_FMT("Failed to create log file named: {}", lv_LogStringName);
+                    PEACH_PRINT_ERROR_FMT("Failed to create log file named: {}", lv_CurrentLogLevelFlag.Filename);
                     return false;
                 }
 
-                pm_ActiveLogMask |= static_cast<uint8_t>(lv_LogEnum);
+                pm_ActiveLogMask |= static_cast<uint8_t>(lv_CurrentLogLevelFlag.Level);
             }
         }
 
@@ -247,19 +250,7 @@ namespace PeachCore{
 
             if (pm_LogToFile)
             {
-                if (f_LogFile.is_open())
-                {
-                    f_LogFile << f_LogEntry << "\n";
-
-                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
-                    {
-                        ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
-                    }
-                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_TRACE_BIT)
-                    {
-                        f_LogFile.flush();
-                    }
-                }
+                WriteLogEntry(TRACE_LOG_INDEX, PEACH_LOGGER_FLUSH_TRACE_BIT, f_LogEntry);
             }
 
             PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_WHITE);
@@ -289,19 +280,7 @@ namespace PeachCore{
 
             if (pm_LogToFile)
             {
-                if (f_LogFile.is_open())
-                {
-                    f_LogFile << f_LogEntry << "\n";
-
-                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
-                    {
-                        ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
-                    }
-                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_DEBUG_BIT)
-                    {
-                        f_LogFile.flush();
-                    }
-                }
+                WriteLogEntry(DEBUG_LOG_INDEX, PEACH_LOGGER_FLUSH_DEBUG_BIT, f_LogEntry);
             }
 
             PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_BLUE);
@@ -331,20 +310,7 @@ namespace PeachCore{
 
             if (pm_LogToFile)
             {
-
-                if (f_LogFile.is_open())
-                {
-                    f_LogFile << f_LogEntry << "\n";
-
-                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
-                    {
-                        ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
-                    }
-                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_INFO_BIT)
-                    {
-                        f_LogFile.flush();
-                    }
-                }
+                WriteLogEntry(INFO_LOG_INDEX, PEACH_LOGGER_FLUSH_INFO_BIT, f_LogEntry);
             }
 
             PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_GREEN);
@@ -378,19 +344,7 @@ namespace PeachCore{
 
             if (pm_LogToFile)
             {
-                if (f_LogFile.is_open())
-                {
-                    f_LogFile << f_LogEntry << "\n";
-
-                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
-                    {
-                        ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
-                    }
-                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_WARNING_BIT)
-                    {
-                        f_LogFile.flush();
-                    }
-                }
+                WriteLogEntry(WARNING_LOG_INDEX, PEACH_LOGGER_FLUSH_WARNING_BIT, f_LogEntry);
             }
 
             PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_YELLOW);
@@ -424,19 +378,7 @@ namespace PeachCore{
 
             if (pm_LogToFile)
             {
-                if (f_LogFile.is_open())
-                {
-                    f_LogFile << f_LogEntry << "\n";
-
-                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
-                    {
-                        ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
-                    }
-                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_ERROR_BIT)
-                    {
-                        f_LogFile.flush();
-                    }
-                }
+                WriteLogEntry(ERROR_LOG_INDEX, PEACH_LOGGER_FLUSH_ERROR_BIT, f_LogEntry);
             }
 
             PEACH_PRINT_ERROR(f_LogEntry);
@@ -470,19 +412,17 @@ namespace PeachCore{
 
             if (pm_LogToFile)
             {
-                if (f_LogFile.is_open())
-                {
-                    f_LogFile << f_LogEntry << "\n";
+                FILE* f_File = pm_LogFileHandles[FATAL_LOG_INDEX];
 
-                    if (pm_LogSizeCounter++ >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
-                    {
-                        ForceFlushAllLogs(); //AssertThreadAccess is already called so this is safe UwU >O< !!!!!
-                    }
-                    else if (pm_FlushMask & PEACH_LOGGER_FLUSH_FATAL_BIT)
-                    {
-                        f_LogFile.flush();
-                    }
+                if (f_File == nullptr) 
+                { 
+                    return; 
                 }
+
+                std::fwrite(f_LogEntry.data(), 1, f_LogEntry.size(), f_File);
+                std::fputc('\n', f_File);
+
+                FlushAllLocked(); //dont increment log counter since its gonna be set to 0 anyways after flushing
             }
 
             PEACH_PRINT(f_LogEntry, PEACH_COL_MAGENTA);
@@ -554,66 +494,53 @@ namespace PeachCore{
     bool
         Logger::CreateLogFile
         (
-            const string& fp_FilePath,
-            const string& fp_FileName
+            const std::string& fp_FilePath, 
+            const std::string& fp_FileName, 
+            uint8_t fp_LevelIndex
         )
     {
-        ////////////////////////////////////////////// Cache Full Path String //////////////////////////////////////////////
+        const std::string f_FullPath = fp_FilePath + "/" + fp_FileName;
 
-        const string f_FullPath = fp_FilePath + "/" + fp_FileName;
+        // Check size, decide append vs truncate
+        const char* f_Mode = "ab";  // default: append, binary
 
-        ////////////////////////////////////////////// If file exists and is too big, truncate it //////////////////////////////////////////////
-        error_code f_ErrorCode;
-
-        if (filesystem::exists(f_FullPath, f_ErrorCode) and not f_ErrorCode)
+        std::error_code f_ErrorCode;
+        
+        if (std::filesystem::exists(f_FullPath, f_ErrorCode) and not f_ErrorCode)
         {
-            auto f_LogFileSize = filesystem::file_size(f_FullPath, f_ErrorCode);
+            auto f_Size = std::filesystem::file_size(f_FullPath, f_ErrorCode);
 
-            if (not f_ErrorCode and f_LogFileSize >= PEACH_LOGGER_MAX_LOG_FILE_SIZE_BYTES)
+            if (not f_ErrorCode and f_Size >= PEACH_LOGGER_MAX_LOG_FILE_SIZE_BYTES)
             {
-                ////////////////////////////////////////////// truncate by reopening with ios::trunc //////////////////////////////////////////////
-
-                ofstream f_LogFile(f_FullPath, ios::out | ios::trunc);
-
-                if (not f_LogFile.is_open())
-                {
-                    PEACH_PRINT_ERROR_FMT("Failed to truncate oversized log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName);
-                    return false;
-                }
-
-                pm_LogFiles[fp_FileName] = std::move(f_LogFile);
-
-                ////////////////////////////////////////////// Success! //////////////////////////////////////////////
-
-                return true;
+                f_Mode = "wb";  // truncate
             }
         }
 
-        ////////////////////////////////////////////// If file doesn't exist or isn't too big it's business as usual UwU //////////////////////////////////////////////
+        FILE* f_File = std::fopen(f_FullPath.c_str(), f_Mode);
 
-        ofstream f_LogFile(f_FullPath, ios::out | ios::app);
-
-        if (not f_LogFile.is_open())
+        if (f_File == nullptr)
         {
-            PEACH_PRINT_ERROR_FMT("Failed to open log file: '{}' with logger named: {}", fp_FileName, pm_LoggerName);
+            PEACH_PRINT_ERROR_FMT(PEACH_COL_BRIGHT_RED, "Failed to open log file: '{}', with logger named: {}", f_FullPath, pm_LoggerName);
             return false;
         }
 
-        pm_LogFiles[fp_FileName] = std::move(f_LogFile);
-
-        ////////////////////////////////////////////// Success! //////////////////////////////////////////////
+        pm_LogFileHandles[fp_LevelIndex] = f_File;
 
         return true;
     }
 
     void
-        Logger::CloseOpenLogFiles()
+        Logger::CloseOpenLogFiles() 
+        noexcept
     {
-        for (auto& _f : pm_LogFiles)
+        std::lock_guard<std::mutex> f_Lock(pm_LogFileMutex); //lock in the unlikely event of logmanager calling flush at the same time
+
+        for (FILE*& fv_Handle : pm_LogFileHandles)
         {
-            if (_f.second.is_open())
+            if (fv_Handle != nullptr)
             {
-                _f.second.close();
+                std::fclose(fv_Handle);
+                fv_Handle = nullptr;
             }
         }
     }
@@ -636,17 +563,50 @@ namespace PeachCore{
         return false;
     }
 
-    void
-        Logger::ForceFlushAllLogs() //called by functions that already do an AssertThreadAccess call in them uwu this is to avoid double calling OwO!
+    PEACH_FORCEINLINE void
+        Logger::WriteLogEntry
+        (
+            const uint8_t fp_LevelIndex,
+            const uint8_t fp_FlushBit,
+            const std::string& fp_Entry
+        )
     {
-        for (auto& lv_LogFile : pm_LogFiles)
+        FILE* f_File = pm_LogFileHandles[fp_LevelIndex];
+
+        if (f_File == nullptr) 
+        { 
+            return; 
+        }
+
+        std::fwrite(fp_Entry.data(), 1, fp_Entry.size(), f_File);
+        std::fputc('\n', f_File);
+
+        ++pm_LogSizeCounter;
+
+        if (pm_LogSizeCounter >= PEACH_LOGGER_FLUSH_EVERY_N_LOGS)
         {
-            if (lv_LogFile.second.is_open())
+            FlushAllLocked();
+        }
+        else if (pm_FlushMask & fp_FlushBit)
+        {
+            std::fflush(f_File);
+        }
+    }
+
+    void
+        Logger::FlushAllLocked() 
+        noexcept
+    {
+        std::lock_guard<std::mutex> f_Lock(pm_LogFileMutex); //lock releases on destruction
+
+        for (FILE* fv_Handle : pm_LogFileHandles)
+        {
+            if (fv_Handle != nullptr)
             {
-                lv_LogFile.second.flush();
+                std::fflush(fv_Handle);
             }
         }
 
-        pm_LogSizeCounter = 0; //reset since all logs have been flushed
+        pm_LogSizeCounter = 0;
     }
 }

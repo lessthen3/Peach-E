@@ -22,6 +22,9 @@
 #include <cglm/cglm.h>
 #include <cglm/struct.h>
 
+///STL
+#include <unordered_map>
+
 namespace PeachCore::OpenGL {
 
     constexpr size_t NUMBER_OF_OPENGL_SHADER_TYPES = 6;
@@ -54,8 +57,8 @@ namespace PeachCore::OpenGL {
         ShaderProgram
         (
             const string& fp_ShaderName,
-            const string& fp_VertexSourceFilePath,
-            const string& fp_FragmentSourceFilePath,
+            const string& fp_VertexSource,
+            const string& fp_FragmentSource,
             Logger* logger
         );
 

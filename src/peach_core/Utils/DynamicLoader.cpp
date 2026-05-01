@@ -18,8 +18,6 @@
 
 //Imagine if windows was posix compliant, what a world that'd be >O<
 #ifdef PEACH_PLATFORM_WINDOWS
-    #define NOMINMAX
-    #define WIN32_LEAN_AND_MEAN
     #include <windows.h>
 
     //XXX: we do this to avoid weird stuff w unicode and ansi strings, LoadLibrary is just a macro and since its a preprocessor thing it can cause runtime trouble

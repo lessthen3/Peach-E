@@ -27,7 +27,7 @@ namespace PeachCore {
     struct Fog3D
     {
          bool pm_IsActive = true;
-         vec4s pm_Colour = { 1.0f, 1.0f, 1.0f, 1.0f }; // Initialize with a struct literal
+         vec4s pm_Colour = {{1.0f, 1.0f, 1.0f, 1.0f}}; // Initialize with a struct literal
          float pm_Density = 1;
 
         ////////////////////////////////////////////// Constructor //////////////////////////////////////////////

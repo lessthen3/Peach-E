@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "Utils/Logger.h"
+#include "LogManager.h"
 
 ///SDL3
 #include <SDL3/SDL.h>
@@ -25,6 +25,7 @@
 #include <atomic>
 #include <array>
 #include <vector>
+#include <unordered_map>
 
 namespace PeachCore {
 
@@ -146,7 +147,7 @@ namespace PeachCore {
         float Rotation = 0.0f;
         float Tilt = 0.0f;
 
-        vec2s Position = { {0.0f, 0.0f} };
+        vec2s Position = {{0.0f, 0.0f}};
     };
 
     struct TouchInput
@@ -162,14 +163,14 @@ namespace PeachCore {
 
     struct Gamepad
     {
-        SDL_JoystickID  JoystickID = -1;
+        SDL_JoystickID  JoystickID = UINT32_MAX;
         SDL_Gamepad* ID = nullptr;
         GamepadInput Input;
     };
 
     struct Joystick
     {
-        SDL_JoystickID JoystickID = -1;
+        SDL_JoystickID JoystickID = UINT32_MAX;
         SDL_Joystick* ID = nullptr;
         JoystickInput Input;
     };

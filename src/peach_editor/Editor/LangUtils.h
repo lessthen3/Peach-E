@@ -12,7 +12,7 @@
 
 ///PeachCore
 #include <Managers/ResourceManager.h>
-#include <Language-Support/dotnet/DotnetRuntime.h>
+#include <language_support/dotnet/DotnetRuntime.h>
 
 // Lua runtime for *editor tools* (compiling scripts)
 extern "C"
@@ -22,7 +22,7 @@ extern "C"
     #include <lua/lualib.h>
 }
 
-///Ew Microsoft
+///Ew Microsoft (windows 11 isn't that bad tbh ngl frfr ogog ifykyk)
 
 #ifdef PEACH_PLATFORM_FREEBSD
     #include <dotnet9/nethost.h>

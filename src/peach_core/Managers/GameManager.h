@@ -20,7 +20,7 @@
 #include "PhysicsManager.h"
 #include "NetworkManager.h"
 
-#include "Scene-Items/SceneTree.h"
+#include "scene_items/SceneTree.h"
 
 #include <thread>
 

@@ -26,7 +26,7 @@
 #include <latch>
 
 ///PeachCore
-#include "Utils/Logger.h"
+#include "LogManager.h"
 
 namespace PeachCore {
 

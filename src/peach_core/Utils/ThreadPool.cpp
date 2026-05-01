@@ -11,7 +11,7 @@
 #include "ThreadPool.h"
 
 #include <fmt/format.h>
-#include "Logger.h"
+#include "Managers/LogManager.h"
 
 namespace PeachCore{
 
@@ -83,7 +83,7 @@ namespace PeachCore{
     void
         ThreadPool::Worker(int fp_ThreadNumber)
     {
-        thread_local Logger worker_logger = Logger::Create(fmt::format("Thread_{}", fp_ThreadNumber), PEACH_LOGGER_DEFAULT_FLAGS).value();
+        thread_local unique_ptr<Logger> worker_logger = LogManager::get_single().CreateUniqueLogger(fmt::format("Thread_{}", fp_ThreadNumber), PEACH_LOGGER_DEFAULT_FLAGS);
 
         while (true)
         {
