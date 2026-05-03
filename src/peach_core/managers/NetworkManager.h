@@ -12,6 +12,7 @@
 
 ///STL
 #include <latch>
+#include <semaphore>
 
 ///PeachCore
 #include "utils/Logger.h" 
