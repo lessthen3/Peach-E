@@ -57,10 +57,10 @@ _g_ErrorPatterns = [
     # re.compile(r'\bfailed\b',              re.IGNORECASE),  # ninja "FAILED: CMakeFiles/..." / MSBuild "Build FAILED."
 
     re.compile(r'\blnk\d{4}\b',             re.IGNORECASE), # MSVC linker: LNK1181, LNK2019 etc
-    re.compile(r'\b[Cc][2-9]\d{3}\b'),                      # MSVC compiler: C2065, C3861 
+    re.compile(r'\b[Cc][2356789]\d{3}\b') ,                     # MSVC compiler: C2065, C3861 
     re.compile(r'\bld:\s+error\b',          re.IGNORECASE), # GNU ld errors
     re.compile(r'\bundefined\s+symbol\b',   re.IGNORECASE), # linker: undefined symbol
-    re.compile(r'\bduplicate\s+symbol\b',         re.IGNORECASE), # linker: duplicate symbol
+    re.compile(r'\bduplicate\s+symbol\b',   re.IGNORECASE), # linker: duplicate symbol
     re.compile(r'\bundefined\s+reference\b',re.IGNORECASE), # GCC linker variant
     re.compile(r'\breferenced\s+from\b',    re.IGNORECASE), # Apple ld variant
     
@@ -68,7 +68,7 @@ _g_ErrorPatterns = [
     re.compile(r'\bcommand\s+failed\b',     re.IGNORECASE), # generic CMake command failure
     re.compile(r'cmake\s+error',            re.IGNORECASE), # CMake configure errors
 
-    re.compile(r'\binternal\s+compiler\s+error\b',re.IGNORECASE), # GCC/Clang ICE
+    re.compile(r'\binternal\s+compiler\s+error\b', re.IGNORECASE), # GCC/Clang ICE
 ]
 
 _g_WarningPatterns = [
