@@ -14,13 +14,13 @@
 #include <semaphore>
 #include <latch>
 #include <filesystem>
+#include <unordered_map>
 
 ///PeachCore
 //#include "../rendering/VulkanShaderProgram.h"
-#include "utils/Serializer.h"
 #include "utils/DynamicLoader.h"
 #include "utils/NullResources.h"
-#include "LogManager.h"
+#include "utils/Logger.h"
 
 //////////////////////////////////////////////
 // Language Support

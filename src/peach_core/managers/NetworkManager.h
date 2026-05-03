@@ -10,7 +10,14 @@
 ********************************************************************/
 #pragma once
 
-#include "managers/ResourceManager.h"
+///STL
+#include <latch>
+
+///PeachCore
+#include "utils/Logger.h" 
+
+///moodycamel
+#include <moody_camel/readerwriterqueue.h>
 
 namespace PeachCore {
 

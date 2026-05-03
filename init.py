@@ -56,8 +56,8 @@ _g_ErrorPatterns = [
     re.compile(r'\bfatal\s+error\b',        re.IGNORECASE), # "fatal error:" — preprocessor, linker
     # re.compile(r'\bfailed\b',              re.IGNORECASE),  # ninja "FAILED: CMakeFiles/..." / MSBuild "Build FAILED."
 
-    re.compile(r'\blnk\d{4}\b',             re.IGNORECASE), # MSVC linker: LNK1181, LNK2019 etc
-    re.compile(r'\b[Cc][2356789]\d{3}\b') ,                     # MSVC compiler: C2065, C3861 
+    re.compile(r'\blnk[12]\d{3}\b',         re.IGNORECASE), # MSVC linker errors: LNK1181, LNK2019 etc
+    re.compile(r'\b[Cc][2356789]\d{3}\b',   re.IGNORECASE), # MSVC compiler errors: C2065, C3861 
     re.compile(r'\bld:\s+error\b',          re.IGNORECASE), # GNU ld errors
     re.compile(r'\bundefined\s+symbol\b',   re.IGNORECASE), # linker: undefined symbol
     re.compile(r'\bduplicate\s+symbol\b',   re.IGNORECASE), # linker: duplicate symbol
@@ -73,7 +73,8 @@ _g_ErrorPatterns = [
 
 _g_WarningPatterns = [
     re.compile(r':\s*warning\b',            re.IGNORECASE), # "warning:" / ": warning" — GCC, Clang, MSVC
-    re.compile(r'\b[Cc]4\d{3}\b'),                          # MSVC warnings: C4100, C4244 etc
+    re.compile(r'\b[Cc]4\d{3}\b',           re.IGNORECASE), # MSVC warnings are in the 4000s: C4100, C4244 etc
+    re.compile(r'\blnk4\d{3}\b',            re.IGNORECASE), # linker warnings should be 4000s as well
     re.compile(r'\bcmake\s+warning\b',      re.IGNORECASE), # CMake configure warnings
 ]
 

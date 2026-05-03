@@ -9,6 +9,7 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "NetworkManager.h"
+#include "managers/LogManager.h"
 
 namespace PeachCore {
 
