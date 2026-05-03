@@ -19,7 +19,7 @@
 #include "peach_api/StatusCodes.h"
 #include "peach_api/NodeDef.h"
 
-#include "utils/DoubleBuffered.h"
+#include "math/DoubleBuffered.h"
 
 namespace PeachCore {
 

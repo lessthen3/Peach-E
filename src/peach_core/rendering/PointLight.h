@@ -10,62 +10,59 @@
 ********************************************************************/
 #pragma once
 
-///PeachCore
-#include <glm/glm.hpp>
+///cglm
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 namespace PeachCore {
 
-    struct PointLight2D
+    struct Attenuation
     {
+        float Constant = 1.0f;
+        float Linear = 0.0f;
+        float Exponent = 0.0f;
+        float _________Padding = 0.0f;
     };
 
+    static constexpr Attenuation DEFAULT_ATTENUATION = {1.0f, 0.07f, 0.017f, 0.0f};
 }
 
-namespace PeachCore
-{
-     struct PointLight3D
-     {
-         struct
-         {
-             float Constant = 1;
-             float Linear = 0;
-             float Exponent = 0;
-         } Attenuation;
+namespace PeachCore {
 
-         glm::vec4 pm_Colour;
-         glm::vec3 pm_Position;
-         float pm_Intensity;
+    struct PointLight
+    {
+        Attenuation m_Attenuation;
+        vec4s m_Colour;
+        vec3s m_Position;
+        float m_Intensity;
 
-        ////////////////////////////////////////////// Constructor //////////////////////////////////////////////
+        explicit
+            PointLight
+            (
+                const vec4s fp_Colour, 
+                const vec3s fp_Position, //for 2D we just use x and y, the struct needs to be aligned 16 bytes and might as well use every byte
+                const float fp_Intensity, 
+                const Attenuation fp_Attenuation = DEFAULT_ATTENUATION
+            )
+            :
+            m_Attenuation(fp_Attenuation),
+            m_Colour(fp_Colour),
+            m_Position(fp_Position),
+            m_Intensity(fp_Intensity)
+        {}
 
-         PointLight3D() = default;
+        ////////////////////////////////////////////// Setter and Getters //////////////////////////////////////////////
 
-         PointLight3D(const glm::vec4& fp_Colour, const glm::vec3& fp_Position, const float fp_Intensity)
-         {
-             pm_Colour = fp_Colour;
-             pm_Position = fp_Position;
-             pm_Intensity = fp_Intensity;
+        void 
+            SetAttenuation(const Attenuation fp_Attenuation) //no bad alloc here and its stack allocd passed by val OwOs
+            noexcept
+        {
+            m_Attenuation = fp_Attenuation;
         }
-
-         PointLight3D(const glm::vec4& fp_Colour, const glm::vec3& fp_Position, const float fp_Intensity, const glm::vec3& fp_Attenuation)
-         {
-             pm_Colour = fp_Colour;
-             pm_Position = fp_Position;
-             pm_Intensity = fp_Intensity;
-
-             Attenuation.Constant = fp_Attenuation.x;
-             Attenuation.Linear = fp_Attenuation.y;
-             Attenuation.Exponent = fp_Attenuation.z;
-        }
-
-         ////////////////////////////////////////////// Setter and Getters //////////////////////////////////////////////
-
-         void 
-             SetAttenuation(const glm::vec3& fp_Attenuation)
-         {
-             Attenuation.Constant = fp_Attenuation.x;
-             Attenuation.Linear = fp_Attenuation.y;
-             Attenuation.Exponent = fp_Attenuation.z;
-         }
-    };
+    } ;
 }
+
+static_assert(alignof(PeachCore::PointLight) == 16, "PointLight must be aligned 16 bytes for std 140 layout as a UBO");
+
+//if attenuation size is greater than 16 bytes then itll fuck the entire alignment of point light
+static_assert(sizeof(PeachCore::Attenuation) == 16, "PeachCore::Attenuation is not 16 bytes wide this will cause UBO issues for layout std=140");

@@ -11,11 +11,12 @@
 #pragma once
 
 ///PeachCore
+#include "utils/PeachForceInline.h"
+#include "utils/PeachPrint.h"
+#include "math/DoubleBuffered.h"
 
 ///STL
-#include <tuple>
 #include <vector>
-#include <string>
 
 ///CSTD
 #include <stdint.h>
@@ -28,22 +29,23 @@ namespace PeachCore {
         uint32_t m_Width = 0;
         uint32_t m_Height = 0;
 
-        std::string m_Name;
-
     private:
         uint32_t pm_TileWidth = 0;
         uint32_t pm_TileHeight = 0;
 
-        uint64_t pm_TextureID = 0;
+        uint64_t pm_TextureID = 0; //even if each texture is 4 bytes we def going over the limit of modern cards so this is fine lmfao
 
         bool pm_IsValid = false; //used for tracking whether LoadTexture() was successful/ if a texture is currently loaded
 
-        std::vector<std::tuple<float, float, float, float>> pm_TileUVs; // UV coordinates for each tile
+        std::vector<DoubleBuffered::UVs> pm_TileUVs; // UV coordinates for each tile
 
     public:
-        PeachTexture(const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight);
+        explicit PeachTexture(const uint32_t fp_TextureWidth, const uint32_t fp_TextureHeight);
         ~PeachTexture() = default;
 
+        PeachTexture(const PeachTexture&) = delete;
+        PeachTexture& operator=(const PeachTexture&) = delete;
+        PeachTexture& operator=(const PeachTexture&) volatile = delete;
 
         // Define tile size and calculate UVs for spritesheets
         void 
@@ -51,23 +53,37 @@ namespace PeachCore {
         void 
             CalculateTileUVs();        
 
-        std::vector<std::tuple<float, float, float, float>> 
-            GetTileUVs()
-            const;
+        PEACH_FORCEINLINE UVState
+            GetTileUV_ReadOnly
+            (
+                const size_t fp_TileIndex
+            ) 
+            const noexcept
+        {
+            if (fp_TileIndex >= pm_TileUVs.size())
+            {
+                PEACH_PRINT_ERROR("tried to access an index out of bounds inside PeachTexture::GetTileUV()");
+                return pm_TileUVs.back().GetReadSlot();
+            }
 
-        std::tuple<float, float, float, float> 
-            GetTileUV(const size_t fp_TileIndex) 
-            const;
+            return pm_TileUVs[fp_TileIndex].GetReadSlot();
+        }
 
-        int 
+        PEACH_FORCEINLINE int 
             GetTileCount() 
-            const;
+            const noexcept
+        {
+            return pm_TileUVs.size();
+        }
 
-        bool 
+        PEACH_FORCEINLINE bool 
             IsValid() 
-            const;
+            const noexcept
+        { 
+            return pm_IsValid; 
+        }
 
-        uint64_t
+        PEACH_FORCEINLINE uint64_t
             GetTextureID()
             const noexcept
         {

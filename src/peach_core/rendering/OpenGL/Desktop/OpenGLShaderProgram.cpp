@@ -12,12 +12,6 @@
 
 #include "OpenGLShaderProgram.h"
 
-#include <fmt/format.h>
-
-#include <sstream>
-
-#include <utils/FileIO.h> //TODO: move shader soure loading out of here since resource manager should just pass the loaded string owo
-
 namespace PeachCore::OpenGL {
 
     ShaderProgram::~ShaderProgram() //cleaning up should be kosher since OpenGL runs single threaded anyways owo
@@ -97,19 +91,19 @@ namespace PeachCore::OpenGL {
     // Material Uniform Setters
     //////////////////////////////////////////////
 
-    void
-        ShaderProgram::SetMaterialUniforms
-        (
-            const string& fp_UniformName,
-            const PeachMaterial& fp_Material
-        )
-    {
-        SetUniform(fp_UniformName + ".ambient", fp_Material.GetAmbientColour());
-        SetUniform(fp_UniformName + ".diffuse", fp_Material.GetDiffuseColour());
-        SetUniform(fp_UniformName + ".specular", fp_Material.GetSpecularColour());
-        SetUniform(fp_UniformName + ".hasTexture", fp_Material.IsTextured() ? 1 : 0);
-        SetUniform(fp_UniformName + ".reflectance", fp_Material.GetReflectance());
-    }
+    // void
+    //     ShaderProgram::SetMaterialUniforms
+    //     (
+    //         const string& fp_UniformName,
+    //         const PeachMaterial& fp_Material
+    //     )
+    // {
+    //     SetUniform(fp_UniformName + ".ambient", fp_Material.GetAmbientColour());
+    //     SetUniform(fp_UniformName + ".diffuse", fp_Material.GetDiffuseColour());
+    //     SetUniform(fp_UniformName + ".specular", fp_Material.GetSpecularColour());
+    //     SetUniform(fp_UniformName + ".hasTexture", fp_Material.IsTextured() ? 1 : 0);
+    //     SetUniform(fp_UniformName + ".reflectance", fp_Material.GetReflectance());
+    // }
 
     //////////////////////////////////////////////
     // Texture Uniform Setter

@@ -16,8 +16,7 @@
 ///PeachCore
 #include "Transform.h"
 
-
-namespace PeachCore::DoubleBuffered {
+namespace PeachCore{
 
     struct UVState
     {
@@ -27,8 +26,19 @@ namespace PeachCore::DoubleBuffered {
         float V2 = 1.0f;
     };
 
+}
+
+namespace PeachCore::DoubleBuffered {
+
     struct UVs 
     {
+        UVs() noexcept = default;
+        ~UVs() noexcept = default;
+        
+        UVs(const UVs&) = delete;
+        UVs& operator=(const UVs&) = delete;
+        UVs& operator=(const UVs&) volatile = delete;
+
         UVState Slots[2];
         std::atomic<uint32_t> WriteIndex{ 0 };
 
@@ -39,7 +49,7 @@ namespace PeachCore::DoubleBuffered {
             return Slots[WriteIndex.load(std::memory_order_relaxed) & 1u];
         }
 
-        [[nodiscard]] const UVState&
+        [[nodiscard]] const UVState
             GetReadSlot()
             const noexcept
         {

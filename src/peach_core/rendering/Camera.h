@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "utils/DoubleBuffered.h"
+#include "math/DoubleBuffered.h"
 #include "cglm/struct/mat4.h"
 
 namespace PeachCore {
@@ -351,3 +351,6 @@ namespace PeachCore {
         }
     };
 }
+
+static_assert(alignof(PeachCore::Camera2D) == 16, "Camera2D must be aligned 16 bytes for std 140 layout as a UBO");
+static_assert(alignof(PeachCore::Camera3D) == 16, "Camera3D must be aligned 16 bytes for std 140 layout as a UBO");

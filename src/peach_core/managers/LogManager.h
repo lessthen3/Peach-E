@@ -34,7 +34,13 @@ namespace PeachCore{
         void
             RegisterLogger(Logger* fp_Logger)
         {
+            if(not fp_Logger)
+            {
+                return;
+            }
+
             std::lock_guard<std::mutex> f_Lock(pm_RegistryMutex);
+
             pm_GlobalLoggerRegistry.push_back(fp_Logger);
         }
 
@@ -42,6 +48,11 @@ namespace PeachCore{
             UnregisterLogger(Logger* fp_Logger) 
             noexcept
         {
+            if(not fp_Logger)
+            {
+                return;
+            }
+
             std::lock_guard<std::mutex> f_Lock(pm_RegistryMutex);
 
             auto f_LoggerIterator = std::find(pm_GlobalLoggerRegistry.begin(), pm_GlobalLoggerRegistry.end(), fp_Logger);
@@ -53,7 +64,8 @@ namespace PeachCore{
         }
     
     public:
-        static LogManager& get_single()
+        static LogManager& 
+            get_single()
         {
             static LogManager log_manager;
             return log_manager;
@@ -108,10 +120,18 @@ namespace PeachCore{
             return f_CreatedLogger;
         }
 
-        static void
+        void
             ForceFlushAllLogggers()
         {
+            for(Logger* lv_Logger : pm_GlobalLoggerRegistry)
+            {
+                if(not lv_Logger)
+                {
+                    continue;
+                }
 
+                lv_Logger->FlushAllLocked();
+            }
         }
     };
 }

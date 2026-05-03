@@ -16,7 +16,6 @@
 #include <string>
 #include <thread>
 #include <source_location>
-#include <vector>
 #include <mutex>
 
 ///PeachCore
@@ -59,11 +58,11 @@ namespace PeachCore {
         string Sender;
         uint8_t Level;
 
-        [[nodiscard]] string
+        [[nodiscard]] PEACH_FORCEINLINE string
             Formatted(const string& fp_LevelName)
             const
         {
-            return "[" + Timestamp + "][" + fp_LevelName + "][" + Sender + "]: " + Message;
+            return fmt::format("[{}][{}][{}]: {}", Timestamp, fp_LevelName, Sender, Message);
         }
     };
 
@@ -84,8 +83,7 @@ namespace PeachCore {
         Logger(const Logger&) = delete;
         Logger& operator=(const Logger&) = delete;
         Logger& operator=(Logger&&) = delete;
-
-        Logger(Logger&&) = default;
+        Logger(Logger&&) = delete;
 
         friend LogManager;
 

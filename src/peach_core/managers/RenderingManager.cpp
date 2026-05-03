@@ -281,6 +281,8 @@ namespace PeachCore {
 
         pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, rendering_logger, true);
 
+        glewExperimental = GL_TRUE; //????????????????? wtf glew
+
         if (glewInit() != GLEW_OK)
         {
             rendering_logger->Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager");

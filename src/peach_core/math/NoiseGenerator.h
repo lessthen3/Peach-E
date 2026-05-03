@@ -21,7 +21,7 @@
 #include <cglm/struct.h>
 
 ///PeachCore
-#include "utils/Math.h"
+#include "BasicOperations.h"
 
 namespace PeachCore {
 
@@ -150,16 +150,17 @@ namespace PeachCore {
             const 
         {
             // 1. Create a "distorted" coordinate (q)
-            vec2s q = {
+            vec2s q = 
+            {{
                 fractal(x + 0.0f, y + 0.0f, 3),
                 fractal(x + 5.2f, y + 1.3f, 3) // Offsets to prevent symmetry
-            };
+            }};
 
             // 2. Create a "second-order" distorted coordinate (r)
-            vec2s r = {
+            vec2s r = {{
                 fractal(x + strength * q.x + 1.7f, y + strength * q.y + 9.2f, 3),
                 fractal(x + strength * q.x + 8.3f, y + strength * q.y + 2.8f, 3)
-            };
+            }};
 
             // 3. Sample the final noise using the warped coordinates
             return fractal(x + strength * r.x, y + strength * r.y, 3);

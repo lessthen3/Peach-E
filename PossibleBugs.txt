@@ -1,4 +1,4 @@
-
+Random.h has a lot of points that can break and do some bad stuff so gotta fail hard there since it cannot return anything bad really
 
 okay so ran vulkan thru wsl2 ubuntu and failing to acquire he next image happens on swapchain recreation
 

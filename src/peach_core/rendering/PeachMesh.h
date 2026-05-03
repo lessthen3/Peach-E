@@ -14,7 +14,7 @@
 #include "PeachMaterial.h"
 
 ///OpenGL
-#ifndef PEACH_RENDERER_OPENGL
+#ifdef PEACH_RENDERER_OPENGL
 
 #include <GL/glew.h>
 
@@ -26,27 +26,34 @@ namespace PeachCore::OpenGL {
         GLuint pm_VBO;
         uint64_t pm_VertexCount;
 
-        vector<GLuint> pm_ListVBO;
+        PeachMaterial pm_Material;
 
-        vector<PeachMaterial> pm_Materials;
+        std::vector<GLuint> pm_ListVBO;
+
+        std::vector<PeachMaterial> pm_Materials;
 
         //////////////////////////////////////////////
         //CLASS CONSTRUCTOR
         //////////////////////////////////////////////
 
-         PeachMesh() = default;
+         PeachMesh()
+         :
+            pm_VAO(0),
+            pm_VBO(0),
+            pm_VertexCount(0)
+        {}
 
          void
              Render()
              const
          {
-            const uint64_t f_Texture = pm_Material.GetTextureID();
+            // const uint64_t f_Texture = pm_Material.GetTextureID();
 
-            if (f_Texture != 0)
-            {
-                glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, f_Texture);
-            }
+            // if (f_Texture != 0)
+            // {
+            //     glActiveTexture(GL_TEXTURE0);
+            //     glBindTexture(GL_TEXTURE_2D, f_Texture);
+            // }
 
             glBindVertexArray(pm_VAO);
 
@@ -63,11 +70,11 @@ namespace PeachCore::OpenGL {
             return pm_Material;
         }
 
-         void 
-             SetMaterial(const PeachMaterial& fp_Material) 
-         {
-            pm_Material = fp_Material;
-        }
+        //  void 
+        //      SetMaterial(const PeachMaterial& fp_Material) 
+        //  {
+        //     pm_Material = fp_Material;
+        // }
 
          int 
              GetVAO()
@@ -95,12 +102,12 @@ namespace PeachCore::OpenGL {
                 glDeleteBuffers(1, &vbo_id);
             } //delete all vboid buffers
 
-            const uint64_t f_Texture = pm_Material.GetTextureID();
+            // const uint64_t f_Texture = pm_Material.GetTextureID();
 
-            if (f_Texture != 0)
-            { 
-                //f_Texture->CleanUp(); 
-            } //cleanup textures
+            // if (f_Texture != 0)
+            // { 
+            //     //f_Texture->CleanUp(); 
+            // } //cleanup textures
 
             glBindVertexArray(0);
             glDeleteVertexArrays(1, &pm_VAO);

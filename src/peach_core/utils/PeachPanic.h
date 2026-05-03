@@ -16,11 +16,29 @@
 ///PeachCore
 #include "PeachForceInline.h"
 #include "PeachPrint.h"
+#include "managers/LogManager.h"
 
 ///SDL
 #include <SDL3/SDL_messagebox.h>
 
 namespace PeachCore {
+
+    [[nodiscard]] PEACH_FORCEINLINE static constexpr const char*
+        PeachExtractFilename(const char* fp_Path)
+    {
+        const char* f_LastSlash = fp_Path;
+
+        for (const char* lv_Cur = fp_Path; *lv_Cur != '\0'; ++lv_Cur)
+        {
+            if (*lv_Cur == '/' || *lv_Cur == '\\')
+            {
+                f_LastSlash = lv_Cur + 1;
+            }
+        }
+
+        return f_LastSlash;
+    }
+
     [[noreturn]] PEACH_FORCEINLINE void 
         PanicExit
         (
@@ -43,7 +61,7 @@ namespace PeachCore {
             "Please report this to the developer.",
             fp_Condition,
             fp_Message,
-            fp_Loc.file_name(),
+            PeachExtractFilename(fp_Loc.file_name()),
             fp_Loc.line(),
             fp_Loc.function_name()
         );
@@ -67,10 +85,10 @@ namespace PeachCore {
         );
 
         // Flush all log files, close handles
-        // Logger::FlushAllLoggers();
+        LogManager::get_single().ForceFlushAllLogggers();
 
         std::exit(-69420); 
     }
 }
 
-#define PEACH_PANIC_IF(fp_Condition, fp_Message) ((fp_Condition) ? (void)0 : ::PeachCore::PanicExit(#fp_Condition, fp_Message))
+#define PEACH_PANIC_IF(fp_Condition, fp_Message) (__builtin_expect(!!(fp_Condition), 1) ? (void)0 : ::PeachCore::PanicExit(#fp_Condition, fp_Message))

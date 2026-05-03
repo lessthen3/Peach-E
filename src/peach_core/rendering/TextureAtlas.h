@@ -1,85 +1,68 @@
-﻿/*******************************************************************
- *                        Peach-E v0.0.1
- *         Created by Ranyodh Singh Mandur - 🍑 2024-2026
- *
- *              Licensed under the MIT License (MIT).
- *         For more details, see the LICENSE file or visit:
- *               https://opensource.org/licenses/MIT
- *
- *           Peach-E is a free open source game engine
-********************************************************************/
-#pragma once
+﻿// /*******************************************************************
+//  *                        Peach-E v0.0.1
+//  *         Created by Ranyodh Singh Mandur - 🍑 2024-2026
+//  *
+//  *              Licensed under the MIT License (MIT).
+//  *         For more details, see the LICENSE file or visit:
+//  *               https://opensource.org/licenses/MIT
+//  *
+//  *           Peach-E is a free open source game engine
+// ********************************************************************/
+// #pragma once
 
-#include "PeachTexture.h"
+// #include "PeachTexture.h"
 
-#include <vector>
-#include <tuple>
-
-namespace PeachCore {
-
-    struct Tile
-    {
-        std::tuple<float, float, float, float> m_UVCoords;
-        //b2Body* m_PhysicsBody = nullptr;  // Pointer to the Box2D body associated with this tile, if any
-
-        Tile(const std::tuple<float, float, float, float>& fp_UVCoords)
-        {
-            m_UVCoords = fp_UVCoords;
-        }//can use a reference here since the lifetime of the attached Texture2D is directly linked to the TileSet
-
-        Tile() = default;
-        ~Tile() = default;
-    };
+// namespace PeachCore {
 
 
-    struct TextureAtlas
-    {
-    private:
-        PeachTexture pm_Texture;
-        uint32_t pm_TileWidth;
-        uint32_t pm_TileHeight;
+//     struct TextureAtlas
+//     {
+//     private:
+//         PeachTexture pm_Texture;
+//         uint32_t pm_TileWidth;
+//         uint32_t pm_TileHeight;
 
-    //Constructor and Destructor
-    public:
-        TextureAtlas(PeachTexture&& fp_Texture) 
-        : 
-            pm_Texture(std::move(fp_Texture))
-        {}
+//     //Constructor and Destructor
+//     public:
+//         TextureAtlas(PeachTexture&& fp_Texture) 
+//         : 
+//             pm_Texture(std::move(fp_Texture))
+//         {}
         
-        ~TextureAtlas(); //pm_Texture automatically de-referenced off stack
-                          //All tiles will be cleaned up in destructor definition, and then deallocated off the stack
+//         ~TextureAtlas(); //pm_Texture automatically de-referenced off stack
+//                           //All tiles will be cleaned up in destructor definition, and then deallocated off the stack
 
-    //Inherited Functions
-    public:
-        void 
-            Initialize();
+//     //Inherited Functions
+//     public:
+//         void 
+//             Initialize();
 
-    //Class Specific Methods
-    public:
-        Tile 
-            GetTile(int index) 
-            const;
+//     //Class Specific Methods
+//     public:
+//         Tile 
+//             GetTile(int index) 
+//             const;
 
-        //void DefinePhysicsForTile(int index, b2World& world, float metersPerPixel); //int index, b2World& world, const b2BodyDef& bodyDef, const b2FixtureDef& fixtureDef
-        void 
-            SetCurrentTexture(const uint32_t fp_TextureHandle);
+//         //void DefinePhysicsForTile(int index, b2World& world, float metersPerPixel); //int index, b2World& world, const b2BodyDef& bodyDef, const b2FixtureDef& fixtureDef
+//         void 
+//             SetCurrentTexture(const uint32_t fp_TextureHandle);
 
-        bool
-            SetUVs(const uint32_t fp_DesiredTileWidth, const uint32_t fp_DesiredTileHeight);
+//         bool
+//             SetUVs(const uint32_t fp_DesiredTileWidth, const uint32_t fp_DesiredTileHeight);
 
-        bool
-            CreateTilesFromTexture2D();
+//         bool
+//             CreateTilesFromTexture2D();
 
-        std::vector<Tile> m_Tiles;
+//         std::vector<Tile> m_Tiles;
 
-    private:
-        // std::tuple<float, float, float, float>
-        //     GetTileUV(const size_t index)
-        //     const;
+//     private:
+//         // std::tuple<float, float, float, float>
+//         //     GetTileUV(const size_t index)
+//         //     const;
 
-        bool
-            IsValidTileIndex(const size_t fp_Index)
-            const;
-    };
+//         bool
+//             IsValidTileIndex(const size_t fp_Index)
+//             const;
+//     };
 
-}
+// }

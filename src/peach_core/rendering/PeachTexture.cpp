@@ -47,42 +47,8 @@ namespace PeachCore {
                 float v1 = (float)(y * pm_TileHeight) / m_Height;
                 float u2 = (float)((x + 1) * pm_TileWidth) / m_Width;
                 float v2 = (float)((y + 1) * pm_TileHeight) / m_Height;
-                pm_TileUVs.emplace_back(u1, v1, u2, v2);
+                // pm_TileUVs.emplace_back(u1, v1, u2, v2);
             }
         }
-    }
-
-    std::vector<std::tuple<float, float, float, float>> 
-        PeachTexture::GetTileUVs()
-        const
-    {
-        return pm_TileUVs;
-    }
-
-    std::tuple<float, float, float, float> 
-        PeachTexture::GetTileUV(const size_t fp_TileIndex) 
-        const 
-    {
-        if (fp_TileIndex >= pm_TileUVs.size())
-        {
-            // throw std::out_of_range("Tile index is out of range.");
-            std::exit(-69);
-        }
-
-        return pm_TileUVs[fp_TileIndex];
-    }
-
-    int 
-        PeachTexture::GetTileCount() 
-        const 
-    {
-        return pm_TileUVs.size();
-    }
-
-    bool 
-        PeachTexture::IsValid() 
-        const 
-    { 
-        return pm_IsValid; 
     }
 }

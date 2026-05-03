@@ -15,7 +15,7 @@
 #include <cglm/struct.h>
 
 ///PeachCore
-#include "PeachForceInline.h"
+#include "utils/PeachForceInline.h"
 
 ///CSTD
 #include <cmath>
