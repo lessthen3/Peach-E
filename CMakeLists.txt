@@ -428,8 +428,8 @@ elseif(PEACH_MACOS) #TODO fix iokit and other frameworks that dont exist on ios 
 elseif(PEACH_PLATFORM_IS_FREEBSD)
 
     # Gotta let the linker know where to find GL since bsd is a special little kitty >O<
-    link_directories(/usr/local/lib)
-    include_directories(/usr/local/include)
+    # link_directories(/usr/local/lib)
+    # include_directories(/usr/local/include)
 
     find_package(OpenGL REQUIRED)
 
@@ -509,15 +509,19 @@ endif()
 
 ####################################### Compiler Options and Other Definitions
 
+target_compile_definitions(peach_core PUBLIC 
+    $<$<CONFIG:Debug>:PEACH_DEBUG>
+    GLEW_NO_GLU #is not used on mac but is whatever just gets ignored anyways owo
+)
+
 if(NOT PEACH_PLATFORM_IS_WINDOWS)
     target_compile_definitions(peach_core PUBLIC LUA_USE_POSIX) #so that lua uses mkstemp instead for atomic file whatevers ig
 endif()
 
-target_compile_definitions(peach_core PUBLIC 
-    $<$<CONFIG:Debug>:PEACH_DEBUG>
-    SDL_MAIN_HANDLED
-    GLEW_NO_GLU #is not used on mac but is whatever just gets ignored anyways owo
-)
+# IMPORTANT: suppress SDL's main() rename on platforms where we own main()., Android MUST NOT define this, SDL's JNI bridge NEEDS THIS
+if(NOT PEACH_ANDROID)
+    target_compile_definitions(peach_core PUBLIC SDL_MAIN_HANDLED)
+endif()
 
 if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD OR PEACH_HAIKU OR PEACH_ANDROID)
 

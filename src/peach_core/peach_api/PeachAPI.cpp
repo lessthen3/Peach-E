@@ -59,7 +59,7 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE
     PEACH_DuplicatePeachNode(const PEACH_NodeID fp_OriginalNode, PEACH_NodeID*const  fp_DuplicatedNodeContainer)
 {
-    if (not fp_DuplicatedNodeContainer)
+    if (not fp_DuplicatedNodeContainer) [[unlikely]]
     {
         //PeachCore::Print("[ERROR]: Tried to pass a nullptr reference to Peach_DuplicatePeachNode(), for desired duplicated peach node container", PeachCore::Colours::Red);
         return PEACH_ERROR_NULLPTR_REF_PASSED;
@@ -159,7 +159,7 @@ PEACH_API PEACH_STATUS_CODE
 PEACH_API PEACH_STATUS_CODE
     PEACH_StatusCodeToString(const PEACH_STATUS_CODE fp_StatusCode, size_t fp_BufferSize, char* fp_CharBuffer)
 {
-    if (not fp_CharBuffer)
+    if (not fp_CharBuffer) [[unlikely]]
     {
         return PEACH_ERROR_NULLPTR_REF_PASSED;
     }
@@ -174,7 +174,7 @@ PEACH_API PEACH_STATUS_CODE
         break;
     }
 
-    if (f_ErrorString.size() > fp_BufferSize)
+    if (f_ErrorString.size() > fp_BufferSize) //idk fill buffer as much as I can, and report it was truncated ig owo
     {
 
         return PEACH_ERROR_INTERNAL_API_FAILURE; //this should be mentioned in an issue with a detailed description of how to reproduce uwu

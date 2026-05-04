@@ -13,6 +13,8 @@
 
 #include <csignal>
 
+#include <SDL3/SDL_main.h>
+
 namespace PeachCore {
 
     [[nodiscard]] static bool
@@ -126,7 +128,7 @@ namespace PeachCore
 #if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
         if (not PEACH_EnableWindowsConsoleColours())
         {
-
+            PEACH_PRINT_ERROR("Unable to set console mode, and enable ANSI colour codes on windows terminal owo");
         }
 #endif
 
@@ -141,6 +143,10 @@ namespace PeachCore
         }
 
         main_logger->Debug("main_thread logger successfully initialized", "GameManager");
+
+        #ifndef PEACH_PLATFORM_ANDROID // SDL is fucking weird mang
+            SDL_SetMainReady(); // Required when SDL_MAIN_HANDLED is defined
+        #endif
 
         //////////////////// Initialize Subsystems ////////////////////
 

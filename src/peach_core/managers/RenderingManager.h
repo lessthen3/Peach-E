@@ -17,23 +17,23 @@
 //////// Rendering Backends ////////
 
 #ifdef PEACH_RENDERER_OPENGL
-#include "rendering/OpenGL/Desktop/OpenGLRenderer.h"
+#   include "rendering/OpenGL/Desktop/OpenGLRenderer.h"
 #endif
 
 #ifdef PEACH_RENDERER_VULKAN
-#include "rendering/Vulkan/VulkanRenderer.h"
+#   include "rendering/Vulkan/VulkanRenderer.h"
 #endif
 
 #ifdef PEACH_RENDERER_METAL 
-#include "../rendering/Metal/MetalRenderer.h"
+#   include "../rendering/Metal/MetalRenderer.h"
 #endif
 
 #ifdef PEACH_RENDERER_OPENGL_ES
-#include "../rendering/OpenGL/Mobile/MobileGLRenderer.h"
+#   include "../rendering/OpenGL/Mobile/MobileGLRenderer.h"
 #endif
 
 #ifdef PEACH_RENDERER_WEBGL
-#include "../rendering/OpenGL/Browser/WebGLRenderer.h"
+#   include "../rendering/OpenGL/Browser/WebGLRenderer.h"
 #endif
 
 //////// Rendering Primitives ////////
@@ -210,7 +210,6 @@ namespace PeachCore {
                 const uint32_t fp_InitialWindowHeight,
                 const size_t fp_InitialFrameRate
             );
-
     private:
         [[nodiscard]] bool
             InitializeVulkan
@@ -219,7 +218,7 @@ namespace PeachCore {
                 const uint32_t fp_InitialWindowHeight
             );
     public:
-#endif
+#endif /*PEACH_RENDERER_VULKAN*/
 
 #ifdef PEACH_RENDERER_OPENGL
         void
@@ -232,7 +231,6 @@ namespace PeachCore {
                 const uint32_t fp_InitialWindowHeight,
                 const size_t fp_InitialFrameRate
             );
-
     private:
         //wip? future me: WORKING BITCH
         [[nodiscard]] PEACH_STATUS_CODE
@@ -245,8 +243,7 @@ namespace PeachCore {
         [[nodiscard]] bool
             PresentFrameGL();
     public:
-
-#endif
+#endif /*PEACH_RENDERER_OPENGL*/
 
 #ifdef PEACH_RENDERER_METAL 
         void
@@ -257,13 +254,44 @@ namespace PeachCore {
                 SDL_Window* fp_MainWindow,
                 const size_t fp_InitialFrameRate
             );
-
+    private:
         [[nodiscard]] PEACH_STATUS_CODE
             InitializeMetal();
 
         [[nodiscard]] bool
             PresentFrameMetal();
+    public:
+#endif /*PEACH_RENDERER_METAL*/
+
+#ifdef PEACH_RENDERER_OPENGL_ES
+        void
+            RenderLoopOpenGLES
+            (
+                const string& fp_LogOutputDirectory,
+                latch& fp_InitLatch,
+                SDL_Window* fp_MainWindow,
+                const size_t fp_InitialFrameRate
+            );
+    private:
+        [[nodiscard]] PEACH_STATUS_CODE
+            InitializeOpenGLES();
+    public:
 #endif
+
+#ifdef PEACH_RENDERER_WEBGL
+        void
+            RenderLoopWebGL
+            (
+                const string& fp_LogOutputDirectory,
+                latch& fp_InitLatch,
+                SDL_Window* fp_MainWindow,
+                const size_t fp_InitialFrameRate
+            );
+    private:
+        [[nodiscard]] PEACH_STATUS_CODE
+            InitializeWebGL();
+    public:
+#endif /*PEACH_RENDERER_WEBGL*/
 
         void
             Stop()

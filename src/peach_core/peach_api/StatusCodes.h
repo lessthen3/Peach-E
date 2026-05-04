@@ -15,7 +15,7 @@
 extern "C"
 {
 #endif
-    typedef enum{ //only C23 supports the : int64_t definition which is not great for compatibility
+    typedef enum { //only C23 supports the : int64_t definition which is not great for compatibility
         
         PEACH_OK = 1,
         PEACH_ERROR_INTERNAL_API_FAILURE,
