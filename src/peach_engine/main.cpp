@@ -9,10 +9,15 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include <managers/GameManager.h>
+#include <debug/PeachLauncher.h>
 
-int 
-    main(int, const char* fp_ArgVector[]) //This method kinda clean ngl lmfao
+static int
+    RunPeachEngine(int, const char** fp_ArgVector)
 {
+    int* crash = nullptr;
+
+    *crash = 69;
+
     try
     {
         auto engine_manager = &PeachCore::GameManager::get_single();
@@ -62,5 +67,33 @@ int
         PEACH_PRINT_ERROR_FMT("Unhandled exception: {}", cv_Exception.what());
 
         return EXIT_FAILURE;
+    }
+}
+
+
+
+int 
+    main(int fp_ArgCount, const char** fp_ArgVector) //This method kinda clean ngl lmfao
+{
+    // Detect if we are the child or being debugged
+    bool f_RunAsEngine = false;
+
+    for (int lv_Index = 0; lv_Index < fp_ArgCount; ++lv_Index) 
+    {
+        if (std::string(fp_ArgVector[lv_Index]) == "--engine-child") 
+        {
+            f_RunAsEngine = true;
+            break;
+        }
+    }
+
+    // 2. The Logic Switch
+    if (PeachCore::IsDebuggerAttached() || f_RunAsEngine) // THIS IS THE ENGINE MODE
+    {
+        return RunPeachEngine(fp_ArgCount, fp_ArgVector); 
+    }
+    else // THIS IS THE WATCHDOG MODE, this process stays light, consumes almost no RAM, and just waits for the Engine to finish or explode.
+    {
+        return PeachCore::LauncherMain( 1, fp_ArgVector);
     }
 }

@@ -19,24 +19,24 @@
 #define PEACH_SERIALIZABLE(...)                           \
     using peach_serializable_tag = void;                  \
     template <typename V>                                 \
-    void PEACH_VISIT(V&& v) {                              \
-        __VA_ARGS__;                               \
+    void PEACH_VISIT(V&& v) {                             \
+        __VA_ARGS__;                                      \
     }                                                     \
     template <typename V>                                 \
-    void PEACH_VISIT(V&& v) const {                        \
-        __VA_ARGS__;                               \
+    void PEACH_VISIT(V&& v) const {                       \
+        __VA_ARGS__;                                      \
     }
 
 // Derived type that wants to also serialize its Base part
 #define PEACH_SERIALIZABLE_DERIVED(Base, ...)             \
     using peach_serializable_tag = void;                  \
     template <typename V>                                 \
-    void PEACH_VISIT(V&& v) {                              \
-        Base::PEACH_VISIT(v);                              \
-        __VA_ARGS__;                               \
+    void PEACH_VISIT(V&& v) {                             \
+        Base::PEACH_VISIT(v);                             \
+        __VA_ARGS__;                                      \
     }                                                     \
     template <typename V>                                 \
-    void PEACH_VISIT(V&& v) const {                        \
-        Base::PEACH_VISIT(v);                              \
-        __VA_ARGS__;                               \
+    void PEACH_VISIT(V&& v) const {                       \
+        Base::PEACH_VISIT(v);                             \
+        __VA_ARGS__;                                      \
     }

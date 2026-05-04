@@ -43,10 +43,10 @@ namespace PeachCore {
         {
             for (int x = 0; x < cols; ++x)
             {
-                float u1 = (float)(x * pm_TileWidth) / m_Width;
-                float v1 = (float)(y * pm_TileHeight) / m_Height;
-                float u2 = (float)((x + 1) * pm_TileWidth) / m_Width;
-                float v2 = (float)((y + 1) * pm_TileHeight) / m_Height;
+                // float u1 = (float)(x * pm_TileWidth) / m_Width;
+                // float v1 = (float)(y * pm_TileHeight) / m_Height;
+                // float u2 = (float)((x + 1) * pm_TileWidth) / m_Width;
+                // float v2 = (float)((y + 1) * pm_TileHeight) / m_Height;
                 // pm_TileUVs.emplace_back(u1, v1, u2, v2);
             }
         }

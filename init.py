@@ -201,7 +201,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
     ############# Ensure Valid Generator was Selected #############
 
     if fp_Generator not in f_GeneratorMap:
-        print(CreateColouredText("[ERROR]: Invalid Generator Selected, PLEASE PICK A VALID GENERATOR", "red"))
+        print(CreateColouredText("[ERROR]: Invalid Generator Selected, use -h to see what generators are available owo", "red"))
         return False
     
     ############# Determine if Generator is Single Config #############
@@ -340,9 +340,9 @@ def main() -> bool:
 
     ############# Setup Parser #############
 
-    usage_message = \
-        CreateColouredText("init.py ", 'bright magenta') + \
-        CreateColouredText("--[build_type: release, debug or both] ", "bright blue") + \
+    usage_message =                                                                                     \
+        CreateColouredText("init.py ", 'bright magenta') +                                              \
+        CreateColouredText("--[build_type: release, debug or both] ", "bright blue") +                  \
         CreateColouredText("-G [desired_generator] ", "blue")
 
     parser = argparse.ArgumentParser(
@@ -382,21 +382,21 @@ def main() -> bool:
         '-G', 
         nargs=1,
         metavar="[generator]",
-        help=CreateColouredText('Used to set the project file generator, options are as follows:', 'bright magenta') + "\n" + \
+        help=CreateColouredText('Used to set the project file generator, options are as follows:', 'bright magenta') + "\n" +                                        \
                 "\t" + CreateColouredText('-G vs2015 --> vs2026 ', 'blue') + CreateColouredText('Generates solution for Visual Studio 2015 - 2026', 'cyan') + "\n" + \
                 
-                "\t" + CreateColouredText('-G xcode ', 'blue') + CreateColouredText('Generates project files for Xcode', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G xcode ', 'blue') + CreateColouredText('Generates project files for Xcode', 'cyan') + "\n" +                            \
                 
-                "\t" + CreateColouredText('-G ninja ', 'blue') + CreateColouredText('Generates project files using Ninja', 'cyan') + "\n" + \
-                "\t" + CreateColouredText('-G ninja-mc ', 'blue') + CreateColouredText('For Ninja Multi-Config', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G ninja ', 'blue') + CreateColouredText('Generates project files using Ninja', 'cyan') + "\n" +                          \
+                "\t" + CreateColouredText('-G ninja-mc ', 'blue') + CreateColouredText('For Ninja Multi-Config', 'cyan') + "\n" +                                    \
                 
-                "\t" + CreateColouredText('-G unix ', 'blue') + CreateColouredText('For Unix Makefiles', 'cyan') + "\n" + \
-                "\t" + CreateColouredText('-G unix-eclipse ', 'blue') + CreateColouredText('Generate Unix Makefiles for Eclipse CDT', 'cyan') + "\n" + \
-                "\t" + CreateColouredText('-G unix-cb ', 'blue') + CreateColouredText('Generates Unix Makefiles for CodeBlocks', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G unix ', 'blue') + CreateColouredText('For Unix Makefiles', 'cyan') + "\n" +                                            \
+                "\t" + CreateColouredText('-G unix-eclipse ', 'blue') + CreateColouredText('Generate Unix Makefiles for Eclipse CDT', 'cyan') + "\n" +               \
+                "\t" + CreateColouredText('-G unix-cb ', 'blue') + CreateColouredText('Generates Unix Makefiles for CodeBlocks', 'cyan') + "\n" +                    \
 
-                "\t" + CreateColouredText('-G mingw ', 'blue') + CreateColouredText('Generates MinGW Makefiles', 'cyan') + "\n" + \
-                "\t" + CreateColouredText('-G msys ', 'blue') + CreateColouredText('Generates MSYS Makefiles', 'cyan') + "\n" + \
-                "\t" + CreateColouredText('-G nmake ', 'blue') + CreateColouredText('Generates NMake Makefiles', 'cyan') + "\n" + \
+                "\t" + CreateColouredText('-G mingw ', 'blue') + CreateColouredText('Generates MinGW Makefiles', 'cyan') + "\n" +                                    \
+                "\t" + CreateColouredText('-G msys ', 'blue') + CreateColouredText('Generates MSYS Makefiles', 'cyan') + "\n" +                                      \
+                "\t" + CreateColouredText('-G nmake ', 'blue') + CreateColouredText('Generates NMake Makefiles', 'cyan') + "\n" +                                    \
                 "\t" + CreateColouredText('-G nmake-jom ', 'blue') + CreateColouredText('Generates JOM Makefiles', 'cyan')
     )   
     
@@ -492,7 +492,7 @@ def main() -> bool:
     ############# Check for Generator #############
         
     if(not args.G):
-        print(CreateColouredText("[ERROR]: YOU DIDN'T USE -G FLAG BROTHER", "red"))
+        print(CreateColouredText("[ERROR]: please specify cmake generator using -G [desired_generator] >w<", "red"))
         return False
 
     f_DesiredGenerator = args.G[0].lower() #convert to all lower case for easier handling
@@ -527,7 +527,7 @@ def main() -> bool:
         if f_CurrentPlatform == "Windows":
             f_ToolchainKey = "windows-arm64" if "arm" in f_MachineArch else "windows-x64" #python is weird mang
         elif f_CurrentPlatform == "Darwin":
-            f_ToolchainKey = "macos"
+            f_ToolchainKey = "macos-arm64" if "arm" in f_MachineArch else "macos-x64" #python is weird mang
         elif f_CurrentPlatform == "Linux":
             f_ToolchainKey = "linux-arm64" if "arm" in f_MachineArch else "linux-x64" #python is weird mang
         elif f_CurrentPlatform == "FreeBSD":
@@ -610,7 +610,7 @@ def main() -> bool:
     print(CreateColouredText(f"[INFO]: Final Build Summary: \n", "bright green"))
     print(CreateColouredText(f"Generator: {f_DesiredGenerator}", "bright magenta"))
     print(CreateColouredText(f"Build Type: {f_BuildType}", "bright magenta"))
-    print(CreateColouredText(f"Platform: {f_CurrentPlatform}\n", "bright magenta"))
+    print(CreateColouredText(f"Platform: {f_ToolchainKey}\n", "bright magenta"))
 
     return True
 

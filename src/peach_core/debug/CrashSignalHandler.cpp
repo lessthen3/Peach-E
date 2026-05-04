@@ -41,15 +41,15 @@ namespace PeachCore::Debug {
         Static path written at startup, read at crash time.
         Must be a stable buffer — no std::string, no allocation. 
     */
-    static const char* s_CrashFlagPath = "./";
-    // static char s_LogDirectoryPath[1024] = { 0 };
+    static char* s_CrashFlagPath;
+    static char s_LogDirectoryPath[1024] = { 0 };
 
-    // static void
-    //     SetCrashFlagPath(const char* fp_Path)
-    //     noexcept
-    // {
-    //     std::strncpy(s_CrashFlagPath, fp_Path, sizeof(s_CrashFlagPath) - 1);
-    // }
+    void
+        SetCrashFlagPath(const char* fp_Path)
+        noexcept
+    {
+        std::strncpy(s_CrashFlagPath, fp_Path, sizeof(s_CrashFlagPath) - 1);
+    }
 
     /*
         Async-signal-safe number-to-string. Returns length written.
@@ -148,8 +148,8 @@ namespace PeachCore::Debug {
     {
         #if defined(PEACH_PLATFORM_DESKTOP)
 
-            std::signal(SIGSEGV, CrashSignalHandler);
-            std::signal(SIGABRT, CrashSignalHandler);
+            std::signal(SIGSEGV,CrashSignalHandler);
+            std::signal(SIGABRT,CrashSignalHandler);
             std::signal(SIGFPE, CrashSignalHandler);
             std::signal(SIGILL, CrashSignalHandler);
 

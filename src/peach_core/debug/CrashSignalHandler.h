@@ -14,4 +14,8 @@ namespace PeachCore::Debug {
     void
         InstallCrashHandler()
         noexcept;
+    
+    void
+        SetCrashFlagPath(const char* fp_Path)
+        noexcept;
 }

@@ -51,75 +51,80 @@
 #define PEACH_STRINGIFY(fp_X) #fp_X
 #define PEACH_TOSTRING(fp_X) PEACH_STRINGIFY(fp_X)
 
-#define PEACH_TO_JSON(fp_DesiredObject, fp_DesiredFileName, fp_DesiredOutputDirectory, fp_Logger) \
-    ( \
-        []() consteval \
-         { \
-            static_assert \
-            ( \
-                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_DesiredObject)>>::value, \
-                "PEACH_TO_JSON at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
-            ); \
-                return 0; \
-        }(), \
-        ::PeachCore::Serializer::ToJSON(fp_DesiredObject, fp_DesiredFileName, fp_DesiredOutputDirectory, fp_Logger) \
-    )
+#define PEACH_TO_JSON(fp_DesiredObject, fp_DesiredFileName, fp_DesiredOutputDirectory, fp_Logger)                               \
+(                                                                                                                               \
+    (void)[]() consteval                                                                                                        \
+    {                                                                                                                           \
+        static_assert                                                                                                           \
+        (                                                                                                                       \
+            ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_DesiredObject)>>::value,                 \
+            "PEACH_TO_JSON at " __FILE__ " ln " PEACH_TOSTRING(__LINE__)                                                        \
+            ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?"                                   \
+        );                                                                                                                      \
+            return 0;                                                                                                           \
+    }(),                                                                                                                        \
+    ::PeachCore::Serializer::ToJSON(fp_DesiredObject, fp_DesiredFileName, fp_DesiredOutputDirectory, fp_Logger)                 \
+)
 
-#define PEACH_FROM_JSON(fp_DesiredObject, fp_FilePath, fp_Logger) \
-    ( \
-        []() consteval \
-         { \
-            static_assert \
-            ( \
-                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_DesiredObject)>>::value, \
-                "PEACH_FROM_JSON at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
-            ); \
-                return 0; \
-        }(), \
-        ::PeachCore::Serializer::FromJSON(fp_DesiredObject, fp_FilePath, fp_Logger) \
-    )
+#define PEACH_FROM_JSON(fp_DesiredObject, fp_FilePath, fp_Logger)                                                               \
+(                                                                                                                               \
+    (void)[]() consteval                                                                                                        \
+    {                                                                                                                           \
+        static_assert                                                                                                           \
+        (                                                                                                                       \
+            ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_DesiredObject)>>::value,                 \
+            "PEACH_FROM_JSON at " __FILE__ " ln " PEACH_TOSTRING(__LINE__)                                                      \
+            ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?"                                   \
+        );                                                                                                                      \
+            return 0;                                                                                                           \
+    }(),                                                                                                                        \
+    ::PeachCore::Serializer::FromJSON(fp_DesiredObject, fp_FilePath, fp_Logger)                                                 \
+)
 
-#define PEACH_PACK_BINARY(fp_DesiredObject, fp_BinaryVector) \
-    ( \
-        []() consteval \
-         { \
-            static_assert \
-            ( \
-                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_DesiredObject)>>::value, \
-                "PEACH_PACK_BINARY at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
-            ); \
-                return 0; \
-        }(), \
-        ::PeachCore::Serializer::PackIntoBinaryVector(fp_DesiredObject, fp_BinaryVector) \
-    )
+#define PEACH_PACK_BINARY(fp_DesiredObject, fp_BinaryVector)                                                                    \
+(                                                                                                                               \
+    (void)[]() consteval                                                                                                        \
+    {                                                                                                                           \
+        static_assert                                                                                                           \
+        (                                                                                                                       \
+            ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_DesiredObject)>>::value,                 \
+            "PEACH_PACK_BINARY at " __FILE__ " ln " PEACH_TOSTRING(__LINE__)                                                    \
+            ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?"                                   \
+        );                                                                                                                      \
+            return 0;                                                                                                           \
+    }(),                                                                                                                        \
+    ::PeachCore::Serializer::PackIntoBinaryVector(fp_DesiredObject, fp_BinaryVector)                                            \
+)
 
-#define PEACH_UNPACK_BINARY(fp_EmptyObject, fp_BinaryVector, fp_Logger) \
-    ( \
-        []() consteval \
-         { \
-            static_assert \
-            ( \
-                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_EmptyObject)>>::value, \
-                "PEACH_UNPACK_BINARY at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
-            ); \
-                return 0; \
-        }(), \
-        ::PeachCore::Serializer::UnpackFromBinaryVector(fp_EmptyObject, fp_BinaryVector, fp_Logger) \
-    )
+#define PEACH_UNPACK_BINARY(fp_EmptyObject, fp_BinaryVector, fp_Logger)                                                         \
+(                                                                                                                               \
+    (void)[]() consteval                                                                                                        \
+    {                                                                                                                           \
+        static_assert                                                                                                           \
+        (                                                                                                                       \
+            ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_EmptyObject)>>::value,                   \
+            "PEACH_UNPACK_BINARY at " __FILE__ " ln " PEACH_TOSTRING(__LINE__)                                                  \
+            ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?"                                   \
+        );                                                                                                                      \
+            return 0;                                                                                                           \
+    }(),                                                                                                                        \
+    ::PeachCore::Serializer::UnpackFromBinaryVector(fp_EmptyObject, fp_BinaryVector, fp_Logger)                                 \
+)
 
-#define PEACH_UNPACK_BINARY_OFFSET(fp_EmptyObject, fp_BinaryVector, fp_Logger, fp_StartReadOffset) \
-    ( \
-        []() consteval \
-         { \
-            static_assert \
-            ( \
-                ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_EmptyObject)>>::value, \
-                "PEACH_UNPACK_BINARY_OFFSET at " __FILE__ " ln " PEACH_TOSTRING(__LINE__) ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?" \
-            ); \
-                return 0; \
-        }(), \
-        ::PeachCore::Serializer::UnpackFromBinaryVector(fp_EmptyObject, fp_BinaryVector, fp_Logger, fp_StartReadOffset) \
-    )
+#define PEACH_UNPACK_BINARY_OFFSET(fp_EmptyObject, fp_BinaryVector, fp_Logger, fp_StartReadOffset)                              \
+(                                                                                                                               \
+    (void)[]() consteval                                                                                                        \
+    {                                                                                                                           \
+        static_assert                                                                                                           \
+        (                                                                                                                       \
+            ::PeachCore::Serializer::is_serializable_struct<remove_cvref_t<decltype(fp_EmptyObject)>>::value,                   \
+            "PEACH_UNPACK_BINARY_OFFSET at " __FILE__ " ln " PEACH_TOSTRING(__LINE__)                                           \
+            ", T is missing PEACH_SERIALIZABLE(...), did you add the macro to your type uwu?"                                   \
+        );                                                                                                                      \
+            return 0;                                                                                                           \
+    }(),                                                                                                                        \
+    ::PeachCore::Serializer::UnpackFromBinaryVector(fp_EmptyObject, fp_BinaryVector, fp_Logger, fp_StartReadOffset)             \
+)
 
 /// back to normality >W<
 

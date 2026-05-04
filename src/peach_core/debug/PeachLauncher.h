@@ -10,9 +10,15 @@
 ********************************************************************/
 #pragma once
 
-namespace PeachCore{
-    int 
-        LauncherMain(int argc, char* argv[]);
+namespace PeachCore {
+
+    [[nodiscard]] int 
+        LauncherMain(int argc, const char** argv);
+    
+    [[nodiscard]] bool 
+        IsDebuggerAttached()
+        noexcept;
+
 }
 
 

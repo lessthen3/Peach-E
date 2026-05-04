@@ -8,7 +8,6 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-
 ///PeachCore
 #include "FileIO.h"
 
@@ -39,7 +38,7 @@ namespace PeachCore::FileIO
     {
         ////////////////////////////////////////////// Logger nullptr Safety Check //////////////////////////////////////////////
 
-        if (not logger)
+        if (not logger) [[unlikely]]
         {
             PEACH_PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during WriteToBinary()");
             return false;
@@ -99,7 +98,7 @@ namespace PeachCore::FileIO
     {
         ////////////////////////////////////////////// Logger nullptr Safety Check //////////////////////////////////////////////
 
-        if (not logger) //check for nullptr ref passed to ReadBinaryIntoVector
+        if (not logger) [[unlikely]] //check for nullptr ref passed to ReadBinaryIntoVector
         {
             PEACH_PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during ReadBinaryIntoVector()");
             return false;
@@ -183,7 +182,7 @@ namespace PeachCore::FileIO
             Logger*const logger
         )
     {
-        if (not logger)
+        if (not logger) [[unlikely]]
         {
             PEACH_PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during WriteToJSON()");
             return false;
@@ -304,6 +303,96 @@ namespace PeachCore::FileIO
 
         fp_CharBuffer.resize(static_cast<size_t>(f_FileSize));
         f_FileStream.read(fp_CharBuffer.data(), f_FileSize);
+
+        f_FileStream.close();
+
+        ////////////////////////////////////////////// Success! //////////////////////////////////////////////
+
+        return true;
+    }
+    
+
+    bool
+        ReadFileIntoString
+        (
+            const string& fp_ScriptFilePath,
+            const vector<string>& fp_Extensions,
+            std::string& fp_StringBuffer,
+            Logger*const logger
+        )
+    {
+        ////////////////////////////////////////////// Logger nullptr Safety Check //////////////////////////////////////////////
+
+        if (not logger) [[unlikely]]
+        {
+            PEACH_PRINT_ERROR("Serialization Error: Tried to pass nullptr reference to logger during ReadFileIntoCharBuffer()");
+            return false;
+        }
+
+        ////////////////////////////////////////////// Ensure directory exists //////////////////////////////////////////////
+
+        if (not filesystem::exists(fp_ScriptFilePath))
+        {
+            logger->Error("Serialization Error: Tried to pass invalid filepath to ReadFileIntoCharBuffer()", "Serializer");
+            return false;
+        }
+
+        ////////////////////////////////////////////// Extract file extension assuming fmt::format "filename.ext" //////////////////////////////////////////////
+
+        size_t f_LastDotIndex = fp_ScriptFilePath.rfind('.');
+
+        if (f_LastDotIndex == string::npos)
+        {
+            logger->Error("Serialization Error: No file extension found", "Serializer");
+            return false;
+        }
+
+        string f_FileExtension = fp_ScriptFilePath.substr(f_LastDotIndex);
+
+        bool f_IsValidExtension = false;
+
+        for (const string& lv_ExtensionName : fp_Extensions)
+        {
+            if (f_FileExtension == lv_ExtensionName) //file extension for peach-e binary encoding, get it? it's like a bin of peaches >w<
+            {
+                f_IsValidExtension = true;
+                break;
+            }
+        }
+
+        if (not f_IsValidExtension)
+        {
+            logger->Error(fmt::format("Serialization Error: Attempted to read from an unknown text file extension: '{}'", f_FileExtension), "Serializer");
+            return false;
+        }
+
+        ifstream f_FileStream(fp_ScriptFilePath, ios::in | ios::binary);
+
+        if (not f_FileStream)
+        {
+            logger->Error(fmt::format("Serialization Error: Failed to open '{}' for reading.", fp_ScriptFilePath), "Serializer");
+            return false;
+        }
+
+        ////////////////////////////////////////////// Get File Size //////////////////////////////////////////////
+
+        f_FileStream.seekg(0, ios::end);
+        streampos f_FileSize = f_FileStream.tellg();
+        f_FileStream.seekg(0, ios::beg);
+
+        ////////////////////////////////////////////// Assert File Contains Data //////////////////////////////////////////////
+
+        if (f_FileSize <= 0) //Treat empty files as an error since user thinks the file has something otherwise they wouldn't have tried to read from it UwU!
+        {
+            logger->Error("Serialization Error: Tried to pass empty file to ReadJSONIntoString()", "Serializer");
+            fp_StringBuffer.clear();
+            return false;
+        }
+
+        ////////////////////////////////////////////// Store Data -> fp_CharBuffer //////////////////////////////////////////////
+
+        fp_StringBuffer.resize(static_cast<size_t>(f_FileSize));
+        f_FileStream.read(fp_StringBuffer.data(), f_FileSize);
 
         f_FileStream.close();
 

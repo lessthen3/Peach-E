@@ -62,6 +62,15 @@ namespace PeachCore::FileIO
         Logger*const logger
     );
 
+[[nodiscard]] bool
+    ReadFileIntoString
+    (
+        const string& fp_ScriptFilePath,
+        const vector<string>& fp_Extensions,
+        std::string& fp_StringBuffer,
+        Logger*const logger
+    );
+
 
 [[nodiscard]] bool 
     WriteAtomic
