@@ -50,6 +50,13 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic) # Add Compiler Warnings for Clang/GCC (assuming those are the only two ur using on unix like systems uwu)
 endif()
 
+# disable third party warnings OwO, idk just trusting em
+if(MSVC)
+    set(WARNING_OFF_FLAG "/W0")
+else()
+    set(WARNING_OFF_FLAG "-w") #just assuming clang or gcc if not msvc
+endif()
+
 ####################################### Check For No Config Set
 
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
@@ -69,9 +76,9 @@ file(
     GLOB_RECURSE 
     PEACH_CORE_SOURCES 
     CONFIGURE_DEPENDS 
-    "src/peach_core/*.cpp" 
-    "src/peach_core/*.h"
-    "src/peach_core/*.hpp"
+    ${PROJECT_SOURCE_DIR}/src/peach_core/*.cpp
+    ${PROJECT_SOURCE_DIR}/src/peach_core/*.h
+    ${PROJECT_SOURCE_DIR}/src/peach_core/*.hpp
 )
 
 source_group(
@@ -79,6 +86,18 @@ source_group(
     PREFIX "peach"
     FILES ${PEACH_CORE_SOURCES}
 )
+
+####################################### Override build options if we're building for android >///< yes daddy ~~nyah
+
+if(PEACH_ANDROID)
+    set(BUILD_PEACH_CORE_SHARED ON  CACHE BOOL "" FORCE)
+    set(BUILD_PEACH_EDITOR      OFF CACHE BOOL "" FORCE)
+    set(BUILD_PEACH_ENGINE      OFF CACHE BOOL "" FORCE)
+elseif(PEACH_IOS OR PEACH_TVOS)
+    set(BUILD_PEACH_CORE_SHARED OFF  CACHE BOOL "" FORCE)
+    set(BUILD_PEACH_EDITOR      OFF CACHE BOOL "" FORCE)
+    set(BUILD_PEACH_ENGINE      ON CACHE BOOL "" FORCE)
+endif()
 
 ####################################### Static/Dynamic Library Target
 
@@ -115,62 +134,55 @@ set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make 
 
 ####################################### peach_core src includes
 
-# disable third party warnings OwO, idk just trusting em
-if(MSVC)
-    set(WARNING_OFF_FLAG "/W0")
-else()
-    set(WARNING_OFF_FLAG "-w") #just assuming clang or gcc if not msvc
-endif()
-
 file(GLOB LUA_SOURCES 
-    third_party/peach_core/source_include/lua/*.c
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/lua/*.c
 )
 
 file(GLOB LZ4_SOURCES
-    third_party/peach_core/source_include/lz4/*.c
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/lz4/*.c
 )
 
 file(GLOB CLIPPER2_SOURCES
-    third_party/peach_core/source_include/clipper2/*.cpp
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/clipper2/*.cpp
 )
 
 file(GLOB BOX2D_SOURCES
-    third_party/peach_core/source_include/box2d/*.c
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/box2d/*.c
 )
 
 file(GLOB_RECURSE JOLT_SOURCES
-    third_party/peach_core/source_include/Jolt/*.cpp #need caps since jolt does the target include thing in its cmake owo
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/Jolt/*.cpp #need caps since jolt does the target include thing in its cmake owo
 )
 
 file(GLOB FMT_SOURCES
-    third_party/peach_core/source_include/fmt/format.cc
-    third_party/peach_core/source_include/fmt/os.cc
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/fmt/format.cc
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/fmt/os.cc
 )
 
 file(GLOB MONOCYPHER_SOURCES
-    third_party/peach_core/source_include/monocypher/*.c
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/monocypher/*.c
 )
 
 if(PEACH_PLATFORM_IS_APPLE)
     file(GLOB PHYSFS_SOURCES 
-        third_party/peach_core/source_include/physfs/*.c
-        third_party/peach_core/source_include/physfs/*.m
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/physfs/*.c
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/physfs/*.m
     )
 else()
     file(GLOB PHYSFS_SOURCES 
-        third_party/peach_core/source_include/physfs/*.c
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include/physfs/*.c
     )
 endif(PEACH_PLATFORM_IS_APPLE)
 
 if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD OR PEACH_HAIKU OR PEACH_ANDROID)
 
     file(GLOB VOLK_SOURCES
-        third_party/peach_core/plat_dep_source_include/volk/volk.c
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include/volk/volk.c
     )
 
     file(GLOB VKBOOTSTRAP_SOURCES
-        third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.cpp
-        third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.inl
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.cpp
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.inl
     )
 
     target_sources(peach_core PRIVATE
@@ -178,12 +190,12 @@ if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FRE
         ${VOLK_SOURCES}
     )
 
+    target_include_directories(peach_core SYSTEM PUBLIC #try to avoid header warnings >o<
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include #include since it passed the plat test
+    )
+
     source_group("third_party/volk" FILES ${VOLK_SOURCES})
     source_group("third_party/vkbootstrap" FILES ${VKBOOTSTRAP_SOURCES})
-
-    target_include_directories(peach_core SYSTEM PUBLIC #try to avoid header warnings >o<
-        third_party/peach_core/plat_dep_source_include #include since it passed the plat test
-    )
 
     # disable third party warnings OwO, idk just trusting em
     set_source_files_properties(
@@ -205,13 +217,15 @@ target_sources(peach_core PRIVATE
     ${MONOCYPHER_SOURCES}
 )
 
-if(PEACH_PLATFORM_IS_APPLE)
-    target_sources(peach_core PRIVATE src/peach_core/rendering/Metal/MetalBridge.mm ) #just to get the objc file compiled for the extern "C" call owo
-endif()
-
 target_include_directories(peach_core SYSTEM PUBLIC #try to avoid header warnings owo
-    third_party/peach_core/source_include #supported across the board owo ily guys ~~nyah
+    ${PROJECT_SOURCE_DIR}/third_party/peach_core/source_include #supported across the board owo ily guys ~~nyah
 )
+
+if(PEACH_PLATFORM_IS_APPLE)
+    target_sources(peach_core PRIVATE 
+        ${PROJECT_SOURCE_DIR}/src/peach_core/rendering/Metal/MetalBridge.mm  #just to get the objc file compiled for the extern "C" call owo
+    ) 
+endif()
 
 source_group("third_party/physfs" FILES ${PHYSFS_SOURCES})
 source_group("third_party/lua" FILES ${LUA_SOURCES})
@@ -370,6 +384,16 @@ elseif(PEACH_BSD_ARM64) #Xxx: doing this took decades off my life ;w;
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
+elseif(PEACH_ANDROID) #doesn't need glew owo
+
+    ############ Windowing and Input
+
+    STATIC_IMPORT(SDL3 
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/android/release/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/android/debug/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
+    )
+
 else()
     message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
 endif()
@@ -456,6 +480,18 @@ elseif(PEACH_WASM)
         "-sMAX_WEBGL_VERSION=2" 
         "-sUSE_SDL=3" 
     )
+elseif(PEACH_ANDROID)
+    # System libs provided by the NDK/Android OS itself, no static import needed
+    target_link_libraries(peach_core PUBLIC
+        android      # ANativeActivity, AAssetManager, etc.
+        log          # __android_log_print — used internally by SDL and others
+        GLESv3       # OpenGL ES 3.0
+        EGL          # EGL surface/context management
+        OpenSLES     # Audio (miniaudio fallback since AAudio requires API 26+)
+        # Vulkan is loaded dynamically via volk, no -lVulkan needed
+    )
+elseif(PEACH_IOS)
+
 endif()
 
 # Peach Core
@@ -519,7 +555,7 @@ if(NOT PEACH_PLATFORM_IS_WINDOWS)
 endif()
 
 # IMPORTANT: suppress SDL's main() rename on platforms where we own main()., Android MUST NOT define this, SDL's JNI bridge NEEDS THIS
-if(NOT PEACH_ANDROID)
+if(NOT PEACH_ANDROID AND NOT PEACH_IOS AND NOT PEACH_TVOS)
     target_compile_definitions(peach_core PUBLIC SDL_MAIN_HANDLED)
 endif()
 
@@ -579,9 +615,9 @@ if(BUILD_PEACH_EDITOR)
         GLOB_RECURSE 
         PEACH_EDITOR_SOURCES 
         CONFIGURE_DEPENDS 
-        "src/peach_editor/*.cpp" 
-        "src/peach_editor/*.h"
-        "src/peach_editor/*.hpp"
+        ${PROJECT_SOURCE_DIR}/src/peach_editor/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/peach_editor/*.h
+        ${PROJECT_SOURCE_DIR}/src/peach_editor/*.hpp
     )
 
     source_group(
@@ -615,19 +651,19 @@ if(BUILD_PEACH_EDITOR)
     ####################################### pseudo source cmake include owo
 
     file(GLOB TINYXML2_SOURCES
-        third_party/peach_editor/source_include/tinyxml2/tinyxml2.cpp
+        ${PROJECT_SOURCE_DIR}/third_party/peach_editor/source_include/tinyxml2/tinyxml2.cpp
     )
 
     file(GLOB LODEPNG_SOURCES
-        third_party/peach_editor/source_include/lodepng/lodepng.cpp
+        ${PROJECT_SOURCE_DIR}/third_party/peach_editor/source_include/lodepng/lodepng.cpp
     )
 
     file(GLOB SPIRV_CROSS_SOURCES
-        third_party/peach_editor/weird_source_include/spirv_cross/*.cpp
+        ${PROJECT_SOURCE_DIR}/third_party/peach_editor/weird_source_include/spirv_cross/*.cpp
     )
 
     file(GLOB BC7ENC_RDO_SOURCES
-        third_party/peach_editor/source_include/bc7enc_rdo/*.cpp
+        ${PROJECT_SOURCE_DIR}/third_party/peach_editor/source_include/bc7enc_rdo/*.cpp
     )
 
     target_sources(Peach_Editor PRIVATE
@@ -688,7 +724,7 @@ if(BUILD_PEACH_EDITOR)
     set(ASTCENC_SHAREDLIB OFF CACHE BOOL "" FORCE)
     set(ASTCENC_DYNAMIC_RUNTIME OFF CACHE BOOL "" FORCE)
 
-    add_subdirectory(third_party/peach_editor/source_include/astcenc)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/source_include/astcenc)
 
     ####################################### astenc project folder visual declutter OwO UwU
 
@@ -1216,9 +1252,9 @@ if(BUILD_PEACH_TESTS)
         GLOB_RECURSE 
         PEACH_TEST_SOURCES 
         CONFIGURE_DEPENDS 
-        "test_suite/cpp/*.cpp" 
-        "test_suite/cpp/*.h"
-        "test_suite/cpp/*.hpp"
+        ${PROJECT_SOURCE_DIR}/test_suite/cpp/*.cpp 
+        ${PROJECT_SOURCE_DIR}/test_suite/cpp/*.h
+        ${PROJECT_SOURCE_DIR}/test_suite/cpp/*.hpp
     )
 
         ####################################### Create executable target

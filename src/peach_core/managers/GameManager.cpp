@@ -10,8 +10,7 @@
 ********************************************************************/
 #include "GameManager.h"
 #include "InputManager.h"
-
-#include <csignal>
+#include "debug/CrashSignalHandler.h"
 
 #include <SDL3/SDL_main.h>
 
@@ -28,7 +27,13 @@ namespace PeachCore {
             Logger* const logger
         )
     {
-        if (*fp_SDLWindow)
+        if(not logger) [[unlikely]]
+        {
+            PEACH_PRINT_ERROR("tried to pass nullptr reference to logger inside GameManager::CreateSDLWindow()");
+            return false;
+        }
+
+        if (*fp_SDLWindow) [[unlikely]] //otherwise can't guarantee the original window was cleaned up and that's a problem ;w;
         {
             logger->Error("Tried passing a valid SDL_Window* handle for window creation, please cleanup original SDL window or dereference pointer before attempting to create a new SDL window", "GameManager");
             return false;
@@ -64,7 +69,7 @@ namespace PeachCore {
 
         if (not *fp_SDLWindow)
         {
-            logger->Fatal("Window could not be created! SDL_Error: " + string(SDL_GetError()), "GameManager");
+            logger->Fatal(fmt::format("Window could not be created! SDL_Error: {}", SDL_GetError()), "GameManager");
             return false;
         }
 
@@ -116,7 +121,7 @@ namespace PeachCore
 
         if(not fp_IsSegfaultHandled)
         {
-            signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
+            Debug::InstallCrashHandler(); //XXX: used for trying to close and flush logs on seg fault
         }
 
         //////////////////// Required Threads Variable for Knowing Which Threads to Shutdown or Whatever ////////////////////
@@ -173,7 +178,7 @@ namespace PeachCore
         else if (not RetrieveQueues())
         {
             main_logger->Fatal("Command Queue acquisiton failed, exiting engine execution immediately", "GameManager");
-            ShutdownPeachEngine();
+            ShutdownPeachEngine(); //shutdown threads now that their initialized owo
             return false;
         }
 
@@ -227,8 +232,6 @@ namespace PeachCore
         )
     {
         //////////////////// Use Peach-E default Segfault Handler ////////////////////
-
-        signal(SIGSEGV, SegFaultHandler); //XXX: used for trying to close and flush logs on seg fault
 
         PEACH_TO_DO_UNUSED(fp_RootPath);
 
@@ -288,7 +291,7 @@ namespace PeachCore
             return false;
         }
 
-        main_logger->Debug(fmt::format("PhysFS initialized at root: {}", fp_RootPath), "GameManager");
+        main_logger->Info(fmt::format("PhysFS initialized at root: {}", fp_RootPath), "GameManager");
         return true;
     }
 
@@ -757,11 +760,5 @@ namespace PeachCore
         //LoadScene(fp_DesiredSceneName);
 
         return PEACH_OK;
-    }
-
-    [[nodiscard]] SceneTree*
-        GameManager::GetCurrentScene()
-    {
-        return &pm_CurrentScene;
     }
 }

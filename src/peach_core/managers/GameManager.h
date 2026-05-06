@@ -205,7 +205,10 @@ namespace PeachCore {
             ChangeScene(const string& fp_DesiredSceneName);
 
         [[nodiscard]] SceneTree*
-            GetCurrentScene();
+            GetCurrentScene()
+        {
+            return &pm_CurrentScene;
+        }
 
     //////////////////////////////////////////////
     // Private Methods

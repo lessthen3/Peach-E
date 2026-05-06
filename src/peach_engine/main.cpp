@@ -14,9 +14,9 @@
 static int
     RunPeachEngine(int, const char** fp_ArgVector)
 {
-    int* crash = nullptr;
+    // int* crash = nullptr;
 
-    *crash = 69;
+    // *crash = 69;
 
     try
     {
@@ -88,7 +88,7 @@ int
     }
 
     // 2. The Logic Switch
-    if (PeachCore::IsDebuggerAttached() || f_RunAsEngine) // THIS IS THE ENGINE MODE
+    if (PeachCore::IsDebuggerAttached() or f_RunAsEngine) // THIS IS THE ENGINE MODE
     {
         return RunPeachEngine(fp_ArgCount, fp_ArgVector); 
     }
