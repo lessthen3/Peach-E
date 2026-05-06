@@ -329,7 +329,282 @@ def unpack_versioned_dep(fp_WorkingDirectory: str, fp_ArchivePatternName: str) -
 
         return True
 
-############# Main Function #############
+############################################################################## Android Build ##############################################################################
+
+def FindAndroidNdk():
+    """
+    Resolve the absolute path to the Android NDK directory.
+    Returns the path string on success, or None if no NDK could be located.
+
+    Lookup order:
+      1. ANDROID_NDK_HOME env var (explicit override)
+      2. ANDROID_NDK_ROOT env var (NDK's own scripts use this)
+      3. ANDROID_NDK env var (CMake sometimes sets this internally)
+      4. ANDROID_HOME / ANDROID_SDK_ROOT env vars, then walk into ndk/<version>/
+      5. ANDROID_HOME / ANDROID_SDK_ROOT env vars, then walk into ndk-bundle/
+    """
+
+    ############# direct env vars pointing at the NDK itself #############
+
+    f_DirectNdkEnvVars = ["ANDROID_NDK_HOME", "ANDROID_NDK_ROOT", "ANDROID_NDK"]
+
+    for f_EnvVarName in f_DirectNdkEnvVars:
+        f_Candidate = os.environ.get(f_EnvVarName)
+
+        if not f_Candidate or not os.path.isdir(f_Candidate):
+            print(CreateColouredText(f"[INFO]: android sdk env var: {f_Candidate} not found, continuing search...", "bright green"))
+            continue
+
+        print(CreateColouredText(f"[INFO]: found android sdk env var: {f_Candidate}!", "bright green"))
+        return f_Candidate
+
+    ############# SDK-relative fallbacks via ANDROID_HOME / ANDROID_SDK_ROOT #############
+
+    print(CreateColouredText("[INFO]: could not find ndk, trying ANDROID_HOME...", "bright green"))
+
+    f_SdkRoot = os.environ.get("ANDROID_HOME")
+
+    if not f_SdkRoot:
+        print(CreateColouredText("[INFO]: ANDROID_HOME not found, trying ANDROID_SDK_ROOT", "bright green"))
+
+        f_SdkRoot = os.environ.get("ANDROID_SDK_ROOT")
+
+        if not f_SdkRoot or not os.path.isdir(f_SdkRoot):
+            print(CreateColouredText("[ERROR]: ANDROID_SDK_ROOT not found!, could not find suitable tools for cross compiling peachy for android, please install and set env vars for Android Studio", "red"))
+            return None
+
+    ############# modern layout: $SDK/ndk/<version>/ #############
+
+    f_VersionedNdkRoot = os.path.join(f_SdkRoot, "ndk")
+
+    if os.path.isdir(f_VersionedNdkRoot):
+        f_AvailableVersions = []
+
+        for f_Entry in os.listdir(f_VersionedNdkRoot):
+            f_EntryPath = os.path.join(f_VersionedNdkRoot, f_Entry)
+
+            if os.path.isdir(f_EntryPath):
+                f_AvailableVersions.append(f_Entry)
+
+        if f_AvailableVersions:
+            f_AvailableVersions.sort(reverse=True) #lexicographic descending picks the highest semver-style version
+            f_FullPathToNdk = os.path.join(f_VersionedNdkRoot, f_AvailableVersions[0])
+
+            print(CreateColouredText(f"[INFO]: found a viable NDK, choosing latest version at: {f_FullPathToNdk}", "bright green"))
+            return f_FullPathToNdk
+
+    ############# legacy layout: $SDK/ndk-bundle/ #############
+
+    print(CreateColouredText(f"[INFO]: found {f_SdkRoot}, however unable to find NDK, trying legacy ndk-bundle instead", "bright green"))
+
+    f_LegacyNdkBundle = os.path.join(f_SdkRoot, "ndk-bundle")
+
+    if not os.path.isdir(f_LegacyNdkBundle):
+        print(CreateColouredText("[ERRROR]: found android sdk, however unable to find suitable NDK, are you sure you've installed the NDK packages?", "red"))
+        return None
+    
+    return f_LegacyNdkBundle
+
+############################################################################## Android Helpers ##############################################################################
+
+def IsWindows():
+    return platform.system() == "Windows"
+
+def GetGradlewName():
+    """The gradle wrapper has two flavors. Windows uses gradlew.bat, every Un*x uses gradlew."""
+    return "gradlew.bat" if IsWindows() else "gradlew"
+
+def GetExeName(fp_BaseName):
+    """Append .exe on Windows, leave bare on Un*x."""
+    return fp_BaseName + ".exe" if IsWindows() else fp_BaseName
+
+def FindAdb():
+    """
+    Locate adb. Same env-var search order as ANDROID_HOME — adb lives at <SDK>/platform-tools/adb[.exe]
+    Returns full path or None. Does NOT rely on PATH because we want consistent behavior whether or not
+    the user added platform-tools to PATH.
+    """
+    f_SdkRoot = os.environ.get("ANDROID_HOME") or os.environ.get("ANDROID_SDK_ROOT")
+
+    if f_SdkRoot:
+        f_AdbPath = os.path.join(f_SdkRoot, "platform-tools", GetExeName("adb"))
+
+        if os.path.isfile(f_AdbPath):
+            return f_AdbPath
+
+    ############# fallback: maybe it's on PATH #############
+
+    f_PathAdb = shutil.which("adb")
+
+    if f_PathAdb:
+        return f_PathAdb
+
+    return None
+
+def RunSubprocessLive(fp_Cmd, fp_Cwd = None, fp_EnvOverrides = None):
+    """
+    Run a subprocess streaming its output live to our stdout/stderr (no buffering).
+    Returns the exit code. fp_Cmd is a list, not a string — never use shell=True with user-controlled paths.
+    """
+    f_Env = os.environ.copy()
+
+    if fp_EnvOverrides:
+        f_Env.update(fp_EnvOverrides)
+
+    f_Process = subprocess.Popen(
+        fp_Cmd,
+        cwd=fp_Cwd,
+        env=f_Env,
+        stdout=None,    # inherit our stdout — output streams live
+        stderr=None,    # same for stderr
+    )
+
+    return f_Process.wait()
+
+def PackageAndroidApk(fp_BaseDir, fp_BuildType):
+    """
+    Copy the freshly-built libpeach_core.so into the gradle project's jniLibs dir,
+    then invoke gradlew to assemble the APK.
+    """
+
+    ############# locate the .so we just built #############
+    # adjust this path to wherever your android cmake build outputs land
+    # cmake with ninja typically dumps shared libs at build/<config>/
+
+    f_BuiltSo = os.path.join(fp_BaseDir, "build", "libpeach_core.so")
+
+    if not os.path.isfile(f_BuiltSo):
+        ############# fallback search — find it wherever cmake stuck it #############
+
+        f_Found = None
+
+        for f_Root, f_Dirs, f_Files in os.walk(os.path.join(fp_BaseDir, "build")):
+            if "libpeach_core.so" in f_Files:
+                f_Found = os.path.join(f_Root, "libpeach_core.so")
+                break
+
+        if not f_Found:
+            print(CreateColouredText("[ERROR]: could not find libpeach_core.so in build/ — did the native build actually succeed?", "red"))
+            return False
+
+        f_BuiltSo = f_Found
+
+    ############# ensure jniLibs/arm64-v8a/ exists #############
+
+    f_AndroidProjectDir = os.path.join(fp_BaseDir, "res", "android_project")
+    f_JniLibsDir = os.path.join(f_AndroidProjectDir, "app", "src", "main", "jniLibs", "arm64-v8a")
+
+    os.makedirs(f_JniLibsDir, exist_ok=True)
+
+    f_DestSo = os.path.join(f_JniLibsDir, "libpeach_core.so")
+
+    print(CreateColouredText(f"[INFO]: copying {f_BuiltSo} -> {f_DestSo}", "bright cyan"))
+    shutil.copy2(f_BuiltSo, f_DestSo)
+
+    ############# invoke gradlew #############
+
+    f_GradlewPath = os.path.join(f_AndroidProjectDir, GetGradlewName())
+
+    if not os.path.isfile(f_GradlewPath):
+        print(CreateColouredText(f"[ERROR]: gradlew wrapper not found at {f_GradlewPath} >w<", "red"))
+        return False
+
+    ############# Un*x systems need exec bit set on gradlew (lost when copied through windows etc) #############
+
+    if not IsWindows():
+        f_CurrentMode = os.stat(f_GradlewPath).st_mode
+        os.chmod(f_GradlewPath, f_CurrentMode | 0o111) # add execute for u/g/o
+
+    f_GradleTask = "assembleRelease" if fp_BuildType == "Release" else "assembleDebug"
+
+    print(CreateColouredText(f"[INFO]: running gradlew {f_GradleTask} ~ nya~", "bright cyan"))
+
+    f_ExitCode = RunSubprocessLive(
+        [f_GradlewPath, f_GradleTask],
+        fp_Cwd=f_AndroidProjectDir
+    )
+
+    if f_ExitCode != 0:
+        print(CreateColouredText(f"[ERROR]: gradlew {f_GradleTask} failed with exit code {f_ExitCode}", "red"))
+        return False
+
+    f_ApkSubdir = "release" if fp_BuildType == "Release" else "debug"
+    f_ApkName = f"app-{f_ApkSubdir}.apk"
+    f_ApkPath = os.path.join(f_AndroidProjectDir, "app", "build", "outputs", "apk", f_ApkSubdir, f_ApkName)
+
+    if os.path.isfile(f_ApkPath):
+        print(CreateColouredText(f"[INFO]: APK built successfully at {f_ApkPath}", "bright green"))
+        return True
+    else:
+        print(CreateColouredText(f"[ERROR]: gradlew reported success but APK not found at {f_ApkPath}", "red"))
+        return False
+
+
+def InstallAndroidApk(fp_BaseDir, fp_BuildType):
+    """Install the APK onto whichever device adb sees first."""
+
+    f_Adb = FindAdb()
+
+    if not f_Adb:
+        print(CreateColouredText("[ERROR]: adb not found — is the Android SDK platform-tools installed?", "red"))
+        return False
+
+    f_ApkSubdir = "release" if fp_BuildType == "Release" else "debug"
+    f_ApkName = f"app-{f_ApkSubdir}.apk"
+    f_ApkPath = os.path.join(fp_BaseDir, "res", "android_project", "app", "build", "outputs", "apk", f_ApkSubdir, f_ApkName)
+
+    print(CreateColouredText(f"[INFO]: installing {f_ApkName} via adb~", "bright cyan"))
+
+    f_ExitCode = RunSubprocessLive([f_Adb, "install", "-r", f_ApkPath])
+
+    if f_ExitCode != 0:
+        print(CreateColouredText(f"[ERROR]: adb install failed with exit code {f_ExitCode} — is a device connected? (run `{f_Adb} devices` to check)", "red"))
+        return False
+
+    return True
+
+
+def LaunchAndroidApk():
+    """Launch PeachActivity and tail logcat. Blocks until user kills it (Ctrl+C)."""
+
+    f_Adb = FindAdb()
+
+    if not f_Adb:
+        print(CreateColouredText("[ERROR]: adb not found", "red"))
+        return False
+
+    ############# clear stale log buffer first so we only see this run's output #############
+
+    RunSubprocessLive([f_Adb, "logcat", "-c"])
+
+    ############# launch the activity #############
+
+    f_LaunchExitCode = RunSubprocessLive([
+        f_Adb, "shell", "am", "start",
+        "-n", "com.starlightbrew.peach/.PeachActivity"
+    ])
+
+    if f_LaunchExitCode != 0:
+        print(CreateColouredText("[ERROR]: failed to launch activity", "red"))
+        return False
+
+    print(CreateColouredText("[INFO]: tailing logcat — press Ctrl+C to stop ~ nya~", "bright cyan"))
+
+    ############# tail filtered logcat — blocks until user interrupts #############
+
+    try:
+        RunSubprocessLive([
+            f_Adb, "logcat",
+            "-s", "SDL:V", "SDL/APP:V", "peach_core:V",
+            "AndroidRuntime:E", "DEBUG:E", "libc:E"
+        ])
+
+    except KeyboardInterrupt:
+        print(CreateColouredText("\n[INFO]: stopped tailing logcat", "bright cyan"))
+
+    return True
+
+############################################################################## Main Function ##############################################################################
 
 def main() -> bool:
 
@@ -456,6 +731,24 @@ def main() -> bool:
         help=CreateColouredText('Compiles with gcc on compatible platforms', 'bright magenta')
     )
 
+    parser.add_argument(
+        "--package_apk",
+        action="store_true",
+        help="after a successful android build, copy the .so into the gradle project and run gradlew assembleDebug/Release"
+    )
+
+    parser.add_argument(
+        "--install_apk",
+        action="store_true",
+        help="after --package_apk, install the resulting apk to the connected device via adb"
+    )
+
+    parser.add_argument(
+        "--launch_apk",
+        action="store_true",
+        help="after --install_apk, launch the activity and tail logcat"
+    )
+
     args = parser.parse_args()
 
     ############# Validate Build Config #############
@@ -540,6 +833,29 @@ def main() -> bool:
 
         print(CreateColouredText(f"[INFO]: Auto-detected platform: {f_ToolchainKey} ~ nya~", "bright cyan"))
 
+    ############# Android #############
+
+    if f_ToolchainKey == "android":
+
+        f_AndroidNdkAbsolutePath = FindAndroidNdk() # Android Studio reliably sets ANDROID_HOME or ANDROID_SDK_ROOT, NDK installs under $SDK/ndk/<version>/ (newer) or $SDK/ndk-bundle/ (old).
+        
+        if not f_AndroidNdkAbsolutePath:
+            print(CreateColouredText("[ERROR]: unable to locate required tools for Android cross compilation >w< stopping build immediately", "red"))
+            return False
+        
+        f_AndroidNdkAbsolutePath = f_AndroidNdkAbsolutePath.replace("\\", "/") #replace chars since on windows cmake is kinda stupid
+        
+        f_ExtraGenerationConfigs.extend(
+            [
+                f"-DCMAKE_ANDROID_NDK={f_AndroidNdkAbsolutePath}", #have to set this manually since cmake is kinda cooked ngl ¯\_(ツ)_/¯
+                "-DANDROID_ABI=arm64-v8a",
+                "-DANDROID_PLATFORM=android-24",
+                "-DANDROID_STL=c++_static"
+            ]
+        )
+
+        print(CreateColouredText(f"[INFO]: Hooked Android NDK Toolchain at {f_AndroidNdkAbsolutePath} ~ nya~", "bright green"))
+
     ############# Compiler Identification #############
 
     if args.use_clang:
@@ -599,6 +915,20 @@ def main() -> bool:
         WriteBuildSummaryMarkdown(".", False, True);
     elif args.dump_errors:
         WriteBuildSummaryMarkdown(".", True, False);
+    
+    ############# Android Post-Build: Package, Install, Launch #############
+
+    if f_ToolchainKey == "android" and (args.package_apk or args.install_apk or args.launch_apk):
+        if not PackageAndroidApk(f_BaseDir, f_BuildType):
+            return False
+
+    if f_ToolchainKey == "android" and (args.install_apk or args.launch_apk):
+        if not InstallAndroidApk(f_BaseDir, f_BuildType):
+            return False
+
+    if f_ToolchainKey == "android" and args.launch_apk:
+        if not LaunchAndroidApk():
+            return False
 
     ############# return false on failed build ;w; #############
 

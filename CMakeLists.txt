@@ -390,7 +390,7 @@ elseif(PEACH_ANDROID) #doesn't need glew owo
 
     STATIC_IMPORT(SDL3 
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/android/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/android/debug/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/android/release/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
@@ -448,6 +448,28 @@ elseif(PEACH_MACOS) #TODO fix iokit and other frameworks that dont exist on ios 
         "-framework UniformTypeIdentifiers"
         "-lpthread"
     ) #needed for statically linking SDL3
+
+elseif(PEACH_IOS OR PEACH_TVOS) #idk ill just link the same, exe compilation on rel will dead code eliminate this shi
+
+    target_link_libraries(peach_core PUBLIC
+        "-framework UIKit"
+        "-framework Foundation"
+        "-framework Metal"
+        "-framework MetalKit"
+        "-framework QuartzCore"
+        "-framework CoreGraphics"
+        "-framework CoreVideo"
+        "-framework AVFoundation"
+        "-framework AudioToolbox"
+        "-framework CoreAudio"
+        "-framework CoreHaptics"  # iOS 13+ for haptics
+        "-framework CoreMotion"   # iOS-specific sensors
+        "-framework GameController"
+        "-framework CoreMedia"
+        "-framework ImageIO"
+        "-framework CoreServices"        # SDL3 uses this for file APIs
+        "-framework MobileCoreServices"  # legacy UTI lookups SDL still references like the carbon shi on macos ;w; >w< owo
+    )
 
 elseif(PEACH_PLATFORM_IS_FREEBSD)
 

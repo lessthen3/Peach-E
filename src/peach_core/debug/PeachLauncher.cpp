@@ -110,6 +110,8 @@ namespace PeachCore{
         );
     }
 
+#ifdef PEACH_PLATFORM_DESKTOP
+
     int 
         LauncherMain(int, const char** argv)
     {
@@ -172,5 +174,7 @@ namespace PeachCore{
         #   error "Unsupported platform for Peach Launcher ;w;"
         #endif
     }
+
+#endif /*PEACH_PLATFORM_DESKTOP*/
 
 } //namespace PeachCore

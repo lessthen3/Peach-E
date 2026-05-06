@@ -26,7 +26,7 @@
 #   define STDERR_FILENO 2
 #   define PEACH_CRASH_WRITE ::_write
 #   define PEACH_CRASH_EXIT ::_exit
-#elif defined(PEACH_PLATFORM_LINUX) || defined(PEACH_PLATFORM_APPLE) || defined(PEACH_PLATFORM_FREEBSD)
+#elif defined(PEACH_PLATFORM_LINUX) || defined(PEACH_PLATFORM_APPLE) || defined(PEACH_PLATFORM_FREEBSD) || defined(PEACH_PLATFORM_ANDROID)
 #   include <unistd.h>     // for write, _exit on POSIX
 #
 #   define PEACH_CRASH_WRITE ::write
@@ -45,10 +45,18 @@ namespace PeachCore::Debug {
     static char s_LogDirectoryPath[1024] = { 0 };
 
     void
-        SetCrashFlagPath(const char* fp_Path)
+        SetCrashFlagPath(const char* fp_Path) //TODO ACTUALLY FIX THIS
         noexcept
     {
-        std::strncpy(s_CrashFlagPath, fp_Path, sizeof(s_CrashFlagPath) - 1);
+        if(not fp_Path)
+        {
+            return; //idk this is broken
+        }
+
+        // std::strncpy_s(s_CrashFlagPath, fp_Path, sizeof(s_CrashFlagPath) - 1); //might need to use strncpy_s
+        // // snprintf is on everything, handles null-termination, and is "safe"
+        // // Use the array buffer s_LogDirectoryPath, not the pointer s_CrashFlagPath!
+        // snprintf(s_LogDirectoryPath, sizeof(s_LogDirectoryPath), "%s", fp_Path);
     }
 
     /*
@@ -121,7 +129,7 @@ namespace PeachCore::Debug {
             #ifdef PEACH_PLATFORM_WINDOWS
                 // Windows: _open is technically not in the strict POSIX safe list
                 // but on Windows you don't have async-signal semantics anyway.
-                int f_Fd = ::_open(s_CrashFlagPath, _O_WRONLY | _O_CREAT | _O_TRUNC, _S_IREAD | _S_IWRITE);
+                int f_Fd = ::_sopen_s(s_CrashFlagPath, _O_WRONLY | _O_CREAT | _O_TRUNC, _S_IREAD | _S_IWRITE);
             #else
                 int f_Fd = ::open(s_CrashFlagPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
             #endif

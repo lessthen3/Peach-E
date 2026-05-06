@@ -205,17 +205,46 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "haiku")
 ############# android cross #############
 
 elseif(PEACH_TARGET_PLATFORM STREQUAL "android")
-    set(CMAKE_SYSTEM_NAME Android)
-    set(CMAKE_SYSTEM_PROCESSOR aarch64)
-    set(CMAKE_ANDROID_ARCH_ABI arm64-v8a)
-    set(CMAKE_ANDROID_API 24) # android 7.0 minimum
-    set(CMAKE_ANDROID_STL_TYPE c++_static)
 
-    if(NOT DEFINED ENV{ANDROID_NDK_HOME})
-        message(FATAL_ERROR "ANDROID_NDK_HOME environment variable not set")
+    #set abi and versions via init.py
+
+    ############# resolve the NDK path #############
+    # init.py is the primary entry point and passes -DCMAKE_ANDROID_NDK=<path> directly, this is just a fall back
+
+    if(NOT DEFINED CMAKE_ANDROID_NDK OR CMAKE_ANDROID_NDK STREQUAL "")
+    
+        message(STATUS "CMake Android NDK var not set, going to try and find it through peach.toolchain.cmake")
+
+        if(DEFINED ENV{ANDROID_NDK_HOME} AND NOT "$ENV{ANDROID_NDK_HOME}" STREQUAL "")
+            set(CMAKE_ANDROID_NDK "$ENV{ANDROID_NDK_HOME}")
+
+        elseif(DEFINED ENV{ANDROID_NDK_ROOT} AND NOT "$ENV{ANDROID_NDK_ROOT}" STREQUAL "")
+            set(CMAKE_ANDROID_NDK "$ENV{ANDROID_NDK_ROOT}")
+
+        elseif(DEFINED ENV{ANDROID_NDK} AND NOT "$ENV{ANDROID_NDK}" STREQUAL "")
+            set(CMAKE_ANDROID_NDK "$ENV{ANDROID_NDK}")
+
+        else()
+            message(FATAL_ERROR
+                "Android NDK not found >w< either:\n"
+                "  - run the build via init.py which auto-detects, OR\n"
+                "  - set ANDROID_NDK_HOME (or ANDROID_NDK_ROOT) env var, OR\n"
+                "  - pass -DCMAKE_ANDROID_NDK=<path> directly to cmake"
+            )
+        endif()
     endif()
 
-    set(CMAKE_ANDROID_NDK $ENV{ANDROID_NDK_HOME})
+    # normalize backslashes to forward slashes regardless of where the path came from (Windows env vars give us C:\foo\bar which CMake's string parser hates)
+    file(TO_CMAKE_PATH "${CMAKE_ANDROID_NDK}" CMAKE_ANDROID_NDK)
+
+    if(NOT IS_DIRECTORY "${CMAKE_ANDROID_NDK}")
+        message(FATAL_ERROR "CMAKE_ANDROID_NDK is set but doesn't point to a valid directory: '${CMAKE_ANDROID_NDK}'")
+    endif()
+
+    message(STATUS "Android NDK found at ${CMAKE_ANDROID_NDK} UwU!!!!!!!!!!!!!!!")
+
+    # Now manually pull in the toolchain
+    include("${CMAKE_ANDROID_NDK}/build/cmake/android.toolchain.cmake")
 
     set(PEACH_ANDROID             ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_MOBILE  ON CACHE BOOL "" FORCE)

@@ -10,6 +10,8 @@
 ********************************************************************/
 #pragma once
 
+#ifdef PEACH_PLATFORM_DESKTOP
+
 namespace PeachCore {
 
     [[nodiscard]] int 
@@ -20,6 +22,8 @@ namespace PeachCore {
         noexcept;
 
 }
+
+#endif /*PEACH_PLATFORM_DESKTOP*/
 
 
 // // peach_launcher.cpp

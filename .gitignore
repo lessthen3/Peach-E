@@ -42,6 +42,11 @@
 #MacOS specific
 **.DS_Store
 
+# Android Build Artifacts owo
+res/android_project/build
+res/android_project/app/build
+**.gradle
+
 
 #Compressed deps
 

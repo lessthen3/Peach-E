@@ -155,10 +155,10 @@ namespace PeachCore {
         unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr; //OpenGL not supported on mac anymore fuck you tim apple
 #endif
 #ifdef PEACH_RENDERER_OPENGL_ES
-        unique_ptr<WebGL::Renderer> pm_WebGLRenderer = nullptr;
+        unique_ptr<MobileGL::Renderer> pm_WebGLRenderer = nullptr;
 #endif
 #ifdef PEACH_RENDERER_WEBGL
-        unique_ptr<MobileGL::Renderer> pm_MobileGLRenderer = nullptr;
+        unique_ptr<WebGL::Renderer> pm_MobileGLRenderer = nullptr;
 #endif
 
         size_t pm_CurrentFrameRateLimit = 0u;
