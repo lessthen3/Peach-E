@@ -51,21 +51,21 @@ namespace PeachCore {
         ALL_THREADS = MainThread | RenderThread | ResourceThread | NetworkThread | PhysicsThread | AudioThread
     };
 
-    inline
+    constexpr inline
         ThreadName operator|(ThreadName fp_FuckCpp, ThreadName fp_FuckYou) //fuck C++ CoodOEOs MSelLLLSlelS Ss brb ima write C++ like java and be confused why it doesn't work uwu
         noexcept
     {
         return static_cast<ThreadName>(static_cast<uint8_t>(fp_FuckCpp) | static_cast<uint8_t>(fp_FuckYou));
     }
 
-    inline bool 
+    constexpr inline bool 
         operator&(ThreadName fp_FuckCpp, ThreadName fp_FuckYou)
         noexcept
     {
         return static_cast<uint8_t>(fp_FuckCpp) & static_cast<uint8_t>(fp_FuckYou);
     }
 
-    inline ThreadName
+    constexpr inline ThreadName
         operator^(ThreadName fp_FuckCpp, ThreadName fp_FuckYou)
         noexcept
     {
@@ -199,6 +199,15 @@ namespace PeachCore {
         bool
             ShutdownPeachEngine();
 
+        //////////////////////////////////////// Thread Panic ////////////////////////////////////////
+
+        void
+            ThreadPanicShutdown(PEACH_STATUS_CODE fp_PanicCode)
+        {
+            PEACH_PRINT_FMT(PEACH_COL_BRIGHT_MAGENTA, "shutting down engine due to thread panic with code: {}", static_cast<int>(fp_PanicCode));
+            m_IsRunning.store(false, std::memory_order_release);
+        }
+
         //////////////////////////////////////// Peach API Functions ////////////////////////////////////////
 
         PEACH_STATUS_CODE
@@ -223,7 +232,7 @@ namespace PeachCore {
                 const string& fp_RootPath,
                 const uint32_t fp_InitialWindowWidth,
                 const uint32_t fp_InitialWindowHeight,
-                 RendererType fp_RenderingBackend, //o7
+                RendererType fp_RenderingBackend, //o7
                 const bool fp_Is3D = false
 
             );

@@ -512,6 +512,15 @@ elseif(PEACH_ANDROID)
         OpenSLES     # Audio (miniaudio fallback since AAudio requires API 26+)
         # Vulkan is loaded dynamically via volk, no -lVulkan needed
     )
+
+    ############# 16KB page-size alignment for Android 15+ #############
+    # required for Pixel 8+, Play Store mandate as of Nov 2025
+    # 16384-aligned binaries also work on older 4KB-page devices, so this is
+    # universally correct on Android — set unconditionally
+    target_link_options(peach_core PRIVATE
+        "-Wl,-z,max-page-size=16384"
+        "-Wl,-z,common-page-size=16384"
+    )
 elseif(PEACH_IOS)
 
 endif()

@@ -161,7 +161,7 @@ namespace PeachCore{ //static internaly linked functions owo
 
 namespace PeachCore{
 
-    Logger::~Logger() ///XXX: Just copy and pasted the flushalllogs method because they have the assert at the beginning and wont work with premature exit
+    Logger::~Logger() 
     {
         LogManager::get_single().UnregisterLogger(this);
         FlushAllLocked();
@@ -253,7 +253,7 @@ namespace PeachCore{
                 WriteLogEntry(TRACE_LOG_INDEX, PEACH_LOGGER_FLUSH_TRACE_BIT, f_LogEntry);
             }
 
-            PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_WHITE);
+            PEACH_PRINT(f_LogEntry.c_str(), PEACH_COL_BRIGHT_WHITE);
         }
     }
 
@@ -283,7 +283,7 @@ namespace PeachCore{
                 WriteLogEntry(DEBUG_LOG_INDEX, PEACH_LOGGER_FLUSH_DEBUG_BIT, f_LogEntry);
             }
 
-            PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_BLUE);
+            PEACH_PRINT(f_LogEntry.c_str(), PEACH_COL_BRIGHT_BLUE);
         }
     }
 
@@ -313,7 +313,7 @@ namespace PeachCore{
                 WriteLogEntry(INFO_LOG_INDEX, PEACH_LOGGER_FLUSH_INFO_BIT, f_LogEntry);
             }
 
-            PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_GREEN);
+            PEACH_PRINT(f_LogEntry.c_str(), PEACH_COL_BRIGHT_GREEN);
         }
     }
 
@@ -347,7 +347,7 @@ namespace PeachCore{
                 WriteLogEntry(WARNING_LOG_INDEX, PEACH_LOGGER_FLUSH_WARNING_BIT, f_LogEntry);
             }
 
-            PEACH_PRINT(f_LogEntry, PEACH_COL_BRIGHT_YELLOW);
+            PEACH_PRINT(f_LogEntry.c_str(), PEACH_COL_BRIGHT_YELLOW);
         }
     }
 
@@ -381,7 +381,7 @@ namespace PeachCore{
                 WriteLogEntry(ERROR_LOG_INDEX, PEACH_LOGGER_FLUSH_ERROR_BIT, f_LogEntry);
             }
 
-            PEACH_PRINT_ERROR(f_LogEntry);
+            PEACH_PRINT_ERROR(f_LogEntry.c_str());
         }
     }
 
@@ -425,7 +425,7 @@ namespace PeachCore{
                 FlushAllLocked(); //dont increment log counter since its gonna be set to 0 anyways after flushing
             }
 
-            PEACH_PRINT(f_LogEntry, PEACH_COL_MAGENTA);
+            PEACH_PRINT(f_LogEntry.c_str(), PEACH_COL_MAGENTA);
         }
     }
 

@@ -40,9 +40,22 @@ extern "C"
         PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL,
         PEACH_ERROR_FAILED_INITIALIZE_GLEW,
 
+        //////////////////////// MobileGL ////////////////////////
+
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_MOBILE_GL,
+
+        //////////////////////// WebGL ////////////////////////
+
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_WEB_GL,
+
         //////////////////////// Vulkan ////////////////////////
 
-        PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN
+        PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN,
+
+        //////////////////////// Metal ////////////////////////
+
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_METAL
+
 
     } PEACH_STATUS_CODE;
 

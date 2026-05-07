@@ -480,18 +480,6 @@ namespace PeachCore {
             case SDL_EVENT_WINDOW_FOCUS_GAINED:
                 m_CurrentMainWindowState.IsKeyboardFocus.store(true, std::memory_order_relaxed);
                 break;
-            case SDL_EVENT_WINDOW_HIDDEN:
-                m_CurrentMainWindowState.IsHidden.store(true, std::memory_order_relaxed);
-                break;
-            case SDL_EVENT_WINDOW_SHOWN:
-                m_CurrentMainWindowState.IsHidden.store(false, std::memory_order_relaxed);
-                break;
-            case SDL_EVENT_WINDOW_MAXIMIZED:
-                m_CurrentMainWindowState.SetMaximized();
-                break;
-            case SDL_EVENT_WINDOW_MINIMIZED:
-                m_CurrentMainWindowState.SetMinimized();
-                break;
             case SDL_EVENT_WINDOW_RESIZED:
                 m_CurrentMainWindowState.Width.store(wv_Event.window.data1, std::memory_order_relaxed);
                 m_CurrentMainWindowState.Height.store(wv_Event.window.data2, std::memory_order_relaxed); //idek what data2 is lmfao
@@ -501,6 +489,7 @@ namespace PeachCore {
                 break;
             case SDL_EVENT_WINDOW_EXPOSED: // window became visible again
                 m_CurrentMainWindowState.IsOccluded.store(false, std::memory_order_relaxed);
+                m_CurrentMainWindowState.IsSurfaceReady.store(true, std::memory_order_release);
                 break;
             ///NOT SURE IF THESE ARE NEEDED SINCE THERE IS A WINDOW FLAG FOR MOUSE FOCUS ALREADY
             case SDL_EVENT_WINDOW_MOUSE_LEAVE:
@@ -510,7 +499,35 @@ namespace PeachCore {
                 m_CurrentMainWindowState.IsMouseFocus.store(true, std::memory_order_relaxed);
                 break;
 
-            
+            case SDL_EVENT_WINDOW_HIDDEN:
+                m_CurrentMainWindowState.IsHidden.store(true, std::memory_order_release);
+                                m_CurrentMainWindowState.IsSurfaceReady.store(false, std::memory_order_release);
+                break;
+            case SDL_EVENT_WINDOW_RESTORED:
+            case SDL_EVENT_WINDOW_SHOWN:
+                m_CurrentMainWindowState.IsHidden.store(false, std::memory_order_release);
+                m_CurrentMainWindowState.IsSurfaceReady.store(true, std::memory_order_release);
+                break;
+            case SDL_EVENT_WINDOW_MAXIMIZED:
+                m_CurrentMainWindowState.SetMaximized();
+                break;
+            case SDL_EVENT_WINDOW_MINIMIZED:
+                m_CurrentMainWindowState.SetMinimized();
+                m_CurrentMainWindowState.IsHidden.store(true, std::memory_order_release);
+                m_CurrentMainWindowState.IsSurfaceReady.store(false, std::memory_order_release);
+                break;
+
+            case SDL_EVENT_WILL_ENTER_BACKGROUND:
+            case SDL_EVENT_DID_ENTER_BACKGROUND:
+                m_CurrentMainWindowState.IsHidden.store(true, std::memory_order_release);
+                break;
+
+            case SDL_EVENT_DID_ENTER_FOREGROUND:
+                m_CurrentMainWindowState.IsHidden.store(false, std::memory_order_release);
+                //flag swapchain for recreation since the underlying surface may have been lost
+                //during backgrounding; let renderer detect via VK_ERROR_SURFACE_LOST and recreate
+                break;
+
             }
         }
 

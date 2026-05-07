@@ -32,7 +32,20 @@ int
 
     auto& f_Engine = PeachCore::GameManager::get_single();
 
-    if (not f_Engine.InitializePeachEngine(f_RootPath))
+    constexpr PeachCore::ThreadName f_RequiredThreads = ( PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::AudioThread | PeachCore::ThreadName::PhysicsThread ); 
+
+    if 
+    (
+        not f_Engine.InitializePeachEngineCustom
+        (
+            f_RootPath,
+            f_RequiredThreads,
+            PeachCore::RendererType::Vulkan, //TODO: hook runtime GLES fallback once IsVulkanUsable() lands
+            1280, //placeholder, mobile fullscreens to native resolution
+            720,  //placeholder
+            false //let peachy install its segfault handler
+        )
+    )
     {
         return EXIT_FAILURE;
     }

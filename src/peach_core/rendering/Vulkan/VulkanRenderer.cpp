@@ -130,6 +130,41 @@ namespace PeachCore::Vulkan {
 
         PEACH_PRINT_FMT(PEACH_COL_MAGENTA, "acquired image index: {}, currentframe: {}", pm_RenderData.CurrentSwapchainImageIndex, pm_RenderData.CurrentFrameCycle);
 
+        if (result == VK_ERROR_SURFACE_LOST_KHR)
+        {
+            if (InputManager::get_single().m_CurrentMainWindowState.IsSurfaceReady.load(std::memory_order_relaxed))
+            {
+                return Renderer::StatusCode::NO_VALID_RENDERING_SURFACE; //still backgrounded, the new ANativeWindow doesn't exist yet so we just skip frame
+            }
+
+            //foregrounded but our VkSurfaceKHR is bound to the now-dead ANativeWindow.
+            //SDL has already swapped its internal handle to the new one (DID_ENTER_FOREGROUND
+            //fires after surfaceCreated), so SDL_Vulkan_CreateSurface will give us a fresh
+            //surface bound to the live window.
+
+            rendering_logger->Info("Surface lost while foregrounded — recreating surface and swapchain", "VulkanRenderer");
+
+            if (not RecreateSurfaceAndSwapchain())
+            {
+                rendering_logger->Error("Failed to recreate surface and swapchain after foreground", "VulkanRenderer");
+                return Renderer::StatusCode::FAILED_TO_RECREATE_SWAPCHAIN_ERROR;
+            }
+
+            //skip this frame, the next BeginFrame will use the new surface successfully
+            return Renderer::StatusCode::NO_VALID_RENDERING_SURFACE;
+        }
+
+        //WARNING: unsure if i wanna pause rendering cause of this but seems fine tbh 
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) //swapchain stale, recreate immediately and skip this frame
+        {
+            if (not RecreateSwapChain())
+            {
+                rendering_logger->Error("Failed to recreate swapchain after VK_ERROR_OUT_OF_DATE_KHR in BeginFrame", "VulkanRenderer");
+                return Renderer::StatusCode::FAILED_TO_RECREATE_SWAPCHAIN_ERROR;
+            }
+            return Renderer::StatusCode::NO_VALID_RENDERING_SURFACE;
+        }
+
         if (result != VK_SUCCESS and result != VK_SUBOPTIMAL_KHR)
         {
             rendering_logger->Error(fmt::format("failed to acquire swapchain image. Error: {} ", static_cast<int>(result)), "VulkanRenderer");
@@ -304,12 +339,7 @@ namespace PeachCore::Vulkan {
         pm_RenderData.CurrentWindowHeight = InputManager::get_single().m_CurrentMainWindowState.Height.load(std::memory_order_relaxed);
 
         //random dude on forums said only use windowing size uwu idk what ab surface uwu and said recreating swapchains extra times is never a bad thing uwu only perf hit
-        if 
-        (
-            pm_RenderData.CurrentWindowWidth != pm_Init.SwapChain.extent.width or pm_RenderData.CurrentWindowHeight != pm_Init.SwapChain.extent.height
-            or result == VK_ERROR_OUT_OF_DATE_KHR
-            or result == VK_SUBOPTIMAL_KHR
-        ) 
+        if (result == VK_ERROR_OUT_OF_DATE_KHR or result == VK_SUBOPTIMAL_KHR) 
         {
             rendering_logger->Info("Attempting to recreate swapchain due to window resize", "VulkanRenderer");
 
@@ -401,6 +431,18 @@ namespace PeachCore::Vulkan {
     bool
         Renderer::InitializeDevice(const string& fp_AppName)
     {
+        //////////////////// Query SDL for required instance extensions ////////////////////
+        //SDL tells us which platform surface extensions to enable (VK_KHR_surface + VK_KHR_android_surface on Android, VK_KHR_win32_surface on Windows, etc.)
+        //Without this, SDL_Vulkan_CreateSurface may produce an invalid surface handle.
+
+        uint32_t f_SDLExtCount = 0;
+        const char* const* f_SDLExtensions = SDL_Vulkan_GetInstanceExtensions(&f_SDLExtCount);
+
+        if (not f_SDLExtensions and f_SDLExtCount > 0)
+        {
+            rendering_logger->Fatal("SDL_Vulkan_GetInstanceExtensions returned null with non-zero count", "VulkanRenderer");
+            return false;
+        }
         //////////////////// Build Instance ////////////////////
 
         vkb::InstanceBuilder builder;
@@ -409,8 +451,9 @@ namespace PeachCore::Vulkan {
             .set_app_name(fp_AppName.c_str())
             .set_engine_name("Peach-E")
             .request_validation_layers(true)
-            .require_api_version(1, 2, 0)
+            .require_api_version(1, 1, 0)
             .use_default_debug_messenger()  // Optional, but great for debugging
+            .enable_extensions(f_SDLExtCount, f_SDLExtensions) // platform surface extensions owo
             .build();
 
         if (not inst_ret)
@@ -439,13 +482,39 @@ namespace PeachCore::Vulkan {
             return false;
         }
 
+                uint32_t f_PhysDevCount = 0;
+vkEnumeratePhysicalDevices(pm_Init.Instance.instance, &f_PhysDevCount, nullptr);
+
+rendering_logger->Info(fmt::format("Vulkan enumerated {} physical device(s)", f_PhysDevCount), "VulkanRenderer");
+
+std::vector<VkPhysicalDevice> f_PhysDevs(f_PhysDevCount);
+vkEnumeratePhysicalDevices(pm_Init.Instance.instance, &f_PhysDevCount, f_PhysDevs.data());
+
+for (const auto& fv_Device : f_PhysDevs)
+{
+    VkPhysicalDeviceProperties fv_Props;
+    vkGetPhysicalDeviceProperties(fv_Device, &fv_Props);
+
+    rendering_logger->Info(
+        fmt::format("  GPU: {} | API {}.{}.{} | Type {} | DriverVer 0x{:x}",
+            fv_Props.deviceName,
+            VK_API_VERSION_MAJOR(fv_Props.apiVersion),
+            VK_API_VERSION_MINOR(fv_Props.apiVersion),
+            VK_API_VERSION_PATCH(fv_Props.apiVersion),
+            static_cast<int>(fv_Props.deviceType),
+            fv_Props.driverVersion
+        ),
+        "VulkanRenderer"
+    );
+}
+
         //////////////////// Create Physical Device ////////////////////
 
         vkb::PhysicalDeviceSelector phys_device_selector(pm_Init.Instance);
 
         auto phys_device_ret = phys_device_selector
             .set_surface(pm_Init.Surface)
-            .set_minimum_version(1, 2)
+            .set_minimum_version(1, 1)
             //.add_required_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME)
             //.add_required_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME)
             // .require_dedicated_transfer_queue()
@@ -761,6 +830,55 @@ namespace PeachCore::Vulkan {
         if (not CreateCommandPool()) return false;
         if (not CreateCommandBuffers()) return false;
 
+        return true;
+    }
+
+    bool
+        Renderer::RecreateSurfaceAndSwapchain()
+    {
+        //wait for any in-flight GPU work to drain before tearing anything down
+        pm_Init.Dispatch.deviceWaitIdle();
+
+        //////////////////// Destroy swapchain-dependent objects ////////////////////
+        //same teardown as RecreateSwapChain — the swapchain is bound to the surface so it goes first
+
+        pm_Init.Dispatch.destroyCommandPool(pm_RenderData.CommandPool, nullptr);
+
+        for (auto fv_Framebuffer : pm_RenderData.FrameBuffers)
+        {
+            pm_Init.Dispatch.destroyFramebuffer(fv_Framebuffer, nullptr);
+        }
+
+        pm_Init.SwapChain.destroy_image_views(pm_RenderData.SwapChainImageViews);
+
+        vkb::destroy_swapchain(pm_Init.SwapChain); //explicit swapchain destroy, RecreateSwapChain doesn't do this since vkb::SwapchainBuilder reuses the old one in build()
+
+        //////////////////// Destroy and recreate the surface ////////////////////
+        //the underlying ANativeWindow died with the previous activity instance.
+        //SDL's already updated its internal window handle to the new ANativeWindow
+        //by the time SDL_EVENT_DID_ENTER_FOREGROUND fires, so SDL_Vulkan_CreateSurface
+        //will create a surface against the live one.
+
+        vkb::destroy_surface(pm_Init.Instance, pm_Init.Surface);
+        pm_Init.Surface = VK_NULL_HANDLE;
+
+        if (not SDL_Vulkan_CreateSurface(pm_Init.MainWindow, pm_Init.Instance.instance, nullptr, &pm_Init.Surface))
+        {
+            rendering_logger->Error(fmt::format("Failed to recreate Vulkan surface: {}", SDL_GetError()), "VulkanRenderer");
+            return false;
+        }
+
+        //////////////////// Rebuild swapchain on the fresh surface ////////////////////
+
+        if (not CreateSwapChain())     { return false; }
+        if (not CreateFrameBuffer())   { return false; }
+        if (not CreateCommandPool())   { return false; }
+        if (not CreateCommandBuffers()) { return false; }
+
+        //reset frame cycle since the new swapchain image indices start fresh
+        pm_RenderData.CurrentFrameCycle = 0;
+
+        rendering_logger->Info("Surface and swapchain successfully recreated after foreground", "VulkanRenderer");
         return true;
     }
 }//namespace PeachCore::Vulkan

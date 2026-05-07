@@ -919,7 +919,7 @@ namespace PeachCore {
         {
             string f_StringJSON;
             ToString(&f_StringJSON, fp_JSON);
-            PEACH_PRINT(f_StringJSON, PEACH_COL_BRIGHT_WHITE);
+            PEACH_PRINT(f_StringJSON.c_str(), PEACH_COL_BRIGHT_WHITE);
         }
 
         //////////////////////////////////////////////

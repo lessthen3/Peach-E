@@ -9,6 +9,8 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "RenderingManager.h"
+#include "GameManager.h" //this is kosher since it's religated to this TU only owo
+
 /*
     This class is used to manage the render thread, and queue/unqueue objects safely
     Copyright(c) 2024-present Ranyodh Singh Mandur.
@@ -69,7 +71,7 @@ namespace PeachCore {
 
         if (not rendering_logger)
         {
-            PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: RenderingManager failed to initialize the render_thread logger >w<");
+            PEACH_PRINT_ERROR("RenderingManager failed to initialize the render_thread logger >w<");
             return false;
         }
 
@@ -208,7 +210,8 @@ namespace PeachCore {
         if (InitializeOpenGL(fp_InitialWindowWidth, fp_InitialWindowHeight) != PEACH_OK)
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager");
-            exit(PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
+            GameManager::get_single().ThreadPanicShutdown(PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here Futur ryan: no it really shouldn't uwu
+            pm_IsRunning.store(false, std::memory_order_release);        
         }
 
         fp_InitLatch.count_down();
@@ -324,7 +327,8 @@ namespace PeachCore {
         if (not InitializeVulkan(fp_InitialWindowWidth, fp_InitialWindowHeight))
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager");
-            exit(PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN);
+            GameManager::get_single().ThreadPanicShutdown(PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN);
+            pm_IsRunning.store(false, std::memory_order_release);        
         }
 
         fp_InitLatch.count_down();
@@ -441,7 +445,8 @@ namespace PeachCore {
         if (InitializeMetal() != PEACH_OK)
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid Metal context, exiting execution immediately", "RenderingManager");
-            exit(PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here
+            GameManager::get_single().ThreadPanicShutdown(PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_METAL); //not sure if exit should be used here
+            pm_IsRunning.store(false, std::memory_order_release);        
         }
 
         fp_InitLatch.count_down();

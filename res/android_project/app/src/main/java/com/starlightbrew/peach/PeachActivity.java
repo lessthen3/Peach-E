@@ -12,10 +12,5 @@ public class PeachActivity extends SDLActivity
     {
         return new String[] { "peach_core" }; // just the one .so, SDL3 is baked in
     }
-
-    @Override
-    protected String getMainSharedObject()
-    {
-        return "peach_core"; // the .so that contains SDL_main (your renamed main())
-    }
+    
 }

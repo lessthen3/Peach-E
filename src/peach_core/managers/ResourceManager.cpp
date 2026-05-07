@@ -39,7 +39,7 @@ namespace PeachCore {
 
         if(not resource_logger)
         {
-            PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: ResourceManager failed to initialize the resource_thread logger >w<");
+            PEACH_PRINT_ERROR("ResourceManager failed to initialize the resource_thread logger >w<");
             return false;
         }
 

@@ -52,6 +52,8 @@ namespace PeachCore {
         std::atomic<bool> IsHidden{false};
         std::atomic<bool> IsOccluded{ false };
 
+        std::atomic<bool> IsSurfaceReady{true}; //just gonna assume its ready on creation idk we'll see how this works out future ryan: 
+
         void
             SetMaximized()
         {

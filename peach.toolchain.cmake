@@ -31,7 +31,8 @@ endif()
 set(PEACH_WINDOWS_X64       OFF CACHE BOOL "" FORCE)
 set(PEACH_WINDOWS_ARM64     OFF CACHE BOOL "" FORCE)
 
-set(PEACH_MACOS             OFF CACHE BOOL "" FORCE)
+set(PEACH_MACOS_X64         OFF CACHE BOOL "" FORCE)
+set(PEACH_MACOS_ARM64       OFF CACHE BOOL "" FORCE)
 set(PEACH_IOS               OFF CACHE BOOL "" FORCE)
 set(PEACH_TVOS              OFF CACHE BOOL "" FORCE)
 
@@ -88,21 +89,10 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "windows-arm64")
 
 ############# macos native #############
 
-elseif(PEACH_TARGET_PLATFORM STREQUAL "macos")
+elseif(PEACH_TARGET_PLATFORM STREQUAL "macos-x64")
     set(CMAKE_SYSTEM_NAME Darwin)
 
-    # detect host arch if not explicitly passed in
-    if(NOT DEFINED PEACH_MAC_ARCH)
-        execute_process(
-            COMMAND uname -m
-            OUTPUT_VARIABLE f_HostArch
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-        )
-        set(PEACH_MAC_ARCH "${f_HostArch}" CACHE STRING "macOS target arch (arm64 or x86_64)")
-    endif()
-
-    set(CMAKE_OSX_ARCHITECTURES "${PEACH_MAC_ARCH}")
-
+    set(CMAKE_OSX_ARCHITECTURES "x86_64")
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
 
     set(PEACH_MACOS               ON CACHE BOOL "" FORCE)
@@ -110,7 +100,20 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "macos")
     set(PEACH_PLATFORM_IS_APPLE   ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
 
-    message(STATUS "macOS, premium fur and silky frameworks for daddy's kitten~ 🍎")
+    message(STATUS "macOS x86_64, older but golder ^w^ >///< daddy still loves u kitten owo ~~~🍎")
+
+elseif(PEACH_TARGET_PLATFORM STREQUAL "macos-arm64")
+    set(CMAKE_SYSTEM_NAME Darwin)
+
+    set(CMAKE_OSX_ARCHITECTURES "ARM64")
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
+
+    set(PEACH_MACOS_ARM64         ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_APPLE   ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
+
+    message(STATUS "macOS MMMMMMMMMM daddy likey >w<, premium fur and silky frameworks for daddy's kitten~ 🍎")
 
 ############# ios cross from mac #############
 
@@ -301,7 +304,7 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "psvita")
 else()
     message(FATAL_ERROR
         "Unknown PEACH_TARGET_PLATFORM: '${PEACH_TARGET_PLATFORM}' >///< \n"
-        "valid options: windows, windows-arm64, macos, linux, ios, tvos, android, wasm, psvita"
+        "valid options: windows-x64, windows-arm64, freebsd-x64, freebsd-arm64, linux-x64, linux-arm64, macos-x64, macos-arm64, , ios, tvos, android, wasm, psvita"
     )
 endif()
 
@@ -331,12 +334,20 @@ function(peach_apply_platform_definitions fp_Target fp_Visibility)
             PEACH_ARCH_ARM64
         )
 
-    elseif(PEACH_MACOS)
+    elseif(PEACH_MACOS_ARM64)
         target_compile_definitions(${fp_Target} ${fp_Visibility}
             PEACH_PLATFORM_MACOS
             PEACH_PLATFORM_APPLE
             PEACH_PLATFORM_DESKTOP
-            PEACH_ARCH_ARM64 # universal binary covers both but arm64 is primary
+            PEACH_ARCH_ARM64 
+        )
+    
+    elseif(PEACH_MACOS_X64)
+        target_compile_definitions(${fp_Target} ${fp_Visibility}
+            PEACH_PLATFORM_MACOS
+            PEACH_PLATFORM_APPLE
+            PEACH_PLATFORM_DESKTOP
+            PEACH_ARCH_X64 
         )
 
     elseif(PEACH_IOS)

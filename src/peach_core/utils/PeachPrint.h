@@ -38,8 +38,47 @@
 # define PEACH_USING_OS_TERMINAL
 #endif /*PEACH_DEBUG*/
 
-// print macros, gets thrown out for release builds owo
-#ifdef PEACH_USING_OS_TERMINAL
+// print macros, get thrown out for release builds owo
+
+// stdout and stderr are routed to /dev/null for Android app processes. The ONLY way to get output is through the Android log system. No ANSI codes ;w;
+// fmt formats the message to a std::string first since __android_log_print is printf-style (%s/%d/etc), not fmt-style ({}/{:d}/etc).
+//
+// View output with: adb logcat -s peach_core:V
+//
+// fmt::format().c_str() is intentional, its lifetime extends to the end of the full-expression containing the __android_log_print call, so the pointer is valid when printf-style %s reads it.
+#if defined(PEACH_PLATFORM_ANDROID) && defined(PEACH_DEBUG)
+#   include <android/log.h>
+#   define PEACH_ANDROID_LOG_TAG "peach_core"
+#   define PEACH_PRINT(fp_String, fp_Colour) __android_log_print(ANDROID_LOG_INFO, PEACH_ANDROID_LOG_TAG, "%s", (fp_String))
+#   define PEACH_PRINT_ERROR(fp_String) __android_log_print(ANDROID_LOG_ERROR, PEACH_ANDROID_LOG_TAG, "%s", (fp_String))
+#   define PEACH_PRINT_FMT(fp_Colour, fp_Format, ...) __android_log_print(ANDROID_LOG_INFO, PEACH_ANDROID_LOG_TAG, "%s", fmt::format(fp_Format __VA_OPT__(,) __VA_ARGS__).c_str())
+#   define PEACH_PRINT_ERROR_FMT(fp_Format, ...) __android_log_print(ANDROID_LOG_ERROR, PEACH_ANDROID_LOG_TAG, "%s", fmt::format(fp_Format __VA_OPT__(,) __VA_ARGS__).c_str())
+#elif (defined(PEACH_PLATFORM_IOS) || defined(PEACH_PLATFORM_TVOS)) && defined(PEACH_DEBUG)
+// Xcode's debugger console captures stderr from running apps, os_log has a completely different format string ABI incompatible with fmt so we use fprintf(stderr) instead. No ANSI codes .w.
+#   include <cstdio>
+#   define PEACH_PRINT(fp_String, fp_Colour) \
+        do { ::std::fputs(fp_String, stderr); ::std::fputc('\n', stderr); } while(0)
+#   define PEACH_PRINT_ERROR(fp_String) \
+        do { ::std::fputs("[ERROR] ", stderr); ::std::fputs(fp_String, stderr); ::std::fputc('\n', stderr); } while(0)
+#   define PEACH_PRINT_FMT(fp_Colour, fp_Format, ...) \
+        do { \
+            auto fv_Msg = fmt::format(fp_Format __VA_OPT__(,) __VA_ARGS__); \
+            ::std::fputs(fv_Msg.c_str(), stderr); \
+            ::std::fputc('\n', stderr); \
+        } while(0)
+#   define PEACH_PRINT_ERROR_FMT(fp_Format, ...) \
+        do { \
+            auto fv_Msg = fmt::format(fp_Format __VA_OPT__(,) __VA_ARGS__); \
+            ::std::fputs("[ERROR] ", stderr); \
+            ::std::fputs(fv_Msg.c_str(), stderr); \
+            ::std::fputc('\n', stderr); \
+        } while(0)
+#elif defined(PEACH_PLATFORM_WASM) && defined(PEACH_DEBUG) //Emscripten maps stdout->console.log and stderr->console.error, ANSI codes appear literally as "\x1B[32m" so we ignore em (scripten)
+#   define PEACH_PRINT(fp_String, fp_Colour) fmt::print(stdout, "{}\n", fp_String)
+#   define PEACH_PRINT_ERROR(fp_String) fmt::print(stderr, "[ERROR] {}\n", fp_String)
+#   define PEACH_PRINT_FMT(fp_Colour, fp_Format, ...) fmt::print(stdout, fp_Format "\n" __VA_OPT__(,) __VA_ARGS__)
+#   define PEACH_PRINT_ERROR_FMT(fp_Format, ...) fmt::print(stderr, "[ERROR] " fp_Format "\n" __VA_OPT__(,) __VA_ARGS__)
+#elif defined(PEACH_USING_OS_TERMINAL) && defined(PEACH_PLATFORM_DESKTOP) //Desktop platforms only owo
 #   define PEACH_PRINT(fp_String, fp_Colour) fmt::print(stdout, "{}{}{}\n", fp_Colour, fp_String, PEACH_COL_RESET)
 #   define PEACH_PRINT_ERROR(fp_String) fmt::print(stderr, "{}{}{}\n", PEACH_COL_BRIGHT_RED, fp_String ,PEACH_COL_RESET)
 #   define PEACH_PRINT_FMT(fp_Colour, fp_Format, ...) fmt::print(stdout, "{}" fp_Format "{}\n", fp_Colour, __VA_OPT__(__VA_ARGS__,) PEACH_COL_RESET)

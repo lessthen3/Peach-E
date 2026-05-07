@@ -353,8 +353,11 @@ namespace PeachCore::Vulkan{
         bool
             CreateSyncObjects();
 
-        bool
+        [[nodiscard]] bool
             RecreateSwapChain();
+        
+        [[nodiscard]] bool
+            RecreateSurfaceAndSwapchain();
     };
 }//namespace PeachCore::Vulkan
 

@@ -273,7 +273,26 @@ namespace PeachCore
     bool
         GameManager::InitializePhysFS(const char* fp_RootPath)
     {
-        if (not PHYSFS_init(fp_RootPath))
+        /*
+            PHYSFS_init(argv0) uses argv0 as a hint to locate the base directory.
+            On Android, /proc/self/exe points to app_process64 (ART launcher), NOT
+            our .so — physfs corrupts its platform function table on the resulting
+            path mangling, branching to ASCII bytes as a function pointer → SIGSEGV.
+
+            Passing nullptr skips the argv0-based base dir calculation and uses
+            platform defaults instead. We then mount fp_RootPath manually.
+
+            On all other platforms, passing fp_RootPath is fine because it maps
+            to argv[0] which physfs uses to find the game executable directory.
+        */
+
+        #ifdef PEACH_PLATFORM_ANDROID
+            const char* f_PhysFSArgv0 = nullptr;
+        #else
+            const char* f_PhysFSArgv0 = fp_RootPath;
+        #endif
+
+        if (not PHYSFS_init(f_PhysFSArgv0))
         {
             main_logger->Fatal(fmt::format("Failed to initialize PhysFS: {}", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode())), "GameManager");
             return false;
