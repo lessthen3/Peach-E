@@ -45,7 +45,7 @@
 # Android Build Artifacts owo
 res/android_project/build
 res/android_project/app/build
-**.gradle
+res/android_project/.gradle
 
 
 #Compressed deps
