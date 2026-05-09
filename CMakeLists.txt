@@ -65,7 +65,7 @@ endif()
 
 ####################################### Enforce 64-bit Requirement
 
-if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8 AND NOT PEACH_VITA)
+if(NOT ${CMAKE_SIZEOF_VOID_P} EQUAL 8 AND NOT PEACH_VITA AND NOT PEACH_WASM) #ah yes browser so good 32 bit got threading in 2020 very smart very good js devs are not terrible owo
     message(FATAL_ERROR "Peach-E only supports 64-bit platforms.")
 endif()
 
@@ -87,14 +87,18 @@ source_group(
     FILES ${PEACH_CORE_SOURCES}
 )
 
-####################################### Override build options if we're building for android >///< yes daddy ~~nyah
+####################################### Override build options if we're building for smth weird >///< yes daddy ~~nyah
 
 if(PEACH_ANDROID)
     set(BUILD_PEACH_CORE_SHARED ON  CACHE BOOL "" FORCE)
     set(BUILD_PEACH_EDITOR      OFF CACHE BOOL "" FORCE)
     set(BUILD_PEACH_ENGINE      OFF CACHE BOOL "" FORCE)
 elseif(PEACH_IOS OR PEACH_TVOS)
-    set(BUILD_PEACH_CORE_SHARED OFF  CACHE BOOL "" FORCE)
+    set(BUILD_PEACH_CORE_SHARED OFF CACHE BOOL "" FORCE)
+    set(BUILD_PEACH_EDITOR      OFF CACHE BOOL "" FORCE)
+    set(BUILD_PEACH_ENGINE      ON  CACHE BOOL "" FORCE)
+elseif(PEACH_WASM)
+    set(BUILD_PEACH_CORE_SHARED OFF CACHE BOOL "" FORCE)
     set(BUILD_PEACH_EDITOR      OFF CACHE BOOL "" FORCE)
     set(BUILD_PEACH_ENGINE      ON CACHE BOOL "" FORCE)
 endif()
@@ -394,6 +398,16 @@ elseif(PEACH_ANDROID) #doesn't need glew owo
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
+elseif(PEACH_WASM)
+
+    ############ Windowing and Input
+
+    STATIC_IMPORT(SDL3 
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/wasm/release/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/wasm/debug/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
+    )
+    
 else()
     message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
 endif()
@@ -497,16 +511,11 @@ elseif(PEACH_HAIKU)
         network # Haiku network stack
     )
 
-elseif(PEACH_WASM)
-    target_link_options(peach_core PUBLIC #wasm is weird mang, but I get it owo
-        "-sMAX_WEBGL_VERSION=2" 
-        "-sUSE_SDL=3" 
-    )
 elseif(PEACH_ANDROID)
     # System libs provided by the NDK/Android OS itself, no static import needed
     target_link_libraries(peach_core PUBLIC
         android      # ANativeActivity, AAssetManager, etc.
-        log          # __android_log_print — used internally by SDL and others
+        log          # __android_log_print 
         GLESv3       # OpenGL ES 3.0
         EGL          # EGL surface/context management
         OpenSLES     # Audio (miniaudio fallback since AAudio requires API 26+)
@@ -514,9 +523,7 @@ elseif(PEACH_ANDROID)
     )
 
     ############# 16KB page-size alignment for Android 15+ #############
-    # required for Pixel 8+, Play Store mandate as of Nov 2025
-    # 16384-aligned binaries also work on older 4KB-page devices, so this is
-    # universally correct on Android — set unconditionally
+    # Play Store mandate as of Nov 2025, 16KB alignment works with the older 4KB page devices, tl;dr this is universally correct on Android, so we set unconditionally
     target_link_options(peach_core PRIVATE
         "-Wl,-z,max-page-size=16384"
         "-Wl,-z,common-page-size=16384"
@@ -598,11 +605,11 @@ if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FRE
 
 endif()
 
-if(PEACH_VITA)
+if(PEACH_VITA OR PEACH_WASM)
     target_compile_definitions(peach_core PUBLIC #vita can't do SIMD w Box2D too old ;w;
         BOX2D_DISABLE_SIMD
     )
-endif(PEACH_VITA)
+endif(PEACH_VITA OR PEACH_WASM)
 
 if(PEACH_PLATFORM_IS_WINDOWS)
 
@@ -636,7 +643,89 @@ else()
     )     
 endif(BUILD_PEACH_CORE_SHARED)
 
-####################################### Executable Targets
+############################################################################## Peach Engine
+
+if(BUILD_PEACH_ENGINE)
+
+    ####################################### Find peach engine entry point
+
+    if(PEACH_WASM)
+        set(PEACH_ENGINE_SOURCES ${PROJECT_SOURCE_DIR}/src/peach_core/platform_entry_points/WasmMain.cpp)
+    else()
+        file(
+            GLOB 
+            PEACH_ENGINE_SOURCES 
+            CONFIGURE_DEPENDS 
+            ${PROJECT_SOURCE_DIR}/src/peach_engine/main.cpp #thin wrapper for Peach Engine executable
+        )
+
+        source_group(
+            TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/peach_engine"
+            PREFIX "peach_engine"
+            FILES ${PEACH_ENGINE_SOURCES}
+        )
+    endif()
+
+    ####################################### Create executable target
+
+    if(PEACH_MACOS) #create a bundle instead of a regular exe for macOS
+        set(MACOSX_BUNDLE TRUE)
+
+        add_executable(${PROJECT_NAME} MACOSX_BUNDLE
+            ${PEACH_ENGINE_SOURCES}
+        )
+    else()
+        add_executable(
+            ${PROJECT_NAME} 
+            ${PEACH_ENGINE_SOURCES}
+        )
+    endif(PEACH_MACOS)
+
+    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON) #make Peach_Engine PIC friendly UwU
+
+    ####################################### Wasm stuff owo
+
+    if(PEACH_WASM)
+        set_target_properties(${PROJECT_NAME} PROPERTIES
+            SUFFIX ".html"  # emscripten also produces .js and .wasm alongside it
+        )
+
+        target_link_options(${PROJECT_NAME} PRIVATE
+            "-sMAX_WEBGL_VERSION=2"
+            "-sUSE_SDL=3"
+            "-sFULL_ES3=1"                  # full OpenGL ES 3.0 API surface
+            "-sALLOW_MEMORY_GROWTH=1"       # heap can expand as needed, important for engine
+            "-sINITIAL_MEMORY=67108864"     # 64MB initial heap, adjust later
+            "-sPTHREAD_POOL_SIZE=4"         # pre-spawn 4 workers for std::thread
+            "-sEXIT_RUNTIME=0"              # don't destroy runtime when main() returns — rAF loop keeps running
+            "-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap']" # expose for potential JS interop
+        )
+
+        # WasmMain.cpp uses emscripten headers so the library also needs the include path
+        target_include_directories(${PROJECT_NAME} PRIVATE
+            "$ENV{EMSDK}/upstream/emscripten/cache/sysroot/include"
+        )
+    endif()
+
+    ####################################### Compiler Options and Definitions
+
+    if(MSVC)
+        target_compile_options(${PROJECT_NAME} PRIVATE
+            $<$<CONFIG:Debug>:/MTd>
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
+            /Zc:preprocessor
+        ) 
+    endif(MSVC)
+
+    ####################################### Link Peach Engine to Peach Core
+
+    target_link_libraries(${PROJECT_NAME} PRIVATE 
+        peach_core
+    )
+
+endif(BUILD_PEACH_ENGINE)
+
+############################################################################## Peach Editor
 
 if(BUILD_PEACH_EDITOR)
 
@@ -1226,57 +1315,7 @@ if(BUILD_PEACH_EDITOR)
 
 endif(BUILD_PEACH_EDITOR)
 
-if(BUILD_PEACH_ENGINE)
-
-    ####################################### Find peach engine entry point
-
-    file(
-        GLOB 
-        PEACH_ENGINE_SOURCES 
-        CONFIGURE_DEPENDS 
-        "src/peach_engine/main.cpp" #thin wrapper for Peach Engine executable
-    )
-
-    source_group(
-        TREE "${CMAKE_CURRENT_SOURCE_DIR}/src/peach_engine"
-        PREFIX "peach_engine"
-        FILES ${PEACH_ENGINE_SOURCES}
-    )
-
-    ####################################### Create executable target
-
-    if(PEACH_MACOS) #create a bundle instead of a regular exe for macOS
-        set(MACOSX_BUNDLE TRUE)
-
-        add_executable(${PROJECT_NAME} MACOSX_BUNDLE
-            ${PEACH_ENGINE_SOURCES}
-        )
-    else()
-        add_executable(
-            ${PROJECT_NAME} 
-            ${PEACH_ENGINE_SOURCES}
-        )
-    endif(PEACH_MACOS)
-
-    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON) #make Peach_Engine PIC friendly UwU
-
-    ####################################### Compiler Options and Definitions
-
-    if(MSVC)
-        target_compile_options(${PROJECT_NAME} PRIVATE
-            $<$<CONFIG:Debug>:/MTd>
-            $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
-            /Zc:preprocessor
-        ) 
-    endif(MSVC)
-
-    ####################################### Link Peach Engine to Peach Core
-
-    target_link_libraries(${PROJECT_NAME} PRIVATE 
-        peach_core
-    )
-
-endif(BUILD_PEACH_ENGINE)
+############################################################################## Peach Tests owo
 
 if(BUILD_PEACH_TESTS)
     file(

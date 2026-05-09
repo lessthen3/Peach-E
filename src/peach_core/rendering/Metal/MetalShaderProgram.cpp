@@ -12,4 +12,8 @@
 
 #include "MetalShaderProgram.h"
 
+namespace PeachCore::Metal {
+
+}
+
 #endif /*PEACH_RENDERER_METAL OWO*/

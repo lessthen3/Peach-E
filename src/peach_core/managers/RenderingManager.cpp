@@ -367,7 +367,7 @@ namespace PeachCore {
                 }
 
                 f_StatusCode = pm_VulkanRenderer->DrawFrame();
-                if (f_StatusCode & ~Vulkan::Renderer::StatusCode::OK)
+                if (f_StatusCode &~ Vulkan::Renderer::StatusCode::OK)
                 {
                     PEACH_PRINT_ERROR_FMT("DrawFrame() failed exit, StatusCode: {}", f_StatusCode);
                 }

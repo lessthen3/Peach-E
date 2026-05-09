@@ -147,10 +147,7 @@ namespace PeachCore::Metal{
 
         if (not f_Library)
         {
-            rendering_logger->Fatal(
-                fmt::format("Failed to compile Metal shaders: {}", f_Error->localizedDescription()->utf8String()),
-                "MetalRenderer"
-            );
+            rendering_logger->Fatal(fmt::format("Failed to compile Metal shaders: {}", f_Error->localizedDescription()->utf8String()), "MetalRenderer");
             return false;
         }
 
@@ -171,10 +168,7 @@ namespace PeachCore::Metal{
 
         if (not pm_Pipeline)
         {
-            rendering_logger->Fatal(
-                fmt::format("Failed to create Metal pipeline state: {}", f_Error->localizedDescription()->utf8String()),
-                "MetalRenderer"
-            );
+            rendering_logger->Fatal(fmt::format("Failed to create Metal pipeline state: {}", f_Error->localizedDescription()->utf8String()), "MetalRenderer");
             return false;
         }
 

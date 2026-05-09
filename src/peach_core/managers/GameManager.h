@@ -219,6 +219,11 @@ namespace PeachCore {
             return &pm_CurrentScene;
         }
 
+        #ifdef PEACH_PLATFORM_WASM
+            void 
+                ___________________WasmFrameCallback(); //that should be clear enough that this is private owo
+        #endif
+
     //////////////////////////////////////////////
     // Private Methods
     //////////////////////////////////////////////

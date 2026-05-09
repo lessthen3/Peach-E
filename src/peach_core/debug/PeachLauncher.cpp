@@ -8,25 +8,31 @@
  *
  *           Peach-E is a free open source game engine
 ********************************************************************/
-#include "PeachLauncher.h"
-
-// for showing crash dialog from the parent process owo
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_messagebox.h>
-
-#include <cstdio>
+#ifdef PEACH_PLATFORM_DESKTOP
 
 #ifdef PEACH_PLATFORM_WINDOWS
 #   include <windows.h>
 #   include <debugapi.h>
+#   include "PeachLauncher.h"
+#   include <SDL3/SDL.h> // for showing crash dialog from the parent process owo
+#   include <SDL3/SDL_messagebox.h>
+#   include <cstdio>
 #elif defined(PEACH_PLATFORM_LINUX)
 #   include <fstream>
 #   include <string>
 #   include <unistd.h>
 #   include <sys/wait.h>
+#   include "PeachLauncher.h"
+#   include <SDL3/SDL.h> // for showing crash dialog from the parent process owo
+#   include <SDL3/SDL_messagebox.h>
+#   include <cstdio>
 #elif defined(PEACH_PLATFORM_APPLE)
 #   include <sys/sysctl.h>
 #   include <unistd.h>
+#   include "PeachLauncher.h"
+#   include <SDL3/SDL.h> // for showing crash dialog from the parent process owo
+#   include <SDL3/SDL_messagebox.h>
+#   include <cstdio>
 #endif
 
 namespace PeachCore {
@@ -110,8 +116,6 @@ namespace PeachCore{
         );
     }
 
-#ifdef PEACH_PLATFORM_DESKTOP
-
     int 
         LauncherMain(int, const char** argv)
     {
@@ -174,7 +178,7 @@ namespace PeachCore{
         #   error "Unsupported platform for Peach Launcher ;w;"
         #endif
     }
+} //namespace PeachCore
 
 #endif /*PEACH_PLATFORM_DESKTOP*/
 
-} //namespace PeachCore

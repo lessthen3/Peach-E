@@ -53,6 +53,17 @@ namespace PeachCore {
         {
             f_WindowFlags = SDL_WINDOW_METAL | SDL_WINDOW_RESIZABLE;
         }
+        else if (fp_RenderingBackend == RendererType::WebGL or fp_RenderingBackend == RendererType::MobileGL)
+        {
+            //WebGL and OpenGL ES both use SDL_WINDOW_OPENGL.
+            //GLES context attributes MUST be set before SDL_CreateWindow, not after.
+            //On WASM, SDL3 + Emscripten translate these to a WebGL2 context automatically.
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+
+            f_WindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE;
+        }
         else
         {
             logger->Error("Invalid Renderer Type was passed to CreateSDLWindow(), please pass a valid rendering backend type", "GameManager");
@@ -361,7 +372,7 @@ namespace PeachCore
                     pm_MainWindow,
                     fp_InitialWindowWidth,
                     fp_InitialWindowHeight,
-                    10
+                    100
                 );
             }
 #endif
@@ -593,69 +604,204 @@ namespace PeachCore
     // Main Loop for Peach Engine >O<
     //////////////////////////////////////////////
 
-    void
-        GameManager::StartMainGameLoop()
-    {
-        const float PHYSICS_TIME_STEP = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;  // Fixed physics update rate 
-        float INPUT_POLL_TIME_STEP = 1.0f / USER_DEFINED_POLLING_RATE;  // Should be variable to allow dynamic adjustment in-game
+    #ifdef PEACH_PLATFORM_WASM
 
-        float f_PhysicsAccumulator = 0.0f;
-        float f_InputAccumulator = 0.0f;
+        #include <emscripten/emscripten.h>
+        #include <emscripten/html5.h>
 
-        auto f_CurrentTime = chrono::high_resolution_clock::now();
-
-        [[maybe_unused]] auto network_manager = &NetworkManager::get_single(); 
-        auto physics_manager = &PhysicsManager::get_single();
-        [[maybe_unused]] auto resource_manager = &ResourceManager::get_single();
-
-        ///TODO: log whenever frametime is running late in debug
-        while (m_IsRunning.load(std::memory_order_acquire))
+        namespace
         {
+            //emscripten requires a C-style callback. We stash the GameManager singleton ptr
+            //in a file-scope variable since the loop has no userdata channel that's worth
+            //the boilerplate of wrapping our own. GameManager is already a singleton anyway.
+            GameManager* g_WasmLoopOwner = nullptr;
+
+            //per-frame timing state — needs to persist across callback invocations
+            chrono::high_resolution_clock::time_point g_LastFrameTime;
+            float g_PhysicsAccumulator = 0.0f;
+            bool g_LoopInitialized = false;
+
+            void 
+                PeachWasmDispatch() //em_callback_func compatible: void(*)()
+            {
+                if (g_WasmLoopOwner)
+                {
+                    g_WasmLoopOwner->___________________WasmFrameCallback();
+                }
+            }
+        }
+
+        void
+            GameManager::___________________WasmFrameCallback()
+        {
+            if (not g_WasmLoopOwner)
+            {
+                return; //loop owner gone, can happen during shutdown
+            }
+
+            if (not g_WasmLoopOwner->m_IsRunning.load(std::memory_order_acquire))
+            {
+                //engine signaled shutdown — stop the rAF loop
+                emscripten_cancel_main_loop();
+                return;
+            }
+
+            ////////////////// Per-frame timing init on first call //////////////////
+
+            if (not g_LoopInitialized)
+            {
+                g_LastFrameTime = chrono::high_resolution_clock::now();
+                g_LoopInitialized = true;
+            }
+
+            const float f_PhysicsTimeStep = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;
+
+            ////////////////// Frame timing //////////////////
+
             auto f_NewTime = chrono::high_resolution_clock::now();
-            float f_FrameTime = chrono::duration<float>(f_NewTime - f_CurrentTime).count();
-            f_CurrentTime = f_NewTime;
+            float f_FrameTime = chrono::duration<float>(f_NewTime - g_LastFrameTime).count();
+            g_LastFrameTime = f_NewTime;
 
-            //////////////////// Prevent spiral of death by clamping frame time, frames will be skipped, but if you're already this behind then thats the least of your problems lmao ////////////////////
-
-            if (f_FrameTime > 0.25)
+            if (f_FrameTime > 0.25f) //spiral-of-death clamp
             {
-                f_FrameTime = 0.25;
+                f_FrameTime = 0.25f;
             }
 
-            //////////////////// Increment Accumulators ////////////////////
+            g_PhysicsAccumulator += f_FrameTime;
 
-            f_PhysicsAccumulator += f_FrameTime;
-            f_InputAccumulator += f_FrameTime;
+            ////////////////// Inputs //////////////////
+            //input polling is locked to render rate on WASM since SDL_PollEvent must run on
+            //the main thread which is also the rAF callback thread. We can't have a separate
+            //polling rate like desktop does — browser doesn't allow it.
 
-            //////////////////// Poll Inputs OwO ////////////////////
+            g_WasmLoopOwner->PollUserInputEvents();
 
-            if (f_InputAccumulator >= INPUT_POLL_TIME_STEP)
-            {
-                PollUserInputEvents();
-                f_InputAccumulator -= INPUT_POLL_TIME_STEP;
-            }
+            ////////////////// Physics and fixed-step updates //////////////////
 
-            //////////////////// Physics and fixed interval updates ////////////////////
-
-            if (f_PhysicsAccumulator >= PHYSICS_TIME_STEP)
+            if (g_PhysicsAccumulator >= f_PhysicsTimeStep)
             {
                 size_t f_Steps = 0;
 
-                while (f_PhysicsAccumulator >= PHYSICS_TIME_STEP)
+                while (g_PhysicsAccumulator >= f_PhysicsTimeStep)
                 {
-                    f_PhysicsAccumulator -= PHYSICS_TIME_STEP;
+                    g_PhysicsAccumulator -= f_PhysicsTimeStep;
                     f_Steps++;
                 }
 
-                float f_ScaledDt = PHYSICS_TIME_STEP * pm_CurrentTimeScale;
+                float f_ScaledDt = f_PhysicsTimeStep * g_WasmLoopOwner->pm_CurrentTimeScale;
 
-                physics_manager->RequestPhysicsWorldStep(f_ScaledDt, f_Steps);
-                CallConstantUpdate(f_ScaledDt);
+                PhysicsManager::get_single().RequestPhysicsWorldStep(f_ScaledDt, f_Steps);
+                g_WasmLoopOwner->CallConstantUpdate(f_ScaledDt);
+                g_WasmLoopOwner->pm_CurrentScene.CleanSceneTree();
+            }
 
-                pm_CurrentScene.CleanSceneTree(); //Check for any node removals uwu, done everytime after scripts are ran to check for queued for removal nodes uwu
+            ////////////////// Render //////////////////
+            //rendering must happen on the main thread for WebGL. RenderingManager's
+            //thread-based RenderLoopVK/RenderLoopGL pattern doesn't work here — we need
+            //a single-frame render call that runs synchronously in the callback.
+            //
+            //TODO: implement RenderingManager::RenderSingleFrame() that does what one
+            //iteration of the desktop render loop body does, then call it here.
+
+            // RenderingManager::get_single().RenderSingleFrame();
+
+            //returning from this function yields control back to the browser, which
+            //schedules the next rAF callback in ~16ms (60Hz) or ~8ms (120Hz). Browser
+            //will throttle this to 1Hz when the tab is backgrounded.
+        }
+
+        void
+            GameManager::StartMainGameLoop()
+        {
+            g_WasmLoopOwner = this;
+            g_LoopInitialized = false;
+
+            //args:
+            //  fp_FuncPtr — the per-frame callback
+            //  fp_Fps     — 0 means "use requestAnimationFrame's natural rate" (recommended)
+            //  fp_SimulateInfiniteLoop — must be 0, otherwise emscripten transforms the
+            //                            program into "throw to escape main(), restart on
+            //                            next frame" which breaks RAII teardown completely.
+            //                            With 0, this returns immediately, the rAF loop
+            //                            runs in the background, and main() returns
+            //                            normally — but DON'T let main() actually exit
+            //                            because that destroys all globals. The Emscripten
+            //                            runtime keeps your wasm module alive after main()
+            //                            returns as long as you don't call exit().
+
+            emscripten_set_main_loop(PeachWasmDispatch, 0, 0); // free fn, not member fn
+            //control returns here immediately. main() in WasmMain.cpp must return without
+            //calling ShutdownPeachEngine — engine teardown happens via an exit handler or
+            //user navigation away from the page.
+        }
+
+    #else
+
+        void
+            GameManager::StartMainGameLoop()
+        {
+            const float PHYSICS_TIME_STEP = 1.0f / USER_DEFINED_CONSTANT_UPDATE_FPS;  // Fixed physics update rate 
+            float INPUT_POLL_TIME_STEP = 1.0f / USER_DEFINED_POLLING_RATE;  // Should be variable to allow dynamic adjustment in-game
+
+            float f_PhysicsAccumulator = 0.0f;
+            float f_InputAccumulator = 0.0f;
+
+            auto f_CurrentTime = chrono::high_resolution_clock::now();
+
+            [[maybe_unused]] auto network_manager = &NetworkManager::get_single(); 
+            auto physics_manager = &PhysicsManager::get_single();
+            [[maybe_unused]] auto resource_manager = &ResourceManager::get_single();
+
+            ///TODO: log whenever frametime is running late in debug
+            while (m_IsRunning.load(std::memory_order_acquire))
+            {
+                auto f_NewTime = chrono::high_resolution_clock::now();
+                float f_FrameTime = chrono::duration<float>(f_NewTime - f_CurrentTime).count();
+                f_CurrentTime = f_NewTime;
+
+                //////////////////// Prevent spiral of death by clamping frame time, frames will be skipped, but if you're already this behind then thats the least of your problems lmao ////////////////////
+
+                if (f_FrameTime > 0.25)
+                {
+                    f_FrameTime = 0.25;
+                }
+
+                //////////////////// Increment Accumulators ////////////////////
+
+                f_PhysicsAccumulator += f_FrameTime;
+                f_InputAccumulator += f_FrameTime;
+
+                //////////////////// Poll Inputs OwO ////////////////////
+
+                if (f_InputAccumulator >= INPUT_POLL_TIME_STEP)
+                {
+                    PollUserInputEvents();
+                    f_InputAccumulator -= INPUT_POLL_TIME_STEP;
+                }
+
+                //////////////////// Physics and fixed interval updates ////////////////////
+
+                if (f_PhysicsAccumulator >= PHYSICS_TIME_STEP)
+                {
+                    size_t f_Steps = 0;
+
+                    while (f_PhysicsAccumulator >= PHYSICS_TIME_STEP)
+                    {
+                        f_PhysicsAccumulator -= PHYSICS_TIME_STEP;
+                        f_Steps++;
+                    }
+
+                    float f_ScaledDt = PHYSICS_TIME_STEP * pm_CurrentTimeScale;
+
+                    physics_manager->RequestPhysicsWorldStep(f_ScaledDt, f_Steps);
+                    CallConstantUpdate(f_ScaledDt);
+
+                    pm_CurrentScene.CleanSceneTree(); //Check for any node removals uwu, done everytime after scripts are ran to check for queued for removal nodes uwu
+                }
             }
         }
-    }
+
+    #endif /*PEACH_PLATFORM_WASM*/
 
     //////////////////////////////////////////////
     // Plugin Stuff

@@ -3,7 +3,7 @@ Peach-E is a modern, cross-platform, open source 2D/3D game engine built with C+
 
 Peach-E is and __will always be 100% free__. No stupid licensing garbage and no royalties. Built by a game developer, for game developers of any skill level.
 
-Currently you can target Windows(x64 + arm64), MacOS(arm64 + x64), Linux(x64 + arm64), and FreeBSD(x64). Native support for Haiku, Android, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, Web, PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
+Currently you can target Windows(x64 + arm64), MacOS(arm64 + x64), Linux(x64 + arm64), and FreeBSD(x64), Android(arm64 only, android-24+), Web. Native support for Haiku, iOS, iPadOS(w/ apple pencil), tvOS, watchOS, PS Vita are in the works. Peach-E may work on other POSIX compliant systems, but your mileage may vary.
 
 Peach-E can be used headless with C++, or via the peach_api headers which utilizes a C calling convention so linking against C, Rust or whatever uses the calling convention is supported.
 
@@ -37,7 +37,7 @@ Features:
 
 🍑 __Physics:__ Box2D (v3.1.1) for 2D, Jolt (v5.5.0) for 3D
 
-🍑 __Native support for Windows, MacOS, Linux, and FreeBSD__ _(Haiku, iOS, iPadOS, tvOS, Android, PS Vita, and web are a WIP)_
+🍑 __Native support for Windows, MacOS, Linux, FreeBSD, Android, and Web__ _(Haiku, iOS, iPadOS, tvOS, PS Vita, are a WIP)_
 
 🍑 __Quality of life nodes__ for easily integrating in-game consoles and logging support out of the box
 
@@ -129,6 +129,20 @@ hardware= snapdragon X plus X1P42100, iGPU Adreno X1-45
 ```ini
 os= FreeBSD 15 (owo)
 arch= x86_64
-compiler= clang 19 (gcc rlly doesn"'"t like the PCH and randomized memory addressing)
+compiler= clang 19 (gcc rlly doesnt like the PCH and randomized memory addressing)
 hardware= intel i7 4790k iGPU
+```
+
+```ini
+os= android 16
+arch= arm64-v8a
+compiler= ndk 30.0.14904198 rc1
+hardware= Samsung Galaxy S22 Ultra
+```
+
+```ini
+os= wasm32 (y 32 bit man)
+arch= N/A
+compiler= emcc/em++ 5.0.7 >w<
+hardware= N/A
 ```

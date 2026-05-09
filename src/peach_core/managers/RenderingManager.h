@@ -33,6 +33,7 @@
 #endif
 
 #ifdef PEACH_RENDERER_WEBGL
+#   include <SDL3/SDL.h>
 #   include "../rendering/OpenGL/Browser/WebGLRenderer.h"
 #endif
 

@@ -22,15 +22,26 @@
 #   include <io.h>
 #   include <process.h>
 #   include <sys/stat.h>
-#
 #   define STDERR_FILENO 2
 #   define PEACH_CRASH_WRITE ::_write
 #   define PEACH_CRASH_EXIT ::_exit
 #elif defined(PEACH_PLATFORM_LINUX) || defined(PEACH_PLATFORM_APPLE) || defined(PEACH_PLATFORM_FREEBSD) || defined(PEACH_PLATFORM_ANDROID)
 #   include <unistd.h>     // for write, _exit on POSIX
-#
 #   define PEACH_CRASH_WRITE ::write
 #   define PEACH_CRASH_EXIT ::_exit
+#elif defined(PEACH_PLATFORM_WASM)
+#   include <emscripten/emscripten.h>
+#   include <cstdio>
+#   include <unistd.h>     // for write, _exit on POSIX
+#   define PEACH_CRASH_WRITE ::write
+#   define PEACH_CRASH_EXIT ::_exit
+#elif defined(PEACH_PLATFORM_IOS) || defined(PEACH_PLATFORM_TVOS)
+// iOS/tvOS delegate crash reporting to the platform (Xcode/Instruments), CrashSignalHandler compiles but InstallCrashHandler's iOS branch is a no-op
+// so this is dead code. Define stubs to satisfy the compiler.
+#   include <unistd.h>
+#   define PEACH_CRASH_WRITE(fd, buf, len) ((void)0)
+#   define PEACH_CRASH_EXIT(code)          ::_exit(code)
+#   define STDERR_FILENO 2
 #else
 #   error "Unsupported platform for crash signal handling owo"
 #endif
@@ -150,12 +161,11 @@ namespace PeachCore::Debug {
         PEACH_CRASH_EXIT(128 + fp_Signal);
     }
 
-    void
-        InstallCrashHandler()
-        noexcept
-    {
-        #if defined(PEACH_PLATFORM_DESKTOP)
-
+    #if defined(PEACH_PLATFORM_DESKTOP)
+        void
+            InstallCrashHandler()
+            noexcept
+        {
             std::signal(SIGSEGV,CrashSignalHandler);
             std::signal(SIGABRT,CrashSignalHandler);
             std::signal(SIGFPE, CrashSignalHandler);
@@ -164,38 +174,76 @@ namespace PeachCore::Debug {
             #ifdef SIGBUS
                 std::signal(SIGBUS, CrashSignalHandler);
             #endif
+        }
+    #endif /*PEACH_PLATFORM_DESKTOP*/
 
-        #elif defined(PEACH_PLATFORM_IOS) || defined(PEACH_PLATFORM_TVOS)
-        // No-op — let Apple's CrashReporter handle it
 
-        #elif defined(PEACH_PLATFORM_ANDROID)
-        // No-op — let Android debuggerd generate tombstones
-
-        #elif defined(PEACH_PLATFORM_WASM)
-            // Install JS-side error handler via EM_ASM
-            EM_ASM
-            (
-                {
-                    window.addEventListener
-                    (
-                        'error',
-                        function(e)
-                        {
-                            console.error('Peach-E:', e.message);
-                        }
-                    );
-                }
-            );
-
-        #elif defined(PEACH_PLATFORM_VITA)
+    #if defined(PEACH_PLATFORM_VITA)
+        void
+            InstallCrashHandler()
+            noexcept
+        {
             // Vita has limited signal support — install what's available
             std::signal(SIGSEGV, CrashSignalHandler);
             std::signal(SIGABRT, CrashSignalHandler);
-        #else
-            // Unknown platform, install standard signals defensively
-            std::signal(SIGSEGV, CrashSignalHandler);
-        #endif
-    }
+        }
+    #endif /*PEACH_PLATFORM_VITA*/
+
+    #if defined(PEACH_PLATFORM_ANDROID)
+        void
+            InstallCrashHandler()
+            noexcept
+        {
+            // No-op — let Android debuggerd generate tombstones
+
+        }
+    #endif /*PEACH_PLATFORM_ANDROID*/
+
+    #if defined(PEACH_PLATFORM_IOS) || defined(PEACH_PLATFORM_TVOS)
+        void
+            InstallCrashHandler()
+            noexcept
+        {
+            // No-op — let Apple's CrashReporter handle it
+        }
+    #endif /*defined(PEACH_PLATFORM_IOS) || defined(PEACH_PLATFORM_TVOS)*/
+
+    #if defined(PEACH_PLATFORM_WASM)
+        //register a JS window.onerror handler to surface WASM traps in the console.
+        //this runs on the JS side and fires when any unhandled error/trap occurs.
+        //EM_ASM embeds the JS literal directly — C++ code resumes after the closing brace.
+        void
+            InstallCrashHandler()
+            noexcept
+        {
+            EM_ASM
+            (
+                window.addEventListener('unhandledrejection', function(fp_Event)
+                {
+                    console.error('[peach_core] unhandled promise rejection:', fp_Event.reason);
+                });
+
+                window.onerror = function(fp_Message, fp_Source, fp_Line, fp_Col, fp_Error)
+                {
+                    console.error('[peach_core] window.onerror:', fp_Message, 
+                        'at', fp_Source + ':' + fp_Line + ':' + fp_Col,
+                        fp_Error ? fp_Error.stack : "");
+                    return false; //return false to NOT suppress the default browser error reporting
+                };
+            );
+
+            std::fputs("[peach_core] WASM crash handler: JS window.onerror registered\n", stderr);
+        }
+    #endif
+
+        // #ifdef
+    //     void
+    //         InstallCrashHandler() //default?
+    //         noexcept
+    //     {
+            
+    //     }
+    // #endif /**/
 
     #ifdef PEACH_PLATFORM_WINDOWS
         static LONG WINAPI

@@ -657,36 +657,48 @@ def main() -> bool:
         '-G', 
         nargs=1,
         metavar="[generator]",
-        help=CreateColouredText('Used to set the project file generator, options are as follows:', 'bright magenta') + "\n" +                                        \
-                "\t" + CreateColouredText('-G vs2015 --> vs2026 ', 'blue') + CreateColouredText('Generates solution for Visual Studio 2015 - 2026', 'cyan') + "\n" + \
+        help=
+            CreateColouredText('Used to set the project file generator, options are as follows:', 'bright magenta') + "\n" +                                        
+                "\t" + CreateColouredText('-G ', 'blue') +  CreateColouredText("vs2015 --> vs2026 ", 'bright green') + CreateColouredText('Generates solution for Visual Studio 2015 - 2026', 'cyan') + "\n" + 
                 
-                "\t" + CreateColouredText('-G xcode ', 'blue') + CreateColouredText('Generates project files for Xcode', 'cyan') + "\n" +                            \
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("xcode ", 'bright green') + CreateColouredText('Generates project files for Xcode', 'cyan') + "\n" +                            
                 
-                "\t" + CreateColouredText('-G ninja ', 'blue') + CreateColouredText('Generates project files using Ninja', 'cyan') + "\n" +                          \
-                "\t" + CreateColouredText('-G ninja-mc ', 'blue') + CreateColouredText('For Ninja Multi-Config', 'cyan') + "\n" +                                    \
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("ninja ", 'bright green') + CreateColouredText('Generates project files using Ninja', 'cyan') + "\n" +                          
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("ninja-mc ", 'bright green') + CreateColouredText('For Ninja Multi-Config', 'cyan') + "\n" +                                    
                 
-                "\t" + CreateColouredText('-G unix ', 'blue') + CreateColouredText('For Unix Makefiles', 'cyan') + "\n" +                                            \
-                "\t" + CreateColouredText('-G unix-eclipse ', 'blue') + CreateColouredText('Generate Unix Makefiles for Eclipse CDT', 'cyan') + "\n" +               \
-                "\t" + CreateColouredText('-G unix-cb ', 'blue') + CreateColouredText('Generates Unix Makefiles for CodeBlocks', 'cyan') + "\n" +                    \
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("unix ", 'bright green') + CreateColouredText('For Unix Makefiles', 'cyan') + "\n" +                                            
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("unix-eclipse ", 'bright green') + CreateColouredText('Generate Unix Makefiles for Eclipse CDT', 'cyan') + "\n" +               
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("unix-cb ", 'bright green') + CreateColouredText('Generates Unix Makefiles for CodeBlocks', 'cyan') + "\n" +                    
 
-                "\t" + CreateColouredText('-G mingw ', 'blue') + CreateColouredText('Generates MinGW Makefiles', 'cyan') + "\n" +                                    \
-                "\t" + CreateColouredText('-G msys ', 'blue') + CreateColouredText('Generates MSYS Makefiles', 'cyan') + "\n" +                                      \
-                "\t" + CreateColouredText('-G nmake ', 'blue') + CreateColouredText('Generates NMake Makefiles', 'cyan') + "\n" +                                    \
-                "\t" + CreateColouredText('-G nmake-jom ', 'blue') + CreateColouredText('Generates JOM Makefiles', 'cyan')
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("mingw ", 'bright green') + CreateColouredText('Generates MinGW Makefiles', 'cyan') + "\n" +                                    
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("msys ", 'bright green') + CreateColouredText('Generates MSYS Makefiles', 'cyan') + "\n" +                                      
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("nmake ", 'bright green') + CreateColouredText('Generates NMake Makefiles', 'cyan') + "\n" +                                    
+                "\t" + CreateColouredText('-G ', 'blue') + CreateColouredText("nmake-jom ", 'bright green') + CreateColouredText('Generates JOM Makefiles', 'cyan')
     )   
     
     parser.add_argument(
         '-T',
         nargs=1,
         metavar="[target]",
-        help=CreateColouredText("ios, tvos, android, wasm, psvita, or leave empty for native", 'cyan')
+        help=
+            CreateColouredText("Valid toolchain keys are: ", 'bright magenta') + "\n" + 
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" windows-arm64 or windows-x64",'bright green') + "\n" +
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" macos-arm64 or macos-x64",'bright green') + "\n" +
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" linux-arm64 or linux-x64",'bright green') + "\n" +
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" freebsd-arm64 or freebsd-x64",'bright green') + "\n" +
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" haiku",'bright green') + "\n" +
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" ios",'bright green') + "\n" +
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" tvos",'bright green') + "\n" +
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" android",'bright green') + "\n" +
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" wasm",'bright green') + "\n" +
+                "\t" + CreateColouredText("-T", "blue") + CreateColouredText(" psvita",'bright green') + "\n" 
     )
 
     parser.add_argument(
         '-J',
         nargs=1,
         metavar="[max_jobs]",
-        help=CreateColouredText("Set max number of jobs the compiler can do at once owo",'cyan')
+        help=CreateColouredText("Set max number of jobs the compiler can do at once owo",'bright magenta')
     )
 
     parser.add_argument(
@@ -728,25 +740,26 @@ def main() -> bool:
     parser.add_argument(
         '--use_gcc',
         action='store_true',
-        help=CreateColouredText('Compiles with gcc on compatible platforms', 'bright magenta')
+        help=CreateColouredText('Compiles with gcc on compatible platforms', 'bright magenta') + '\n' + #uwu
+        CreateColouredText("======================================================= ANDROID ONLY =======================================================", 'bright red') 
     )
 
     parser.add_argument(
         "--package_apk",
         action="store_true",
-        help="after a successful android build, copy the .so into the gradle project and run gradlew assembleDebug/Release"
+        help=CreateColouredText("after a successful android build, copy the .so into the gradle project and run gradlew assembleDebug/Release", 'bright magenta')
     )
 
     parser.add_argument(
         "--install_apk",
         action="store_true",
-        help="after --package_apk, install the resulting apk to the connected device via adb"
+        help=CreateColouredText("after --package_apk, install the resulting apk to the connected device via adb", 'bright magenta')
     )
 
     parser.add_argument(
         "--launch_apk",
         action="store_true",
-        help="after --install_apk, launch the activity and tail logcat"
+        help=CreateColouredText("after --install_apk, launch the activity and tail logcat", 'bright magenta')
     )
 
     args = parser.parse_args()
@@ -813,7 +826,25 @@ def main() -> bool:
     f_ToolchainKey = ""
 
     if args.T:
+
         f_ToolchainKey = args.T[0].lower()
+
+        f_ValidToolchainKeys = [
+            "windows-arm64", "windows-x64", 
+            "macos-arm64", "macos-x64", 
+            "linux-arm64", "linux-x64", 
+            "freebsd-arm64", "freebsd-x64", 
+            "haiku",
+            "android",
+            "ios", "tvos",
+            "wasm",
+            "psvita"
+        ]
+
+        if f_ToolchainKey not in f_ValidToolchainKeys:
+            print(CreateColouredText("[ERROR]: invalid toolchain key was detected, please use -h to see the list of valid toolchain keys"))
+            return False
+        
     else:
         f_MachineArch = platform.machine().lower()
 
@@ -855,6 +886,13 @@ def main() -> bool:
         )
 
         print(CreateColouredText(f"[INFO]: Hooked Android NDK Toolchain at {f_AndroidNdkAbsolutePath} ~ nya~", "bright green"))
+
+    ############# WASM #############
+
+    if f_ToolchainKey == "wasm":
+        if not os.environ.get("EMSDK"):
+            print(CreateColouredText("[ERROR]: unable to verify EMSDK env var, please set this environment variable and try again ;w;", "red"))
+
 
     ############# Compiler Identification #############
 

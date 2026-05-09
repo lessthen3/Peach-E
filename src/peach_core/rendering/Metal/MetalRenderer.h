@@ -21,10 +21,11 @@
 ///PeachCore
 #include "../../utils/Logger.h"
 
+// Metal Bridge, calling out to the .mm TU
 extern "C" void PEACH_AssignMetalDeviceToLayer(void* fp_Layer, void* fp_Device);
 extern "C" void* PEACH_GetNextDrawable(void* fp_Layer);
 
-namespace PeachCore::Metal{
+namespace PeachCore::Metal {
 
     struct Renderer
     {
@@ -41,6 +42,14 @@ namespace PeachCore::Metal{
     public:
         ~Renderer();
 
+        Renderer(const Renderer&) = delete;
+
+        Renderer& operator=(const Renderer&) = delete;
+        Renderer& operator=(const Renderer&) volatile = delete;
+
+        Renderer(Renderer&&) = delete;
+        Renderer& operator=(Renderer&&) = delete;
+
         [[nodiscard]] bool
             Initialize
             (
@@ -48,11 +57,15 @@ namespace PeachCore::Metal{
                 shared_ptr<Logger> fp_Logger
             );
 
-        [[nodiscard]] uint32_t BeginFrame();
-        [[nodiscard]] uint32_t DrawFrame();
-        [[nodiscard]] uint32_t EndFrame();
+        [[nodiscard]] uint32_t 
+            BeginFrame();
+        [[nodiscard]] uint32_t 
+            DrawFrame();
+        [[nodiscard]] uint32_t 
+            EndFrame();
 
-        void CleanUp();
+        void 
+            CleanUp();
 
     private:
         shared_ptr<Logger> rendering_logger = nullptr;
@@ -78,7 +91,8 @@ namespace PeachCore::Metal{
         void* pm_CachedLayer = nullptr;
 
     private:
-        [[nodiscard]] bool CreatePipeline();
+        [[nodiscard]] bool 
+            CreatePipeline();
     };
 }
 

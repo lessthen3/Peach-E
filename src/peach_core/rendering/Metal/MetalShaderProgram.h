@@ -15,7 +15,7 @@
 #include <peach_metal/PeachMetal.hpp>
 #include <string>
 
-namespace PeachCore::Metal{
+namespace PeachCore::Metal {
 
     struct GraphicsPipeConfig
     {

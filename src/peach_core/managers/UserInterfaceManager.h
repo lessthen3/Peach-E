@@ -14,7 +14,9 @@
     This Class contains all algorithms that run and determine state between all PUI nodes uwu, including walking the tree to determine hit detection, what elements are 
 */
 
-#include <glm/glm.hpp>
+///cglm
+#include <cglm/cglm.h>
+#include <cglm/struct.h>
 
 ///STL
 #include "scene_items/UI/Panel.h"
@@ -23,10 +25,10 @@ namespace PeachCore::PUI {
 
     struct Section //defines a container that should evenly divide the screen into pieces where AABB checks can easily be done to determine whether a bounding box is contained inside
     {
-        glm::vec2 TopLeftCorner = glm::vec2();
-        glm::vec2 BottomRightCorner = glm::vec2();
+        vec2s TopLeftCorner = {{0.0f, 0.0f}};
+        vec2s BottomRightCorner = {{0.0f, 0.0f}};
 
-        vector<uint64_t> ContainedNodes;
+        std::vector<uint64_t> ContainedNodes;
 
     };
 

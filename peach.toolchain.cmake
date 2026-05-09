@@ -265,6 +265,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "wasm")
         message(FATAL_ERROR "EMSDK not set! install emscripten from https://emscripten.org and set EMSDK env var uwu")
     endif()
 
+    include("$ENV{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake") #grab the emscripten toolchain file uwu
+
     set(CMAKE_C_COMPILER "$ENV{EMSDK}/upstream/emscripten/emcc")
     set(CMAKE_CXX_COMPILER "$ENV{EMSDK}/upstream/emscripten/em++")
     set(CMAKE_AR "$ENV{EMSDK}/upstream/emscripten/emar")
