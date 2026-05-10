@@ -11,6 +11,7 @@
 #include "GameManager.h"
 #include "InputManager.h"
 #include "debug/CrashSignalHandler.h"
+#include "utils/PeachPrint.h"
 
 #include <SDL3/SDL_main.h>
 
@@ -88,30 +89,12 @@ namespace PeachCore {
     }
 }
 
-namespace PeachCore{
-    static void
-        SegFaultHandler(int fp_Signal) //primitive segfault handler
-    {
-        PEACH_PRINT_ERROR_FMT("[!] Crash signal received: {}, __FATAL__SEGMENTATION__FAULT__", fp_Signal);
-        // possibly notify watchdog or dump stack trace
-        exit(FATAL_SEGMENTATION_FAULT); //clean exit so everything calls their destructors
-    }
-}
-
 namespace PeachCore
 {
     /*
         dont needa check required threads here since joinable is false on default constructed threads
         and if the thread was never created, then it'd just stay in that default constructed state owo
     */
-    GameManager::~GameManager() 
-    {
-        if (pm_RenderThread.joinable()) { pm_RenderThread.join(); }
-        if (pm_AudioThread.joinable()) { pm_AudioThread.join(); }
-        if (pm_PhysicsThread.joinable()) { pm_PhysicsThread.join(); }
-        if (pm_NetworkThread.joinable()) { pm_NetworkThread.join(); }
-        if (pm_ResourceThread.joinable()) { pm_ResourceThread.join(); }
-    }
 
     //////////////////////////////////////////////
     // Initialization, Startup, and Shutdown/Cleanup OwO
@@ -261,22 +244,54 @@ namespace PeachCore
         if (pm_RequiredThreads & ThreadName::RenderThread)
         {
             RenderingManager::get_single().Stop();
+
+            if (pm_RenderThread.joinable())
+            {
+                pm_RenderThread.join(); 
+                main_logger->Info("Successfully joined render thread", "GameManager");
+            }
         }
         if (pm_RequiredThreads & ThreadName::AudioThread)
         {
             AudioManager::get_single().Stop();
+
+            if (pm_AudioThread.joinable()) 
+            { 
+                pm_AudioThread.join(); 
+                main_logger->Info("Successfully joined audio thread", "GameManager");
+            }
         }
         if (pm_RequiredThreads & ThreadName::PhysicsThread)
         {
             PhysicsManager::get_single().Stop();
+
+            if (pm_PhysicsThread.joinable()) 
+            {
+                pm_PhysicsThread.join(); 
+                main_logger->Info("Successfully joined physics thread", "GameManager");
+            }
         }
         if (pm_RequiredThreads & ThreadName::NetworkThread)
         {
             NetworkManager::get_single().Stop();
+
+            if (pm_NetworkThread.joinable()) 
+            { 
+                pm_NetworkThread.join(); 
+                main_logger->Info("Successfully joined network thread", "GameManager");
+            }
         }
 
         //don't need to check for usage here since ResourceManager is ALWAYS utilized regardless of what threads are desired uwu
         ResourceManager::get_single().Stop();
+
+        if (pm_ResourceThread.joinable()) 
+        { 
+            pm_ResourceThread.join(); 
+            main_logger->Info("Successfully joined the RESOURCE thread", "GameManager");
+        }
+
+        // SDL_Quit();
 
         return true;
     }
@@ -336,6 +351,9 @@ namespace PeachCore
             const bool fp_Is3D
         )
     {
+        PEACH_TO_DO_UNUSED(fp_InitialWindowWidth);
+        PEACH_TO_DO_UNUSED(fp_InitialWindowHeight);
+
         const string f_LogDir = fp_RootPath + "/logs";
 
         ////////////////////////////////////////////// Resource Loading //////////////////////////////////////////////
@@ -901,6 +919,15 @@ namespace PeachCore
             if (SDL_GetWindowID(pm_MainWindow) == lv_Window) //ERROR: THIS WILL NOT CLOSE GRACEFULLY but w/e the driver will pick it up :^)
             {
                 m_IsRunning.store(false, std::memory_order_release);
+                // RenderingManager::get_single().Stop(); //stop rendering but also should wait probably here since windows closing
+                // if(pm_RenderThread.joinable())
+                // {
+                //     pm_RenderThread.join();
+                //     PEACH_PRINT("Successfully joined render thread on close owo", PEACH_COL_BRIGHT_GREEN);
+                // }
+                // else {
+                //     PEACH_PRINT_ERROR("Failed to join render thread on close ;w;");
+                // }
             }
 
             SDL_DestroyWindow(SDL_GetWindowFromID(lv_Window)); //WARNING DO NOT CLOSE WINDOW HERE SEND A REQUEST TO THE RENDERING MANAGER FOR THAT
@@ -910,6 +937,7 @@ namespace PeachCore
 
         PEACH_PRINT_FMT(PEACH_COL_GREEN, "mouse x : {}, y: {}", f_MousePos.x, f_MousePos.y);
     }
+
     //////////////////////////////////////////////
     // Peach API Functions
     //////////////////////////////////////////////

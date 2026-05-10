@@ -12,6 +12,7 @@
 #include "managers/ProjectManager.h"
 
 #include "utils/PeachPanic.h"
+#include "utils/PeachPrint.h"
 
 //#include <Jolt/Jolt.h>
 //#include <Jolt/RegisterTypes.h>
@@ -41,6 +42,7 @@ static inline constexpr void
 int 
     main(int, const char* fp_ArgVector[])
 {
+    PeachCore::LogManager::get_single();
     // PEACH_PANIC_IF(false, "This is a test for panic owo");
 
     // // freetype smoke test
@@ -142,6 +144,8 @@ int
         }
 
         peach_editor->StartPeachEditorMainLoop();
+
+        PEACH_PRINT(PEACH_COL_BRIGHT_MAGENTA, "exited all loops and reached EXIT_SUCCESS, any errors after here are static destructors fuqqq");
 
         return EXIT_SUCCESS;
     }

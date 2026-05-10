@@ -57,7 +57,7 @@ namespace PeachCore {
     // Private Destructor
     //////////////////////////////////////////////
     private:
-        ~AudioManager() {}
+        ~AudioManager() = default;
 
     //////////////////////////////////////////////
     // Singleton Instance

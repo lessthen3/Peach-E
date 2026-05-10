@@ -19,7 +19,7 @@
 #include <vector>
 #include <algorithm>
 
-namespace PeachCore{
+namespace PeachCore {
 
     struct LogManager
     {
@@ -64,6 +64,8 @@ namespace PeachCore{
         }
     
     public:
+        ~LogManager() = default;
+
         static LogManager& 
             get_single()
         {

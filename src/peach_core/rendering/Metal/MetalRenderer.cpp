@@ -13,12 +13,7 @@
 #include "MetalRenderer.h"
 #include <fmt/format.h>
 
-namespace PeachCore::Metal{
-
-    Renderer::~Renderer()
-    {
-        CleanUp();
-    }
+namespace PeachCore::Metal {
 
     bool
         Renderer::Initialize
@@ -97,10 +92,8 @@ namespace PeachCore::Metal{
     }
 
     bool
-        Renderer::CreatePipeline()
+        Renderer::CreatePipeline() //just using inline for now while figuring out the cross compilation shaderc process
     {
-        // compile inline MSL shader source
-        // in production you'd load .metallib from your peachbin
         const char* f_ShaderSrc = R"(
             #include <metal_stdlib>
             using namespace metal;
@@ -184,8 +177,8 @@ namespace PeachCore::Metal{
             return StatusCode::FAILED_TO_CREATE_COMMAND_BUFFER;
         }
 
-        // AutoreleasePool scope per frame — critical for metal-cpp memory management
-        NS::AutoreleasePool* f_Pool = NS::AutoreleasePool::alloc()->init();
+        // AutoreleasePool scope per frame, critical for metal-cpp memory management
+        pm_FramePool = NS::AutoreleasePool::alloc()->init();
 
             // in BeginFrame — no CA::MetalLayer* needed at all
         void* f_RawDrawable = PEACH_GetNextDrawable(pm_CachedLayer);
@@ -199,7 +192,7 @@ namespace PeachCore::Metal{
 
         if (not pm_CurrentDrawable)
         {
-            f_Pool->release();
+            pm_FramePool->release();
             return StatusCode::NO_DRAWABLE;
         }
 
@@ -207,7 +200,7 @@ namespace PeachCore::Metal{
 
         if (not pm_CurrentCommandBuffer)
         {
-            f_Pool->release();
+            pm_FramePool->release();
             return StatusCode::FAILED_TO_CREATE_COMMAND_BUFFER;
         }
 
@@ -221,7 +214,6 @@ namespace PeachCore::Metal{
 
         pm_CurrentEncoder = pm_CurrentCommandBuffer->renderCommandEncoder(f_PassDesc);
         f_PassDesc->release();
-        f_Pool->release();
 
         pm_IsFrameStarted = true;
         return StatusCode::OK;
@@ -263,6 +255,8 @@ namespace PeachCore::Metal{
         pm_CurrentEncoder->endEncoding();
         pm_CurrentCommandBuffer->presentDrawable(pm_CurrentDrawable);
         pm_CurrentCommandBuffer->commit();
+
+        pm_FramePool->release();
 
         pm_CurrentEncoder       = nullptr;
         pm_CurrentCommandBuffer = nullptr;

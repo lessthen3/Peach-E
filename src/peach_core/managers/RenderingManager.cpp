@@ -10,6 +10,7 @@
 ********************************************************************/
 #include "RenderingManager.h"
 #include "GameManager.h" //this is kosher since it's religated to this TU only owo
+#include <memory>
 
 /*
     This class is used to manage the render thread, and queue/unqueue objects safely
@@ -56,6 +57,7 @@ namespace PeachCore {
     void 
         RenderingManager::Shutdown() //no moar sdl quit only main thread does that owo but it lives the entire runtime and the driver can handle that whatever
     {
+
     }
 
     bool 
@@ -102,6 +104,9 @@ namespace PeachCore {
         noexcept
     {
         pm_IsRunning.store(false, std::memory_order_release);
+    //         if (this_thread::.joinable()) {
+    //     pm_Thread.join(); // <--- This BLOCKS the main thread until the loop finishes
+    // }
     }
 
    bool
@@ -442,7 +447,10 @@ namespace PeachCore {
 
             return;
         }
-        if (InitializeMetal() != PEACH_OK)
+
+        pm_MetalRenderer = make_unique<Metal::Renderer>();
+
+        if (pm_MetalRenderer->Initialize(pm_MainWindow, rendering_logger) != PEACH_OK)
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid Metal context, exiting execution immediately", "RenderingManager");
             GameManager::get_single().ThreadPanicShutdown(PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_METAL); //not sure if exit should be used here
@@ -450,6 +458,74 @@ namespace PeachCore {
         }
 
         fp_InitLatch.count_down();
+
+        auto f_CurrentTime = chrono::high_resolution_clock::now();
+        float f_RenderAccumulator = 0.0f;
+
+        while (pm_IsRunning.load(std::memory_order_acquire))
+        {
+            auto f_NewTime = chrono::high_resolution_clock::now();
+            float f_FrameTime = chrono::duration<float>(f_NewTime - f_CurrentTime).count();
+
+            f_CurrentTime = f_NewTime;
+
+            //////////////////// clamp to one frame render pass when its taking too long owo ////////////////////
+
+            if (f_FrameTime > 0.25)
+            {
+                f_FrameTime = RENDER_FRAME_TIME_STEP;
+            }
+
+            //////////////////// Increment Accumulator ////////////////////
+
+            f_RenderAccumulator += f_FrameTime;
+
+            //////////////////// Physics and fixed interval updates ////////////////////
+
+            if (f_RenderAccumulator >= RENDER_FRAME_TIME_STEP)
+            {
+                //////////////////// Submit Draw Calls ////////////////////
+
+                uint32_t f_StatusCode = pm_MetalRenderer->BeginFrame();
+                if (f_StatusCode & ~Metal::Renderer::StatusCode::OK) //don't even try to draw into cmd buffer or end frame is frame didnt start properly
+                {
+                    PEACH_PRINT_ERROR_FMT("BeginFrame() failed exit, StatusCode: {}", f_StatusCode);
+                }
+
+                f_StatusCode = pm_MetalRenderer->DrawFrame();
+                if (f_StatusCode &~ Metal::Renderer::StatusCode::OK)
+                {
+                    PEACH_PRINT_ERROR_FMT("DrawFrame() failed exit, StatusCode: {}", f_StatusCode);
+                }
+
+                f_StatusCode = pm_MetalRenderer->EndFrame();
+                if (f_StatusCode & ~Metal::Renderer::StatusCode::OK)
+                {
+                    PEACH_PRINT_ERROR_FMT("EndFrame() failed exit, StatusCode: {}", f_StatusCode);
+                }
+
+                f_RenderAccumulator -= RENDER_FRAME_TIME_STEP;
+            }
+
+            PEACH_TO_DO_UNUSED(ProcessCommands()); //TODO: write a heuristic to figure out the best way to stream assets since we dont wanna fully drain the pipeline everytime but also tbh doesnt matter that much uwu
+
+            // sleep whatever is left in the budget after all work is done
+            float f_Remaining = RENDER_FRAME_TIME_STEP - chrono::duration<float>(chrono::high_resolution_clock::now() - f_CurrentTime).count();
+
+            // sleep the remaining time so we don't burn a core, and be nice to other processes uwu
+            if (f_Remaining > 0.001f) // dont bother sleeping < 1ms 
+            {
+                this_thread::sleep_for(chrono::duration<float>(f_Remaining * 0.9f));  // 90% to avoid oversleeping
+            }
+        }
+
+        Shutdown();
+
+        #ifdef PEACH_PLATFORM_MACOS
+            PEACH_FlushCATransaction(); //commit any pending implicit CA transaction before thread exits, prevents macOS warning on thread deletion
+        #endif
+
+        // pm_MetalRenderer->CleanUp();
     }
 
     PEACH_STATUS_CODE

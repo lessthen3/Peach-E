@@ -306,7 +306,7 @@ elseif(PEACH_WINDOWS_ARM64)
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
 
-elseif(PEACH_MACOS)
+elseif(PEACH_PLATFORM_IS_MACOS) #everything is a fat binary owo at least the libs
 
     ############ Windowing and Input
 
@@ -440,7 +440,7 @@ elseif(PEACH_PLATFORM_IS_WINDOWS)
         kernel32
     )
 
-elseif(PEACH_MACOS) #TODO fix iokit and other frameworks that dont exist on ios ipados or tvos and watchos
+elseif(PEACH_PLATFORM_IS_MACOS) #TODO fix iokit and other frameworks that dont exist on ios ipados or tvos and watchos
 
     target_link_libraries(peach_core PUBLIC
         "-framework AVFoundation"
@@ -562,7 +562,7 @@ elseif(PEACH_SWITCH)
         PEACH_RENDERER_OPENGL
     )
 
-elseif(PEACH_MACOS OR PEACH_IOS OR PEACH_TVOS)
+elseif(PEACH_PLATFORM_IS_MACOS OR PEACH_IOS OR PEACH_TVOS)
     target_compile_definitions(peach_core PUBLIC
         PEACH_RENDERER_METAL
     )
@@ -668,18 +668,17 @@ if(BUILD_PEACH_ENGINE)
 
     ####################################### Create executable target
 
-    if(PEACH_MACOS) #create a bundle instead of a regular exe for macOS
+    if(PEACH_PLATFORM_IS_MACOS) #create a bundle instead of a regular exe for macOS
         set(MACOSX_BUNDLE TRUE)
 
         add_executable(${PROJECT_NAME} MACOSX_BUNDLE
             ${PEACH_ENGINE_SOURCES}
         )
     else()
-        add_executable(
-            ${PROJECT_NAME} 
+        add_executable(${PROJECT_NAME} 
             ${PEACH_ENGINE_SOURCES}
         )
-    endif(PEACH_MACOS)
+    endif()
 
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON) #make Peach_Engine PIC friendly UwU
 
@@ -748,7 +747,7 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### Create executable target
 
-    if(PEACH_MACOS) #create a bundle instead of a regular exe for macOS
+    if(PEACH_PLATFORM_IS_MACOS) #create a bundle instead of a regular exe for macOS
         set(MACOSX_BUNDLE TRUE)
 
         add_executable(Peach_Editor MACOSX_BUNDLE
@@ -756,11 +755,10 @@ if(BUILD_PEACH_EDITOR)
         )
     else()
         # Peach Editor
-        add_executable( 
-            Peach_Editor
+        add_executable(Peach_Editor
             ${PEACH_EDITOR_SOURCES}
         )
-    endif(PEACH_MACOS)
+    endif()
 
     target_include_directories(Peach_Editor PRIVATE
         ${PROJECT_SOURCE_DIR}/src/peach_editor/ #again because its prettier owo
@@ -815,24 +813,21 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### tell astcenc which ISA to build for based on our platform
 
-    if(PEACH_MACOS)
-        if(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
-            set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
-            set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
-            set(ASTCENC_ISA_SSE41 OFF CACHE BOOL "" FORCE)
-            set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
-        else()
-            set(ASTCENC_ISA_NEON  OFF CACHE BOOL "" FORCE)
-            set(ASTCENC_ISA_AVX2  ON  CACHE BOOL "" FORCE)
-            set(ASTCENC_ISA_SSE41 ON  CACHE BOOL "" FORCE)
-            set(ASTCENC_ISA_SSE2  ON  CACHE BOOL "" FORCE)
-        endif(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+    if(PEACH_MACOS_ARM64)
+        set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE41 OFF CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
+    elseif(PEACH_MACOS_X64)
+        set(ASTCENC_ISA_NEON  OFF CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_AVX2  ON  CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE41 ON  CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE2  ON  CACHE BOOL "" FORCE)
     elseif(PEACH_WINDOWS_X64 OR PEACH_LINUX_X64 OR PEACH_BSD_X64)
         set(ASTCENC_ISA_NEON  OFF CACHE BOOL "" FORCE)
         set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
         set(ASTCENC_ISA_SSE41 ON  CACHE BOOL "" FORCE)
         set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
-
     elseif(PEACH_WINDOWS_ARM64 OR PEACH_LINUX_ARM64 OR PEACH_BSD_ARM64)
         set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
         set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
@@ -875,7 +870,7 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### Set astenc target properties
 
-    if(PEACH_MACOS)
+    if(PEACH_PLATFORM_IS_MACOS)
         foreach(f_AstcTarget
             astcenc-neon-static
             astcenc-avx2-static
@@ -892,9 +887,8 @@ if(BUILD_PEACH_EDITOR)
             endif(TARGET ${f_AstcTarget})
         endforeach()
 
-        # on arm64 — exclude x86 ISA targets from the build entirely
-        # Xcode will still generate them in the project but won't compile them
-        if(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+        # on arm64 — exclude x86 ISA targets from the build entirely, Xcode will still generate them in the project but won't compile them
+        if(PEACH_MACOS_ARM64)
             foreach(f_AstcTarget
                 astcenc-avx2-static
                 astcenc-sse4.1-static
@@ -906,9 +900,9 @@ if(BUILD_PEACH_EDITOR)
                     )
                 endif(TARGET ${f_AstcTarget})
             endforeach()
-        endif(CMAKE_OSX_ARCHITECTURES STREQUAL "arm64")
+        endif(PEACH_MACOS_ARM64)
         
-    endif(PEACH_MACOS)
+    endif(PEACH_PLATFORM_IS_MACOS)
 
     if(MSVC)
         foreach(f_AstcTarget 
@@ -1031,7 +1025,7 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
-    elseif(PEACH_MACOS) #all the macos libs are fat and handle x64 and arm but the exec target will be only for 1 arch UwU!
+    elseif(PEACH_PLATFORM_IS_MACOS) #all the macos libs are fat and handle x64 and arm but the exec target will be only for 1 arch UwU!
 
         ############ Pretty Fonts
 
@@ -1056,8 +1050,8 @@ if(BUILD_PEACH_EDITOR)
         # ############ Asset Importing
 
         STATIC_IMPORT(assimp 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steveARM64/libassimp.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steve64/libassimp.a" #assimp debug wayyyy too big owo
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steve64/libassimp.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
         )
 
@@ -1220,44 +1214,44 @@ if(BUILD_PEACH_EDITOR)
         ############ Pretty Fonts
 
         STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64/libfreetyped.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64_arm/libfreetype.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64_arm/libfreetyped.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
         )
 
         STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/release/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/debug/libmsdfgen-core.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64_arm/release/libmsdfgen-core.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64_arm/debug/libmsdfgen-core.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
         )
 
         STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/release/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/debug/libmsdfgen-ext.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64_arm/release/libmsdfgen-ext.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64_arm/debug/libmsdfgen-ext.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
         )
 
         # ############ Asset Importing
 
         STATIC_IMPORT(assimp 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libassimp.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64_arm/libassimp.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64_arm/libassimp.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
         )
 
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/freebsd64/libnethost.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/freebsd64/libnethost.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/freebsd64_arm/libnethost.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/freebsd64_arm/libnethost.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet9"
         )
 
         ############ Vulkan Specific Imports
 
         STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64_arm/libshaderc_combined.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64_arm/libshaderc_combined.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 

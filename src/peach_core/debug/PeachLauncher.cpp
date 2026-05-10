@@ -10,29 +10,23 @@
 ********************************************************************/
 #ifdef PEACH_PLATFORM_DESKTOP
 
+#include "PeachLauncher.h"
+#include <SDL3/SDL.h> // for showing crash dialog from the parent process owo
+#include <SDL3/SDL_messagebox.h>
+#include <cstdio>
+
 #ifdef PEACH_PLATFORM_WINDOWS
 #   include <windows.h>
 #   include <debugapi.h>
-#   include "PeachLauncher.h"
-#   include <SDL3/SDL.h> // for showing crash dialog from the parent process owo
-#   include <SDL3/SDL_messagebox.h>
-#   include <cstdio>
 #elif defined(PEACH_PLATFORM_LINUX)
 #   include <fstream>
 #   include <string>
 #   include <unistd.h>
 #   include <sys/wait.h>
-#   include "PeachLauncher.h"
-#   include <SDL3/SDL.h> // for showing crash dialog from the parent process owo
-#   include <SDL3/SDL_messagebox.h>
-#   include <cstdio>
 #elif defined(PEACH_PLATFORM_APPLE)
 #   include <sys/sysctl.h>
 #   include <unistd.h>
-#   include "PeachLauncher.h"
-#   include <SDL3/SDL.h> // for showing crash dialog from the parent process owo
-#   include <SDL3/SDL_messagebox.h>
-#   include <cstdio>
+#   include <sys/wait.h>
 #endif
 
 namespace PeachCore {

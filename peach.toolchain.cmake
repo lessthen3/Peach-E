@@ -61,6 +61,7 @@ set(PEACH_PLATFORM_IS_UNIX        OFF CACHE BOOL "" FORCE)
 set(PEACH_PLATFORM_IS_WINDOWS     OFF CACHE BOOL "" FORCE)
 set(PEACH_PLATFORM_IS_LINUX       OFF CACHE BOOL "" FORCE)
 set(PEACH_PLATFORM_IS_FREEBSD     OFF CACHE BOOL "" FORCE)
+set(PEACH_PLATFORM_IS_MACOS       OFF CACHE BOOL "" FORCE)
 
 
 ############# windows native #############
@@ -91,27 +92,29 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "windows-arm64")
 
 elseif(PEACH_TARGET_PLATFORM STREQUAL "macos-x64")
     set(CMAKE_SYSTEM_NAME Darwin)
+    set(CMAKE_SYSTEM_PROCESSOR x86_64)
 
-    set(CMAKE_OSX_ARCHITECTURES "x86_64")
+    set(CMAKE_OSX_ARCHITECTURES x86_64)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
 
-    set(PEACH_MACOS               ON CACHE BOOL "" FORCE)
+    set(PEACH_MACOS_X64           ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_APPLE   ON CACHE BOOL "" FORCE)
-    set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_MACOS   ON CACHE BOOL "" FORCE)
 
     message(STATUS "macOS x86_64, older but golder ^w^ >///< daddy still loves u kitten owo ~~~🍎")
 
 elseif(PEACH_TARGET_PLATFORM STREQUAL "macos-arm64")
     set(CMAKE_SYSTEM_NAME Darwin)
+    set(CMAKE_SYSTEM_PROCESSOR arm64)
 
-    set(CMAKE_OSX_ARCHITECTURES "ARM64")
+    set(CMAKE_OSX_ARCHITECTURES arm64)     #idfk apple clang is stupid needs lowercase LMFAO 
     set(CMAKE_OSX_DEPLOYMENT_TARGET "12.0")
 
     set(PEACH_MACOS_ARM64         ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_APPLE   ON CACHE BOOL "" FORCE)
-    set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
+    set(PEACH_PLATFORM_IS_MACOS   ON CACHE BOOL "" FORCE)
 
     message(STATUS "macOS MMMMMMMMMM daddy likey >w<, premium fur and silky frameworks for daddy's kitten~ 🍎")
 
@@ -120,6 +123,7 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "macos-arm64")
 elseif(PEACH_TARGET_PLATFORM STREQUAL "ios")
     set(CMAKE_SYSTEM_NAME iOS)
     set(CMAKE_SYSTEM_PROCESSOR arm64)
+
     set(CMAKE_OSX_ARCHITECTURES arm64)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0")
     set(CMAKE_OSX_SYSROOT iphoneos)
@@ -306,7 +310,7 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "psvita")
 else()
     message(FATAL_ERROR
         "Unknown PEACH_TARGET_PLATFORM: '${PEACH_TARGET_PLATFORM}' >///< \n"
-        "valid options: windows-x64, windows-arm64, freebsd-x64, freebsd-arm64, linux-x64, linux-arm64, macos-x64, macos-arm64, , ios, tvos, android, wasm, psvita"
+        "valid options: windows-x64, windows-arm64, freebsd-x64, freebsd-arm64, linux-x64, linux-arm64, macos-x64, macos-arm64, ios, tvos, android, wasm, psvita"
     )
 endif()
 

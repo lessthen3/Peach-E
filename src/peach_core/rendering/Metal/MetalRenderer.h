@@ -24,6 +24,7 @@
 // Metal Bridge, calling out to the .mm TU
 extern "C" void PEACH_AssignMetalDeviceToLayer(void* fp_Layer, void* fp_Device);
 extern "C" void* PEACH_GetNextDrawable(void* fp_Layer);
+extern "C" void PEACH_FlushCATransaction();
 
 namespace PeachCore::Metal {
 
@@ -40,7 +41,8 @@ namespace PeachCore::Metal {
             static constexpr uint32_t FAILED_TO_CREATE_COMMAND_BUFFER = 1 << 4;
         };
     public:
-        ~Renderer();
+        ~Renderer() = default;
+        Renderer() = default;
 
         Renderer(const Renderer&) = delete;
 
@@ -69,6 +71,8 @@ namespace PeachCore::Metal {
 
     private:
         shared_ptr<Logger> rendering_logger = nullptr;
+
+        NS::AutoreleasePool* pm_FramePool = nullptr;
 
         MTL::Device* pm_Device = nullptr;
         MTL::CommandQueue* pm_CommandQueue  = nullptr;

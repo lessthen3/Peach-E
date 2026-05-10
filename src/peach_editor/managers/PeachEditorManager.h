@@ -106,10 +106,9 @@ namespace PeachEditor {
                     not PeachCore::GameManager::get_single().InitializePeachEngineCustom
                     (
                         fp_RootPath,
-                        PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::PhysicsThread | PeachCore::ThreadName::AudioThread,
+                        PeachCore::ThreadName::RenderThread,
                         f_RenderingBackend,
-                        800,
-                        600
+                        800, 600
                     )
                 )
             {

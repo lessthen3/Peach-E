@@ -68,7 +68,7 @@ namespace PeachCore {
         AudioManager::Stop()
     {
         pm_IsRunning.store(false, std::memory_order_release);
-        pm_AudioSemaphore.release(); // Wake it up to exit        
+        pm_AudioSemaphore.release(); // wake up to exit        
     }
 
     bool 

@@ -93,3 +93,22 @@
 
 //XXX: meant to be grepable owo, avoids the -Wunused spam from clang/gcc
 #define PEACH_TO_DO_UNUSED(fp_Action) (void)(fp_Action)
+
+
+// #elif defined(PEACH_PLATFORM_WASM) && defined(PEACH_DEBUG)
+
+//     #include <emscripten/emscripten.h>
+
+//     #define PEACH_PRINT(fp_String, fp_Colour) \
+//         emscripten_log(EM_LOG_CONSOLE, "%s", (fp_String))
+
+//     #define PEACH_PRINT_ERROR(fp_String) \
+//         emscripten_log(EM_LOG_ERROR, "%s", (fp_String))
+
+//     #define PEACH_PRINT_FMT(fp_Colour, fp_Format, ...) \
+//         emscripten_log(EM_LOG_CONSOLE, "%s", \
+//             fmt::format(fp_Format __VA_OPT__(,) __VA_ARGS__).c_str())
+
+//     #define PEACH_PRINT_ERROR_FMT(fp_Format, ...) \
+//         emscripten_log(EM_LOG_ERROR, "%s", \
+//             fmt::format(fp_Format __VA_OPT__(,) __VA_ARGS__).c_str())
