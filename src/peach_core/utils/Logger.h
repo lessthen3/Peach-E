@@ -12,6 +12,16 @@
 
 #define PEACH_LOGGER_DEFAULT_FLAGS PEACH_ALL_LOGS | PEACH_FLUSH_ERROR
 
+///IMPORTANT: ur cute >w<
+
+#ifdef PEACH_DEBUG // can always just do a ptr deref since the factory functions guarantee Logger can only be heap allocated owo
+#   define PEACH_LOG_DEBUG(logger, msg, sender) logger->Debug(msg, sender)  
+#   define PEACH_LOG_TRACE(logger, msg, sender) logger->Trace(msg, sender)
+#else
+#   define PEACH_LOG_DEBUG(logger, msg, sender) ((void)0)
+#   define PEACH_LOG_TRACE(logger, msg, sender) ((void)0)
+#endif /*PEACH_DEBUG*/
+
 /// STL
 #include <string>
 #include <thread>
@@ -25,7 +35,6 @@
 ///fmt
 #include "PeachPrint.h"
 #include "PeachForceInline.h"
-
 
 constexpr int FATAL_SEGMENTATION_FAULT = -6969;
 
@@ -140,19 +149,21 @@ namespace PeachCore {
 
         //////////////////////////////////////////////////////////// Logging Functions  ////////////////////////////////////////////////////////////
 
-        void
-            Trace
-            (
-                const string& fp_Message,
-                const string& fp_Sender
-            );
+        #ifdef PEACH_DEBUG
+            void
+                Trace
+                (
+                    const string& fp_Message,
+                    const string& fp_Sender
+                );
 
-        void
-            Debug
-            (
-                const string& fp_Message,
-                const string& fp_Sender
-            );
+            void
+                Debug
+                (
+                    const string& fp_Message,
+                    const string& fp_Sender
+                );
+        #endif /*PEACH_DEBUG*/
 
         void
             Info

@@ -261,7 +261,7 @@ namespace PeachCore::OpenGL {
         // Create Shaders
         ///////////////////////////////////////////////
 
-        int
+        GLuint
             CreateShader //creates, compiles and attaches desired shader type to current shaderprogram
             (
                 const string& fp_ShaderSourceCode,

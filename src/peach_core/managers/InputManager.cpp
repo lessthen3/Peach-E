@@ -33,7 +33,7 @@ namespace PeachCore {
             return false;
         }
 
-        input_logger->Debug("InputLogger successfully initialized", "RenderingManager");
+        input_logger->Info("InputLogger successfully initialized", "InputManager");
 
         m_CurrentMainWindowState.Width = fp_InitialWindowWidth;
         m_CurrentMainWindowState.Height = fp_InitialWindowHeight;

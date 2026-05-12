@@ -118,18 +118,24 @@ namespace PeachCore
             Debug::InstallCrashHandler(); //XXX: used for trying to close and flush logs on seg fault
         }
 
+        //////////////////// SDL is fucking weird mang ////////////////////
+
+        #ifdef SDL_MAIN_HANDLED 
+            SDL_SetMainReady(); // Required when SDL_MAIN_HANDLED is defined
+        #endif
+
         //////////////////// Required Threads Variable for Knowing Which Threads to Shutdown or Whatever ////////////////////
 
         pm_RequiredThreads = fp_RequiredThreads;
 
         //////////////////// Enable ANSI colour codes for windows console grumble grumble ////////////////////
 
-#if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
-        if (not PEACH_EnableWindowsConsoleColours())
-        {
-            PEACH_PRINT_ERROR("Unable to set console mode, and enable ANSI colour codes on windows terminal owo");
-        }
-#endif
+        #if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_USING_OS_TERMINAL)
+            if (not PEACH_EnableWindowsConsoleColours())
+            {
+                PEACH_PRINT_ERROR("Unable to set console mode, and enable ANSI colour codes on windows terminal owo");
+            }
+        #endif
 
         ////////////////////////////////////////////// Initialize Main Thread Logger //////////////////////////////////////////////
 
@@ -141,11 +147,7 @@ namespace PeachCore
             return false;
         }
 
-        main_logger->Debug("main_thread logger successfully initialized", "GameManager");
-
-        #ifndef PEACH_PLATFORM_ANDROID // SDL is fucking weird mang
-            SDL_SetMainReady(); // Required when SDL_MAIN_HANDLED is defined
-        #endif
+        main_logger->Info("main_thread logger successfully initialized", "GameManager");
 
         //////////////////// Initialize Subsystems ////////////////////
 
@@ -164,6 +166,11 @@ namespace PeachCore
             main_logger->Fatal("Initialization failed: Was not able to create the main window, exiting execution immediately", "GameManager");
             return false; //PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW;
         }
+        else if (not InputManager::get_single().Initialize(fp_StartingWindowWidth, fp_StartingWindowHeight, fp_RootPath + "/logs", PEACH_LOGGER_DEFAULT_FLAGS))
+        {
+
+            return false;
+        }
         else if (not InitializeThreads(fp_RootPath, fp_StartingWindowWidth, fp_StartingWindowHeight, fp_RenderingBackend))
         {
             main_logger->Fatal("Failed to initialize Peach Engine managers, ending engine program execution immediately", "GameManager");
@@ -173,14 +180,6 @@ namespace PeachCore
         {
             main_logger->Fatal("Command Queue acquisiton failed, exiting engine execution immediately", "GameManager");
             ShutdownPeachEngine(); //shutdown threads now that their initialized owo
-            return false;
-        }
-
-        //////////////////// Intialize InputManager ////////////////////
-
-        if (not InputManager::get_single().Initialize(fp_StartingWindowWidth, fp_StartingWindowHeight, fp_RootPath + "/logs", PEACH_LOGGER_DEFAULT_FLAGS))
-        {
-
             return false;
         }
 
@@ -243,13 +242,7 @@ namespace PeachCore
         
         if (pm_RequiredThreads & ThreadName::RenderThread)
         {
-            RenderingManager::get_single().Stop();
-
-            if (pm_RenderThread.joinable())
-            {
-                pm_RenderThread.join(); 
-                main_logger->Info("Successfully joined render thread", "GameManager");
-            }
+            pm_RenderingManager.Stop();
         }
         if (pm_RequiredThreads & ThreadName::AudioThread)
         {
@@ -378,54 +371,14 @@ namespace PeachCore
 
         if (pm_RequiredThreads & ThreadName::RenderThread)
         {
-#ifdef PEACH_RENDERER_VULKAN
-            if(fp_RenderingBackend == RendererType::Vulkan)
-            {
-                pm_RenderThread = thread
-                (
-                    &RenderingManager::RenderLoopVK,
-                    std::ref(RenderingManager::get_single()),
-                    f_LogDir,
-                    std::ref(pm_ThreadInitializationLatch),
-                    pm_MainWindow,
-                    fp_InitialWindowWidth,
-                    fp_InitialWindowHeight,
-                    100
-                );
-            }
-#endif
+            PEACH_STATUS_CODE result = pm_RenderingManager.Initialize(fp_RenderingBackend, pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, 10, f_LogDir);
 
-#ifdef PEACH_RENDERER_OPENGL
-            if (fp_RenderingBackend == RendererType::OpenGL)
+            if(result != PEACH_OK)
             {
-                pm_RenderThread = thread
-                (
-                    &RenderingManager::RenderLoopGL,
-                    std::ref(RenderingManager::get_single()),
-                    f_LogDir,
-                    std::ref(pm_ThreadInitializationLatch),
-                    pm_MainWindow,
-                    fp_InitialWindowWidth,
-                    fp_InitialWindowHeight,
-                    10
-                );
+                return result;
             }
-#endif
 
-#ifdef PEACH_RENDERER_METAL
-            if (fp_RenderingBackend == RendererType::Metal)
-            {
-                pm_RenderThread = thread
-                (
-                    &RenderingManager::RenderLoopMetal,
-                    std::ref(RenderingManager::get_single()),
-                    f_LogDir,
-                    std::ref(pm_ThreadInitializationLatch),
-                    pm_MainWindow,
-                    10
-                );
-            }
-#endif
+            pm_ThreadInitializationLatch.count_down();
         }
         else
         {
@@ -502,7 +455,7 @@ namespace PeachCore
 
         PEACH_PRINT("Hello World!\n", PEACH_COL_BLUE); //>w<
         main_logger->Warning("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
-        main_logger->Trace("Success! This Built Correctly", "Peach-E");
+        PEACH_LOG_TRACE(main_logger, "Success! This Built Correctly", "Peach-E");
 
         pm_ThreadInitializationLatch.wait();
 
@@ -528,7 +481,7 @@ namespace PeachCore
 
         if (pm_RequiredThreads & ThreadName::RenderThread)
         {
-            pm_RenderCommandQueue = RenderingManager::get_single().GetDrawCommandQueue(main_logger.get());
+            pm_RenderCommandQueue = pm_RenderingManager.GetDrawCommandQueue(main_logger.get());
 
             if (not pm_RenderCommandQueue)
             {

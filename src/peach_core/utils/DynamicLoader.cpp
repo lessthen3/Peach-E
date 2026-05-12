@@ -160,7 +160,7 @@ namespace PeachCore::DynamicLoader {
             return nullptr; //its already nullptr but its nice to be explicit here
         }
         
-        logger->Debug(fmt::format("Symbol located: '{}'", fp_SymbolName), "DynamicLoader");
+        PEACH_LOG_DEBUG(logger, fmt::format("Symbol located: '{}'", fp_SymbolName), "DynamicLoader");
 
         return symbol;
     }

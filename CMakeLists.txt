@@ -15,7 +15,7 @@ option(BUILD_PEACH_CORE_SHARED "Builds peach_core as a shared library" OFF) #bui
 
 option(BUILD_PEACH_TESTS "build test suite" OFF)
 option(BUILD_PEACH_EDITOR "turns on build output for peach editor" ON)
-option(BUILD_PEACH_ENGINE "turns on build output for the executable peach engine, doesn't relate to peach_core" ON)
+option(BUILD_PEACH_ENGINE "turns on build output for the executable peach engine, doesn't relate to peach_core" OFF)
 
 option(BUILD_ASSET_CONVERTER_TOOL "builds the asset converter exe for importing assets for things like mods" OFF)
 
@@ -407,7 +407,17 @@ elseif(PEACH_WASM)
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/wasm/debug/libSDL3.a"
         "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
     )
-    
+
+elseif(PEACH_VITA)
+
+    ############ Windowing and Input
+
+    STATIC_IMPORT(SDL3 
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/psvita/release/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/psvita/debug/libSDL3.a"
+        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
+    )
+
 else()
     message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
 endif()
@@ -416,12 +426,13 @@ endif()
 
 if(PEACH_PLATFORM_IS_LINUX)
 
-    find_package(OpenGL REQUIRED)
-
+    find_package(OpenGL REQUIRED COMPONENTS OpenGL GLX EGL)
+    
     target_link_libraries(peach_core PUBLIC
-        #opengl
-        GL
-        glew    
+        glew
+        OpenGL::GL
+        OpenGL::GLX
+        OpenGL::EGL
     )
 
 elseif(PEACH_PLATFORM_IS_WINDOWS)
@@ -529,6 +540,69 @@ elseif(PEACH_ANDROID)
         "-Wl,-z,common-page-size=16384"
     )
 elseif(PEACH_IOS)
+
+elseif(PEACH_VITA)
+    # PS Vita uses .stub files to map to the OS modules. 
+    target_link_libraries(peach_core PUBLIC
+        # --- Graphics & Display ---
+        SceGxm_stub          # The native low-level GPU API
+        SceDisplay_stub      # Screen buffers and VSync
+        SceShUtility_stub    # Shell utilities (for splash screens/scaling)
+        
+        # --- Input ---
+        SceCtrl_stub         # Buttons and Joysticks
+        SceTouch_stub        # Front and Rear touchpads
+        SceHid_stub          # Support for external controllers (DS4/PSTV)
+
+        # --- Sensors ---
+        SceMotion_stub       # Gyro and Accelerometer
+        
+        # --- Audio ---
+        SceAudio_stub        # Primary audio output
+        SceAudiodec_stub     # Hardware decoding
+
+        # --- System Services ---
+        ScePower_stub        # Battery info and CPU/GPU clock frequency control (don't forget to boost to 444MHz!)(okay thanks ig) scePowerSetArmClockFrequency(444) scePowerSetGpuClockFrequency(222)
+        SceRtc_stub          # Real-time clock
+        SceAppUtil_stub      # System app events (OS buttons, battery)
+        SceCommonDialog_stub # System keyboard and message popups
+        SceSysmodule_stub    # Required to load GXM/Net/etc modules at runtime
+
+        # --- Network ---
+        SceNet_stub          # Sockets
+        SceNetCtl_stub       # Network state/Wifi
+        
+        # --- Core Runtime ---
+        SceLibKernel_stub    # equivalent of kernel32.dll apparently so yeah, i'd like to allocate memory, might be needed at some point ig owo
+        pthread              # VitaSDK's pthread implementation
+        m                    # still a dumb fucking name for the math lib but ig its called libm y not libmath or literally anything else LMFAO the C programmer urge to name smth in the least descriptive way possible >w<
+    )
+
+    # Vita linker requires -Wl,-q to keep relocations for the .velf tool
+    target_link_options(peach_core PRIVATE "-Wl,-q")
+    
+    # Define VITA for your code logic
+    target_compile_definitions(peach_core PUBLIC VITA)
+
+    # Create the Vita ELF
+    add_custom_command(TARGET peach_core POST_BUILD
+        COMMAND vita-elf-create $<TARGET_FILE:peach_core> peach_core.velf
+    )
+
+    # "sign" it for homebrew
+    add_custom_command(TARGET peach_core POST_BUILD
+        COMMAND vita-make-fself peach_core.velf eboot.bin
+    )
+
+    # Create the System File Object
+    add_custom_command(TARGET peach_core POST_BUILD
+        COMMAND vita-mksfoex -s TITLE_ID="PEACH0001" "Peach Engine" param.sfo
+    )
+
+    # Pack the VPK (I'll need an assets folder with a sce_sys/icon0.png apparently)
+    add_custom_command(TARGET peach_core POST_BUILD
+        COMMAND vita-pack-vpk -s param.sfo -b eboot.bin peach_engine.vpk
+    )
 
 endif()
 

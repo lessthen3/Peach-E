@@ -60,43 +60,160 @@ namespace PeachCore {
 
     }
 
-    bool 
+    PEACH_STATUS_CODE 
         RenderingManager::Initialize
         (
-            const string& fp_LogOutputDirectory,
-            const size_t fp_InitialFrameRate
+            const RendererType fp_RequiredRenderingBacked,
+            SDL_Window* fp_MainWindow,
+            const uint32_t fp_InitialWindowWidth,
+            const uint32_t fp_InitialWindowHeight,
+            const size_t fp_InitialFrameRate,
+            const string& fp_LogOutputDirectory
         )   
     {
+        if (pm_IsInitialized.load()) //XXX: can log here since initializaiton only succeeds if rendering_logger gets created owo
+        {
+            rendering_logger->Warning("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager");
+            return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL;
+        }
+
+        //////////////////// Set Frame Limit //////////////////// IMPORTANT: this has to be at the top otherwise the threads will start with garbage data here owo
+
+        pm_CurrentFrameRateLimit = fp_InitialFrameRate;
+        RENDER_FRAME_TIME_STEP = 1.0f / (float)fp_InitialFrameRate;
+
         //////////////////// Initialize Logger ////////////////////
 
         rendering_logger = LogManager::get_single().CreateSharedLogger("RenderingManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
 
-        if (not rendering_logger)
+        if (not rendering_logger) [[unlikely]]
         {
             PEACH_PRINT_ERROR("RenderingManager failed to initialize the render_thread logger >w<");
-            return false;
+            return PEACH_FATAL_FAILED_TO_CREATE_RENDERING_LOGGER;
         }
 
-        rendering_logger->Debug("RenderingLogger successfully initialized", "RenderingManager");
+        rendering_logger->Info("RenderingLogger successfully initialized", "RenderingManager");
+
+        //////////////////// Validate Window, and Store ////////////////////
+
+        if(not fp_MainWindow) [[unlikely]] //don't needa check rendering_logger cause rendering manager can never be created without a valid logger instance owo
+        {
+            rendering_logger->Fatal("Tried to pass a nullptr reference to SDL_Window while starting Peach-E's RenderingManager owo", "RenderingManager");
+            return PEACH_ERROR_NULLPTR_REF_PASSED;
+        }
 
         //////////////////// Initialize Loading and Command Queues ////////////////////
 
         if (not InitializeLoadingQueue())
         {
             rendering_logger->Fatal("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager");
-            return false;
+            return PEACH_FATAL_FAILED_TO_INITIALIZE_RENDERING_LOADING_QUEUE;
         }
 
         InitializeDrawCommandQueue();
 
-        //rendering_logger->Fatal("Invalid rendering backend was selected, RenderingManager was not able to initialize properly", "RenderingManager");
+        //////////////////// Initialize Rendering Backend ////////////////////
 
-        pm_IsInitialized = true;
-        pm_CurrentFrameRateLimit = fp_InitialFrameRate;
+        #ifdef PEACH_RENDERER_OPENGL
+            if(fp_RequiredRenderingBacked == RendererType::OpenGL)
+            {
+                ////Set Core Profile for OpenGL Context whatever the fuck that means
+                SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
-        RENDER_FRAME_TIME_STEP = 1.0f / (float)fp_InitialFrameRate;
+                //// Set OpenGL version
+                SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
+                SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
-        return true;
+                SDL_GLContext f_OpenGLContext = SDL_GL_CreateContext(fp_MainWindow);
+
+                if (not f_OpenGLContext)
+                {
+                    rendering_logger->Fatal(fmt::format("Failed to create OpenGL context: {}", SDL_GetError()), "OpenGL::Renderer");
+                    return PEACH_ERROR_FAILED_TO_CREATE_GL_CONTEXT;
+                }
+
+                glewExperimental = GL_TRUE; //????????????????? wtf glew
+
+                if (glewInit() != GLEW_OK)
+                {
+                    rendering_logger->Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager");
+                    return PEACH_ERROR_FAILED_INITIALIZE_GLEW;
+                }
+
+                rendering_logger->Info("GLEW initialized properly. Successfully initialized OpenGL!", "RenderingManager");
+
+                // if (InitializeOpenGL(fp_MainWindow) != PEACH_OK)
+                // {
+                //     rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager");
+                //     return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL; //not sure if exit should be used here Futur ryan: no it really shouldn't uwu
+                // }
+
+                // pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, rendering_logger, true); //needa make context current once the thread loop starts
+                
+                pm_RenderThread = thread
+                (
+                    &RenderingManager::RenderLoopGL,
+                    this
+                );
+            }
+        #endif /*PEACH_RENDERER_OPENGL*/
+
+        
+        #ifdef PEACH_RENDERER_VULKAN
+            if(fp_RequiredRenderingBacked == RendererType::Vulkan)
+            {
+                if (volkInitialize() != VK_SUCCESS)
+                {
+                    rendering_logger->Fatal("Volk failed to initialize! unable to find dynamic library to query vulkan driver for capabilities and functions", "RenderingManager");
+                    return PEACH_ERROR_FAILED_TO_FIND_VULKAN_DYNAMIC_LIBRARY_FOR_FUNCTION_PFN_QUERYING;
+                }
+
+                pm_VulkanRenderer = make_unique<Vulkan::Renderer>();
+                
+                if (not pm_VulkanRenderer->Initialize(fp_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, fp_LogOutputDirectory))
+                {
+                    rendering_logger->Fatal("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager");
+                    return PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN;
+                }
+
+                rendering_logger->Info("Success! VulkanRenderer initialized properly, full rendering capabilities should be ready UwU", "RenderingManager");
+
+                pm_RenderThread = thread
+                (
+                    &RenderingManager::RenderLoopVK,
+                    this
+                );
+            }
+        #endif /*PEACH_RENDERER_VULKAN*/
+
+        #ifdef PEACH_RENDERER_METAL
+            if(fp_RequiredRenderingBacked == RendererType::Metal)
+            {
+                pm_MetalRenderer = make_unique<Metal::Renderer>();
+
+                if (pm_MetalRenderer->Initialize(pm_MainWindow, rendering_logger) != PEACH_OK)
+                {
+                    rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid Metal context, exiting execution immediately", "RenderingManager");
+                    GameManager::get_single().ThreadPanicShutdown(PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_METAL); //not sure if exit should be used here
+                    pm_IsRunning.store(false, std::memory_order_release);        
+                }
+
+                pm_RenderThread = thread
+                (
+                    &RenderingManager::RenderLoopMetal,
+                    this
+                );
+            }
+        #endif /*PEACH_RENDERER_METAL*/
+
+            //rendering_logger->Fatal("Invalid rendering backend was selected, RenderingManager was not able to initialize properly", "RenderingManager");
+        
+
+        //////////////////// Initialization Successful! ////////////////////
+
+        pm_IsInitialized.store(true); //owo
+
+        return PEACH_OK;
     }
    
     void
@@ -104,9 +221,12 @@ namespace PeachCore {
         noexcept
     {
         pm_IsRunning.store(false, std::memory_order_release);
-    //         if (this_thread::.joinable()) {
-    //     pm_Thread.join(); // <--- This BLOCKS the main thread until the loop finishes
-    // }
+
+        if (pm_RenderThread.joinable())
+        {
+            pm_RenderThread.join();                         // IMPORTANT: this will block until smth is returned so idk kinda can get fucked ig
+            rendering_logger->Info("Successfully joined render thread", "GameManager");
+        }
     }
 
    bool
@@ -195,32 +315,8 @@ namespace PeachCore {
 #ifdef PEACH_RENDERER_OPENGL
 
     void
-        RenderingManager::RenderLoopGL
-        (
-            const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch,
-            SDL_Window* fp_MainWindow,
-            const uint32_t fp_InitialWindowWidth,
-            const uint32_t fp_InitialWindowHeight,
-            const size_t fp_InitialFrameRate
-        )
+        RenderingManager::RenderLoopGL()
     {
-        pm_MainWindow = fp_MainWindow;
-
-        if (not Initialize(fp_LogOutputDirectory, fp_InitialFrameRate))
-        {
-
-            return;
-        }
-        if (InitializeOpenGL(fp_InitialWindowWidth, fp_InitialWindowHeight) != PEACH_OK)
-        {
-            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager");
-            GameManager::get_single().ThreadPanicShutdown(PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL); //not sure if exit should be used here Futur ryan: no it really shouldn't uwu
-            pm_IsRunning.store(false, std::memory_order_release);        
-        }
-
-        fp_InitLatch.count_down();
-
         auto f_CurrentTime = chrono::high_resolution_clock::now();
         float f_RenderAccumulator = 0.0f;
 
@@ -272,71 +368,14 @@ namespace PeachCore {
         return true;
     }
 
-    PEACH_STATUS_CODE
-        RenderingManager::InitializeOpenGL
-        (
-            const uint32_t fp_InitialWindowWidth,
-            const uint32_t fp_InitialWindowHeight
-        )
-    {
-        if (pm_IsOpenGLInitialized)
-        {
-            rendering_logger->Warning("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager");
-            return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL;
-        }
-
-        rendering_logger->Debug("main SDL window successfully created", "RenderingManager");
-
-        pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, rendering_logger, true);
-
-        glewExperimental = GL_TRUE; //????????????????? wtf glew
-
-        if (glewInit() != GLEW_OK)
-        {
-            rendering_logger->Fatal("Failed to create GLEW context: " + static_cast<string>("OWO"), "RenderingManager");
-            //SDL_DestroyWindow(pm_MainWindow);
-            return PEACH_ERROR_FAILED_INITIALIZE_GLEW;
-        }
-
-        rendering_logger->Debug("GLEW initialized properly", "RenderingManager");
-
-        rendering_logger->Info("Successfully initialized OpenGL!", "RenderingManager");
-
-        pm_IsOpenGLInitialized = true;
-
-        return PEACH_OK;
-    }
-
 #endif
 
 #ifdef PEACH_RENDERER_VULKAN
 
     void
-        RenderingManager::RenderLoopVK
-        (
-            const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch,
-            SDL_Window* fp_MainWindow,
-            const uint32_t fp_InitialWindowWidth,
-            const uint32_t fp_InitialWindowHeight,
-            const size_t fp_InitialFrameRate
-        )
+        RenderingManager::RenderLoopVK()
     {
-        pm_MainWindow = fp_MainWindow;
-
-        if (not Initialize(fp_LogOutputDirectory, fp_InitialFrameRate))
-        {
-
-            return;
-        }
-        if (not InitializeVulkan(fp_InitialWindowWidth, fp_InitialWindowHeight))
-        {
-            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to initialize Vulkan, exiting execution immediately", "RenderingManager");
-            GameManager::get_single().ThreadPanicShutdown(PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN);
-            pm_IsRunning.store(false, std::memory_order_release);        
-        }
-
-        fp_InitLatch.count_down();
+        pm_VulkanRenderer->UpdateForNewThread();
 
         auto f_CurrentTime = chrono::high_resolution_clock::now();
         float f_RenderAccumulator = 0.0f;
@@ -401,64 +440,13 @@ namespace PeachCore {
         Shutdown();
     }
 
-    bool
-        RenderingManager::InitializeVulkan //yeah ik it copies all the way down the stack frames and is w/e avoids initialization order problems down the line and doesn't really cost anything since this is called once at startup owo
-        (
-            const uint32_t fp_InitialWindowWidth,
-            const uint32_t fp_InitialWindowHeight
-        )
-    {
-        if (volkInitialize() != VK_SUCCESS)
-        {
-            rendering_logger->Fatal("Volk failed to initialize! ending program execution immediately", "RenderingManager");
-            return false;
-        }
-
-        pm_VulkanRenderer = make_unique<Vulkan::Renderer>();
-        
-        if (not pm_VulkanRenderer->Initialize(pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, rendering_logger))
-        {
-            rendering_logger->Fatal("Failed to initialize Vulkan! ending program execution immediately", "RenderingManager");
-            return false;
-        }
-
-        rendering_logger->Info("Success! VulkanRenderer initialized properly, full rendering capabilities should be ready UwU", "RenderingManager");
-
-        return true; // >w<
-    }
-
 #endif
 
 #ifdef PEACH_RENDERER_METAL
 
     void
-        RenderingManager::RenderLoopMetal
-        (
-            const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch,
-            SDL_Window* fp_MainWindow,
-            const size_t fp_InitialFrameRate
-        )
+        RenderingManager::RenderLoopMetal()
     {
-        pm_MainWindow = fp_MainWindow;
-
-        if (not Initialize(fp_LogOutputDirectory, fp_InitialFrameRate))
-        {
-
-            return;
-        }
-
-        pm_MetalRenderer = make_unique<Metal::Renderer>();
-
-        if (pm_MetalRenderer->Initialize(pm_MainWindow, rendering_logger) != PEACH_OK)
-        {
-            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid Metal context, exiting execution immediately", "RenderingManager");
-            GameManager::get_single().ThreadPanicShutdown(PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_METAL); //not sure if exit should be used here
-            pm_IsRunning.store(false, std::memory_order_release);        
-        }
-
-        fp_InitLatch.count_down();
-
         auto f_CurrentTime = chrono::high_resolution_clock::now();
         float f_RenderAccumulator = 0.0f;
 
@@ -554,34 +542,5 @@ namespace PeachCore {
         RenderingManager::GetCurrentViewPort()
     {
       
-    }
-
-    size_t
-        RenderingManager::GetCurrentFrameRateLimit() 
-        const noexcept
-    {
-        return pm_CurrentFrameRateLimit;
-    }
-
-    void
-        RenderingManager::SetNewFrameRateLimit(const size_t fp_NewFrameRateLimit)
-        noexcept
-    {
-        pm_CurrentFrameRateLimit = fp_NewFrameRateLimit;
-        RENDER_FRAME_TIME_STEP = 1.0f / (float)fp_NewFrameRateLimit;
-    }
-
-   bool 
-        RenderingManager::IsVSyncEnabled() 
-        const noexcept
-    {
-        return pm_IsVSyncEnabled;
-    }
-
-    void 
-        RenderingManager::SetVSync(const bool fp_IsEnabled)
-        noexcept
-    {
-        pm_IsVSyncEnabled = fp_IsEnabled;
     }
 }

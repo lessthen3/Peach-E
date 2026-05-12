@@ -279,12 +279,19 @@ namespace PeachCore::Vulkan{
 
         bool pm_IsFrameStarted = false;
 
-        shared_ptr<Logger> rendering_logger = nullptr;
+        unique_ptr<Logger> vulkan_logger = nullptr;
 
         vector<TextureSlot> pm_TextureSlots;
         vector<MeshSlot> pm_MeshSlots;
 
     public:
+        
+        void 
+            UpdateForNewThread()
+        {
+            (void)vulkan_logger->UpdateThreadOwner(this_thread::get_id());
+        }
+
         //////////////////// Initialize Method ////////////////////
 
         bool
@@ -293,7 +300,7 @@ namespace PeachCore::Vulkan{
                 SDL_Window* fp_MainWindow,
                 const uint32_t fp_InitialWindowWidth,
                 const uint32_t fp_InitialWindowHeight,
-                shared_ptr<Logger> fp_RenderingLogger
+                const string& fp_LogOutputDirectory
             );
 
         //////////////////// Setup Peach UI ////////////////////

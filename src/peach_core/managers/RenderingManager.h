@@ -110,31 +110,26 @@ namespace PeachCore {
 
     };
 
+    struct GameManager;
+
     //////////////////////////////////////////////
     // Rendering Manager Class
     //////////////////////////////////////////////
     class RenderingManager 
     {
     //////////////////////////////////////////////
-    // Private Destructor
+    // Public Destructor
     //////////////////////////////////////////////
-    private:
+    public:
         //IMPORTANT: not really needed to cleanup here and the OS will def clear the memory block associated w the process quicker, RenderingManager Lifetime = Process Lifetime
         ~RenderingManager() = default; 
 
     //////////////////////////////////////////////
-    // Singleton Instance
-    //////////////////////////////////////////////
-    public:
-        static RenderingManager& get_single() 
-        {
-            static RenderingManager rendering_manager;
-            return rendering_manager;
-        }
-    //////////////////////////////////////////////
     // Private Constructor
     //////////////////////////////////////////////
     private:
+        friend GameManager;
+
         explicit RenderingManager() = default; //explicitly nothing UwU >O<
         RenderingManager(const RenderingManager&) = delete;
         RenderingManager& operator=(const RenderingManager&) = delete;
@@ -146,21 +141,24 @@ namespace PeachCore {
     // Private Members
     //////////////////////////////////////////////
     private:
-#ifdef PEACH_RENDERER_METAL 
-        unique_ptr<Metal::Renderer> pm_MetalRenderer = nullptr;
-#endif
-#ifdef PEACH_RENDERER_VULKAN
-        unique_ptr<Vulkan::Renderer> pm_VulkanRenderer = nullptr;
-#endif
-#ifdef PEACH_RENDERER_OPENGL
-        unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr; //OpenGL not supported on mac anymore fuck you tim apple
-#endif
-#ifdef PEACH_RENDERER_OPENGL_ES
-        unique_ptr<MobileGL::Renderer> pm_WebGLRenderer = nullptr;
-#endif
-#ifdef PEACH_RENDERER_WEBGL
-        unique_ptr<WebGL::Renderer> pm_MobileGLRenderer = nullptr;
-#endif
+
+        thread pm_RenderThread;
+
+        #ifdef PEACH_RENDERER_METAL 
+            unique_ptr<Metal::Renderer> pm_MetalRenderer = nullptr;
+        #endif
+        #ifdef PEACH_RENDERER_VULKAN
+            unique_ptr<Vulkan::Renderer> pm_VulkanRenderer = nullptr;
+        #endif
+        #ifdef PEACH_RENDERER_OPENGL
+            unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr; //OpenGL not supported on mac anymore fuck you tim apple
+        #endif
+        #ifdef PEACH_RENDERER_OPENGL_ES
+            unique_ptr<MobileGL::Renderer> pm_WebGLRenderer = nullptr;
+        #endif
+        #ifdef PEACH_RENDERER_WEBGL
+            unique_ptr<WebGL::Renderer> pm_MobileGLRenderer = nullptr;
+        #endif
 
         size_t pm_CurrentFrameRateLimit = 0u;
         size_t pm_CurrentFrame = 0u;
@@ -179,7 +177,6 @@ namespace PeachCore {
 
         //////////////////// Window Stuff ////////////////////
 
-        SDL_Window* pm_MainWindow = nullptr;
         unordered_map<SDL_WindowID, SDL_Window*> pm_CurrentlyActiveWindows;
         vector<SDL_WindowID> pm_CloseWindowRequests;
 
@@ -188,8 +185,6 @@ namespace PeachCore {
         shared_ptr<Logger> rendering_logger = nullptr;
 
         unique_ptr<unsigned char> pm_DefaultTexture = nullptr;
-
-        bool pm_IsOpenGLInitialized = false;
 
     public: 
         atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
@@ -202,45 +197,13 @@ namespace PeachCore {
 
 #ifdef PEACH_RENDERER_VULKAN
         void
-            RenderLoopVK
-            (
-                const string& fp_LogOutputDirectory,
-                latch& fp_InitLatch,
-                SDL_Window* fp_MainWindow,
-                const uint32_t fp_InitialWindowWidth,
-                const uint32_t fp_InitialWindowHeight,
-                const size_t fp_InitialFrameRate
-            );
-    private:
-        [[nodiscard]] bool
-            InitializeVulkan
-            (
-                const uint32_t fp_InitialWindowWidth,
-                const uint32_t fp_InitialWindowHeight
-            );
-    public:
+            RenderLoopVK();
 #endif /*PEACH_RENDERER_VULKAN*/
 
 #ifdef PEACH_RENDERER_OPENGL
         void
-            RenderLoopGL
-            (
-                const string& fp_LogOutputDirectory,
-                latch& fp_InitLatch,
-                SDL_Window* fp_MainWindow,
-                const uint32_t fp_InitialWindowWidth,
-                const uint32_t fp_InitialWindowHeight,
-                const size_t fp_InitialFrameRate
-            );
+            RenderLoopGL();
     private:
-        //wip? future me: WORKING BITCH
-        [[nodiscard]] PEACH_STATUS_CODE
-            InitializeOpenGL
-            (
-                const uint32_t fp_InitialWindowWidth,
-                const uint32_t fp_InitialWindowHeight
-            );
-
         [[nodiscard]] bool
             PresentFrameGL();
     public:
@@ -248,13 +211,7 @@ namespace PeachCore {
 
 #ifdef PEACH_RENDERER_METAL 
         void
-            RenderLoopMetal
-            (
-                const string& fp_LogOutputDirectory,
-                latch& fp_InitLatch,
-                SDL_Window* fp_MainWindow,
-                const size_t fp_InitialFrameRate
-            );
+            RenderLoopMetal();
     private:
         [[nodiscard]] PEACH_STATUS_CODE
             InitializeMetal();
@@ -266,13 +223,7 @@ namespace PeachCore {
 
 #ifdef PEACH_RENDERER_OPENGL_ES
         void
-            RenderLoopOpenGLES
-            (
-                const string& fp_LogOutputDirectory,
-                latch& fp_InitLatch,
-                SDL_Window* fp_MainWindow,
-                const size_t fp_InitialFrameRate
-            );
+            RenderLoopOpenGLES();
     private:
         [[nodiscard]] PEACH_STATUS_CODE
             InitializeOpenGLES();
@@ -281,13 +232,7 @@ namespace PeachCore {
 
 #ifdef PEACH_RENDERER_WEBGL
         void
-            RenderLoopWebGL
-            (
-                const string& fp_LogOutputDirectory,
-                latch& fp_InitLatch,
-                SDL_Window* fp_MainWindow,
-                const size_t fp_InitialFrameRate
-            );
+            RenderLoopWebGL();
     private:
         [[nodiscard]] PEACH_STATUS_CODE
             InitializeWebGL();
@@ -310,70 +255,55 @@ namespace PeachCore {
         void 
             GetCurrentViewPort();
 
-        [[nodiscard]] bool
+        [[nodiscard]] PEACH_FORCEINLINE bool
             IsActive()
             const noexcept
         {
             return pm_IsRunning.load(std::memory_order_acquire);
         }
 
-        [[nodiscard]] size_t
-            GetCurrentFrameRateLimit()
-            const noexcept;
-
-        void
-            SetNewFrameRateLimit(const size_t fp_NewFrameRateLimit)
-            noexcept;
-
-        [[nodiscard]] bool 
-            IsVSyncEnabled() 
-            const noexcept;
-
-        [[nodiscard]] SDL_Window*
-            GetMainWindow()
+        [[nodiscard]] PEACH_FORCEINLINE size_t
+            GetCurrentFrameRateLimit() 
             const noexcept
         {
-            return pm_MainWindow;
+            return pm_CurrentFrameRateLimit;
         }
 
-        void
+        PEACH_FORCEINLINE void
+            SetNewFrameRateLimit(const size_t fp_NewFrameRateLimit)
+            noexcept
+        {
+            pm_CurrentFrameRateLimit = fp_NewFrameRateLimit;
+            RENDER_FRAME_TIME_STEP = 1.0f / (float)fp_NewFrameRateLimit;
+        }
+
+        [[nodiscard]] PEACH_FORCEINLINE bool 
+            IsVSyncEnabled() 
+            const noexcept
+        {
+            return pm_IsVSyncEnabled;
+        }
+
+        PEACH_FORCEINLINE void 
             SetVSync(const bool fp_IsEnabled)
-            noexcept;
+            noexcept
+        {
+            pm_IsVSyncEnabled = fp_IsEnabled;
+        }
 
     //////////////////////////////////////////////
     // Private Methods
     //////////////////////////////////////////////
     private:
-        /*
-            These LERP functions are used for interpolating sprite positions between physics update frames if the rendering fps is > 60 since physics
-            will always update at a constant update interval of 60 times a second, equally spaced apart. This way you'll get "smoother" graphics if u wanna
-            crank up the fps uwu
-
-
-
-            The idea is that the most recent position will be used, and if the last used position idfk idk if thisll work since i cant predict the next frame, and if i use the current frame data and last frames, then the visuals will be outta sync
-            with the current real position which is no good for gameplay, and tryna do predictions like that could be a bad route if the render time oversteps its processing tiime.
-        */
-        inline float
-            Lerp(const float fp_Start, const float fp_End, const float fp_Rate)
-            const noexcept
-        {
-            return fp_Start * (1 - fp_Rate) + fp_End * fp_Rate;
-
-        }
-
-        // inline const vec2s
-        //     Lerp(const vec2s fp_Start, const vec2s fp_End, const vec2s fp_Rate)
-        //     const noexcept
-        // {
-        //     return {{0.0f, 0.0f}};
-        // }
-
-        [[nodiscard]] bool
+        [[nodiscard]] PEACH_STATUS_CODE
             Initialize
             (
-                const string& fp_LogOutputDirectory,
-                const size_t fp_InitialFrameRate
+                const RendererType fp_RequiredRenderingBacked,
+                SDL_Window* fp_MainWindow,
+                const uint32_t fp_InitialWindowWidth,
+                const uint32_t fp_InitialWindowHeight,
+                const size_t fp_InitialFrameRate,
+                const string& fp_LogOutputDirectory
             );
 
         bool

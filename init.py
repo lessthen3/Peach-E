@@ -455,7 +455,7 @@ def RunSubprocessLive(fp_Cmd, fp_Cwd = None, fp_EnvOverrides = None):
         fp_Cmd,
         cwd=fp_Cwd,
         env=f_Env,
-        stdout=None,    # inherit our stdout — output streams live
+        stdout=None,    # inherit our stdout, outputs streams live
         stderr=None,    # same for stderr
     )
 
@@ -565,7 +565,7 @@ def InstallAndroidApk(fp_BaseDir, fp_BuildType):
 
 
 def LaunchAndroidApk():
-    """Launch PeachActivity and tail logcat. Blocks until user kills it (Ctrl+C)."""
+    """Launch PeachActivity and tail logcat; Blocks until user kills it (Ctrl+C)"""
 
     f_Adb = FindAdb()
 
@@ -790,6 +790,10 @@ def main() -> bool:
 
     f_CurrentPlatform = platform.system()
 
+    ############# Get Current Working Directory #############
+
+    f_BaseDir = os.getcwd()
+
     ############# Extra args and cmake configs owo #############
 
     f_ExtraBuildArgs = []
@@ -819,7 +823,39 @@ def main() -> bool:
     ############# Export compile commands? #############
 
     if args.export_commands:
-        f_ExtraGenerationConfigs.append('-DCMAKE_EXPORT_COMPILE_COMMANDS=ON')        
+        f_ExtraGenerationConfigs.append('-DCMAKE_EXPORT_COMPILE_COMMANDS=ON') 
+
+    ############# Compiler Identification #############
+
+    if args.use_clang:
+
+        if f_CurrentPlatform == "Windows":
+            if ensure_tool_installed("clang-cl"):
+                f_ExtraGenerationConfigs.extend(
+                    [
+                        "-T", "ClangCL", 
+                        "-DCMAKE_C_COMPILER=clang-cl", 
+                        "-DCMAKE_CXX_COMPILER=clang-cl"
+                    ]
+                )
+            else:
+                print(CreateColouredText("[TIP]: please make sure you have the llvm toolchain for visual studio installed before using --use_clang on windows owo", "bright cyan"))
+                return False
+        
+        elif not ensure_tool_installed("clang") and not ensure_tool_installed("clang++"):          
+            return False
+
+        f_ExtraGenerationConfigs.extend(["-DCMAKE_C_COMPILER=clang", "-DCMAKE_CXX_COMPILER=clang++"])
+
+    elif args.use_gcc:
+
+        if f_CurrentPlatform == "Windows":
+            print(CreateColouredText("[ERROR]: can't use gcc/g++ on windows, aborting build process", "red"))
+
+        if not ensure_tool_installed("gcc") and not ensure_tool_installed("g++"):
+            return False
+
+        f_ExtraGenerationConfigs.extend(["-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++"])       
 
     ############# Target Platform Config #############
 
@@ -857,7 +893,7 @@ def main() -> bool:
         elif f_CurrentPlatform == "FreeBSD":
             f_ToolchainKey = "freebsd-arm64" if "arm" in f_MachineArch else "freebsd-x64" #python is weird mang
         elif f_CurrentPlatform == "Haiku":
-            f_ToolchainKey = "haiku"
+            f_ToolchainKey = "haiku" #arm64 is experimental atm apparently, also this shi gave my first PC BIOS cancer lmfao wasn't the same after that failed install lol
         else:
             print(CreateColouredText(f"[ERROR]: Could not auto-detect platform: {f_CurrentPlatform}, please specify with -T uwu", "red"))
             return False
@@ -889,40 +925,23 @@ def main() -> bool:
 
     ############# WASM #############
 
-    if f_ToolchainKey == "wasm":
+    elif f_ToolchainKey == "wasm":
         if not os.environ.get("EMSDK"):
             print(CreateColouredText("[ERROR]: unable to verify EMSDK env var, please set this environment variable and try again ;w;", "red"))
 
+    ############# iPhone and iPad #############
 
-    ############# Compiler Identification #############
+    elif f_ToolchainKey == "ios":
+        pass
 
-    if args.use_clang:
+    ############# TvOS #############
 
-        if f_CurrentPlatform == "Windows":
-            print(CreateColouredText("[ERROR]: can't use clang/clang++ on windows, aborting build process", "red"))
-    
-        if not ensure_tool_installed("clang") and not ensure_tool_installed("clang++"):
-            return False
-
-        f_ExtraGenerationConfigs.extend(["-DCMAKE_C_COMPILER=clang", "-DCMAKE_CXX_COMPILER=clang++"])
-
-    elif args.use_gcc:
-
-        if f_CurrentPlatform == "Windows":
-            print(CreateColouredText("[ERROR]: can't use gcc/g++ on windows, aborting build process", "red"))
-
-        if not ensure_tool_installed("gcc") and not ensure_tool_installed("g++"):
-            return False
-
-        f_ExtraGenerationConfigs.extend(["-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++"])
-
-    ############# Get Current Working Directory #############
-
-    f_BaseDir = os.getcwd()
+    elif f_ToolchainKey == "tvos":
+        pass
 
     ############# Decompress archives with large libs #############
 
-    if(f_CurrentPlatform == "Windows"): #only needed for windows so far since the lib sizes are ridiculous
+    elif "windows" in f_ToolchainKey: #only needed for windows so far since the lib sizes are ridiculous
 
         f_ShadercDir = f_BaseDir + "/third_party/peach_editor/shaderc_combined/win64"
         f_AssimpDir = f_BaseDir + "/third_party/peach_editor/assimp/win64"
@@ -956,16 +975,14 @@ def main() -> bool:
     
     ############# Android Post-Build: Package, Install, Launch #############
 
-    if f_ToolchainKey == "android" and (args.package_apk or args.install_apk or args.launch_apk):
-        if not PackageAndroidApk(f_BaseDir, f_BuildType):
+    if f_ToolchainKey == "android":
+        if (args.package_apk or args.install_apk or args.launch_apk) and not PackageAndroidApk(f_BaseDir, f_BuildType):
             return False
 
-    if f_ToolchainKey == "android" and (args.install_apk or args.launch_apk):
-        if not InstallAndroidApk(f_BaseDir, f_BuildType):
+        if (args.install_apk or args.launch_apk) and not InstallAndroidApk(f_BaseDir, f_BuildType):
             return False
 
-    if f_ToolchainKey == "android" and args.launch_apk:
-        if not LaunchAndroidApk():
+        if args.launch_apk and not LaunchAndroidApk():
             return False
 
     ############# return false on failed build ;w; #############

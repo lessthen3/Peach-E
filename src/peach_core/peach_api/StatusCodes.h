@@ -31,14 +31,19 @@ extern "C"
         PEACH_ERROR_INVALID_NODE_REMOVAL_ID,
         PEACH_ERROR_INVALID_NODE_REMOVAL_NAME,
 
+        //======================================================================= Rendering Manager =======================================================================//
+
         //////////////////////// General Rendering Statuses ////////////////////////
 
         PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW,
+        PEACH_FATAL_FAILED_TO_INITIALIZE_RENDERING_LOADING_QUEUE,
+        PEACH_FATAL_FAILED_TO_CREATE_RENDERING_LOGGER,
 
         //////////////////////// OpenGL Specific ////////////////////////
 
         PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL,
         PEACH_ERROR_FAILED_INITIALIZE_GLEW,
+        PEACH_ERROR_FAILED_TO_CREATE_GL_CONTEXT,
 
         //////////////////////// MobileGL ////////////////////////
 
@@ -51,10 +56,14 @@ extern "C"
         //////////////////////// Vulkan ////////////////////////
 
         PEACH_ERROR_FAILED_TO_INITIALIZE_VULKAN,
+        PEACH_ERROR_FAILED_TO_FIND_VULKAN_DYNAMIC_LIBRARY_FOR_FUNCTION_PFN_QUERYING,
 
         //////////////////////// Metal ////////////////////////
 
         PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_METAL
+
+        //=================================================================================================================================================================//
+
 
 
     } PEACH_STATUS_CODE;

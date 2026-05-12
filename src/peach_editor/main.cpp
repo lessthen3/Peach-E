@@ -143,7 +143,7 @@ int
             return EXIT_FAILURE;
         }
 
-        peach_editor->StartPeachEditorMainLoop();
+        peach_editor->StartPeachEditorMainLoop(); //ye
 
         PEACH_PRINT(PEACH_COL_BRIGHT_MAGENTA, "exited all loops and reached EXIT_SUCCESS, any errors after here are static destructors fuqqq");
 

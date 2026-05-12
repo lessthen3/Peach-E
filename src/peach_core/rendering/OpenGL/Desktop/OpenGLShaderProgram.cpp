@@ -21,6 +21,7 @@ namespace PeachCore::OpenGL {
             CleanUp();
         }
 
+        //WARNING: this can be dangerous printing in a destructor cause C++ eh
         PEACH_PRINT_FMT(PEACH_COL_BRIGHT_MAGENTA, "Destroyed program ID: {} for shader program named: {} ", pm_ProgramID, pm_ProgramName);
     }
 
@@ -59,7 +60,6 @@ namespace PeachCore::OpenGL {
 
         GLint f_VertexShaderID = CreateShader(fp_VertexSource, GL_VERTEX_SHADER, logger);
         GLint f_FragmentShaderID = CreateShader(fp_FragmentSource, GL_FRAGMENT_SHADER, logger);
-        
 
         if (f_VertexShaderID and f_FragmentShaderID) //CreateShader returns 0 if it fails so this will work fine
         {
@@ -138,8 +138,9 @@ namespace PeachCore::OpenGL {
 
         glLinkProgram(pm_ProgramID);
 
-        logger->Debug
+        PEACH_LOG_DEBUG
         (
+            logger,
             "Successfully Linked!", 
             fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
         );
@@ -181,10 +182,10 @@ namespace PeachCore::OpenGL {
     }
 
     void
-        ShaderProgram::AutoCaptureActiveUniforms
+        ShaderProgram::AutoCaptureActiveUniforms //gets uniforms detected by current glContext, then puts them into a map of the form <uniform-name, uniformLocation>
         (
-            Logger* fp_RenderingLogger
-        ) //gets uniforms detected by current glContext, then puts them into a map of the form <uniform-name, uniformLocation>
+            Logger* fp_RenderingLogger [[maybe_unused]]
+        ) 
     {
         int f_Total = -1;
         glGetProgramiv(pm_ProgramID, GL_ACTIVE_UNIFORMS, &f_Total);
@@ -204,8 +205,9 @@ namespace PeachCore::OpenGL {
 
             pm_Uniforms.insert({ f_temp, f_UniformLocation });
 
-            fp_RenderingLogger->Debug
+            PEACH_LOG_DEBUG
             (
+                fp_RenderingLogger,
                 fmt::format("Uniform #: {}, Type(GLenum): {}, Name: {}, Location(GLint): {}", lv_Index, type, f_temp, f_UniformLocation),
                 fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
             );
@@ -216,7 +218,7 @@ namespace PeachCore::OpenGL {
     // Create Shaders
     ///////////////////////////////////////////////
 
-    int
+    GLuint
         ShaderProgram::CreateShader //creates, compiles and attaches desired shader type to current shaderprogram
         (
             const string& fp_ShaderSourceCode,
@@ -225,14 +227,14 @@ namespace PeachCore::OpenGL {
         ) 
         const
     {
-        int f_ShaderID = glCreateShader(fp_ShaderType);
+        GLuint f_ShaderID = glCreateShader(fp_ShaderType);
 
         if (f_ShaderID == 0)
         {
             return 0;
         }
 
-        const char* f_Cstr = fp_ShaderSourceCode.c_str(); //idk why cpp makes me do this in two lines but whatever
+        const char* f_Cstr = fp_ShaderSourceCode.c_str(); //idk why cpp makes me do this in two lines but whatever, future ryan: there's a reason but it's not intuitive
 
         glShaderSource(f_ShaderID, 1, &f_Cstr, NULL);
         glCompileShader(f_ShaderID);
@@ -240,19 +242,19 @@ namespace PeachCore::OpenGL {
         int success;
         GLchar infoLog[512];
 
-        // After glCompileShader(f_ShaderID);
         glGetShaderiv(f_ShaderID, GL_COMPILE_STATUS, &success);
 
         if (not success)
         {
             glGetShaderInfoLog(f_ShaderID, 512, NULL, infoLog);
+
             fp_RenderingLogger->Error
             (
                 fmt::format("Shader compilation error: {}", infoLog), 
                 fmt::format("OpenGL::ShaderProgram: {}:{}", pm_ProgramName, pm_ProgramID)
             );
 
-            return 0; // Or handle the error appropriately
+            return 0; // propagate up and handle at call site owo
         }
 
         return f_ShaderID;

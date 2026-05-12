@@ -286,21 +286,14 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "wasm")
 ############# ps vita cross #############
 
 elseif(PEACH_TARGET_PLATFORM STREQUAL "psvita")
-    set(CMAKE_SYSTEM_NAME PSVita)
-    set(CMAKE_SYSTEM_PROCESSOR armv7-a)
+    # set(CMAKE_SYSTEM_NAME PSVita)
+    # set(CMAKE_SYSTEM_PROCESSOR armv7-a)
 
     if(NOT DEFINED ENV{VITASDK})
         message(FATAL_ERROR "VITASDK not set! install vitasdk from https://vitasdk.org and set VITASDK env var uwu")
     endif()
 
-    set(CMAKE_C_COMPILER "$ENV{VITASDK}/bin/arm-vita-eabi-gcc")
-    set(CMAKE_CXX_COMPILER "$ENV{VITASDK}/bin/arm-vita-eabi-g++")
-    set(CMAKE_AR "$ENV{VITASDK}/bin/arm-vita-eabi-ar")
-    set(CMAKE_RANLIB "$ENV{VITASDK}/bin/arm-vita-eabi-ranlib")
-    set(CMAKE_FIND_ROOT_PATH "$ENV{VITASDK}/arm-vita-eabi")
-    set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+    include("$ENV{VITASDK}/share/vita.toolchain.cmake") #set vita sdk toolchain owo
     
     set(PEACH_VITA                  ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_HANDHELD  ON CACHE BOOL "" FORCE)

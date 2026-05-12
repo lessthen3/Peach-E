@@ -72,7 +72,7 @@ namespace PeachEditor {
             peach_engine->StartMainGameLoop();
             peach_engine->ShutdownPeachEngine();
 
-            main_editor_logger->Debug("Exit Success!", "Peach-E");
+            PEACH_LOG_DEBUG(main_editor_logger, "Exit Success!", "Peach-E");
         }
 
         bool
@@ -90,7 +90,7 @@ namespace PeachEditor {
                 return false;
             }
 
-            main_editor_logger->Debug("Main editor logger successfully initialized", "PeachEditorManager");
+            main_editor_logger->Info("Main editor logger successfully initialized", "PeachEditorManager");
 
 #ifdef PEACH_PLATFORM_APPLE
             auto f_RenderingBackend = PeachCore::RendererType::Metal; //TESTING: apple only supports metal but the other plats need a default renderer and meta data to save the backend set by usr

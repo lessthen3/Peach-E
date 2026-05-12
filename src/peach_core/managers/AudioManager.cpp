@@ -87,7 +87,7 @@ namespace PeachCore {
             return false;
         }
 
-        audio_logger->Debug("AudioLogger successfully initialized", "AudioManager");
+        audio_logger->Info("AudioThreadLogger successfully initialized", "AudioManager");
 
         //////////////////// Initialize Loading and Command Queues ////////////////////
 
@@ -100,6 +100,8 @@ namespace PeachCore {
         InitializeAudioCommandQueue();
 
         //////////////////// Initialized Successfully! ////////////////////
+
+        audio_logger->Info("AudioLogger successfully initialized", "AudioManager");
 
         pm_IsInitialized = true;
 

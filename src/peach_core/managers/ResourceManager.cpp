@@ -43,7 +43,7 @@ namespace PeachCore {
             return false;
         }
 
-        resource_logger->Debug("ResourceThreadLogger successfully initialized", "ResourceManager");
+        resource_logger->Info("ResourceThreadLogger successfully initialized", "ResourceManager");
 
         //////////////////// Initialize Queues ////////////////////
 
@@ -626,7 +626,7 @@ namespace PeachCore {
             return false;
         }
 
-        resource_logger->Debug("Successfully located CreatePlugin() or DestroyPlugin() functions in: " + fp_PluginFilePath, "ResourceManager");
+        resource_logger->Info(fmt::format("Successfully located PEACH_GetScriptDefFn functions in: {}", fp_PluginFilePath), "ResourceManager");
 
         op_ScriptDataOut.ScriptDef = f_GetDef(nullptr); // nullptr = single-script plugin
         op_ScriptDataOut.Handle = f_Handle;
@@ -719,12 +719,12 @@ namespace PeachCore {
 
             if (it == fp_OldState.end())
             {
-                resource_logger->Debug("New file found in working directory: " + lv_File.first, "ResourceManager");
+                PEACH_LOG_DEBUG(resource_logger, fmt::format("New file found in working directory: {}", lv_File.first), "ResourceManager");
                 return false;
             }
             else if (it->second != lv_File.second)
             {
-                resource_logger->Trace("Modified file found in working directory: " + lv_File.first, "ResourceManager");
+                PEACH_LOG_DEBUG(resource_logger, fmt::format("Modified file found in working directory: {}", lv_File.first), "ResourceManager");
                 return false;
             }
         }
@@ -733,7 +733,7 @@ namespace PeachCore {
         {
             if (fp_NewState.find(lv_File.first) == fp_NewState.end())
             {
-                resource_logger->Debug("Deleted file from working directory: " + lv_File.first, "ResourceManager");
+                PEACH_LOG_DEBUG(resource_logger, fmt::format("Deleted file from working directory: {}", lv_File.first), "ResourceManager");
                 return false;
             }
         }

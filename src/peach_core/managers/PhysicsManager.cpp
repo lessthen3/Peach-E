@@ -23,7 +23,7 @@ namespace PeachCore {
             return false;
         }
 
-        physics_logger->Debug("PhysicsLogger successfully initialized", "PhysicsManager");
+        physics_logger->Info("PhysicsLogger successfully initialized", "PhysicsManager");
 
         pm_PhysicsCommandQueue = make_shared<PhysicsCommandPipe>();
 

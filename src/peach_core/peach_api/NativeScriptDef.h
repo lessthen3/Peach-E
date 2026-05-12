@@ -27,8 +27,7 @@ extern "C" {
     typedef void (*PEACH_OnConstantUpdateFn)(PEACH_NodeID fp_NodeID, double fp_FixedDelta, void* fp_UserData);
     typedef void (*PEACH_OnShutdownFn)      (PEACH_NodeID fp_NodeID, void* fp_UserData);
 
-    typedef struct
-    {
+    typedef struct{
         PEACH_OnInitializeFn     OnInitialize;
         PEACH_OnUpdateFn         OnUpdate;
         PEACH_OnConstantUpdateFn OnConstantUpdate;

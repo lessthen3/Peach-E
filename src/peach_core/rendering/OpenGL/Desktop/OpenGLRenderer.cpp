@@ -15,19 +15,15 @@
 
 namespace PeachCore::OpenGL {
 
-    Renderer::Renderer //peach renderer is never supposed to create an sdl window, it only manages closing it
+    PEACH_STATUS_CODE
+        Renderer::Initialize //peach renderer is never supposed to create an sdl window, it only manages closing it
     (
         SDL_Window* fp_CurrentWindow,
-        const uint32_t fp_InitialWindowWidth,
-        const uint32_t fp_InitialWindowHeight,
+        SDL_GLContext fp_OpenGLContext,
         shared_ptr<Logger> fp_RenderingLogger,
         const bool fp_Is3DEnabled
     )
     {
-        //TODO: these are for viewport setup which ill do later owo
-        PEACH_TO_DO_UNUSED(fp_InitialWindowWidth);
-        PEACH_TO_DO_UNUSED(fp_InitialWindowHeight);
-
         if (not fp_RenderingLogger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
         {
             PEACH_PRINT_ERROR("Tried to initialize PeachRenderer with a nullptr for the Rendering Logger doofus");
@@ -46,30 +42,17 @@ namespace PeachCore::OpenGL {
 
         pm_Is3DEnabled = fp_Is3DEnabled;
 
-        ////Set Core Profile for OpenGL Context whatever the fuck that means
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
-        //// Set OpenGL version
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
-
         // Create an OpenGL context associated with the window
-        pm_OpenGLContext = SDL_GL_CreateContext(pm_MainWindow);
+        pm_OpenGLContext = fp_OpenGLContext;
         SDL_GL_MakeCurrent(pm_MainWindow, pm_OpenGLContext);
-
-        if (not pm_OpenGLContext)
-        {
-            rendering_logger->Fatal(fmt::format("Failed to create OpenGL context: {}", SDL_GetError()), "OpenGL::Renderer");
-            SDL_DestroyWindow(pm_MainWindow);
-        }
-
-        rendering_logger->Debug("OpenGL initialized properly", "OpenGL::Renderer");
 
         if (pm_Is3DEnabled)
         {
             glEnable(GL_DEPTH_TEST);
             glDepthFunc(GL_LESS);
         }
+
+        return PEACH_OK;
     }
 
     void

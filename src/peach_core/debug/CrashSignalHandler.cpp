@@ -15,7 +15,7 @@
 #include "CrashSignalHandler.h"
 
 #include <csignal>
-#include <cstring>      // for strlen — async-signal-safe
+#include <cstring>      // for strlen — async signal safe aka ass
 #include <fcntl.h>
 
 #ifdef PEACH_PLATFORM_WINDOWS
@@ -132,14 +132,11 @@ namespace PeachCore::Debug {
         PEACH_CRASH_WRITE(STDERR_FILENO, "\n", 1);
 
         /*
-            Write a crash flag file so the launcher knows we crashed
-            Use raw open/write/close — async-signal-safe on POSIX
+            Write a crash flag file so the launcher knows we crashed, using raw open/write/close since it's async signal safe on POSIX
         */ 
         if (s_CrashFlagPath[0] != '\0')
         {
-            #ifdef PEACH_PLATFORM_WINDOWS
-                // Windows: _open is technically not in the strict POSIX safe list
-                // but on Windows you don't have async-signal semantics anyway.
+            #ifdef PEACH_PLATFORM_WINDOWS // Windows doesn't have async-signal semantics ;w; but the kernel guys always have smth just as good or better than POSIX
                 int f_Fd = ::_sopen_s(s_CrashFlagPath, _O_WRONLY | _O_CREAT | _O_TRUNC, _S_IREAD | _S_IWRITE);
             #else
                 int f_Fd = ::open(s_CrashFlagPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
@@ -162,6 +159,7 @@ namespace PeachCore::Debug {
     }
 
     #if defined(PEACH_PLATFORM_DESKTOP)
+
         void
             InstallCrashHandler()
             noexcept
@@ -175,10 +173,9 @@ namespace PeachCore::Debug {
                 std::signal(SIGBUS, CrashSignalHandler);
             #endif
         }
-    #endif /*PEACH_PLATFORM_DESKTOP*/
 
+    #elif defined(PEACH_PLATFORM_VITA)
 
-    #if defined(PEACH_PLATFORM_VITA)
         void
             InstallCrashHandler()
             noexcept
@@ -187,9 +184,9 @@ namespace PeachCore::Debug {
             std::signal(SIGSEGV, CrashSignalHandler);
             std::signal(SIGABRT, CrashSignalHandler);
         }
-    #endif /*PEACH_PLATFORM_VITA*/
 
-    #if defined(PEACH_PLATFORM_ANDROID)
+    #elif defined(PEACH_PLATFORM_ANDROID)
+
         void
             InstallCrashHandler()
             noexcept
@@ -197,18 +194,17 @@ namespace PeachCore::Debug {
             // No-op — let Android debuggerd generate tombstones
 
         }
-    #endif /*PEACH_PLATFORM_ANDROID*/
 
-    #if defined(PEACH_PLATFORM_IOS) || defined(PEACH_PLATFORM_TVOS)
+    #elif defined(PEACH_PLATFORM_IOS) || defined(PEACH_PLATFORM_TVOS)
+
         void
             InstallCrashHandler()
             noexcept
         {
             // No-op — let Apple's CrashReporter handle it
         }
-    #endif /*defined(PEACH_PLATFORM_IOS) || defined(PEACH_PLATFORM_TVOS)*/
 
-    #if defined(PEACH_PLATFORM_WASM)
+    #elif defined(PEACH_PLATFORM_WASM)
         //register a JS window.onerror handler to surface WASM traps in the console.
         //this runs on the JS side and fires when any unhandled error/trap occurs.
         //EM_ASM embeds the JS literal directly — C++ code resumes after the closing brace.
@@ -234,6 +230,7 @@ namespace PeachCore::Debug {
 
             std::fputs("[peach_core] WASM crash handler: JS window.onerror registered\n", stderr);
         }
+
     #endif
 
         // #ifdef

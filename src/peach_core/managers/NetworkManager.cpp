@@ -27,12 +27,11 @@ namespace PeachCore {
             return false;
         }
         
-        network_logger->Debug("NetworkLogger successfully initialized", "NetworkManager");
-
         pm_NetworkCommandQueue = make_shared<NetworkCommandPipe>();
 
+        network_logger->Info("NetworkLogger successfully initialized", "NetworkManager");
         pm_IsInitialized = true;
-
+        
         return true;
     }
 

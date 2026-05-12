@@ -14,9 +14,11 @@
 
 #include <SDL3/SDL.h>
 
+///PeachCore
 #include "OpenGLShaderProgram.h"
 #include "rendering/Camera.h"
 #include "managers/ResourceManager.h"
+#include "peach_api/StatusCodes.h"
 
 namespace PeachCore::OpenGL {
 
@@ -75,12 +77,11 @@ namespace PeachCore::OpenGL {
     public:
         ~Renderer() = default; //driver + OS will clean things up faster tbh
 
-        explicit
-            Renderer //peach renderer is never supposed to create an sdl window, it only manages closing it
+        [[nodiscard]] PEACH_STATUS_CODE //peach renderer is never supposed to create an sdl window, it only manages closing it
+            Initialize 
             (
                 SDL_Window* fp_CurrentWindow,
-                const uint32_t fp_InitialWindowWidth,
-                const uint32_t fp_InitialWindowHeight,
+                SDL_GLContext fp_OpenGLContext,
                 shared_ptr<Logger> fp_RenderingLogger,
                 const bool fp_Is3DEnabled = false
             );

@@ -21,20 +21,20 @@ namespace PeachCore::Vulkan {
             SDL_Window* fp_MainWindow,
             const uint32_t fp_InitialWindowWidth,
             const uint32_t fp_InitialWindowHeight,
-            shared_ptr<Logger> fp_RenderingLogger
+            const string& fp_LogOutputDirectory
         )
     {
-        if (not fp_RenderingLogger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
+        vulkan_logger = LogManager::get_single().CreateUniqueLogger("VulkanRenderer", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
+
+        if (not vulkan_logger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao|||  future ryan: nah log manager fixes that owo
         {
             PEACH_PRINT_ERROR("Tried to initialize VulkanRenderer with a nullptr for the Rendering Logger doofus, Ending program execution immediately since no valid logger was found");
             return false;
         }
 
-        rendering_logger = fp_RenderingLogger;
-
-        if (not fp_MainWindow)
+        if (not fp_MainWindow) [[unlikely]]
         {
-            rendering_logger->Fatal("Tried to initialize VulkanRenderer with a nullptr for the SDL Window doofus, Ending program execution immediately since no valid SDL Window was found", "VulkanRenderer");
+            vulkan_logger->Fatal("Tried to initialize VulkanRenderer with a nullptr for the SDL Window doofus, Ending program execution immediately since no valid SDL Window was found", "VulkanRenderer");
             return false;
         }
 
@@ -44,7 +44,7 @@ namespace PeachCore::Vulkan {
 
         if (not InitializeDevice("Game"))
         {
-            rendering_logger->Fatal("Failed to create Vulkan device, exiting program execution immediately", "VulkanRenderer");
+            vulkan_logger->Fatal("Failed to create Vulkan device, exiting program execution immediately", "VulkanRenderer");
             return false;
         }
         else if (not CreateSwapChain())
@@ -111,7 +111,7 @@ namespace PeachCore::Vulkan {
         }
         else if (pm_IsFrameStarted)
         {
-            rendering_logger->Warning("Frame already began, please only call BeginFrame() once ya done goofed", "VulkanRenderer");
+            vulkan_logger->Warning("Frame already began, please only call BeginFrame() once ya done goofed", "VulkanRenderer");
             return Renderer::StatusCode::BEGIN_FRAME_CALLED_WHILE_FRAME_IS_ALREADY_STARTED;
         }
 
@@ -132,7 +132,7 @@ namespace PeachCore::Vulkan {
 
         if (result == VK_ERROR_SURFACE_LOST_KHR)
         {
-            if (InputManager::get_single().m_CurrentMainWindowState.IsSurfaceReady.load(std::memory_order_relaxed))
+            if (not InputManager::get_single().m_CurrentMainWindowState.IsSurfaceReady.load(std::memory_order_relaxed))
             {
                 return Renderer::StatusCode::NO_VALID_RENDERING_SURFACE; //still backgrounded, the new ANativeWindow doesn't exist yet so we just skip frame
             }
@@ -142,11 +142,11 @@ namespace PeachCore::Vulkan {
             //fires after surfaceCreated), so SDL_Vulkan_CreateSurface will give us a fresh
             //surface bound to the live window.
 
-            rendering_logger->Info("Surface lost while foregrounded — recreating surface and swapchain", "VulkanRenderer");
+            vulkan_logger->Info("Surface lost while foregrounded — recreating surface and swapchain", "VulkanRenderer");
 
             if (not RecreateSurfaceAndSwapchain())
             {
-                rendering_logger->Error("Failed to recreate surface and swapchain after foreground", "VulkanRenderer");
+                vulkan_logger->Error("Failed to recreate surface and swapchain after foreground", "VulkanRenderer");
                 return Renderer::StatusCode::FAILED_TO_RECREATE_SWAPCHAIN_ERROR;
             }
 
@@ -159,15 +159,16 @@ namespace PeachCore::Vulkan {
         {
             if (not RecreateSwapChain())
             {
-                rendering_logger->Error("Failed to recreate swapchain after VK_ERROR_OUT_OF_DATE_KHR in BeginFrame", "VulkanRenderer");
+                vulkan_logger->Error("Failed to recreate swapchain after VK_ERROR_OUT_OF_DATE_KHR in BeginFrame", "VulkanRenderer");
                 return Renderer::StatusCode::FAILED_TO_RECREATE_SWAPCHAIN_ERROR;
             }
+
             return Renderer::StatusCode::NO_VALID_RENDERING_SURFACE;
         }
 
         if (result != VK_SUCCESS and result != VK_SUBOPTIMAL_KHR)
         {
-            rendering_logger->Error(fmt::format("failed to acquire swapchain image. Error: {} ", static_cast<int>(result)), "VulkanRenderer");
+            vulkan_logger->Error(fmt::format("failed to acquire swapchain image. Error: {} ", static_cast<int>(result)), "VulkanRenderer");
             return Renderer::StatusCode::FAILED_TO_ACQUIRE_NEXT_SWAPCHAIN_IMAGE_ERROR;
         }
 
@@ -192,7 +193,7 @@ namespace PeachCore::Vulkan {
 
         if (pm_Init.Dispatch.beginCommandBuffer(cmd, &begin_info) != VK_SUCCESS)
         {
-            rendering_logger->Info("Failed to begin command buffer", "VulkanRenderer");
+            vulkan_logger->Info("Failed to begin command buffer", "VulkanRenderer");
             return Renderer::StatusCode::FAILED_TO_BEGIN_COMMAND_BUFFER_ERROR;
         }
 
@@ -223,7 +224,7 @@ namespace PeachCore::Vulkan {
     {
         if (not pm_IsFrameStarted)
         {
-            rendering_logger->Warning("Tried calling DrawFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer");
+            vulkan_logger->Warning("Tried calling DrawFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer");
             return Renderer::StatusCode::DRAW_FRAME_BEFORE_BEGIN_FRAME_ERROR;
         }
 
@@ -274,7 +275,7 @@ namespace PeachCore::Vulkan {
 
         if (not pm_IsFrameStarted)
         {
-            rendering_logger->Warning("Tried calling EndFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer");
+            vulkan_logger->Warning("Tried calling EndFrame() before any valid call to BeginFrame() tf are ya doing m8", "VulkanRenderer");
             return Renderer::StatusCode::END_FRAME_CALLED_WHEN_FRAME_WASNT_STARTED_ERROR;
         }
 
@@ -286,7 +287,7 @@ namespace PeachCore::Vulkan {
 
         if (pm_Init.Dispatch.endCommandBuffer(cmd) != VK_SUCCESS)
         {
-            rendering_logger->Fatal("Failed to end command buffer", "VulkanRenderer");
+            vulkan_logger->Fatal("Failed to end command buffer", "VulkanRenderer");
             return Renderer::StatusCode::FAILED_TO_END_COMMAND_BUFFER;
         }
 
@@ -310,7 +311,7 @@ namespace PeachCore::Vulkan {
 
         if (pm_Init.Dispatch.queueSubmit(pm_RenderData.GraphicsQueue, 1, &submit_info, pm_RenderData.InFlightFences[pm_RenderData.CurrentFrameCycle]) != VK_SUCCESS)
         {
-            rendering_logger->Error("Failed to submit draw command buffer", "VulkanRenderer");
+            vulkan_logger->Error("Failed to submit draw command buffer", "VulkanRenderer");
             return Renderer::StatusCode::FAILED_TO_SUBMIT_DRAW_COMMAND_BUFFER;
         }
 
@@ -341,11 +342,11 @@ namespace PeachCore::Vulkan {
         //random dude on forums said only use windowing size uwu idk what ab surface uwu and said recreating swapchains extra times is never a bad thing uwu only perf hit
         if (result == VK_ERROR_OUT_OF_DATE_KHR or result == VK_SUBOPTIMAL_KHR) 
         {
-            rendering_logger->Info("Attempting to recreate swapchain due to window resize", "VulkanRenderer");
+            vulkan_logger->Info("Attempting to recreate swapchain due to window resize", "VulkanRenderer");
 
             if(not RecreateSwapChain())
             {
-                rendering_logger->Error("Failed to recreate swapchain after window resize event", "VulkanRenderer");
+                vulkan_logger->Error("Failed to recreate swapchain after window resize event", "VulkanRenderer");
                 return Renderer::StatusCode::FAILED_TO_RECREATE_SWAPCHAIN_ERROR; //WARNING: this approach always assumes the swapchain can successfully be recreated, gotta handle if it fails somehow but idk lemme read the docs some more
             }
 
@@ -354,7 +355,7 @@ namespace PeachCore::Vulkan {
         }
         else if (result != VK_SUCCESS)
         {
-            rendering_logger->Error("Failed to present swapchain image", "VulkanRenderer");
+            vulkan_logger->Error("Failed to present swapchain image", "VulkanRenderer");
             return Renderer::StatusCode::NOT_VULKAN_SUCCESS;
         }
 
@@ -421,7 +422,7 @@ namespace PeachCore::Vulkan {
         VkShaderModule f_ShaderModule;
         if (pm_Init.Dispatch.createShaderModule(&f_CreateInfo, nullptr, &f_ShaderModule) != VK_SUCCESS)
         {
-            rendering_logger->Error("Failed to create shader module ywy", "VulkanRenderer");
+            vulkan_logger->Error("Failed to create shader module ywy", "VulkanRenderer");
             return VK_NULL_HANDLE; // failed to create shader module
         }
 
@@ -440,7 +441,7 @@ namespace PeachCore::Vulkan {
 
         if (not f_SDLExtensions and f_SDLExtCount > 0)
         {
-            rendering_logger->Fatal("SDL_Vulkan_GetInstanceExtensions returned null with non-zero count", "VulkanRenderer");
+            vulkan_logger->Fatal("SDL_Vulkan_GetInstanceExtensions returned null with non-zero count", "VulkanRenderer");
             return false;
         }
         //////////////////// Build Instance ////////////////////
@@ -458,7 +459,7 @@ namespace PeachCore::Vulkan {
 
         if (not inst_ret)
         {
-            rendering_logger->Fatal("Failed to create Vulkan instance. Error: " + inst_ret.error().message(), "VulkanRenderer");
+            vulkan_logger->Fatal("Failed to create Vulkan instance. Error: " + inst_ret.error().message(), "VulkanRenderer");
             return false;
         }
 
@@ -478,35 +479,38 @@ namespace PeachCore::Vulkan {
 
         if (not SDL_Vulkan_CreateSurface(pm_Init.MainWindow, pm_Init.Instance.instance, nullptr, &pm_Init.Surface))
         {
-            rendering_logger->Fatal("Failed to create SDL Vulkan Surface: " + inst_ret.error().message(), "VulkanRenderer");
+            vulkan_logger->Fatal(fmt::format("Failed to create SDL Vulkan Surface: {}", inst_ret.error().message()), "VulkanRenderer");
             return false;
         }
 
-                uint32_t f_PhysDevCount = 0;
-vkEnumeratePhysicalDevices(pm_Init.Instance.instance, &f_PhysDevCount, nullptr);
+        uint32_t f_PhysicalDeviceCount = 0;
+        vkEnumeratePhysicalDevices(pm_Init.Instance.instance, &f_PhysicalDeviceCount, nullptr);
 
-rendering_logger->Info(fmt::format("Vulkan enumerated {} physical device(s)", f_PhysDevCount), "VulkanRenderer");
+        vulkan_logger->Info(fmt::format("Vulkan enumerated {} physical device(s)", f_PhysicalDeviceCount), "VulkanRenderer");
 
-std::vector<VkPhysicalDevice> f_PhysDevs(f_PhysDevCount);
-vkEnumeratePhysicalDevices(pm_Init.Instance.instance, &f_PhysDevCount, f_PhysDevs.data());
+        std::vector<VkPhysicalDevice> f_PhysDevs(f_PhysicalDeviceCount);
+        vkEnumeratePhysicalDevices(pm_Init.Instance.instance, &f_PhysicalDeviceCount, f_PhysDevs.data());
 
-for (const auto& fv_Device : f_PhysDevs)
-{
-    VkPhysicalDeviceProperties fv_Props;
-    vkGetPhysicalDeviceProperties(fv_Device, &fv_Props);
+        for (const auto& fv_Device : f_PhysDevs)
+        {
+            VkPhysicalDeviceProperties fv_Props;
+            vkGetPhysicalDeviceProperties(fv_Device, &fv_Props);
 
-    rendering_logger->Info(
-        fmt::format("  GPU: {} | API {}.{}.{} | Type {} | DriverVer 0x{:x}",
-            fv_Props.deviceName,
-            VK_API_VERSION_MAJOR(fv_Props.apiVersion),
-            VK_API_VERSION_MINOR(fv_Props.apiVersion),
-            VK_API_VERSION_PATCH(fv_Props.apiVersion),
-            static_cast<int>(fv_Props.deviceType),
-            fv_Props.driverVersion
-        ),
-        "VulkanRenderer"
-    );
-}
+            vulkan_logger->Info
+            (
+                fmt::format
+                (
+                    "GPU: {} | API {}.{}.{} | Type {} | DriverVer 0x{:x}",
+                    fv_Props.deviceName,
+                    VK_API_VERSION_MAJOR(fv_Props.apiVersion),
+                    VK_API_VERSION_MINOR(fv_Props.apiVersion),
+                    VK_API_VERSION_PATCH(fv_Props.apiVersion),
+                    static_cast<int>(fv_Props.deviceType),
+                    fv_Props.driverVersion
+                ),
+                "VulkanRenderer"
+            );
+        }
 
         //////////////////// Create Physical Device ////////////////////
 
@@ -522,7 +526,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (not phys_device_ret)
         {
-            rendering_logger->Fatal("Failed to select Vulkan Physical Device. Error: " + phys_device_ret.error().message(), "VulkanRenderer");
+            vulkan_logger->Fatal("Failed to select Vulkan Physical Device. Error: " + phys_device_ret.error().message(), "VulkanRenderer");
             return false;
         }
 
@@ -531,7 +535,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (not device_ret)
         {
-            rendering_logger->Fatal("Failed to create Vulkan device. Error: " + device_ret.error().message(), "VulkanRenderer");
+            vulkan_logger->Fatal("Failed to create Vulkan device. Error: " + device_ret.error().message(), "VulkanRenderer");
             return false;
         }
 
@@ -539,7 +543,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (pm_Init.Device.physical_device.physical_device == VK_NULL_HANDLE)
         {
-            rendering_logger->Fatal("Physical device is null before Nuklear init", "VulkanRenderer");
+            vulkan_logger->Fatal("Physical device is null before Nuklear init", "VulkanRenderer");
             return false;
         }
 
@@ -562,7 +566,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (not swap_ret)
         {
-            rendering_logger->Fatal(fmt::format("SwapChain builder error: {}, with result: {}", swap_ret.error().message(), static_cast<int>(swap_ret.vk_result())), "VulkanRenderer");
+            vulkan_logger->Fatal(fmt::format("SwapChain builder error: {}, with result: {}", swap_ret.error().message(), static_cast<int>(swap_ret.vk_result())), "VulkanRenderer");
             return false;
         }
 
@@ -579,7 +583,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (not graphics_queue.has_value())
         {
-            rendering_logger->Fatal(fmt::format("failed to get graphics queue: {}", graphics_queue.error().message()), "VulkanRenderer");
+            vulkan_logger->Fatal(fmt::format("failed to get graphics queue: {}", graphics_queue.error().message()), "VulkanRenderer");
             return false;
         }
 
@@ -589,7 +593,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (not present_queue.has_value())
         {
-            rendering_logger->Fatal(fmt::format("failed to get present queue: {}", present_queue.error().message()), "VulkanRenderer");
+            vulkan_logger->Fatal(fmt::format("failed to get present queue: {}", present_queue.error().message()), "VulkanRenderer");
             return false;
         }
 
@@ -639,7 +643,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (pm_Init.Dispatch.createRenderPass(&f_RenderPassInfo, nullptr, &pm_RenderData.RenderPass) != VK_SUCCESS)
         {
-            rendering_logger->Fatal("Failed to create render pass, exiting program execution immediately", "VulkanRenderer");
+            vulkan_logger->Fatal("Failed to create render pass, exiting program execution immediately", "VulkanRenderer");
             return false;
         }
 
@@ -654,7 +658,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (vert_module == VK_NULL_HANDLE or frag_module == VK_NULL_HANDLE)
         {
-            rendering_logger->Fatal("failed to create shader module, exiting program execution immediately", "VulkanRenderer");
+            vulkan_logger->Fatal("failed to create shader module, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to create shader modules
         }
 
@@ -686,7 +690,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (pm_Init.Dispatch.createPipelineLayout(&fp_ShaderProgram.pm_GraphicsPipe.PipelineLayoutInfo, nullptr, &f_TempLayout) != VK_SUCCESS)
         {
-            rendering_logger->Fatal("failed to create pipeline layout, exiting program execution immediately", "VulkanRenderer");
+            vulkan_logger->Fatal("failed to create pipeline layout, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to create pipeline layout
         }
 
@@ -701,7 +705,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (pm_Init.Dispatch.createGraphicsPipelines(VK_NULL_HANDLE, 1, &fp_ShaderProgram.pm_GraphicsPipe.PipelineInfo, nullptr, &f_TempGraphicsPipeline) != VK_SUCCESS)
         {
-            rendering_logger->Fatal("failed to create pipline, exiting program execution immediately", "VulkanRenderer");
+            vulkan_logger->Fatal("failed to create pipline, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to create graphics pipeline
         }
         pm_RenderData.GraphicsPipelines.emplace(fp_ShaderProgram.pm_GraphicsPipe.PipelineName, f_TempGraphicsPipeline);
@@ -735,7 +739,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
             if (pm_Init.Dispatch.createFramebuffer(&framebuffer_info, nullptr, &pm_RenderData.FrameBuffers[i]) != VK_SUCCESS)
             {
-                rendering_logger->Fatal("failed to create default framebuffers, exiting program execution immediately", "VulkanRenderer");
+                vulkan_logger->Fatal("failed to create default framebuffers, exiting program execution immediately", "VulkanRenderer");
                 return false; // failed to create framebuffer
             }
         }
@@ -753,7 +757,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (pm_Init.Dispatch.createCommandPool(&pool_info, nullptr, &pm_RenderData.CommandPool) != VK_SUCCESS)
         {
-            rendering_logger->Fatal("failed to create command pool, exiting program execution immediately", "VulkanRenderer");
+            vulkan_logger->Fatal("failed to create command pool, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to create command pool
         }
 
@@ -773,7 +777,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (pm_Init.Dispatch.allocateCommandBuffers(&allocInfo, pm_RenderData.CommandBuffers.data()) != VK_SUCCESS)
         {
-            rendering_logger->Fatal("failed to allocate command buffers, exiting program execution immediately", "VulkanRenderer");
+            vulkan_logger->Fatal("failed to allocate command buffers, exiting program execution immediately", "VulkanRenderer");
             return false; // failed to allocate command buffers;
         }
 
@@ -803,7 +807,7 @@ for (const auto& fv_Device : f_PhysDevs)
                 pm_Init.Dispatch.createFence(&fence_info, nullptr, &pm_RenderData.InFlightFences[i]) != VK_SUCCESS
                 )
             {
-                rendering_logger->Fatal("failed to create sync objects, exiting program execution immediately", "VulkanRenderer");
+                vulkan_logger->Fatal("failed to create sync objects, exiting program execution immediately", "VulkanRenderer");
                 return false; // failed to create synchronization objects for a frame
             }
         }
@@ -864,7 +868,7 @@ for (const auto& fv_Device : f_PhysDevs)
 
         if (not SDL_Vulkan_CreateSurface(pm_Init.MainWindow, pm_Init.Instance.instance, nullptr, &pm_Init.Surface))
         {
-            rendering_logger->Error(fmt::format("Failed to recreate Vulkan surface: {}", SDL_GetError()), "VulkanRenderer");
+            vulkan_logger->Error(fmt::format("Failed to recreate Vulkan surface: {}", SDL_GetError()), "VulkanRenderer");
             return false;
         }
 
@@ -878,7 +882,7 @@ for (const auto& fv_Device : f_PhysDevs)
         //reset frame cycle since the new swapchain image indices start fresh
         pm_RenderData.CurrentFrameCycle = 0;
 
-        rendering_logger->Info("Surface and swapchain successfully recreated after foreground", "VulkanRenderer");
+        vulkan_logger->Info("Surface and swapchain successfully recreated after foreground", "VulkanRenderer");
         return true;
     }
 }//namespace PeachCore::Vulkan

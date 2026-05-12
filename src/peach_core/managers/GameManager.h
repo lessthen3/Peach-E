@@ -80,7 +80,7 @@ namespace PeachCore {
         None = 0
     };
 
-    class GameManager 
+    struct GameManager 
     {
     //////////////////////////////////////////////
     // Private Destructor and Constructor
@@ -111,7 +111,7 @@ namespace PeachCore {
         //////////////////// FPS Vars ////////////////////
 
         size_t USER_DEFINED_CONSTANT_UPDATE_FPS = 60u;
-        size_t USER_DEFINED_POLLING_RATE = 10u; //Needs to be adjustable in-game so no const >w<
+        size_t USER_DEFINED_POLLING_RATE = 1000u; //Needs to be adjustable in-game so no const >w<
 
         float pm_CurrentTimeScale = 1.0f;
 
@@ -143,7 +143,7 @@ namespace PeachCore {
 
         //////////////////// Thread Handles ////////////////////
 
-        thread pm_RenderThread;
+        RenderingManager pm_RenderingManager;
         thread pm_PhysicsThread;
         thread pm_ResourceThread;
         thread pm_AudioThread;

@@ -23,22 +23,17 @@
 
 //////////////////////////////////////////////////////////// C++ --> C compatibility preprocessor defs ////////////////////////////////////////////////////////////
 
-#ifdef __cplusplus 
-
-    //XXX: need to have C calling convention since this'll be called by external runtimes which probably just use a C calling convention esp C#
-    #if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_BUILD_DYNAMIC)
-            #define PEACH_API extern "C" __declspec(dllexport)
-    #elif defined(PEACH_PLATFORM_WINDOWS) && !defined(PEACH_API_STATIC)
-            #define PEACH_API extern "C" __declspec(dllimport)
-    #else
-            #define PEACH_API extern "C"
-    #endif
-
+#ifdef __cplusplus //XXX: need to have C calling convention since this'll be called by external runtimes which probably just use a C calling convention esp C#
+#   if defined(PEACH_PLATFORM_WINDOWS) && defined(PEACH_BUILD_DYNAMIC)
+#       define PEACH_API extern "C" __declspec(dllexport)
+#   elif defined(PEACH_PLATFORM_WINDOWS) && !defined(PEACH_API_STATIC)
+#       define PEACH_API extern "C" __declspec(dllimport)
+#   else
+#       define PEACH_API extern "C"
+#   endif
 #else //being used from C
-
-    #include <stdbool.h> 
-    #define PEACH_API //leave empty when included in C file
-
+#   include <stdbool.h> 
+#   define PEACH_API //leave empty when included in C file
 #endif //C++ detection
 
 //////////////////////////////////////////////////////////// Starting Engine ////////////////////////////////////////////////////////////

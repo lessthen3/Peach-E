@@ -75,6 +75,8 @@ static int
 int 
     main(int fp_ArgCount, const char** fp_ArgVector) //This method kinda clean ngl lmfao
 {
+        PeachCore::LogManager::get_single(); //to avoid static destructor stuff with logger unregistering stuff
+
     // Detect if we are the child or being debugged
     bool f_RunAsEngine = false;
 

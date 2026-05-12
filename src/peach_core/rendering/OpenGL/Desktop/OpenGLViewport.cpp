@@ -259,7 +259,11 @@ namespace PeachCore::OpenGL {
         // Unbind Buffers and Reset GL state
         ////////////////////////////////////////////////
 
-        rendering_logger->Debug("Render Texture successfully setup UwU", "OpenGL::Viewport");
+        rendering_logger->Info
+        (
+            fmt::format("Render Texture successfully setup UwU, FrameBuffer ID: {}, RenderTexture ID: {}, RenderBuffer ID: {}", pm_FrameBuffer, pm_RenderTexture, pm_DepthRenderBuffer), 
+            "OpenGL::Viewport"
+        );
 
         return true;
     }

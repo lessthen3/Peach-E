@@ -83,11 +83,11 @@ namespace PeachCore{ //static internaly linked functions owo
 
         tm local_time{}; //what a fucked type name wtf C, the unbridled c programmer urge to name things in the stupidest fucking way lmfao
 
-#if defined(_WIN32) || defined(_WIN64) //needa do this since localtime() isnt threadsafe uwu
-        localtime_s(&local_time, &time_t_now);
-#else
-        localtime_r(&time_t_now, &local_time);
-#endif
+        #if defined(_WIN32) || defined(_WIN64) //needa do this since localtime() isnt threadsafe uwu
+            localtime_s(&local_time, &time_t_now);
+        #else
+            localtime_r(&time_t_now, &local_time);
+        #endif
 
         stringstream f_AssembledTimeString;
         f_AssembledTimeString << put_time(&local_time, "%Y-%m-%d %H:%M:%S");
@@ -174,11 +174,11 @@ namespace PeachCore{
             const thread::id& fp_NewThreadID
         )
     {
-        if (not AssertThreadAccess("UpdateThreadOwner")) //can't log here since it's only triggered by improper thread usage which will trigger asserthreadacess again
-        {
-            PEACH_PRINT_ERROR_FMT("Tried to call UpdateThreadOwner from a thread that didn't own logger named: {}", pm_LoggerName);
-            return false;
-        }
+        // if (not AssertThreadAccess("UpdateThreadOwner")) //can't log here since it's only triggered by improper thread usage which will trigger asserthreadacess again
+        // {
+        //     PEACH_PRINT_ERROR_FMT("Tried to call UpdateThreadOwner from a thread that didn't own logger named: {}", pm_LoggerName);
+        //     return false;
+        // }
 
         pm_ThreadOwnerID = fp_NewThreadID;
 
@@ -227,65 +227,67 @@ namespace PeachCore{
 
     //////////////////////////////////////////////////////////// Logging Functions  ////////////////////////////////////////////////////////////
 
-    void
-        Logger::Trace
-        (
-            const string& fp_Message,
-            const string& fp_Sender
-        )
-    {
-        if (ValidateLogMsg(PEACH_TRACE_LOG)) //IMPORTANT: don't need to check if the log file was created since activelogmask tracks that as well >w< and the activemask can't be modified directly since its private
+    #ifdef PEACH_DEBUG
+        void
+            Logger::Trace
+            (
+                const string& fp_Message,
+                const string& fp_Sender
+            )
         {
-            const string f_TimeStamp = GetCurrentTimestamp();
-            const string f_LogEntry = 
-                fmt::format
-                (
-                    "[{}][trace][{}]: {}",
-                    f_TimeStamp,
-                    fp_Sender,
-                    fp_Message
-                );
-
-            pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_TRACE_LOG);
-
-            if (pm_LogToFile)
+            if (ValidateLogMsg(PEACH_TRACE_LOG)) //IMPORTANT: don't need to check if the log file was created since activelogmask tracks that as well >w< and the activemask can't be modified directly since its private
             {
-                WriteLogEntry(TRACE_LOG_INDEX, PEACH_LOGGER_FLUSH_TRACE_BIT, f_LogEntry);
+                const string f_TimeStamp = GetCurrentTimestamp();
+                const string f_LogEntry = 
+                    fmt::format
+                    (
+                        "[{}][trace][{}]: {}",
+                        f_TimeStamp,
+                        fp_Sender,
+                        fp_Message
+                    );
+
+                pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_TRACE_LOG);
+
+                if (pm_LogToFile)
+                {
+                    WriteLogEntry(TRACE_LOG_INDEX, PEACH_LOGGER_FLUSH_TRACE_BIT, f_LogEntry);
+                }
+
+                PEACH_PRINT(f_LogEntry.c_str(), PEACH_COL_BRIGHT_WHITE);
             }
-
-            PEACH_PRINT(f_LogEntry.c_str(), PEACH_COL_BRIGHT_WHITE);
         }
-    }
 
-    void
-        Logger::Debug
-        (
-            const string& fp_Message,
-            const string& fp_Sender
-        )
-    {
-        if (ValidateLogMsg(PEACH_DEBUG_LOG))
+        void
+            Logger::Debug
+            (
+                const string& fp_Message,
+                const string& fp_Sender
+            )
         {
-            const string f_TimeStamp = GetCurrentTimestamp();
-            const string f_LogEntry =
-                fmt::format
-                (
-                    "[{}][debug][{}]: {}",
-                    f_TimeStamp,
-                    fp_Sender,
-                    fp_Message
-                );
-
-            pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_DEBUG_LOG);
-
-            if (pm_LogToFile)
+            if (ValidateLogMsg(PEACH_DEBUG_LOG))
             {
-                WriteLogEntry(DEBUG_LOG_INDEX, PEACH_LOGGER_FLUSH_DEBUG_BIT, f_LogEntry);
-            }
+                const string f_TimeStamp = GetCurrentTimestamp();
+                const string f_LogEntry =
+                    fmt::format
+                    (
+                        "[{}][debug][{}]: {}",
+                        f_TimeStamp,
+                        fp_Sender,
+                        fp_Message
+                    );
 
-            PEACH_PRINT(f_LogEntry.c_str(), PEACH_COL_BRIGHT_BLUE);
+                pm_SnapshotBuffer.Emplace(f_TimeStamp, fp_Message, fp_Sender, PEACH_DEBUG_LOG);
+
+                if (pm_LogToFile)
+                {
+                    WriteLogEntry(DEBUG_LOG_INDEX, PEACH_LOGGER_FLUSH_DEBUG_BIT, f_LogEntry);
+                }
+
+                PEACH_PRINT(f_LogEntry.c_str(), PEACH_COL_BRIGHT_BLUE);
+            }
         }
-    }
+    #endif /*PEACH_DEBUG*/
 
     void
         Logger::Info
