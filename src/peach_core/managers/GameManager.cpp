@@ -104,7 +104,7 @@ namespace PeachCore
         GameManager::InitializePeachEngineCustom
         (
             const string& fp_RootPath,
-            const ThreadName fp_RequiredThreads,
+            const RequiredSubsystems fp_RequiredSubsystems,
             const RendererType fp_RenderingBackend,
             const uint32_t fp_StartingWindowWidth,
             const uint32_t fp_StartingWindowHeight,
@@ -126,7 +126,7 @@ namespace PeachCore
 
         //////////////////// Required Threads Variable for Knowing Which Threads to Shutdown or Whatever ////////////////////
 
-        pm_RequiredThreads = fp_RequiredThreads;
+        pm_ActiveSubsystems = fp_RequiredSubsystems;
 
         //////////////////// Enable ANSI colour codes for windows console grumble grumble ////////////////////
 
@@ -166,7 +166,7 @@ namespace PeachCore
             main_logger->Fatal("Initialization failed: Was not able to create the main window, exiting execution immediately", "GameManager");
             return false; //PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW;
         }
-        else if (not InputManager::get_single().Initialize(fp_StartingWindowWidth, fp_StartingWindowHeight, fp_RootPath + "/logs", PEACH_LOGGER_DEFAULT_FLAGS))
+        else if (not InputManager::get_single().Initialize(fp_StartingWindowWidth, fp_StartingWindowHeight, fp_RootPath + "/logs", PEACH_LOGGER_DEFAULT_FLAGS)) //IMPORTANT: NEEDS TO INITIALIZE BEFORE RENDERING MANAGER
         {
 
             return false;
@@ -174,12 +174,10 @@ namespace PeachCore
         else if (not InitializeThreads(fp_RootPath, fp_StartingWindowWidth, fp_StartingWindowHeight, fp_RenderingBackend))
         {
             main_logger->Fatal("Failed to initialize Peach Engine managers, ending engine program execution immediately", "GameManager");
-            return false;
-        }
-        else if (not RetrieveQueues())
-        {
-            main_logger->Fatal("Command Queue acquisiton failed, exiting engine execution immediately", "GameManager");
+            
+            //XXX: idk we needa do smth if only some threads initialize really owo so the engine doesnt just hang >w<
             ShutdownPeachEngine(); //shutdown threads now that their initialized owo
+            
             return false;
         }
 
@@ -240,49 +238,25 @@ namespace PeachCore
 
         //////////////////// clean up in reverse order since a race condition can be created since every manager relies on resource manager's queues uwu ////////////////////
         
-        if (pm_RequiredThreads & ThreadName::RenderThread)
+        if (pm_ActiveSubsystems & Subsystem::Render)
         {
-            pm_RenderingManager.Stop();
+            pm_RenderingManager.ShutdownSubsystem(main_logger.get());
         }
-        if (pm_RequiredThreads & ThreadName::AudioThread)
+        if (pm_ActiveSubsystems & Subsystem::Audio)
         {
-            AudioManager::get_single().Stop();
-
-            if (pm_AudioThread.joinable()) 
-            { 
-                pm_AudioThread.join(); 
-                main_logger->Info("Successfully joined audio thread", "GameManager");
-            }
+            pm_AudioManager.ShutdownSubsystem(main_logger.get());
         }
-        if (pm_RequiredThreads & ThreadName::PhysicsThread)
+        if (pm_ActiveSubsystems & Subsystem::Physics2D or pm_ActiveSubsystems & Subsystem::Physics3D)
         {
-            PhysicsManager::get_single().Stop();
-
-            if (pm_PhysicsThread.joinable()) 
-            {
-                pm_PhysicsThread.join(); 
-                main_logger->Info("Successfully joined physics thread", "GameManager");
-            }
+            pm_PhysicsManager.ShutdownSubsystem(main_logger.get());
         }
-        if (pm_RequiredThreads & ThreadName::NetworkThread)
+        if (pm_ActiveSubsystems & Subsystem::Network)
         {
-            NetworkManager::get_single().Stop();
-
-            if (pm_NetworkThread.joinable()) 
-            { 
-                pm_NetworkThread.join(); 
-                main_logger->Info("Successfully joined network thread", "GameManager");
-            }
+            pm_NetworkManager.ShutdownSubsystem(main_logger.get());
         }
 
         //don't need to check for usage here since ResourceManager is ALWAYS utilized regardless of what threads are desired uwu
-        ResourceManager::get_single().Stop();
-
-        if (pm_ResourceThread.joinable()) 
-        { 
-            pm_ResourceThread.join(); 
-            main_logger->Info("Successfully joined the RESOURCE thread", "GameManager");
-        }
+        pm_ResourceManager.ShutdownSubsystem(main_logger.get());
 
         // SDL_Quit();
 
@@ -334,18 +308,19 @@ namespace PeachCore
     }
 
     //TODO: get a signal from each thread when initialization is done then start the next one so startup can be consisitent and no race conditions for safety
-    bool
+    PEACH_STATUS_CODE
         GameManager::InitializeThreads //XXX: used for kickstarting threads needed for engine execution
         (
             const string& fp_RootPath,
             const uint32_t fp_InitialWindowWidth,
             const uint32_t fp_InitialWindowHeight,
             RendererType fp_RenderingBackend,
-            const bool fp_Is3D
+            const bool fp_IsRendering3D
         )
     {
         PEACH_TO_DO_UNUSED(fp_InitialWindowWidth);
         PEACH_TO_DO_UNUSED(fp_InitialWindowHeight);
+        PEACH_TO_DO_UNUSED(fp_IsRendering3D);
 
         const string f_LogDir = fp_RootPath + "/logs";
 
@@ -356,188 +331,73 @@ namespace PeachCore
         //otherwise we just leave it be
 
         //always going to require resource thread for loading peachey
-        pm_ResourceThread = thread
-        (
-            &ResourceManager::ResourceLoop,
-            std::ref(ResourceManager::get_single()),
-            f_LogDir,
-            fp_RootPath,
-            std::ref(pm_ResourceInitializationLatch)
-        );
 
-        pm_ResourceInitializationLatch.wait(); //wait for resource thread to initialize before going further w any other threads uwu
+        if (not pm_ResourceManager.Initialize(f_LogDir, fp_RootPath))
+        {
+
+            return PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_RESOURCE_MANAGER;
+        }
+
 
         ////////////////////////////////////////////// Rendering //////////////////////////////////////////////
 
-        if (pm_RequiredThreads & ThreadName::RenderThread)
+        if (pm_ActiveSubsystems & Subsystem::Render)
         {
-            PEACH_STATUS_CODE result = pm_RenderingManager.Initialize(fp_RenderingBackend, pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, 10, f_LogDir);
+            PEACH_STATUS_CODE result = pm_RenderingManager.Initialize(fp_RenderingBackend, pm_ResourceManager.GetDrawableResourceLoadingQueue(main_logger.get()), pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, 10, f_LogDir);
 
             if(result != PEACH_OK)
             {
                 return result;
             }
-
-            pm_ThreadInitializationLatch.count_down();
-        }
-        else
-        {
-            pm_ThreadInitializationLatch.count_down();
         }
 
         ////////////////////////////////////////////// Audio //////////////////////////////////////////////
 
-        if (pm_RequiredThreads & ThreadName::AudioThread)
+        if (pm_ActiveSubsystems & Subsystem::Audio)
         {
-            pm_AudioThread = thread
-            (
-                &AudioManager::AudioLoop,
-                std::ref(AudioManager::get_single()),
-                f_LogDir,
-                0.0f,
-                std::ref(pm_ThreadInitializationLatch)
-            );
-        }
-        else
-        {
-            pm_ThreadInitializationLatch.count_down();
+            if (not pm_AudioManager.InitializeAudioEngine(100.0f, pm_ResourceManager.GetAudioResourceLoadingQueue(main_logger.get()), f_LogDir))
+            {
+
+                return PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_AUDIO_SUBSYSTEM;
+            }
+
         }
 
         ////////////////////////////////////////////// Networking //////////////////////////////////////////////
 
-        if (pm_RequiredThreads & ThreadName::NetworkThread)
+        if (pm_ActiveSubsystems & Subsystem::Network)
         {
-            pm_NetworkThread = thread
-            (
-                &NetworkManager::NetworkLoop,
-                std::ref(NetworkManager::get_single()),
-                f_LogDir,
-                std::ref(pm_ThreadInitializationLatch)
-            );
-        }
-        else
-        {
-            pm_ThreadInitializationLatch.count_down();
+            if(not pm_NetworkManager.InitializeNetworking(f_LogDir))
+            {
+
+                return PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_NETWORKING_UWU;
+            }
         }
 
         ////////////////////////////////////////////// Physics //////////////////////////////////////////////
 
-        if (pm_RequiredThreads & ThreadName::PhysicsThread)
-        {
-            if(fp_Is3D)
+        if (pm_ActiveSubsystems & Subsystem::Physics3D)
+        {            
+            if(not pm_PhysicsManager.InitializePhysicsEngine3D(f_LogDir))
             {
-                pm_PhysicsThread = thread
-                (
-                    &PhysicsManager::PhysicsLoop3D,
-                    std::ref(PhysicsManager::get_single()),
-                    f_LogDir,
-                    std::ref(pm_ThreadInitializationLatch)
-                );
-                
-            }
-            else
-            {
-                pm_PhysicsThread = thread
-                (
-                    &PhysicsManager::PhysicsLoop2D,
-                    std::ref(PhysicsManager::get_single()),
-                    f_LogDir,
-                    std::ref(pm_ThreadInitializationLatch),
-                    0.0f,    // fp_GravityX
-                    -9.8f    // fp_GravityY
-                );
+
+                return PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_PHYSICS_3D;
             }
         }
-        else
+        else if (pm_ActiveSubsystems & Subsystem::Physics2D)
         {
-            pm_ThreadInitializationLatch.count_down();
+            if(not pm_PhysicsManager.InitializePhysicsEngine2D(f_LogDir, 0.0f, 0.0f))
+            {
+
+                return PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_PHYSICS_2D;
+            }
         }
 
         PEACH_PRINT("Hello World!\n", PEACH_COL_BLUE); //>w<
         main_logger->Warning("NEW ENGINE ON THE BLOCK MY SLIME", "Peach-E");
         PEACH_LOG_TRACE(main_logger, "Success! This Built Correctly", "Peach-E");
 
-        pm_ThreadInitializationLatch.wait();
-
-        return true;
-    }
-
-    bool
-        GameManager::RetrieveQueues()
-    {
-        //////////////////// Get Resource Loading Command Queue ////////////////////
-
-        pm_ResourceCommandQueue = ResourceManager::get_single().GetLoadCommandQueue(main_logger.get());
-
-        if (not pm_ResourceCommandQueue)
-        {
-            main_logger->Fatal("Failed to retrieve Resource Loading Command Queue from ResourceManager, engine cannot continue execution", "GameManager");
-            return false;
-        }
-
-        main_logger->Info("Successfully retrieved Resource Loading Command Queue from ResourceManager", "GameManager");
-
-        //////////////////// Get Draw Command Queue ////////////////////
-
-        if (pm_RequiredThreads & ThreadName::RenderThread)
-        {
-            pm_RenderCommandQueue = pm_RenderingManager.GetDrawCommandQueue(main_logger.get());
-
-            if (not pm_RenderCommandQueue)
-            {
-                main_logger->Fatal("Failed to retrieve Draw Command Queue from RenderingManager, engine cannot continue execution", "GameManager");
-                return false;
-            }
-
-            main_logger->Info("Successfully retrieved Draw Command Queue from RenderingManager", "GameManager");
-        }
-
-        //////////////////// Get Audio Command Queue ////////////////////
-
-        if (pm_RequiredThreads & ThreadName::AudioThread)
-        {
-            pm_AudioCommandQueue = AudioManager::get_single().GetAudioCommandQueue(main_logger.get());
-
-            if (not pm_AudioCommandQueue)
-            {
-                main_logger->Fatal("Failed to retrieve Audio Command Queue from AudioManager, engine cannot continue execution", "GameManager");
-                return false;
-            }
-
-            main_logger->Info("Successfully retrieved Audio Command Queue from AudioManaager", "GameManager");
-        }
-
-        //////////////////// Get Resource Loading Command Queue ////////////////////
-
-        if (pm_RequiredThreads & ThreadName::NetworkThread)
-        {
-            pm_NetworkCommandQueue = NetworkManager::get_single().GetNetworkCommandQueue(main_logger.get());
-
-            if (not pm_NetworkCommandQueue)
-            {
-                main_logger->Fatal("Failed to retrieve Network Command Queue from ResourceManager, engine cannot continue execution", "GameManager");
-                return false;
-            }
-
-            main_logger->Info("Successfully retrieved Resource Loading Command Queue from ResourceManager", "GameManager");
-        }
-
-        //////////////////// Get Resource Loading Command Queue ////////////////////
-
-        if (pm_RequiredThreads & ThreadName::PhysicsThread)
-        {
-            pm_PhysicsCommandQueue = PhysicsManager::get_single().GetPhysicsCommandQueue(main_logger.get());
-
-            if (not pm_PhysicsCommandQueue)
-            {
-                main_logger->Fatal("Failed to retrieve Resource Loading Command Queue from ResourceManager, engine cannot continue execution", "GameManager");
-                return false;
-            }
-
-            main_logger->Info("Successfully retrieved Resource Loading Command Queue from ResourceManager", "GameManager");
-        }
-
-        return true;
+        return PEACH_OK;
     }
 
     bool
@@ -719,10 +579,6 @@ namespace PeachCore
 
             auto f_CurrentTime = chrono::high_resolution_clock::now();
 
-            [[maybe_unused]] auto network_manager = &NetworkManager::get_single(); 
-            auto physics_manager = &PhysicsManager::get_single();
-            [[maybe_unused]] auto resource_manager = &ResourceManager::get_single();
-
             ///TODO: log whenever frametime is running late in debug
             while (m_IsRunning.load(std::memory_order_acquire))
             {
@@ -764,7 +620,7 @@ namespace PeachCore
 
                     float f_ScaledDt = PHYSICS_TIME_STEP * pm_CurrentTimeScale;
 
-                    physics_manager->RequestPhysicsWorldStep(f_ScaledDt, f_Steps);
+                    pm_PhysicsManager.RequestPhysicsWorldStep(f_ScaledDt, f_Steps);
                     CallConstantUpdate(f_ScaledDt);
 
                     pm_CurrentScene.CleanSceneTree(); //Check for any node removals uwu, done everytime after scripts are ran to check for queued for removal nodes uwu

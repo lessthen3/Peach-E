@@ -11,31 +11,33 @@
 #ifdef PEACH_RENDERER_OPENGL
 
 #include "OpenGLRenderer.h"
+#include "managers/LogManager.h"
 #include <fmt/format.h>
 
 namespace PeachCore::OpenGL {
 
     PEACH_STATUS_CODE
         Renderer::Initialize //peach renderer is never supposed to create an sdl window, it only manages closing it
-    (
-        SDL_Window* fp_CurrentWindow,
-        SDL_GLContext fp_OpenGLContext,
-        shared_ptr<Logger> fp_RenderingLogger,
-        const bool fp_Is3DEnabled
-    )
+        (
+            SDL_Window* fp_CurrentWindow,
+            SDL_GLContext fp_OpenGLContext,
+            const bool fp_Is3DEnabled,
+            const string& fp_LogOutputDirectory
+        )
     {
-        if (not fp_RenderingLogger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
+        gl_logger = LogManager::get_single().CreateUniqueLogger("OpenGL_Renderer", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
+
+        if (not gl_logger) //MAYBE: maybe we should just create a new logger actually nvm that involves getting a reference to the console lmfao
         {
             PEACH_PRINT_ERROR("Tried to initialize PeachRenderer with a nullptr for the Rendering Logger doofus");
-            throw runtime_error("Ending program execution immediately since no valid logger was found"); //idk how else to stop the rest of initialization
+            return PEACH_INTERNAL_FATAL_ERROR_UNABLE_TO_CREATE_LOGGER_GL;
         }
 
-        rendering_logger = fp_RenderingLogger;
 
         if (not fp_CurrentWindow)
         {
-            rendering_logger->Fatal("Tried to initialize PeachRenderer with a nullptr for the SDL Window doofus", "PeachRenderer");
-            throw runtime_error("Ending program execution immediately since no valid SDL Window was found"); //idk how else to stop the rest of initialization
+            gl_logger->Fatal("Tried to initialize PeachRenderer with a nullptr for the SDL Window doofus", "OpenGL::Renderer");
+            return INTERNAL_PEACH_FATAL_ERROR_PASSED_NULLPTR_REFERENCE_TO_SDL_WINDOW_GL; //owo
         }
 
         pm_MainWindow = fp_CurrentWindow;
@@ -44,7 +46,6 @@ namespace PeachCore::OpenGL {
 
         // Create an OpenGL context associated with the window
         pm_OpenGLContext = fp_OpenGLContext;
-        SDL_GL_MakeCurrent(pm_MainWindow, pm_OpenGLContext);
 
         if (pm_Is3DEnabled)
         {
@@ -53,6 +54,13 @@ namespace PeachCore::OpenGL {
         }
 
         return PEACH_OK;
+    }
+
+    void
+        Renderer::UpdateForNewThread()
+    {
+        SDL_GL_MakeCurrent(pm_MainWindow, pm_OpenGLContext);
+        gl_logger->UpdateThreadOwner(); 
     }
 
     void
@@ -183,11 +191,11 @@ namespace PeachCore::OpenGL {
         {
             glTexImage2D(GL_TEXTURE_2D, 0, f_ColourFormat, fp_Width, fp_Height, 0, f_ColourFormat, GL_UNSIGNED_BYTE, fp_Data);
             glGenerateMipmap(GL_TEXTURE_2D);
-            rendering_logger->Info(fmt::format("Successfully freed data from: {}", fp_PeachObjectID), "OpenGL::Renderer");
+            gl_logger->Info(fmt::format("Successfully freed data from: {}", fp_PeachObjectID), "OpenGL::Renderer");
         }
         else
         {
-            rendering_logger->Info("Failed to Register Texture", "OpenGL::Renderer");
+            gl_logger->Info("Failed to Register Texture", "OpenGL::Renderer");
         }
 
         glBindTexture(GL_TEXTURE_2D, 0);

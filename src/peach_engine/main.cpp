@@ -20,7 +20,7 @@ static int
 
     try
     {
-        auto engine_manager = &PeachCore::GameManager::get_single();
+        auto& engine_manager = PeachCore::GameManager::get_single();
 
         std::string f_RootPath = std::string(fp_ArgVector[0]);
         size_t f_EnginePos = f_RootPath.rfind("Peach");
@@ -38,13 +38,12 @@ static int
 
         if 
         (
-            not engine_manager->InitializePeachEngineCustom
+            not engine_manager.InitializePeachEngineCustom
             (
                 f_RootPath, 
-                PeachCore::ThreadName::ALL_THREADS ^ PeachCore::ThreadName::PhysicsThread, 
+                PeachCore::Subsystem::Render | PeachCore::Subsystem::Physics2D | PeachCore::Subsystem::Network | PeachCore::Subsystem::Audio, 
                 f_RenderingBackend,
-                800,
-                600
+                800, 600
             )
         )
         {
@@ -52,9 +51,9 @@ static int
             return PEACH_ERROR_FAILED_TO_INITIALIZE;
         }
 
-        engine_manager->StartMainGameLoop(); //should always work and only throw on exception uwu, or segfault onto the handler owo
+        engine_manager.StartMainGameLoop(); //should always work and only throw on exception uwu, or segfault onto the handler owo
 
-        if (not engine_manager->ShutdownPeachEngine())
+        if (not engine_manager.ShutdownPeachEngine())
         {
 
             return PEACH_ERROR_FAILED_TO_SHUTDOWN_PROPERLY;
@@ -96,6 +95,6 @@ int
     }
     else // THIS IS THE WATCHDOG MODE, this process stays light, consumes almost no RAM, and just waits for the Engine to finish or explode.
     {
-        return PeachCore::LauncherMain( 1, fp_ArgVector);
+        return PeachCore::LauncherMain(1, fp_ArgVector);
     }
 }

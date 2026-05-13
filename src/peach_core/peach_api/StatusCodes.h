@@ -31,13 +31,20 @@ extern "C"
         PEACH_ERROR_INVALID_NODE_REMOVAL_ID,
         PEACH_ERROR_INVALID_NODE_REMOVAL_NAME,
 
-        //======================================================================= Rendering Manager =======================================================================//
+        //========================================================================== GameManager ==========================================================================//
+
+        PEACH_FATAL_ERROR_FAILED_TO_CREATE_MAIN_WINDOW,
+
+        //=================================================================================================================================================================//
+
+        //======================================================================= Rendering =======================================================================//
 
         //////////////////////// General Rendering Statuses ////////////////////////
 
-        PEACH_ERROR_FAILED_TO_CREATE_MAIN_WINDOW,
-        PEACH_FATAL_FAILED_TO_INITIALIZE_RENDERING_LOADING_QUEUE,
         PEACH_FATAL_FAILED_TO_CREATE_RENDERING_LOGGER,
+        PEACH_FATAL_ERROR_PASSED_NULLPTR_REFERENCE_TO_RESOURCE_MANAGER_RENDERING_RESOURCE_PIPE,
+
+        PEACH_WARNING_TRIED_TO_INITIALIZE_RENDERING_MANAGER_AFTER_FULLY_INITIALIZED,
 
         //////////////////////// OpenGL Specific ////////////////////////
 
@@ -45,9 +52,12 @@ extern "C"
         PEACH_ERROR_FAILED_INITIALIZE_GLEW,
         PEACH_ERROR_FAILED_TO_CREATE_GL_CONTEXT,
 
+        INTERNAL_PEACH_FATAL_ERROR_PASSED_NULLPTR_REFERENCE_TO_SDL_WINDOW_GL,
+        PEACH_INTERNAL_FATAL_ERROR_UNABLE_TO_CREATE_LOGGER_GL,
+
         //////////////////////// MobileGL ////////////////////////
 
-        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_MOBILE_GL,
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_MOBILE_GLES,
 
         //////////////////////// WebGL ////////////////////////
 
@@ -60,11 +70,37 @@ extern "C"
 
         //////////////////////// Metal ////////////////////////
 
-        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_METAL
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_METAL,
+
+        //=========================================================================================================================================================//
+
+        //======================================================================= Physics =======================================================================//
+
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_PHYSICS_3D,
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_PHYSICS_2D,
+
+
+        //=======================================================================================================================================================//
+
+        //======================================================================= Networking =======================================================================//
+
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_NETWORKING_UWU,
+
+        //==========================================================================================================================================================//
+
+        //======================================================================= Audio =======================================================================//
+
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_AUDIO_SUBSYSTEM,
 
         //=================================================================================================================================================================//
 
+        //======================================================================= Resource =======================================================================//
 
+        PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_RESOURCE_MANAGER,
+
+        PEACH_FATAL_FAILED_TO_INITIALIZE_RENDERING_LOADING_QUEUE
+
+        //=================================================================================================================================================================//
 
     } PEACH_STATUS_CODE;
 

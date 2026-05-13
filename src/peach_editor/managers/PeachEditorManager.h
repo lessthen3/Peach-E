@@ -22,11 +22,13 @@ namespace PeachEditor {
 
     class PeachEditorManager
     {
+    public:
+        ~PeachEditorManager() = default;
+
         //////////////////////////////////////////////
         // Private Constructor & Destructor
         //////////////////////////////////////////////
     private:
-        ~PeachEditorManager() = default;
         PeachEditorManager() = default;
 
         PeachEditorManager(const PeachEditorManager&) = delete;
@@ -65,12 +67,11 @@ namespace PeachEditor {
         ////////////////////////////////////////////////
         void
             StartPeachEditorMainLoop() //this is where 
-            const
         {
-            auto peach_engine = &PeachCore::GameManager::get_single();
+            auto& engine_manager = PeachCore::GameManager::get_single();
 
-            peach_engine->StartMainGameLoop();
-            peach_engine->ShutdownPeachEngine();
+            engine_manager.StartMainGameLoop();
+            engine_manager.ShutdownPeachEngine();
 
             PEACH_LOG_DEBUG(main_editor_logger, "Exit Success!", "Peach-E");
         }
@@ -106,7 +107,7 @@ namespace PeachEditor {
                     not PeachCore::GameManager::get_single().InitializePeachEngineCustom
                     (
                         fp_RootPath,
-                        PeachCore::ThreadName::RenderThread,
+                        PeachCore::Subsystem::Render | PeachCore::Subsystem::Physics2D | PeachCore::Subsystem::Network | PeachCore::Subsystem::Audio, 
                         f_RenderingBackend,
                         800, 600
                     )

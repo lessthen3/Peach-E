@@ -289,7 +289,7 @@ namespace PeachCore::Vulkan{
         void 
             UpdateForNewThread()
         {
-            (void)vulkan_logger->UpdateThreadOwner(this_thread::get_id());
+            vulkan_logger->UpdateThreadOwner();
         }
 
         //////////////////// Initialize Method ////////////////////

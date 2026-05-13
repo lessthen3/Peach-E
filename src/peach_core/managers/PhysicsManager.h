@@ -26,7 +26,7 @@
 #include <latch>
 
 ///PeachCore
-#include "LogManager.h"
+#include "utils/Logger.h"
 
 namespace PeachCore {
 
@@ -48,33 +48,28 @@ namespace PeachCore {
 
     using PhysicsCommandPipe = moodycamel::ReaderWriterQueue<PhysicsCommand, MOODY_CAMEL_QUEUE_SIZE>;
 
+    struct GameManager;
+
     ////////////////////////////////////////////////
     // PhysicsManager Class
     ////////////////////////////////////////////////
     class PhysicsManager 
     {
+    public:
+        ~PhysicsManager() = default;
+
     ////////////////////////////////////////////////
-    // Private Constructor & Destructor
+    // Private Constructor
     ////////////////////////////////////////////////
     private:
-        ~PhysicsManager() = default;
         PhysicsManager() = default;
 
         PhysicsManager(const PhysicsManager&) = delete;
         PhysicsManager& operator=(const PhysicsManager&) = delete;
-
         PhysicsManager(PhysicsManager&&) = delete;
         PhysicsManager& operator=(PhysicsManager&&) = delete;
 
-    ////////////////////////////////////////////////
-    // Singleton Instance
-    ////////////////////////////////////////////////
-    public:
-        static PhysicsManager& get_single()
-        {
-            static PhysicsManager physics_manager;
-            return physics_manager;
-        }
+        friend GameManager;
 
     ////////////////////////////////////////////////
     // Private Members
@@ -82,49 +77,22 @@ namespace PeachCore {
     private:
         unique_ptr<Logger> physics_logger;
 
-        //////////////////// Thread Syncro Stuff ////////////////////
-
         atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
         atomic<bool> pm_IsInitialized{ false };
 
-        binary_semaphore pm_PhysicsSemaphore{ 0 }; // starts locked (zero tickets)
+        binary_semaphore pm_PhysicsSemaphore{ 0 }; // starts locked (zero tickets)        
+        //this guarantees that if a physics frame is mid process it'll exit after owo
+        //used for waiting until the loop exits before joining the thread owo, this is count down after the while loop is broken out of owo
+        std::latch pm_IsFinishedStoppingLatch{1}; 
 
-        shared_ptr<PhysicsCommandPipe> pm_PhysicsCommandQueue = nullptr;
+        std::thread pm_PhysicsThread;
+
+        PhysicsCommandPipe pm_PhysicsCommandQueue;
 
     ////////////////////////////////////////////////
     // Public Methods
     ////////////////////////////////////////////////
     public:
-
-        void
-            PhysicsLoop2D
-            (
-                const string& fp_LogOutputDirectory,
-                latch& fp_InitLatch,
-                const float fp_GravityX,
-                const float fp_GravityY
-            );
-
-        void
-            PhysicsLoop3D
-            (
-                const string& fp_LogOutputDirectory,
-                latch& fp_InitLatch
-            );
-
-        void
-            RequestPhysicsWorldStep(float fp_Dt, size_t fp_Steps);
-
-        void
-           Stop();
-
-        [[nodiscard]] shared_ptr<PhysicsCommandPipe>
-            GetPhysicsCommandQueue(Logger* const logger);
-
-    ////////////////////////////////////////////////
-    // Private Methods
-    ////////////////////////////////////////////////
-    private:
         [[nodiscard]] bool
             InitializePhysicsEngine2D
             (
@@ -138,6 +106,28 @@ namespace PeachCore {
             (
                 const string& fp_LogOutputDirectory
             );
+
+        void
+            RequestPhysicsWorldStep(float fp_Dt, size_t fp_Steps);
+
+        void
+           ShutdownSubsystem(Logger*const logger);
+
+        PEACH_FORCEINLINE void
+            PushCommand(PhysicsCommand fp_PhysicsCommand)
+        {
+            pm_PhysicsCommandQueue.enqueue(fp_PhysicsCommand);
+        }
+
+    ////////////////////////////////////////////////
+    // Private Methods
+    ////////////////////////////////////////////////
+    private:
+        void
+            PhysicsLoop2D();
+
+        void
+            PhysicsLoop3D();
 
         [[nodiscard]] bool
             Initialize(const string& fp_LogOutputDirectory);

@@ -22,8 +22,6 @@
 
 #include "scene_items/SceneTree.h"
 
-#include <thread>
-
 #ifndef __cpp_lib_jthread
 //idfk freebsd 15 is weird w its clang mang
 #endif
@@ -32,45 +30,20 @@
 
 //AND MAKE RESPONSIBILITES AND CODE IN GENERAL MORE CLEAN AND EASY TO READ
 
+namespace PeachCore::Subsystem {
+
+    constexpr uint8_t Render = 1u << 0;
+    constexpr uint8_t Network = 1u << 1;
+    constexpr uint8_t Physics2D = 1u << 2;
+    constexpr uint8_t Physics3D = 1u << 3;
+    constexpr uint8_t Audio = 1u << 4;
+}
+
 namespace PeachCore {
 
-    //////////////////////////////////////////////
-    // ThreadName Enum
-    //////////////////////////////////////////////
+    using RequiredSubsystems = uint8_t;
 
-    enum class ThreadName : uint8_t
-    {
-        MainThread = 1 << 0,
-        RenderThread = 1 << 1,
-        ResourceThread = 1 << 2,
-        NetworkThread = 1 << 3,
-        PhysicsThread = 1 << 4,
-        AudioThread = 1 << 5,
-
-        NO_THREAD = 0,
-        ALL_THREADS = MainThread | RenderThread | ResourceThread | NetworkThread | PhysicsThread | AudioThread
-    };
-
-    constexpr inline
-        ThreadName operator|(ThreadName fp_FuckCpp, ThreadName fp_FuckYou) //fuck C++ CoodOEOs MSelLLLSlelS Ss brb ima write C++ like java and be confused why it doesn't work uwu
-        noexcept
-    {
-        return static_cast<ThreadName>(static_cast<uint8_t>(fp_FuckCpp) | static_cast<uint8_t>(fp_FuckYou));
-    }
-
-    constexpr inline bool 
-        operator&(ThreadName fp_FuckCpp, ThreadName fp_FuckYou)
-        noexcept
-    {
-        return static_cast<uint8_t>(fp_FuckCpp) & static_cast<uint8_t>(fp_FuckYou);
-    }
-
-    constexpr inline ThreadName
-        operator^(ThreadName fp_FuckCpp, ThreadName fp_FuckYou)
-        noexcept
-    {
-        return static_cast<ThreadName>(static_cast<uint8_t>(fp_FuckCpp) ^ static_cast<uint8_t>(fp_FuckYou));
-    }
+    // using Subsystem = uint8_t;
 
     enum class ScriptRuntimeType : uint8_t
     {
@@ -82,12 +55,8 @@ namespace PeachCore {
 
     struct GameManager 
     {
-    //////////////////////////////////////////////
-    // Private Destructor and Constructor
-    //////////////////////////////////////////////
-    private:
+    public:
         ~GameManager() = default;
-        GameManager() = default;
 
     //////////////////////////////////////////////
     // Singleton Instance
@@ -99,6 +68,9 @@ namespace PeachCore {
             return peach_engine;
         }
 
+    private:
+        GameManager() = default;
+        
         GameManager(const GameManager&) = delete;
         GameManager& operator=(const GameManager&) = delete;
         GameManager(GameManager&&) = delete;
@@ -111,7 +83,7 @@ namespace PeachCore {
         //////////////////// FPS Vars ////////////////////
 
         size_t USER_DEFINED_CONSTANT_UPDATE_FPS = 60u;
-        size_t USER_DEFINED_POLLING_RATE = 1000u; //Needs to be adjustable in-game so no const >w<
+        size_t USER_DEFINED_POLLING_RATE = 10u; //Needs to be adjustable in-game so no const >w<
 
         float pm_CurrentTimeScale = 1.0f;
 
@@ -123,13 +95,8 @@ namespace PeachCore {
         //////////////////// Loading/Command Queues ////////////////////
 
         shared_ptr<LoadCommandPipe> pm_ResourceCommandQueue{ nullptr };
-
         shared_ptr<RenderCommandPipe> pm_RenderCommandQueue{ nullptr };
-
         shared_ptr<AudioCommandPipe> pm_AudioCommandQueue{ nullptr };
-
-        shared_ptr<NetworkCommandPipe> pm_NetworkCommandQueue = nullptr;
-        shared_ptr<PhysicsCommandPipe> pm_PhysicsCommandQueue = nullptr;
 
         //shared_ptr<CommandQueue> m_UserScriptCommandQueue = nullptr; //XXX: used for submitting update commands -> GameManager from script runtimes from multiple threads owo
 
@@ -144,12 +111,12 @@ namespace PeachCore {
         //////////////////// Thread Handles ////////////////////
 
         RenderingManager pm_RenderingManager;
-        thread pm_PhysicsThread;
-        thread pm_ResourceThread;
-        thread pm_AudioThread;
-        thread pm_NetworkThread;
+        PhysicsManager pm_PhysicsManager;
+        ResourceManager pm_ResourceManager;
+        AudioManager pm_AudioManager;
+        NetworkManager pm_NetworkManager;
 
-        ThreadName pm_RequiredThreads = ThreadName::NO_THREAD; //required threads for execution
+        RequiredSubsystems pm_ActiveSubsystems = 0; //required threads for execution
 
         //////////////////// Scene Stuff ////////////////////
 
@@ -159,8 +126,6 @@ namespace PeachCore {
         //////////////////// Thread Syncro Stuff ////////////////////
 
         atomic<bool> m_IsRunning{ true };
-        latch pm_ThreadInitializationLatch{ 4 }; //4 because thats the number of thread managers  - 1 because the resourcemanager has its own latch since the order is : resource thread first, then every other thread since those arent order sensitive uwu
-        latch pm_ResourceInitializationLatch{ 1 };
 
         SDL_Window* pm_MainWindow = nullptr;
         vector<SDL_WindowID> pm_CloseWindowRequests;
@@ -178,7 +143,7 @@ namespace PeachCore {
             InitializePeachEngineCustom //used headless
             (
                 const string& fp_RootPath,
-                const ThreadName fp_RequiredThreads,
+                const RequiredSubsystems fp_RequiredSubsystems,
                 const RendererType fp_RenderingBackend,
                 const uint32_t fp_StartingWindowWidth,
                 const uint32_t fp_StartingWindowHeight,
@@ -231,19 +196,15 @@ namespace PeachCore {
 
         //////////////////////////////////////// Thread Methods ////////////////////////////////////////
 
-        bool
-            InitializeThreads
+        PEACH_STATUS_CODE
+            InitializeThreads //probs should use uint32_t flags instead, since this will be read from a binary or peach.boot.override file owo
             (
                 const string& fp_RootPath,
                 const uint32_t fp_InitialWindowWidth,
                 const uint32_t fp_InitialWindowHeight,
                 RendererType fp_RenderingBackend, //o7
-                const bool fp_Is3D = false
-
+                const bool fp_IsRendering3D = false
             );
-
-        bool
-            RetrieveQueues();
 
         bool
             InitializePhysFS(const char* fp_RootPath);

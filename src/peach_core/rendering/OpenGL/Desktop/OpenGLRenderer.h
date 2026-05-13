@@ -72,19 +72,23 @@ namespace PeachCore::OpenGL {
 
         SDL_GLContext pm_OpenGLContext;
 
-        shared_ptr<Logger> rendering_logger = nullptr;
+        unique_ptr<Logger> gl_logger = nullptr;
 
     public:
         ~Renderer() = default; //driver + OS will clean things up faster tbh
+        Renderer() = default;
 
         [[nodiscard]] PEACH_STATUS_CODE //peach renderer is never supposed to create an sdl window, it only manages closing it
             Initialize 
             (
                 SDL_Window* fp_CurrentWindow,
                 SDL_GLContext fp_OpenGLContext,
-                shared_ptr<Logger> fp_RenderingLogger,
-                const bool fp_Is3DEnabled = false
+                const bool fp_Is3DEnabled,
+                const string& fp_LogOutputDirectory
             );
+
+        void
+            UpdateForNewThread();
 
         void
             SetMainWindow(SDL_Window* fp_SDLWindow);

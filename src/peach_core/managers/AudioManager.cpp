@@ -13,22 +13,9 @@
 namespace PeachCore {
 
     void
-        AudioManager::AudioLoop
-        (
-            const string& fp_LogOutputDirectory, 
-            const float fp_InitialVolume,
-            latch& fp_InitLatch
-        )
+        AudioManager::AudioLoop()
     {
-        PEACH_TO_DO_UNUSED(fp_InitialVolume);
-
-        if (not InitializeAudioEngine(fp_LogOutputDirectory))
-        {
-
-            return;
-        }
-
-        fp_InitLatch.count_down();
+        audio_logger->UpdateThreadOwner();
 
         AudioCommand f_AudioCommand;
 
@@ -44,7 +31,7 @@ namespace PeachCore {
             
             do { //needa do this since i already acquired a ticket so needa process a command if i wanna keep the N tickets N jobs system otherwise it'll do N tickets N-1 jobs since the loop acquires a ticket as well
                 
-                if (not pm_AudioCommandQueue->try_dequeue(f_AudioCommand))
+                if (not pm_AudioCommandQueue.try_dequeue(f_AudioCommand))
                 {
                     break;
                 }
@@ -65,18 +52,48 @@ namespace PeachCore {
     }
 
     void
-        AudioManager::Stop()
+        AudioManager::ShutdownSubsystem(Logger*const logger)
     {
+        if(not logger) [[unlikely]]
+        {
+            PEACH_PRINT_ERROR("Tried to pass nullptr reference to logger inside AudioManager::ShutdownSubsystem()");
+            return;
+        }
+
+        if(not pm_IsInitialized.load(std::memory_order_acquire))
+        {
+            logger->Error("Tried to call ShutdownSubsystem() on AudioManager when audio thread was never started owo wtf mang ;w;", "AudioManager"); 
+            return;
+        }
+
         pm_IsRunning.store(false, std::memory_order_release);
-        pm_AudioSemaphore.release(); // wake up to exit        
+        pm_AudioSemaphore.release(); // wake up to exit     
+        
+        if (pm_AudioThread.joinable()) 
+        { 
+            pm_AudioThread.join(); 
+            logger->Info("Successfully joined audio thread", "AudioManager");
+        }
     }
 
     bool 
         AudioManager::InitializeAudioEngine
         (
+            const float fp_InitialVolume,
+            shared_ptr<AudioResourcePipe> fp_AudioResourcePipe,
             const string& fp_LogOutputDirectory
         )
     {
+        PEACH_TO_DO_UNUSED(fp_InitialVolume);
+
+        //////////////////// Guard against multiple initializations owo ////////////////////
+
+        if(pm_IsInitialized.load(std::memory_order_acquire)) //XXX: can log here since initialization was successful before owo
+        {
+            audio_logger->Warning("Tried to initialize audio manager again, what are you doing? this request was ignored >w<", "AudioManager");
+            return false;
+        }
+
         //////////////////// Initialize Logger ////////////////////
 
         audio_logger = LogManager::get_single().CreateUniqueLogger("AudioManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
@@ -91,20 +108,28 @@ namespace PeachCore {
 
         //////////////////// Initialize Loading and Command Queues ////////////////////
 
-        if (not InitializeLoadingQueue())
+        if (not fp_AudioResourcePipe)
         {
-            audio_logger->Fatal("Initialization failed: AudioManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "AudioManager");
+            audio_logger->Fatal("Initialization failed! AudioManager was not able to obtain a valid LoadingQueue, exiting execution immediately, did you pass a nullptr reference to the audio resource transfer pipe?", "AudioManager");
             return false;
         }
 
-        InitializeAudioCommandQueue();
+        pm_LoadedAudioResourceQueue = fp_AudioResourcePipe;
+
+        audio_logger->Info("AudioManager successfully retrieved loaded resource queue from ResourceManager", "AudioManager");
+
+        //////////////////// Start Thread >w< ////////////////////
+
+        pm_AudioThread = thread
+        (
+            &AudioManager::AudioLoop,
+            this
+        );
 
         //////////////////// Initialized Successfully! ////////////////////
 
         audio_logger->Info("AudioLogger successfully initialized", "AudioManager");
-
-        pm_IsInitialized = true;
-
+        pm_IsInitialized.store(true);
         return true;
     }
 
@@ -115,78 +140,18 @@ namespace PeachCore {
         //if (pm_Context) {alcDestroyContext(pm_Context);}
         //if (pm_Device) {alcCloseDevice(pm_Device);}
     }
-
-    bool
-        AudioManager::InitializeLoadingQueue()
-    {
-        if (pm_LoadedAudioResourceQueue)
-        {
-            audio_logger->Warning("AudioManager already retrieved the loaded resource queue from ResourceManager >O<", "AudioManager");
-            return false;
-        }
-
-        pm_LoadedAudioResourceQueue = ResourceManager::get_single().GetAudioResourceLoadingQueue(audio_logger.get());
-
-        if (not pm_LoadedAudioResourceQueue)
-        {
-            audio_logger->Error("AudioManager failed to retrieve LoadingQueue from ResourceManager, nullptr ref was found >O<", "AudioManager");
-            return false;
-        }
-
-        audio_logger->Info("AudioManager successfully retrieved loaded resource queue from ResourceManager", "AudioManager");
-
-        return true;
-    }
-
-    bool
-        AudioManager::InitializeAudioCommandQueue()
-    {
-        if (pm_AudioCommandQueue)
-        {
-            audio_logger->Warning("AudioManager already initialized the audio command queue >O<", "AudioManager");
-            return false;
-        }
-
-        pm_AudioCommandQueue = make_shared<AudioCommandPipe>();
-
-        audio_logger->Info("AudioManager successfully initialized the audio command queue", "AudioManager");
-
-        return true; //returns one and only one ptr to whoever initializes AudioManager, this is meant only for the main thread
-    }
-
-    [[nodiscard]] shared_ptr<AudioCommandPipe>
-        AudioManager::GetAudioCommandQueue(Logger*const logger)
-    {
-        if (not logger)
-        {
-            PEACH_PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
-            return nullptr;
-        }
-        else if (not pm_IsInitialized)
-        {
-            logger->Error("Attempted to get a reference to AudioManager's AudioCommandQueue before AudioManager was initialized, please initialize AudioManager first UwU", "AudioManager");
-            return nullptr;
-        }
-        else if (pm_AudioCommandQueue.use_count() >= 2)
-        {
-            logger->Warning("AudioManager has already issued a reference to the audio command queue, fuck off", "AudioManager");
-            return nullptr;
-        }
-
-        return pm_AudioCommandQueue;
-    }
     
     void 
-        AudioManager::ProcessCommand(const AudioCommand& fp_AudioCommand)
+        AudioManager::ProcessCommand(AudioCommand fp_AudioCommand)
     {
         //ye
         PEACH_TO_DO_UNUSED(fp_AudioCommand);
     }
 
-    void 
-        AudioManager::OnResourceTransfer(const ResourceTransfer& fp_ResourceTransfer)
-    {
-        PEACH_TO_DO_UNUSED(fp_ResourceTransfer);
+    // void 
+    //     AudioManager::OnResourceTransfer(const ResourceTransfer& fp_ResourceTransfer)
+    // {
+        // PEACH_TO_DO_UNUSED(fp_ResourceTransfer);
 
         //if (not holds_alternative<unique_ptr<AudioData>>(rt.Payload))
         //{
@@ -231,5 +196,5 @@ namespace PeachCore {
         //{
         //    // log error
         //}
-    }
+    // }
 }

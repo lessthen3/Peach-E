@@ -131,11 +131,11 @@ namespace PeachCore {
         //////////////////////////////////////////////
     public:
 
-        [[nodiscard]] bool
-            UpdateThreadOwner //the owning thread must update and pass off the logger to be considered valid otherwise it wont uwu
-            (
-                const thread::id& fp_NewThreadID
-            );
+        PEACH_FORCEINLINE void
+            UpdateThreadOwner () //the owning thread must update and pass off the logger to be considered valid otherwise it wont uwu
+        {
+            pm_ThreadOwnerID = this_thread::get_id();
+        }
 
         [[nodiscard]] bool
             UpdateActiveMask(const uint32_t fp_NewLogMask);

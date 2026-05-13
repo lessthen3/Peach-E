@@ -121,21 +121,20 @@ namespace PeachCore {
     // Public Destructor
     //////////////////////////////////////////////
     public:
-        //IMPORTANT: not really needed to cleanup here and the OS will def clear the memory block associated w the process quicker, RenderingManager Lifetime = Process Lifetime
-        ~RenderingManager() = default; 
+        ~RenderingManager() = default; //IMPORTANT: not really needed to cleanup here and the OS will def clear the memory block associated w the process quicker, RenderingManager Lifetime = Process Lifetime
 
     //////////////////////////////////////////////
     // Private Constructor
     //////////////////////////////////////////////
     private:
-        friend GameManager;
-
         explicit RenderingManager() = default; //explicitly nothing UwU >O<
+
         RenderingManager(const RenderingManager&) = delete;
         RenderingManager& operator=(const RenderingManager&) = delete;
-
         RenderingManager(RenderingManager&&) = delete;
         RenderingManager& operator=(RenderingManager&&) = delete;
+
+        friend GameManager;
 
     //////////////////////////////////////////////
     // Private Members
@@ -172,8 +171,8 @@ namespace PeachCore {
 
         //////////////////// Command/Resource Queue ////////////////////
 
-        shared_ptr<RenderCommandPipe> pm_RenderCommandQueue = nullptr;
-        shared_ptr<ResourcePipe> pm_LoadedResourceQueue = nullptr;
+        RenderCommandPipe pm_RenderCommandQueue;
+        shared_ptr<RenderingResourcePipe> pm_LoadedResourceQueue = nullptr;
 
         //////////////////// Window Stuff ////////////////////
 
@@ -182,7 +181,7 @@ namespace PeachCore {
 
         //////////////////// Logger ////////////////////
 
-        shared_ptr<Logger> rendering_logger = nullptr;
+        unique_ptr<Logger> rendering_logger = nullptr;
 
         unique_ptr<unsigned char> pm_DefaultTexture = nullptr;
 
@@ -194,66 +193,20 @@ namespace PeachCore {
     // Public Methods
     //////////////////////////////////////////////
     public:
-
-#ifdef PEACH_RENDERER_VULKAN
         void
-            RenderLoopVK();
-#endif /*PEACH_RENDERER_VULKAN*/
-
-#ifdef PEACH_RENDERER_OPENGL
-        void
-            RenderLoopGL();
-    private:
-        [[nodiscard]] bool
-            PresentFrameGL();
-    public:
-#endif /*PEACH_RENDERER_OPENGL*/
-
-#ifdef PEACH_RENDERER_METAL 
-        void
-            RenderLoopMetal();
-    private:
-        [[nodiscard]] PEACH_STATUS_CODE
-            InitializeMetal();
-
-        [[nodiscard]] bool
-            PresentFrameMetal();
-    public:
-#endif /*PEACH_RENDERER_METAL*/
-
-#ifdef PEACH_RENDERER_OPENGL_ES
-        void
-            RenderLoopOpenGLES();
-    private:
-        [[nodiscard]] PEACH_STATUS_CODE
-            InitializeOpenGLES();
-    public:
-#endif
-
-#ifdef PEACH_RENDERER_WEBGL
-        void
-            RenderLoopWebGL();
-    private:
-        [[nodiscard]] PEACH_STATUS_CODE
-            InitializeWebGL();
-    public:
-#endif /*PEACH_RENDERER_WEBGL*/
-
-        void
-            Stop()
-            noexcept;
-
-        [[nodiscard]] shared_ptr<RenderCommandPipe>
-            GetDrawCommandQueue
-            (
-                Logger*const logger
-            ); //this is supposed to be called from the main thread so cant use the rendering_logger here for thread reasons
-
+            ShutdownSubsystem(Logger*const logger);
+            
         void 
             ResizeWindow();
 
         void 
             GetCurrentViewPort();
+        
+        PEACH_FORCEINLINE void
+            PushCommand(RenderCommand fp_RenderCommand)
+        {
+            pm_RenderCommandQueue.enqueue(fp_RenderCommand);
+        }
 
         [[nodiscard]] PEACH_FORCEINLINE bool
             IsActive()
@@ -299,6 +252,7 @@ namespace PeachCore {
             Initialize
             (
                 const RendererType fp_RequiredRenderingBacked,
+                shared_ptr<RenderingResourcePipe> fp_RenderingResourcePipe,
                 SDL_Window* fp_MainWindow,
                 const uint32_t fp_InitialWindowWidth,
                 const uint32_t fp_InitialWindowHeight,
@@ -306,16 +260,51 @@ namespace PeachCore {
                 const string& fp_LogOutputDirectory
             );
 
-        bool
-            InitializeLoadingQueue();
-
-        bool
-            InitializeDrawCommandQueue();
-
         [[nodiscard]] bool
             ProcessCommands();
 
         void
             Shutdown();
+
+        #ifdef PEACH_RENDERER_VULKAN
+            void
+                RenderLoopVK();
+        #endif /*PEACH_RENDERER_VULKAN*/
+
+        #ifdef PEACH_RENDERER_OPENGL
+            void
+                RenderLoopGL();
+        private:
+            [[nodiscard]] bool
+                PresentFrameGL();
+        public:
+        #endif /*PEACH_RENDERER_OPENGL*/
+
+        #ifdef PEACH_RENDERER_METAL 
+            void
+                RenderLoopMetal();
+        private:
+            [[nodiscard]] bool
+                PresentFrameMetal();
+        public:
+        #endif /*PEACH_RENDERER_METAL*/
+
+        #ifdef PEACH_RENDERER_OPENGL_ES
+            void
+                RenderLoopOpenGLES();
+        private:
+            [[nodiscard]] PEACH_STATUS_CODE
+                InitializeOpenGLES();
+        public:
+        #endif
+
+        #ifdef PEACH_RENDERER_WEBGL
+            void
+                RenderLoopWebGL();
+        private:
+            [[nodiscard]] PEACH_STATUS_CODE
+                InitializeWebGL();
+        public:
+        #endif /*PEACH_RENDERER_WEBGL*/
     };
 }

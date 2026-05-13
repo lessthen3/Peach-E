@@ -12,6 +12,7 @@
 
 #include "VulkanRenderer.h"
 #include "managers/InputManager.h"
+#include "managers/LogManager.h"
 
 namespace PeachCore::Vulkan {
 

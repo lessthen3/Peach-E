@@ -9,7 +9,7 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "NetworkManager.h"
-#include "managers/LogManager.h"
+#include "LogManager.h"
 
 namespace PeachCore {
 
@@ -26,30 +26,23 @@ namespace PeachCore {
             PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: NetworkManager failed to initialize the network_thread logger >w<");
             return false;
         }
-        
-        pm_NetworkCommandQueue = make_shared<NetworkCommandPipe>();
+
+        pm_NetworkThread = thread
+        (
+            &NetworkManager::NetworkLoop,
+            this
+        );        
 
         network_logger->Info("NetworkLogger successfully initialized", "NetworkManager");
-        pm_IsInitialized = true;
+
+        pm_IsInitialized.store(true);
         
         return true;
     }
 
     void
-         NetworkManager::NetworkLoop
-        (
-            const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch
-        )
+         NetworkManager::NetworkLoop()
     {
-        if (not InitializeNetworking(fp_LogOutputDirectory))
-        {
-            PEACH_PRINT_ERROR("Failed to Initialize Network Thread!");
-            return;
-        }
-
-        fp_InitLatch.count_down();
-
         while (pm_IsRunning.load(std::memory_order_acquire))
         {
             // Block until main thread wakes us
@@ -71,31 +64,27 @@ namespace PeachCore {
     }
 
     void
-        NetworkManager::Stop()
+        NetworkManager::ShutdownSubsystem(Logger*const logger)
     {
+        if(not logger) [[unlikely]]
+        {
+            PEACH_PRINT_ERROR("Tried to pass nullptr reference to logger inside NetworkManager::ShutdownSubsystem()");
+            return;
+        }
+
+        if(not pm_IsInitialized.load(std::memory_order_acquire))
+        {
+            logger->Error("Tried to call ShutdownSubsystem() on Network Manager when network thread was never started owo wtf mang ;w;", "NetworkManager");
+            return;
+        }
+
         pm_IsRunning.store(false, std::memory_order_release);
-        pm_NetworkSemaphore.release(); // Wake it up to exit        
-    }
-
-    [[nodiscard]] shared_ptr<NetworkCommandPipe>
-        NetworkManager::GetNetworkCommandQueue(Logger* const logger)
-    {
-        if (not logger)
-        {
-            PEACH_PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
-            return nullptr;
+        pm_NetworkSemaphore.release(); // Wake it up to exit 
+        
+        if (pm_NetworkThread.joinable()) 
+        { 
+            pm_NetworkThread.join(); 
+            logger->Info("Successfully joined network thread", "NetworkManager");
         }
-        else if (not pm_IsInitialized)
-        {
-            logger->Error("Attempted to get a reference to AudioManager's AudioCommandQueue before AudioManager was initialized, please initialize AudioManager first UwU", "AudioManager");
-            return nullptr;
-        }
-        else if (pm_NetworkCommandQueue.use_count() >= 2)
-        {
-            logger->Warning("AudioManager has already issued a reference to the audio command queue, fuck off", "AudioManager");
-            return nullptr;
-        }
-
-        return pm_NetworkCommandQueue;
     }
 }

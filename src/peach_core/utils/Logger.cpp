@@ -168,23 +168,6 @@ namespace PeachCore{
         CloseOpenLogFiles(); //Closes any files that are open to prevent introducing vulnerabilities in privileged environments
     }
 
-    bool
-        Logger::UpdateThreadOwner //the owning thread must update and pass off the logger to be considered valid otherwise it wont uwu
-        (
-            const thread::id& fp_NewThreadID
-        )
-    {
-        // if (not AssertThreadAccess("UpdateThreadOwner")) //can't log here since it's only triggered by improper thread usage which will trigger asserthreadacess again
-        // {
-        //     PEACH_PRINT_ERROR_FMT("Tried to call UpdateThreadOwner from a thread that didn't own logger named: {}", pm_LoggerName);
-        //     return false;
-        // }
-
-        pm_ThreadOwnerID = fp_NewThreadID;
-
-        return true;
-    }
-
    bool
         Logger::UpdateActiveMask(const uint32_t fp_NewLogMask)
     {
@@ -448,42 +431,46 @@ namespace PeachCore{
         pm_LoggerName = fp_DesiredLoggerName;
         pm_CurrentWorkingDirectory = fp_DesiredOutputDirectory + "/" + pm_LoggerName;
 
-        if (fp_Flags & PEACH_LOG_TO_ONLY_SNAPSHOT_BUFFER)
-        {
-            pm_LogToFile = false;
-        }
-
         ////////////////////////////////////////////// Set Flush Mask //////////////////////////////////////////////
 
         pm_FlushMask = ExtractFlushMask(fp_Flags);
 
-        ////////////////////////////////////////////// Ensure log directory exists //////////////////////////////////////////////
+        ////////////////////////////////////////////// Create Log Files or Skip if only snapshot buffer is requested owo //////////////////////////////////////////////
 
-        if (not filesystem::exists(pm_CurrentWorkingDirectory))
+        if (fp_Flags & PEACH_LOG_TO_ONLY_SNAPSHOT_BUFFER)
         {
-            if (fp_Flags & PEACH_DONT_CREATE_DIRECTORY)
-            {
-                PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: Failed to find valid log output directory");
-                return false;
-            }
-
-            try
-            {
-                filesystem::create_directories(pm_CurrentWorkingDirectory); //XXX: this can throw so we wrap it in a try catch
-            }
-            catch (const exception& f_Exception)
-            {
-                PEACH_PRINT_ERROR_FMT("Failed to create desired log output directory with exception: '{}'", f_Exception.what());
-                return false;
-            }
+            pm_LogToFile = false;
         }
-
-        ////////////////////////////////////////////// Create Log Files Based on Current Active Mask //////////////////////////////////////////////
-
-        if (not UpdateActiveMask(fp_Flags))
+        else 
         {
-            PEACH_PRINT_ERROR_FMT("[CRITICAL_LOGGING_ERROR]: Failed to create required log files for logger named: {}", pm_LoggerName);
-            return false;
+            ////////////////////////////////////////////// Ensure log directory exists //////////////////////////////////////////////
+
+            if (not filesystem::exists(pm_CurrentWorkingDirectory))
+            {
+                if (fp_Flags & PEACH_DONT_CREATE_DIRECTORY)
+                {
+                    PEACH_PRINT_ERROR("[CRITICAL_LOGGING_ERROR]: Failed to find valid log output directory");
+                    return false;
+                }
+
+                try
+                {
+                    filesystem::create_directories(pm_CurrentWorkingDirectory); //XXX: this can throw so we wrap it in a try catch
+                }
+                catch (const exception& f_Exception)
+                {
+                    PEACH_PRINT_ERROR_FMT("Failed to create desired log output directory with exception: '{}'", f_Exception.what());
+                    return false;
+                }
+            }
+
+            ////////////////////////////////////////////// Create Log Files Based on Current Active Mask //////////////////////////////////////////////
+
+            if (not UpdateActiveMask(fp_Flags))
+            {
+                PEACH_PRINT_ERROR_FMT("[CRITICAL_LOGGING_ERROR]: Failed to create required log files for logger named: {}", pm_LoggerName);
+                return false;
+            }
         }
 
         ////////////////////////////////////////////// Success! //////////////////////////////////////////////

@@ -12,7 +12,6 @@
 
 ///STL
 #include <semaphore>
-#include <latch>
 #include <filesystem>
 #include <unordered_map>
 #include <variant>
@@ -216,23 +215,34 @@ namespace PeachCore {
 
     };
 
-    using ResourcePayload = variant<
+    using RenderingResourcePayload = variant<
+        //Rendering Data
         unique_ptr<TextureData>,
-        unique_ptr<AudioData>,
         unique_ptr<MeshData>,
         unique_ptr<AnimationData> ,
-        unique_ptr<BytecodeData>,
-        unique_ptr<ScriptData>,
-        unique_ptr<NativeScriptData>,
-        unique_ptr<SceneData>,
         unique_ptr<VulkanShaderBytecode>
     >;
 
+    using AudioResourcePayload = variant<
+        //Audio Stuff
+        unique_ptr<AudioData>
+    >;
+
+    using SceneTreeResourcePayload = variant<
+        //Scripts
+        unique_ptr<ScriptData>,
+        unique_ptr<NativeScriptData>,
+        unique_ptr<BytecodeData>,
+
+        //Scene Data
+        unique_ptr<SceneData> //dunno if i need this since its an offset in the peach binary table and its read-only so yeah owo
+    >;
+
+    template<typename ResourcePayloadType>
     struct ResourceTransfer //just gonna use holds_alternative instead of a tagged union
     {
         const PEACH_NodeID NodeID;   // who this is for
-
-        ResourcePayload Payload;
+        ResourcePayloadType Payload;
 
         ~ResourceTransfer() = default;
 
@@ -240,7 +250,7 @@ namespace PeachCore {
             ResourceTransfer
             (
                 const PEACH_NodeID fp_NodeDestination, 
-                ResourcePayload&& fp_ResourcePayload
+                ResourcePayloadType&& fp_ResourcePayload
             )
             :
             NodeID(fp_NodeDestination),
@@ -248,87 +258,89 @@ namespace PeachCore {
         {}
     };
 
-    using ResourcePipe = moodycamel::ReaderWriterQueue<ResourceTransfer, MOODY_CAMEL_QUEUE_SIZE>;
+    using AudioResourcePipe = moodycamel::ReaderWriterQueue<ResourceTransfer<AudioResourcePayload>, MOODY_CAMEL_QUEUE_SIZE>;
+    using RenderingResourcePipe = moodycamel::ReaderWriterQueue<ResourceTransfer<RenderingResourcePayload>, MOODY_CAMEL_QUEUE_SIZE>;
+    using SceneTreeResourcePipe = moodycamel::ReaderWriterQueue<ResourceTransfer<SceneTreeResourcePayload>, MOODY_CAMEL_QUEUE_SIZE>;
+
     using LoadCommandPipe = moodycamel::ReaderWriterQueue<LoadCommand, MOODY_CAMEL_QUEUE_SIZE>;
+
+    struct GameManager;
 
     //////////////////////////////////////////////
     // ResourceManager Class
     //////////////////////////////////////////////
+
     class ResourceManager 
     {
     //////////////////////////////////////////////
     // Private Destructor & Constructor
     //////////////////////////////////////////////
-    private:
+    public:
         ~ResourceManager() = default;
-        ResourceManager() = default;
 
     //////////////////////////////////////////////
     // Singleton Instance
     //////////////////////////////////////////////
     public:
-        static ResourceManager& get_single()
-        {
-            static ResourceManager resource_loader;
-            return resource_loader;
-        }
+        ResourceManager() = default;
 
         ResourceManager(const ResourceManager&) = delete;
         ResourceManager& operator=(const ResourceManager&) = delete;
-
         ResourceManager(ResourceManager&&) = delete;
         ResourceManager& operator=(ResourceManager&&) = delete;
+
+        friend GameManager;
 
     private:
     //////////////////////////////////////////////
     // Private Members
     //////////////////////////////////////////////
     private:
+        //////////////////// Resource Logger ////////////////////
+
+        unique_ptr<Logger> resource_logger = nullptr;
+
         //////////////////// Resource Transfer Queues ////////////////////
 
         //used to push loaded assets that are destined for AudioManager
-        shared_ptr<ResourcePipe> pm_AudioResourceLoadingQueue = nullptr;
+        shared_ptr<AudioResourcePipe> pm_AudioResourceLoadingQueue = nullptr;
         //used to push loaded assets that are destined for RenderingManager
-        shared_ptr<ResourcePipe> pm_DrawableResourceLoadingQueue = nullptr;
+        shared_ptr<RenderingResourcePipe> pm_DrawableResourceLoadingQueue = nullptr;
         //used to push loaded scripts and config stuff -> MainThread/GameManager
-        shared_ptr<ResourcePipe> pm_MainThreadLoadingQueue = nullptr;
+        shared_ptr<SceneTreeResourcePipe> pm_MainThreadLoadingQueue = nullptr;
 
         //////////////////// Load Command Queue ////////////////////
 
         //used for asking ResourceManager to load something from the main thread
-        shared_ptr<LoadCommandPipe> pm_LoadCommandQueue = nullptr;
-
-        //////////////////// Resource Logger ////////////////////
-
-        //Resource Logger owned by ResourceManager only
-        unique_ptr<Logger> resource_logger = nullptr;
+        LoadCommandPipe pm_LoadCommandQueue;
 
         //////////////////// Thread Initialization Safeguards ////////////////////
 
-        bool pm_IsInitialized = false;
+        atomic<bool> pm_IsInitialized = false;
+        atomic<bool> pm_IsRunning = true;
 
         //////////////////// Semaphore Control ////////////////////
 
         MaxCountingSemaphore pm_ResourceSemaphore{ 0 }; // starts locked (zero tickets)
 
-        atomic<bool> pm_IsRunning = true;
-
         //////////////////// Binary Data ////////////////////
 
-        using PeachBinary = unordered_map<string, uint64_t>; // res:// path : binary_offset
+        using PeachBinaryTable = unordered_map<string, uint64_t>; // res:// path : binary_offset
 
-        PeachBinary pm_OffsetTable; // res:// : binary_offset
+        PeachBinaryTable pm_OffsetTable; // res:// : binary_offset
         vector<uint8_t> pm_PeachBinary;
 
         //////////////////// Directory Information ////////////////////
 
         string pm_RootDirectory;
 
+        std::thread pm_ResourceThread;
+
     //////////////////////////////////////////////
     // Public Methods
     //////////////////////////////////////////////
     public:
-        bool
+        [[nodiscard]] bool
             Initialize
             (
                 const string& fp_LogOutputDirectory,
@@ -336,30 +348,19 @@ namespace PeachCore {
             );
 
         void
-            ResourceLoop
-            (
-                const string& fp_LogOutputDirectory,
-                const string& fp_RootPhysfsDirectory,
-               latch& fp_InitLatch
-            );
+            ResourceLoop();
 
-        [[nodiscard]] shared_ptr<ResourcePipe>
+        [[nodiscard]] shared_ptr<AudioResourcePipe>
             GetAudioResourceLoadingQueue
             (
                 Logger*const logger
             ); //this is supposed to be called from the audio thread so cant use the resource_logger here for thread reasons
 
-        [[nodiscard]] shared_ptr<ResourcePipe>
+        [[nodiscard]] shared_ptr<RenderingResourcePipe>
             GetDrawableResourceLoadingQueue
             (
                 Logger* const logger
             ); //this is supposed to be called from the render thread so cant use the resource_logger here for thread reasons
-
-        [[nodiscard]] shared_ptr<LoadCommandPipe>
-            GetLoadCommandQueue
-            (
-                Logger* const logger
-            ); //this is supposed to be called from the main thread so cant use the resource_logger here for thread reasons
 
         bool
             LoadDotNetRuntime
@@ -377,10 +378,34 @@ namespace PeachCore {
             const;
 
         void
-            Stop()
+            ShutdownSubsystem(Logger*const logger) //should only be called by main thread owo
         {
+            if(not logger) [[unlikely]]
+            {
+                PEACH_PRINT_ERROR("Tried to pass nullptr reference to logger inside ResourceManager::ShutdownSubsystem()");
+                return;
+            }
+            
+            if(not pm_IsInitialized.load(std::memory_order_acquire))
+            {
+                logger->Error("Tried to call ShutdownSubsystem() on ResourceManager when resource thread was never started owo wtf mang ;w;", "ResourceManager");
+                return;
+            }
+
             pm_IsRunning.store(false, std::memory_order_release);
-            pm_ResourceSemaphore.release(); // Wake it up to exit        
+            pm_ResourceSemaphore.release(); // Wake it up to exit     
+            
+            if (pm_ResourceThread.joinable()) 
+            { 
+                pm_ResourceThread.join(); 
+                logger->Info("Successfully joined the RESOURCE thread", "ResourceManager");
+            }
+        }
+
+        PEACH_FORCEINLINE void
+            PushCommand(LoadCommand fp_LoadCommand)
+        {
+            pm_LoadCommandQueue.enqueue(fp_LoadCommand);
         }
 
     //////////////////////////////////////////////

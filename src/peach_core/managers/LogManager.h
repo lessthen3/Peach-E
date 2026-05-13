@@ -34,7 +34,7 @@ namespace PeachCore {
         void
             RegisterLogger(Logger* fp_Logger)
         {
-            if(not fp_Logger)
+            if(not fp_Logger) [[unlikely]]
             {
                 return;
             }
@@ -48,7 +48,7 @@ namespace PeachCore {
             UnregisterLogger(Logger* fp_Logger) 
             noexcept
         {
-            if(not fp_Logger)
+            if(not fp_Logger) [[unlikely]]
             {
                 return;
             }

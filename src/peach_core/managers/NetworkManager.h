@@ -11,7 +11,6 @@
 #pragma once
 
 ///STL
-#include <latch>
 #include <semaphore>
 
 ///PeachCore
@@ -36,6 +35,8 @@ namespace PeachCore {
 
     using NetworkCommandPipe = moodycamel::ReaderWriterQueue<NetworkCommand, MOODY_CAMEL_QUEUE_SIZE>;
 
+    struct GameManager;
+
     class NetworkManager
     {
     //////////////////////////////////////////////
@@ -45,24 +46,17 @@ namespace PeachCore {
         ~NetworkManager() = default;
 
     //////////////////////////////////////////////
-    // Singleton Instance
-    //////////////////////////////////////////////
-    public:
-        static NetworkManager& get_single()
-        {
-            static NetworkManager network_manager;
-            return network_manager;
-        }
-    //////////////////////////////////////////////
     // Private Constructor
     //////////////////////////////////////////////
     private:
         explicit NetworkManager() = default; //explicitly nothing UwU >O<
+
         NetworkManager(const NetworkManager&) = delete;
         NetworkManager& operator=(const NetworkManager&) = delete;
-
         NetworkManager(NetworkManager&&) = delete;
         NetworkManager& operator=(NetworkManager&&) = delete;
+
+        friend GameManager;
 
     //////////////////////////////////////////////
     // Private Members
@@ -75,7 +69,9 @@ namespace PeachCore {
         atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
         atomic<bool> pm_IsInitialized{ false };
 
-        shared_ptr<NetworkCommandPipe> pm_NetworkCommandQueue = nullptr;
+        std::thread pm_NetworkThread;
+
+        NetworkCommandPipe pm_NetworkCommandQueue;
 
     //////////////////////////////////////////////
     // Public Methods
@@ -88,20 +84,18 @@ namespace PeachCore {
             );
 
         void
-            NetworkLoop
-            (
-                const string& fp_LogOutputDirectory,
-                latch& fp_InitLatch
-            );
+            NetworkLoop();
 
         void
             RequestNetworkStats();
 
         void
-            Stop();
+            ShutdownSubsystem(Logger*const logger);
 
-        [[nodiscard]] shared_ptr<NetworkCommandPipe>
-            GetNetworkCommandQueue(Logger* const logger);
-
+        PEACH_FORCEINLINE void
+            PushCommand(NetworkCommand fp_NetworkCommand)
+        {
+            pm_NetworkCommandQueue.enqueue(fp_NetworkCommand);
+        }
     };
 }

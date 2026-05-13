@@ -33,6 +33,10 @@ namespace PeachCore {
             const string& fp_RootPhysfsDirectory
         )
     {
+        //////////////////// Set Executable Root Directory ////////////////////
+
+        pm_RootDirectory = fp_RootPhysfsDirectory;
+
         //////////////////// Resource Logger Initialization ////////////////////
 
         resource_logger = LogManager::get_single().CreateUniqueLogger("ResourceThread", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
@@ -47,39 +51,30 @@ namespace PeachCore {
 
         //////////////////// Initialize Queues ////////////////////
 
-        pm_AudioResourceLoadingQueue = make_shared<ResourcePipe>();
-        pm_DrawableResourceLoadingQueue = make_shared<ResourcePipe>();
-        pm_MainThreadLoadingQueue = make_shared<ResourcePipe>();
+        pm_AudioResourceLoadingQueue = make_shared<AudioResourcePipe>();
+        pm_DrawableResourceLoadingQueue = make_shared<RenderingResourcePipe>();
+        pm_MainThreadLoadingQueue = make_shared<SceneTreeResourcePipe>();
 
-        pm_LoadCommandQueue = make_shared<LoadCommandPipe>();
+        //////////////////// Start Thread OwO ////////////////////
 
-        //////////////////// Set Executable Root Directory ////////////////////
+        pm_ResourceThread = thread
+        (
+            &ResourceManager::ResourceLoop,
+            this
+        );
 
-        pm_RootDirectory = fp_RootPhysfsDirectory;
+        //////////////////// Initialization Success! ////////////////////
 
         resource_logger->Info("ResourceManager successfully initialized all queues", "ResourceManager");
-
-        pm_IsInitialized = true;
-
+        pm_IsInitialized.store(true);
         return true;
     }
 
     void
-        ResourceManager::ResourceLoop
-        (
-            const string& fp_LogOutputDirectory,
-            const string& fp_RootPhysfsDirectory,
-            latch& fp_InitLatch
-        )
+        ResourceManager::ResourceLoop()
     {
-        if (not Initialize(fp_LogOutputDirectory, fp_RootPhysfsDirectory))
-        {
-
-            return;
-        }
-
-        fp_InitLatch.count_down(); //count down latch should be the resource latch inside gamemanager uwu
-
+        resource_logger->UpdateThreadOwner();
+        
         // LoadCommand* f_LoadCommand = nullptr;
 
         while (pm_IsRunning.load(std::memory_order_acquire))
@@ -183,30 +178,10 @@ namespace PeachCore {
     // Queue Retrieval
     //////////////////////////////////////////////
 
-    shared_ptr<LoadCommandPipe>
-        ResourceManager::GetLoadCommandQueue
-        (
-            Logger*const logger
-        ) //this is supposed to be called from the main thread so cant use the resource_logger here for thread reasons
-    {
-        if (not pm_IsInitialized)
-        {
-            logger->Error("Attempted to get a reference to ResourceManager's LoadCommandQueue before ResourceManager was initialized, please initialize ResourceManager first UwU", "ResourceManager");
-            return nullptr;
-        }
-        else if (pm_LoadCommandQueue.use_count() >= 2)
-        {
-            logger->Error("Attempted to get more than one reference to ResourceManager's LoadCommandQueue >O<", "ResourceManager");
-            return nullptr;
-        }
-
-        return pm_LoadCommandQueue;
-    }
-
     //THESE METHODS ONLY ALLOW A MAXIMUM OF ONE REFERENCE PASSED OUT, TO ANYONE ASKING THIS IS MEANT FOR THE AUDIO/RENDER THREAD
     //This method should be one of the first methods called on startup
 
-    [[nodiscard]] shared_ptr<ResourcePipe>
+    shared_ptr<AudioResourcePipe>
         ResourceManager::GetAudioResourceLoadingQueue
         (
             Logger*const logger
@@ -226,7 +201,7 @@ namespace PeachCore {
         return pm_AudioResourceLoadingQueue;
     }
 
-    [[nodiscard]] shared_ptr<ResourcePipe>
+    shared_ptr<RenderingResourcePipe>
         ResourceManager::GetDrawableResourceLoadingQueue
         (
             Logger* const logger

@@ -9,10 +9,11 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "PhysicsManager.h"
+#include "LogManager.h"
 
 namespace PeachCore {
 
-    [[nodiscard]] bool
+    bool
         PhysicsManager::Initialize(const string& fp_LogOutputDirectory)
     {
         physics_logger = LogManager::get_single().CreateUniqueLogger("PhysicsManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
@@ -25,12 +26,10 @@ namespace PeachCore {
 
         physics_logger->Info("PhysicsLogger successfully initialized", "PhysicsManager");
 
-        pm_PhysicsCommandQueue = make_shared<PhysicsCommandPipe>();
-
         return true;
     }
 
-    [[nodiscard]] bool
+    bool
         PhysicsManager::InitializePhysicsEngine2D
         (
             const string& fp_LogOutputDirectory,
@@ -46,52 +45,30 @@ namespace PeachCore {
         PEACH_TO_DO_UNUSED(fp_GravityX);
         PEACH_TO_DO_UNUSED(fp_GravityY);
 
+        pm_PhysicsThread = thread
+        (
+            &PhysicsManager::PhysicsLoop2D,
+            this
+        );
+
         pm_IsInitialized = true;
 
         return true;
     }
 
-    void
-        PhysicsManager::PhysicsLoop2D
-        (
-            const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch,
-            const float fp_GravityX,
-            const float fp_GravityY
-        )
-    {
-        if (not InitializePhysicsEngine2D(fp_LogOutputDirectory, fp_GravityX, fp_GravityY))
-        {
-            PEACH_PRINT_ERROR("Failed to Initialize Physics Thread!");
-            return;
-        }
-
-        fp_InitLatch.count_down();
-
-        while (pm_IsRunning.load(std::memory_order_acquire))
-        {
-            // Block until main thread wakes us
-            pm_PhysicsSemaphore.acquire();
-
-            if (not pm_IsRunning.load(std::memory_order_acquire))
-            {
-                break; // Double check after wake
-            }
-
-            //ProcessCommands();
-        }
-    }
-
-    [[nodiscard]] bool
-        PhysicsManager::InitializePhysicsEngine3D
-        (
-            const string& fp_LogOutputDirectory
-        )
+    bool
+        PhysicsManager::InitializePhysicsEngine3D(const string& fp_LogOutputDirectory)
     {
         if (not Initialize(fp_LogOutputDirectory))
         {
             return false;
         }
+
+        pm_PhysicsThread = thread
+        (
+            &PhysicsManager::PhysicsLoop3D,
+            this
+        );
         
         //Jolt stuff uwu
 
@@ -101,20 +78,27 @@ namespace PeachCore {
     }
 
     void
-        PhysicsManager::PhysicsLoop3D
-        (
-            const string& fp_LogOutputDirectory,
-            latch& fp_InitLatch
-        )
+        PhysicsManager::PhysicsLoop2D()
     {
-        if (not InitializePhysicsEngine3D(fp_LogOutputDirectory))
+        while (pm_IsRunning.load(std::memory_order_acquire))
         {
-            PEACH_PRINT_ERROR("Failed to Initialize Physics Thread!");
-            return;
+            // Block until main thread wakes us
+            pm_PhysicsSemaphore.acquire();
+
+            if (not pm_IsRunning.load(std::memory_order_acquire)) //IMPORTANT: this is here so that when we call release() from Stop() it exits and hits the latch owo 
+            {
+                break; // Double check after wake
+            }
+
+            //ProcessCommands();
         }
 
-        fp_InitLatch.count_down();
+        pm_IsFinishedStoppingLatch.count_down(); //IMPORTANT: this is required so the thread can be stopped properly and joined safely owo
+    }
 
+    void
+        PhysicsManager::PhysicsLoop3D()
+    {
         while (pm_IsRunning.load(std::memory_order_acquire))
         {
             // Block until main thread wakes us
@@ -127,6 +111,8 @@ namespace PeachCore {
 
             //ProcessCommands();
         }
+
+        pm_IsFinishedStoppingLatch.count_down(); //IMPORTANT: this is required so the thread can be stopped properly and joined safely owo
     }
 
     void
@@ -143,31 +129,29 @@ namespace PeachCore {
     }
 
     void
-        PhysicsManager::Stop()
+        PhysicsManager::ShutdownSubsystem(Logger*const logger)
     {
+        if(not logger) [[unlikely]]
+        {
+            PEACH_PRINT_ERROR("Tried to pass nullptr reference to logger inside PhysicsManager::ShutdownSubsystem()");
+            return;
+        }
+
+        if(not pm_IsInitialized.load(std::memory_order_acquire))
+        {
+            logger->Error("Tried to call ShutdownSubsystem() on Physics Manager when physics thread was never started owo wtf mang ;w;", "PhysicsManager"); 
+            return;
+        }
+
         pm_IsRunning.store(false, std::memory_order_release);
         pm_PhysicsSemaphore.release(); // Wake it up to exit        
-    }
 
-    [[nodiscard]] shared_ptr<PhysicsCommandPipe>
-        PhysicsManager::GetPhysicsCommandQueue(Logger* const logger)
-    {
-        if (not logger)
-        {
-            PEACH_PRINT_ERROR("TRIED TO PASS NULL_PTR REF TO LOGGER INSIDE GetAudioCommandQueue()");
-            return nullptr;
-        }
-        else if (not pm_IsInitialized)
-        {
-            logger->Error("Attempted to get a reference to AudioManager's AudioCommandQueue before AudioManager was initialized, please initialize AudioManager first UwU", "AudioManager");
-            return nullptr;
-        }
-        else if (pm_PhysicsCommandQueue.use_count() >= 2)
-        {
-            logger->Warning("AudioManager has already issued a reference to the audio command queue, fuck off OwO", "AudioManager");
-            return nullptr;
-        }
+        pm_IsFinishedStoppingLatch.wait(); //block until thread loop has exited the loop owo
 
-        return pm_PhysicsCommandQueue;
+        if (pm_PhysicsThread.joinable()) 
+        {
+            pm_PhysicsThread.join(); 
+            logger->Info("Successfully joined physics thread", "PhysicsManager");
+        }
     }
 }

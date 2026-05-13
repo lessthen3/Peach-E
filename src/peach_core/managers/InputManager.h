@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "LogManager.h"
+#include "utils/Logger.h"
 
 ///SDL3
 #include <SDL3/SDL.h>

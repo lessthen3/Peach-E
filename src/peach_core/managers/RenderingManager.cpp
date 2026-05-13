@@ -9,7 +9,6 @@
  *           Peach-E is a free open source game engine
 ********************************************************************/
 #include "RenderingManager.h"
-#include "GameManager.h" //this is kosher since it's religated to this TU only owo
 #include <memory>
 
 /*
@@ -64,6 +63,7 @@ namespace PeachCore {
         RenderingManager::Initialize
         (
             const RendererType fp_RequiredRenderingBacked,
+            shared_ptr<RenderingResourcePipe> fp_RenderingResourcePipe,
             SDL_Window* fp_MainWindow,
             const uint32_t fp_InitialWindowWidth,
             const uint32_t fp_InitialWindowHeight,
@@ -71,10 +71,10 @@ namespace PeachCore {
             const string& fp_LogOutputDirectory
         )   
     {
-        if (pm_IsInitialized.load()) //XXX: can log here since initializaiton only succeeds if rendering_logger gets created owo
+        if (pm_IsInitialized.load(std::memory_order_acquire)) //XXX: can log here since initializaiton only succeeds if rendering_logger gets created owo
         {
-            rendering_logger->Warning("RenderingManager tried to initialize OpenGL when rendering has already been initialized", "RenderingManager");
-            return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL;
+            rendering_logger->Warning("Tried to initialize rendering manager again >O<! what are you doing? this request was ignored", "RenderingManager");
+            return PEACH_WARNING_TRIED_TO_INITIALIZE_RENDERING_MANAGER_AFTER_FULLY_INITIALIZED;
         }
 
         //////////////////// Set Frame Limit //////////////////// IMPORTANT: this has to be at the top otherwise the threads will start with garbage data here owo
@@ -84,7 +84,7 @@ namespace PeachCore {
 
         //////////////////// Initialize Logger ////////////////////
 
-        rendering_logger = LogManager::get_single().CreateSharedLogger("RenderingManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
+        rendering_logger = LogManager::get_single().CreateUniqueLogger("RenderingManager", PEACH_LOGGER_DEFAULT_FLAGS, fp_LogOutputDirectory);
 
         if (not rendering_logger) [[unlikely]]
         {
@@ -102,15 +102,22 @@ namespace PeachCore {
             return PEACH_ERROR_NULLPTR_REF_PASSED;
         }
 
-        //////////////////// Initialize Loading and Command Queues ////////////////////
+        //////////////////// Initialize Loading Queue ////////////////////
 
-        if (not InitializeLoadingQueue())
+        if (not fp_RenderingResourcePipe)
         {
-            rendering_logger->Fatal("Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately", "RenderingManager");
-            return PEACH_FATAL_FAILED_TO_INITIALIZE_RENDERING_LOADING_QUEUE;
+            rendering_logger->Fatal
+            (
+                "Initialization failed: RenderingManager was not able to obtain a valid LoadingQueue, exiting execution immediately, did you pass a nullptr reference to the audio resource transfer pipe?", 
+                "RenderingManager"
+            );
+            
+            return PEACH_FATAL_ERROR_PASSED_NULLPTR_REFERENCE_TO_RESOURCE_MANAGER_RENDERING_RESOURCE_PIPE;
         }
 
-        InitializeDrawCommandQueue();
+        pm_LoadedResourceQueue = fp_RenderingResourcePipe;
+
+        rendering_logger->Info("RenderingManager successfully retrieved loaded rendering resource queue from ResourceManager", "RenderingManager");
 
         //////////////////// Initialize Rendering Backend ////////////////////
 
@@ -142,13 +149,15 @@ namespace PeachCore {
 
                 rendering_logger->Info("GLEW initialized properly. Successfully initialized OpenGL!", "RenderingManager");
 
-                // if (InitializeOpenGL(fp_MainWindow) != PEACH_OK)
-                // {
-                //     rendering_logger->Fatal("Initialization failed: RenderingManager was not able to create a valid OpenGL context, exiting execution immediately", "RenderingManager");
-                //     return PEACH_ERROR_FAILED_TO_INITIALIZE_OPENGL; //not sure if exit should be used here Futur ryan: no it really shouldn't uwu
-                // }
+                pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(); //needa make context current once the thread loop starts
 
-                // pm_OpenGLRenderer = make_unique<OpenGL::Renderer>(pm_MainWindow, fp_InitialWindowWidth, fp_InitialWindowHeight, rendering_logger, true); //needa make context current once the thread loop starts
+                PEACH_STATUS_CODE result = pm_OpenGLRenderer->Initialize(fp_MainWindow, f_OpenGLContext, false, fp_LogOutputDirectory);
+
+                if(result != PEACH_OK)
+                {
+                    rendering_logger->Fatal("Failed to initialize the OpenGL Renderer, engine is exiting execution immediately owo", "RenderingManager");
+                    return result; //not sure if exit should be used here Futur ryan: no it really shouldn't uwu
+                }
                 
                 pm_RenderThread = thread
                 (
@@ -217,15 +226,26 @@ namespace PeachCore {
     }
    
     void
-        RenderingManager::Stop()
-        noexcept
+        RenderingManager::ShutdownSubsystem(Logger*const logger)
     {
+        if(not logger) [[unlikely]]
+        {
+            PEACH_PRINT_ERROR("Tried to pass nullptr reference to logger inside RenderingManager::ShutdownSubsystem()");
+            return;
+        }
+
+        if(not pm_IsInitialized.load(std::memory_order_acquire))
+        {
+            logger->Error("Tried to call ShutdownSubsystem() on RenderingManager when render thread was never started owo wtf mang ;w;", "RenderingManager"); 
+            return;
+        }
+
         pm_IsRunning.store(false, std::memory_order_release);
 
         if (pm_RenderThread.joinable())
         {
             pm_RenderThread.join();                         // IMPORTANT: this will block until smth is returned so idk kinda can get fucked ig
-            rendering_logger->Info("Successfully joined render thread", "GameManager");
+            logger->Info("Successfully joined render thread", "RenderingManager");
         }
     }
 
@@ -235,7 +255,7 @@ namespace PeachCore {
         bool f_ContainsCommands = false;
 
         RenderCommand f_Command;
-        while (pm_RenderCommandQueue->try_dequeue(f_Command))
+        while (pm_RenderCommandQueue.try_dequeue(f_Command))
         {
             f_ContainsCommands = true;
 
@@ -254,69 +274,14 @@ namespace PeachCore {
     }
 
     //creates a window and opengl context, enables sfml 2d graphics and such as well, returns the command queue for thread safe control
-    bool 
-        RenderingManager::InitializeLoadingQueue()
-    {
-        if (pm_LoadedResourceQueue)
-        {
-            rendering_logger->Warning("RenderingManager already retrieved the loaded resource queue from ResourceManager >O<", "RenderingManager");
-            return false;
-        }
-
-        pm_LoadedResourceQueue = ResourceManager::get_single().GetDrawableResourceLoadingQueue(rendering_logger.get());
-
-        if (not pm_LoadedResourceQueue)
-        {
-            rendering_logger->Error("RenderingManager failed to retrieve LoadingQueue from ResourceManager, nullptr ref was found >O<", "RenderingManager");
-            return false;
-        }
-
-        rendering_logger->Info("RenderingManager successfully retrieved loaded resource queue from ResourceManager", "RenderingManager");
-
-        return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
-    }
-
-    bool
-        RenderingManager::InitializeDrawCommandQueue()
-    {
-        if (pm_RenderCommandQueue)
-        {
-            rendering_logger->Warning("RenderingManager already initialized the draw command queue >O<", "RenderingManager");
-            return false;
-        }
-
-        pm_RenderCommandQueue = make_shared<RenderCommandPipe>();
-
-        rendering_logger->Info("RenderingManager successfully initialized the draw command queue", "RenderingManager");
-
-        return true; //returns one and only one ptr to whoever initializes RenderingManager, this is meant only for the main thread
-    }
-
-    shared_ptr<RenderCommandPipe>
-        RenderingManager::GetDrawCommandQueue
-        (
-            Logger* const logger
-        ) //this is supposed to be called from the main thread so cant use the rendering_logger here for thread reasons
-    {
-        if (not pm_IsInitialized)
-        {
-            logger->Error("Attempted to get a reference to RenderingManager's DrawCommandQueue before RenderingManager was initialized, please initialize RenderingManager first UwU", "RenderingManager");
-            return nullptr;
-        }
-        else if (pm_RenderCommandQueue.use_count() >= 2)
-        {
-            logger->Warning("RenderingManager has already issued a reference to the draw command queue, fuck off", "RenderingManager");
-            return nullptr;
-        }
-        
-        return pm_RenderCommandQueue;
-    }
 
 #ifdef PEACH_RENDERER_OPENGL
 
     void
         RenderingManager::RenderLoopGL()
     {
+        pm_OpenGLRenderer->UpdateForNewThread(); //XXX: makes gl context current on this thread, and updates logger thread owner >w< femboy hooters when ;w;
+
         auto f_CurrentTime = chrono::high_resolution_clock::now();
         float f_RenderAccumulator = 0.0f;
 
@@ -514,13 +479,6 @@ namespace PeachCore {
         #endif
 
         // pm_MetalRenderer->CleanUp();
-    }
-
-    PEACH_STATUS_CODE
-        RenderingManager::InitializeMetal()
-    {
-
-        return PEACH_OK;
     }
 
     bool
