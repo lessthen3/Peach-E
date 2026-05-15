@@ -18,53 +18,42 @@
 
 namespace PeachEditor {
 
-    using namespace std;
-
     class PeachEditorManager
     {
+    //////////////////////////////////////////////
+    // Public Constructor & Destructor
+    //////////////////////////////////////////////
     public:
         ~PeachEditorManager() = default;
-
-        //////////////////////////////////////////////
-        // Private Constructor & Destructor
-        //////////////////////////////////////////////
-    private:
         PeachEditorManager() = default;
 
         PeachEditorManager(const PeachEditorManager&) = delete;
         PeachEditorManager& operator=(const PeachEditorManager&) = delete;
-
         PeachEditorManager(PeachEditorManager&&) = delete;
         PeachEditorManager& operator=(PeachEditorManager&&) = delete;
 
-        //////////////////////////////////////////////
-        // Private Members
-        //////////////////////////////////////////////
+    //////////////////////////////////////////////
+    // Private Members
+    //////////////////////////////////////////////
     private:
         unique_ptr<PeachCore::Logger> main_editor_logger = nullptr;
 
         Dotnet::Configs pm_DotnetConfiguration;
 
-        //////////////////////////////////////////////
-        // Public Members
-        //////////////////////////////////////////////
+    //////////////////////////////////////////////
+    // Public Members
+    //////////////////////////////////////////////
     public:
-        static PeachEditorManager& get_single()
-        {
-            static PeachEditorManager peach_editor;
-            return peach_editor;
-        }
-
         atomic<bool> m_IsRunning;
 
-        //////////////////////////////////////////////
-        // Public Methods
-        //////////////////////////////////////////////
-
+    //////////////////////////////////////////////
+    // Public Methods
+    //////////////////////////////////////////////
     public:
         ////////////////////////////////////////////////
         // Start Main Loop
         ////////////////////////////////////////////////
+
         void
             StartPeachEditorMainLoop() //this is where 
         {

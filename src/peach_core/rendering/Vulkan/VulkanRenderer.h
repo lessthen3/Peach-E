@@ -33,7 +33,7 @@
 
 constexpr uint32_t MINIMUM_SWAPCHAIN_SIZE = 2;
 
-namespace PeachCore::Vulkan{
+namespace PeachCore::Vulkan {
 
     struct PhysicalDeviceInfo
     {

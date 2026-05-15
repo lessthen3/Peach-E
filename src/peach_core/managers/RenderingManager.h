@@ -141,7 +141,7 @@ namespace PeachCore {
     //////////////////////////////////////////////
     private:
 
-        thread pm_RenderThread;
+        std::thread pm_RenderThread;
 
         #ifdef PEACH_RENDERER_METAL 
             unique_ptr<Metal::Renderer> pm_MetalRenderer = nullptr;
@@ -153,31 +153,14 @@ namespace PeachCore {
             unique_ptr<OpenGL::Renderer> pm_OpenGLRenderer = nullptr; //OpenGL not supported on mac anymore fuck you tim apple
         #endif
         #ifdef PEACH_RENDERER_OPENGL_ES
-            unique_ptr<MobileGL::Renderer> pm_WebGLRenderer = nullptr;
+            unique_ptr<MobileGL::Renderer> pm_MobileGLRenderer = nullptr;
         #endif
         #ifdef PEACH_RENDERER_WEBGL
-            unique_ptr<WebGL::Renderer> pm_MobileGLRenderer = nullptr;
+            unique_ptr<WebGL::Renderer> pm_WebGLRenderer = nullptr;
         #endif
 
         size_t pm_CurrentFrameRateLimit = 0u;
         size_t pm_CurrentFrame = 0u;
-
-        float RENDER_FRAME_TIME_STEP = 1000.0f;
-
-        bool pm_IsVSyncEnabled = false;
-
-        // list of all Node ID's, SceneTree translates from string ID -> uint64_t ID 
-        vector<uint64_t> pm_RenderableNodes; //NOTE: doesn't need to be multi thread friendly so the reallocs don't really matter
-
-        //////////////////// Command/Resource Queue ////////////////////
-
-        RenderCommandPipe pm_RenderCommandQueue;
-        shared_ptr<RenderingResourcePipe> pm_LoadedResourceQueue = nullptr;
-
-        //////////////////// Window Stuff ////////////////////
-
-        unordered_map<SDL_WindowID, SDL_Window*> pm_CurrentlyActiveWindows;
-        vector<SDL_WindowID> pm_CloseWindowRequests;
 
         //////////////////// Logger ////////////////////
 
@@ -185,9 +168,26 @@ namespace PeachCore {
 
         unique_ptr<unsigned char> pm_DefaultTexture = nullptr;
 
-    public: 
+        shared_ptr<RenderingResourcePipe> pm_LoadedResourceQueue = nullptr;
+
+        // list of all Node ID's, SceneTree translates from string ID -> uint64_t ID 
+        vector<uint64_t> pm_RenderableNodes; //NOTE: doesn't need to be multi thread friendly so the reallocs don't really matter
+
+        //////////////////// Window Stuff ////////////////////
+
+        unordered_map<SDL_WindowID, SDL_Window*> pm_CurrentlyActiveWindows;
+        vector<SDL_WindowID> pm_CloseWindowRequests;
+
+        float RENDER_FRAME_TIME_STEP = 1000.0f;
+
+        bool pm_IsVSyncEnabled = false;
+
         atomic<bool> pm_IsRunning{ true }; //this doesn't need to be atomic but whatevs, or even needed tbh but probs helpful for the while loop maybes
         atomic<bool> pm_IsInitialized{ false };
+
+        //////////////////// Command/Resource Queue ////////////////////
+
+        RenderCommandPipe pm_RenderCommandQueue;
 
     //////////////////////////////////////////////
     // Public Methods
@@ -195,9 +195,6 @@ namespace PeachCore {
     public:
         void
             ShutdownSubsystem(Logger*const logger);
-            
-        void 
-            ResizeWindow();
 
         void 
             GetCurrentViewPort();
@@ -263,9 +260,6 @@ namespace PeachCore {
         [[nodiscard]] bool
             ProcessCommands();
 
-        void
-            Shutdown();
-
         #ifdef PEACH_RENDERER_VULKAN
             void
                 RenderLoopVK();
@@ -274,37 +268,21 @@ namespace PeachCore {
         #ifdef PEACH_RENDERER_OPENGL
             void
                 RenderLoopGL();
-        private:
-            [[nodiscard]] bool
-                PresentFrameGL();
-        public:
         #endif /*PEACH_RENDERER_OPENGL*/
 
         #ifdef PEACH_RENDERER_METAL 
             void
                 RenderLoopMetal();
-        private:
-            [[nodiscard]] bool
-                PresentFrameMetal();
-        public:
         #endif /*PEACH_RENDERER_METAL*/
 
         #ifdef PEACH_RENDERER_OPENGL_ES
             void
                 RenderLoopOpenGLES();
-        private:
-            [[nodiscard]] PEACH_STATUS_CODE
-                InitializeOpenGLES();
-        public:
         #endif
 
         #ifdef PEACH_RENDERER_WEBGL
             void
                 RenderLoopWebGL();
-        private:
-            [[nodiscard]] PEACH_STATUS_CODE
-                InitializeWebGL();
-        public:
         #endif /*PEACH_RENDERER_WEBGL*/
     };
 }

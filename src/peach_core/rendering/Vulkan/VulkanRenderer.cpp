@@ -365,7 +365,7 @@ namespace PeachCore::Vulkan {
     }
 
     void
-        Renderer::CleanUp()
+        Renderer::CleanUp() //IMPORTANT: this can never be called anywhere but the main thread TODO: implement thread access guard here owo
     {
         for (size_t lv_Index = 0; lv_Index < pm_Init.SwapChain.image_count; lv_Index++)
         {
@@ -376,20 +376,20 @@ namespace PeachCore::Vulkan {
 
         pm_Init.Dispatch.destroyCommandPool(pm_RenderData.CommandPool, nullptr);
 
-        for (auto framebuffer : pm_RenderData.FrameBuffers)
+        for (auto lv_CurrentFrameBuffer : pm_RenderData.FrameBuffers)
         {
-            pm_Init.Dispatch.destroyFramebuffer(framebuffer, nullptr);
+            pm_Init.Dispatch.destroyFramebuffer(lv_CurrentFrameBuffer, nullptr);
         }
 
-        for (auto& __pipeline : pm_RenderData.GraphicsPipelines)
+        for (auto& lv_CurrentPipeline : pm_RenderData.GraphicsPipelines)
         {
-            pm_Init.Dispatch.destroyPipeline(__pipeline.second, nullptr);
+            pm_Init.Dispatch.destroyPipeline(lv_CurrentPipeline.second, nullptr);
         }
         pm_RenderData.GraphicsPipelines.clear();
 
-        for (auto& __layout : pm_RenderData.PipelineLayouts)
+        for (auto& lv_CurrentLayout : pm_RenderData.PipelineLayouts)
         {
-            pm_Init.Dispatch.destroyPipelineLayout(__layout.second, nullptr);
+            pm_Init.Dispatch.destroyPipelineLayout(lv_CurrentLayout.second, nullptr);
         }
         pm_RenderData.PipelineLayouts.clear();
 

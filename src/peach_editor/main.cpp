@@ -135,15 +135,15 @@ int
 
         f_ProjectManager.StartProjectManager();
 
-        auto peach_editor = &PeachEditor::PeachEditorManager::get_single();
+        PeachEditor::PeachEditorManager peach_editor;
 
-        if (not peach_editor->InitializePeachEditor(mf_PeachERootPath))
+        if (not peach_editor.InitializePeachEditor(mf_PeachERootPath))
         {
             PEACH_PRINT_ERROR("Failed to initialize Peach Editor properly uwu");
             return EXIT_FAILURE;
         }
 
-        peach_editor->StartPeachEditorMainLoop(); //ye
+        peach_editor.StartPeachEditorMainLoop(); //ye
 
         PEACH_PRINT(PEACH_COL_BRIGHT_MAGENTA, "exited all loops and reached EXIT_SUCCESS, any errors after here are static destructors fuqqq");
 

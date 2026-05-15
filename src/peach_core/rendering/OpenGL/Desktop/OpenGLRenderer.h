@@ -51,11 +51,10 @@ namespace PeachCore::OpenGL {
         GLsizei IndexCount;
 
         uint32_t ShaderProgramID = 0; //doesn't need to be serialized is pure runtime, also this decouples shaders and objects so shaders can be bound in groups and drawn owo
-
-        uint8_t Flags = 0;
-
         uint32_t Generation = 0; 
+
         bool InUse = false;
+        uint8_t Flags = 0;
     };
 
 
@@ -88,13 +87,13 @@ namespace PeachCore::OpenGL {
             );
 
         void
-            UpdateForNewThread();
-
-        void
-            SetMainWindow(SDL_Window* fp_SDLWindow);
+            UpdateForNewThread(); 
 
         void
             DeleteTexture(const uint32_t fp_TextureID);
+
+        void
+            CleanUp();
 
         //bool
         //    DeleteShaderProgram

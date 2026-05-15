@@ -30,6 +30,10 @@
 
 //AND MAKE RESPONSIBILITES AND CODE IN GENERAL MORE CLEAN AND EASY TO READ
 
+namespace PeachCore {
+    static inline const std::thread::id s_mainThreadId = std::this_thread::get_id();
+}
+
 namespace PeachCore::Subsystem {
 
     constexpr uint8_t Render = 1u << 0;

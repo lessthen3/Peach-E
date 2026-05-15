@@ -53,12 +53,6 @@ namespace PeachCore {
 
 namespace PeachCore {
 
-    void 
-        RenderingManager::Shutdown() //no moar sdl quit only main thread does that owo but it lives the entire runtime and the driver can handle that whatever
-    {
-
-    }
-
     PEACH_STATUS_CODE 
         RenderingManager::Initialize
         (
@@ -247,6 +241,45 @@ namespace PeachCore {
             pm_RenderThread.join();                         // IMPORTANT: this will block until smth is returned so idk kinda can get fucked ig
             logger->Info("Successfully joined render thread", "RenderingManager");
         }
+
+        //////////////////// Cleanup Renderers from Main Thread ////////////////////
+
+        #ifdef PEACH_RENDERER_METAL 
+            if(pm_MetalRenderer)
+            {
+                pm_MetalRenderer->CleanUp();
+                pm_MetalRenderer.reset(nullptr);
+            }
+        #endif
+        #ifdef PEACH_RENDERER_VULKAN
+            if(pm_VulkanRenderer)
+            {
+                pm_VulkanRenderer->CleanUp();
+                pm_VulkanRenderer.reset(nullptr);
+            }
+        #endif
+        #ifdef PEACH_RENDERER_OPENGL
+            if(pm_OpenGLRenderer)
+            {
+                pm_OpenGLRenderer->CleanUp();
+                pm_OpenGLRenderer.reset(nullptr);
+            }
+        #endif
+        #ifdef PEACH_RENDERER_OPENGL_ES
+            if(pm_MobileGLRenderer)
+            {
+                
+                pm_MobileGLRenderer.reset(nullptr);
+            }
+        #endif
+        #ifdef PEACH_RENDERER_WEBGL
+            if(pm_WebGLRenderer)
+            {
+
+                pm_WebGLRenderer.reset(nullptr);
+            }
+        #endif
+
     }
 
    bool
@@ -307,7 +340,7 @@ namespace PeachCore {
 
             if (f_RenderAccumulator >= RENDER_FRAME_TIME_STEP)
             {
-                PEACH_TO_DO_UNUSED(PresentFrameGL()); // swap buffers etc.
+                pm_OpenGLRenderer->RenderFrame();
                 f_RenderAccumulator -= RENDER_FRAME_TIME_STEP;
             }
 
@@ -322,15 +355,6 @@ namespace PeachCore {
                 this_thread::sleep_for(chrono::duration<float>(f_Remaining * 0.9f));  // 90% to avoid oversleeping
             }
         }
-
-        Shutdown();
-    }
-
-    bool
-        RenderingManager::PresentFrameGL()
-    {
-
-        return true;
     }
 
 #endif
@@ -401,8 +425,6 @@ namespace PeachCore {
                 this_thread::sleep_for(chrono::duration<float>(f_Remaining * 0.9f));  // 90% to avoid oversleeping
             }
         }
-
-        Shutdown();
     }
 
 #endif
@@ -481,20 +503,7 @@ namespace PeachCore {
         // pm_MetalRenderer->CleanUp();
     }
 
-    bool
-        RenderingManager::PresentFrameMetal()
-    {
-
-        return true;
-    }
-
 #endif
-
-    void 
-        RenderingManager::ResizeWindow()
-    {
-
-    }
 
     void
         RenderingManager::GetCurrentViewPort()

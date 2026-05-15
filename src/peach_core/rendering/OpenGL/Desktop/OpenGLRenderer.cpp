@@ -14,6 +14,48 @@
 #include "managers/LogManager.h"
 #include <fmt/format.h>
 
+//////// Internal Linkage Functions owo
+
+namespace PeachCore::OpenGL {
+    static void 
+        SetTextureFiltering [[maybe_unused]]
+        (
+            GLuint fp_TextureID,
+            TextureFiltering fp_Filter
+        )
+    {
+        glBindTexture(GL_TEXTURE_2D, fp_TextureID);
+
+        switch (fp_Filter)
+        {
+        case TextureFiltering::Nearest:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            break;
+        case TextureFiltering::Linear:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            break;
+        case TextureFiltering::MipMapNearestNearest:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+            break;
+        case TextureFiltering::MipMapLinearNearest:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
+            break;
+        case TextureFiltering::MipMapNearestLinear:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+            break;
+        case TextureFiltering::MipMapLinearLinear:
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            break;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+}
+
+//////// Regular >w<
+
 namespace PeachCore::OpenGL {
 
     PEACH_STATUS_CODE
@@ -57,16 +99,16 @@ namespace PeachCore::OpenGL {
     }
 
     void
+        Renderer::CleanUp()
+    {
+        
+    }
+
+    void
         Renderer::UpdateForNewThread()
     {
         SDL_GL_MakeCurrent(pm_MainWindow, pm_OpenGLContext);
         gl_logger->UpdateThreadOwner(); 
-    }
-
-    void
-        Renderer::SetMainWindow(SDL_Window* fp_SDLWindow)
-    {
-        pm_MainWindow = fp_SDLWindow;
     }
 
     void
@@ -118,43 +160,6 @@ namespace PeachCore::OpenGL {
     {
 
     }
-
-    static void 
-        SetTextureFiltering [[maybe_unused]]
-        (
-            GLuint fp_TextureID,
-            TextureFiltering fp_Filter
-        )
-    {
-        glBindTexture(GL_TEXTURE_2D, fp_TextureID);
-
-        switch (fp_Filter)
-        {
-        case TextureFiltering::Nearest:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-            break;
-        case TextureFiltering::Linear:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            break;
-        case TextureFiltering::MipMapNearestNearest:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-            break;
-        case TextureFiltering::MipMapLinearNearest:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST);
-            break;
-        case TextureFiltering::MipMapNearestLinear:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
-            break;
-        case TextureFiltering::MipMapLinearLinear:
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            break;
-        }
-
-        glBindTexture(GL_TEXTURE_2D, 0);
-    }
-
 
     GLuint
         Renderer::RegisterTexture
