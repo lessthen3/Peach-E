@@ -33,7 +33,6 @@
 
 # JSON
 /third_party/peach_core/header_only/spirv-headers/*.json
-**/spirv-tools/**/**.json
 
 # individual files
 /TODO.txt
