@@ -12,10 +12,10 @@
 ############# require target platform to be passed explicitly #############
 
 if(NOT DEFINED PEACH_TARGET_PLATFORM OR PEACH_TARGET_PLATFORM STREQUAL "")
-    #annoying cmake try compile shenanigans
-    get_filename_component(f_DirName "${CMAKE_BINARY_DIR}" NAME)
+    #try to catch annoying cmake try compile shenanigans
+    get_property(f_IsInternalProbe GLOBAL PROPERTY IN_TRY_COMPILE)
     
-    if(f_DirName MATCHES "TryCompile" OR CMAKE_IN_TRY_COMPILE)
+    if(f_IsInternalProbe OR CMAKE_IN_TRY_COMPILE)
         return() # cmake internal probe, just bail silently uwu
     endif()
 

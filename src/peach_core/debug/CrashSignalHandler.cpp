@@ -50,24 +50,27 @@ namespace PeachCore::Debug {
 
     /* 
         Static path written at startup, read at crash time.
-        Must be a stable buffer — no std::string, no allocation. 
+        Must be a stable buffer — no std::string, no allocation since this is only called when things are really bad and the process/os can be in a really bad state ;w;
     */
-    static char* s_CrashFlagPath;
+    static char s_CrashFlagPath[1024] = { 0 };    
     static char s_LogDirectoryPath[1024] = { 0 };
 
     void
         SetCrashFlagPath(const char* fp_Path) //TODO ACTUALLY FIX THIS
         noexcept
     {
-        if(not fp_Path)
+        if(not fp_Path) [[unlikely]]
         {
             return; //idk this is broken
         }
 
-        // std::strncpy_s(s_CrashFlagPath, fp_Path, sizeof(s_CrashFlagPath) - 1); //might need to use strncpy_s
-        // // snprintf is on everything, handles null-termination, and is "safe"
-        // // Use the array buffer s_LogDirectoryPath, not the pointer s_CrashFlagPath!
-        // snprintf(s_LogDirectoryPath, sizeof(s_LogDirectoryPath), "%s", fp_Path);
+
+        // On Windows, use the secure bounds copy, on POSIX, use standard snprintf.
+        #ifdef PEACH_PLATFORM_WINDOWS
+                ::strncpy_s(s_CrashFlagPath, sizeof(s_CrashFlagPath), fp_Path, _TRUNCATE);
+        #else
+                ::snprintf(s_CrashFlagPath, sizeof(s_CrashFlagPath), "%s", fp_Path);
+        #endif
     }
 
     /*
@@ -78,6 +81,11 @@ namespace PeachCore::Debug {
         WriteIntToBuffer(char* fp_Buffer, int fp_Value)
         noexcept
     {
+        if (not fp_Buffer) [[unlikely]]
+        {
+            return 0;
+        }
+
         if (fp_Value == 0)
         {
             fp_Buffer[0] = '0';
@@ -119,12 +127,17 @@ namespace PeachCore::Debug {
         CrashSignalHandler(int fp_Signal)
         noexcept
     {
-        // Reset to default handler so a re-entrant crash kills the process
-        std::signal(fp_Signal, SIG_DFL);
+        std::signal(fp_Signal, SIG_DFL); // Reset to default handler so a re-entrant crash kills the process
 
-        // Write a fixed message to stderr — async-signal-safe
-        const char* f_Msg = "\n[PEACH FATAL] crash signal received: ";
-        PEACH_CRASH_WRITE(STDERR_FILENO, f_Msg, std::strlen(f_Msg));
+        const char* f_CrashMessage = "\n[PEACH FATAL] crash signal received: "; // Write a fixed message to stderr — async-signal-safe
+
+        #ifdef PEACH_PLATFORM_WINDOWS //windows ::exit takes a unsigned int but un*x systems take size_t, idk windows being windows again ig legacy 32 bit stuff from nt
+            const unsigned int f_MessageLength = static_cast<unsigned int>(std::strlen(f_CrashMessage));
+        #else
+            const size_t f_MessageLength = std::strlen(f_CrashMessage);
+        #endif
+
+        PEACH_CRASH_WRITE(STDERR_FILENO, f_CrashMessage, f_MessageLength);
 
         char f_NumBuf[16];
         int f_NumLen = WriteIntToBuffer(f_NumBuf, fp_Signal);
@@ -134,23 +147,37 @@ namespace PeachCore::Debug {
         /*
             Write a crash flag file so the launcher knows we crashed, using raw open/write/close since it's async signal safe on POSIX
         */ 
-        if (s_CrashFlagPath[0] != '\0')
+        if (s_CrashFlagPath  and s_CrashFlagPath[0] != '\0') //null check so we dont crash in the crash LMFAO
         {
+            int f_FileDescriptor = -1;
+
             #ifdef PEACH_PLATFORM_WINDOWS // Windows doesn't have async-signal semantics ;w; but the kernel guys always have smth just as good or better than POSIX
-                int f_Fd = ::_sopen_s(s_CrashFlagPath, _O_WRONLY | _O_CREAT | _O_TRUNC, _S_IREAD | _S_IWRITE);
+                ::errno_t f_ErrorCode = ::_sopen_s
+                (
+                    &f_FileDescriptor,
+                    s_CrashFlagPath, 
+                    _O_WRONLY | _O_CREAT | _O_TRUNC | _O_BINARY,
+                    _SH_DENYNO,
+                    _S_IREAD | _S_IWRITE
+                );
+
+                if (f_ErrorCode != 0) // If _sopen_s fails, it returns a non-zero error number, and sets f_Fd to -1.
+                {
+                    f_FileDescriptor = -1;
+                }
             #else
-                int f_Fd = ::open(s_CrashFlagPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                int f_FileDescriptor = ::open(s_CrashFlagPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
             #endif
 
-            if (f_Fd >= 0)
+            if (f_FileDescriptor >= 0)
             {
-                PEACH_CRASH_WRITE(f_Fd, f_NumBuf, f_NumLen);
-                PEACH_CRASH_WRITE(f_Fd, "\n", 1);
+                PEACH_CRASH_WRITE(f_FileDescriptor, f_NumBuf, f_NumLen);
+                PEACH_CRASH_WRITE(f_FileDescriptor,  "\n",  1);
                 
                 #ifdef PEACH_PLATFORM_WINDOWS
-                    ::_close(f_Fd);
+                    ::_close(f_FileDescriptor);
                 #else
-                    ::close(f_Fd);
+                    ::close(f_FileDescriptor);
                 #endif
             }
         }

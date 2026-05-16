@@ -19,10 +19,10 @@
 //#include <Jolt/Core/Factory.h>
 //#include <box2d/box2d.h>
 
-// #include <ft2build.h>
-// #include FT_FREETYPE_H
-// #include <msdfgen.h>
-// #include <msdfgen-ext.h>
+ #include <ft2build.h>
+ #include FT_FREETYPE_H
+ #include <msdfgen.h>
+ #include <msdfgen-ext.h>
 
 static inline constexpr void 
     ReplaceChar(std::string* fp_String, char fp_OldChar, char fp_NewChar)
@@ -46,43 +46,43 @@ int
     // PEACH_PANIC_IF(false, "This is a test for panic owo");
 
     // // freetype smoke test
-    // {
-    //     FT_Library f_FtLibrary;
-    //     FT_Error f_FtError = FT_Init_FreeType(&f_FtLibrary);
+     {
+         FT_Library f_FtLibrary;
+         FT_Error f_FtError = FT_Init_FreeType(&f_FtLibrary);
 
-    //     if (f_FtError)
-    //     {
-    //        PEACH_PRINT_ERROR("FreeType init FAILED");
-    //     }
-    //     else
-    //     {
-    //         PEACH_PRINT("FreeType init OK", PEACH_COL_BRIGHT_GREEN);
-    //         FT_Done_FreeType(f_FtLibrary);
-    //     }
-    // }
+         if (f_FtError)
+         {
+            PEACH_PRINT_ERROR("FreeType init FAILED");
+         }
+         else
+         {
+             PEACH_PRINT("FreeType init OK", PEACH_COL_BRIGHT_GREEN);
+             FT_Done_FreeType(f_FtLibrary);
+         }
+     }
 
-    // // msdfgen-core smoke test
-    // {
-    //     msdfgen::Shape f_Shape;
-    //     msdfgen::Contour& f_Contour = f_Shape.addContour();
-    //     f_Contour.addEdge(msdfgen::EdgeHolder(msdfgen::Point2(0, 0), msdfgen::Point2(1, 0)));
-    //     PEACH_PRINT("msdfgen-core OK", PEACH_COL_BRIGHT_GREEN);
-    // }
+     // msdfgen-core smoke test
+     {
+         msdfgen::Shape f_Shape;
+         msdfgen::Contour& f_Contour = f_Shape.addContour();
+         f_Contour.addEdge(msdfgen::EdgeHolder(msdfgen::Point2(0, 0), msdfgen::Point2(1, 0)));
+         PEACH_PRINT("msdfgen-core OK", PEACH_COL_BRIGHT_GREEN);
+     }
 
     // // msdfgen-ext smoke test
-    // {
-    //     msdfgen::FreetypeHandle* f_Ft = msdfgen::initializeFreetype();
+     {
+         msdfgen::FreetypeHandle* f_Ft = msdfgen::initializeFreetype();
 
-    //     if (not f_Ft)
-    //     {
-    //         PEACH_PRINT_ERROR("msdfgen-ext FreeType init FAILED");
-    //     }
-    //     else
-    //     {
-    //         PEACH_PRINT("msdfgen-ext init OK", PEACH_COL_BRIGHT_GREEN);
-    //         msdfgen::deinitializeFreetype(f_Ft);
-    //     }
-    // }
+         if (not f_Ft)
+         {
+             PEACH_PRINT_ERROR("msdfgen-ext FreeType init FAILED");
+         }
+         else
+         {
+             PEACH_PRINT("msdfgen-ext init OK", PEACH_COL_BRIGHT_GREEN);
+             msdfgen::deinitializeFreetype(f_Ft);
+         }
+     }
     //// jolt smoke test — if this links and runs ur golden nyaa~
     //{
     //    JPH::RegisterDefaultAllocator();

@@ -40,7 +40,7 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 ####################################### Project folders >w<
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON) 
-set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "other/cmake")
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "third_party/cmake")
 
 ####################################### Build warnings owo
 
@@ -136,6 +136,68 @@ endif()
 
 set_target_properties(peach_core PROPERTIES POSITION_INDEPENDENT_CODE ON) #make peach_core PIC friendly UwU
 
+####################################### peach_core platform specific src includes ;w;
+
+####################################### Vulkan driver querying owo
+
+if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD OR PEACH_HAIKU OR PEACH_ANDROID)
+
+    file(GLOB VOLK_SOURCES
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include/volk/volk.c
+    )
+
+    file(GLOB VKBOOTSTRAP_SOURCES
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.cpp
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.inl
+    )
+
+    source_group("third_party/volk" FILES ${VOLK_SOURCES})
+    source_group("third_party/vkbootstrap" FILES ${VKBOOTSTRAP_SOURCES})
+
+    # disable third party warnings OwO, idk just trusting em
+    set_source_files_properties(
+        ${VKBOOTSTRAP_SOURCES}
+        ${VOLK_SOURCES}
+        PROPERTIES COMPILE_FLAGS ${WARNING_OFF_FLAG}
+    )
+
+    target_sources(peach_core PRIVATE
+        ${VKBOOTSTRAP_SOURCES}
+        ${VOLK_SOURCES}
+    )
+
+    target_include_directories(peach_core SYSTEM PUBLIC #try to avoid header warnings >o<
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include #include since it passed the plat test
+    )
+    
+endif(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD OR PEACH_HAIKU OR PEACH_ANDROID) #vulkan source includes
+
+####################################### GLEW include
+
+if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD OR PEACH_HAIKU)
+
+    file(GLOB GLEW_SOURCES
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/glew.c
+    )
+
+    source_group("third_party/glew" FILES ${GLEW_SOURCES})
+
+    # disable third party warnings OwO, idk just trusting em
+    set_source_files_properties(
+        ${GLEW_SOURCES}
+        PROPERTIES COMPILE_FLAGS ${WARNING_OFF_FLAG}
+    )
+
+    target_sources(peach_core PRIVATE
+        ${GLEW_SOURCES}
+    )
+
+    target_include_directories(peach_core SYSTEM PUBLIC #try to avoid header warnings >o<
+        ${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include #need this because GL is kinda weird w glew w/e >w<
+    )
+
+endif(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD OR PEACH_HAIKU)
+
 ####################################### peach_core src includes
 
 file(GLOB LUA_SOURCES 
@@ -178,37 +240,6 @@ else()
     )
 endif(PEACH_PLATFORM_IS_APPLE)
 
-if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD OR PEACH_HAIKU OR PEACH_ANDROID)
-
-    file(GLOB VOLK_SOURCES
-        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include/volk/volk.c
-    )
-
-    file(GLOB VKBOOTSTRAP_SOURCES
-        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.cpp
-        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include/vk-bootstrap/*.inl
-    )
-
-    target_sources(peach_core PRIVATE
-        ${VKBOOTSTRAP_SOURCES}
-        ${VOLK_SOURCES}
-    )
-
-    target_include_directories(peach_core SYSTEM PUBLIC #try to avoid header warnings >o<
-        ${PROJECT_SOURCE_DIR}/third_party/peach_core/plat_dep_source_include #include since it passed the plat test
-    )
-
-    source_group("third_party/volk" FILES ${VOLK_SOURCES})
-    source_group("third_party/vkbootstrap" FILES ${VKBOOTSTRAP_SOURCES})
-
-    # disable third party warnings OwO, idk just trusting em
-    set_source_files_properties(
-        ${VKBOOTSTRAP_SOURCES}
-        ${VOLK_SOURCES}
-        PROPERTIES COMPILE_FLAGS ${WARNING_OFF_FLAG}
-    )
-    
-endif() #vulkan source includes
 
 target_sources(peach_core PRIVATE
     ${PHYSFS_SOURCES}
@@ -253,6 +284,115 @@ set_source_files_properties(
     PROPERTIES COMPILE_FLAGS ${WARNING_OFF_FLAG}
 )
 
+####################################### SDL time for the big guns >w< (pls be gentle ;w;)
+
+# ==============================================================================
+# 🍑 VENDOR SDL3 BUILD TREE INTEGRATION
+# ==============================================================================
+
+# Force global configuration cache overrides before loading the directory
+set(SDL_PRESEED         OFF CACHE BOOL "" FORCE)
+set(SDL_SHARED          OFF CACHE BOOL "" FORCE)
+set(SDL_STATIC          ON  CACHE BOOL "" FORCE)
+
+# Strike out all testing, documentation, and sample bloat
+set(SDL_TEST_LIBRARY    OFF CACHE BOOL "" FORCE)
+set(SDL_TESTS           OFF CACHE BOOL "" FORCE)
+set(SDL_EXAMPLES        OFF CACHE BOOL "" FORCE)
+set(SDL_INSTALL_DOCS    OFF CACHE BOOL "" FORCE)
+
+# Subsystems kitten actually uses
+set(SDL_VIDEO           ON  CACHE BOOL "" FORCE)
+set(SDL_JOYSTICK        ON  CACHE BOOL "" FORCE)
+set(SDL_HAPTIC          ON  CACHE BOOL "" FORCE)
+set(SDL_HIDAPI          ON  CACHE BOOL "" FORCE)
+set(SDL_POWER           ON  CACHE BOOL "" FORCE)
+set(SDL_SENSOR          ON  CACHE BOOL "" FORCE)
+
+# Subsystems we drop (MiniAudio handles audio, we write our own renderers)
+set(SDL_AUDIO           OFF CACHE BOOL "" FORCE)
+set(SDL_RENDER          OFF CACHE BOOL "" FORCE)
+set(SDL_GPU             OFF CACHE BOOL "" FORCE)
+set(SDL_CAMERA          OFF CACHE BOOL "" FORCE)
+set(SDL_DIALOG          OFF CACHE BOOL "" FORCE)
+set(SDL_DISKAUDIO       OFF CACHE BOOL "" FORCE)
+set(SDL_DUMMYAUDIO      OFF CACHE BOOL "" FORCE)
+set(SDL_DUMMYVIDEO      OFF CACHE BOOL "" FORCE)
+set(SDL_DUMMYCAMERA     OFF CACHE BOOL "" FORCE)
+set(SDL_OFFSCREEN       OFF CACHE BOOL "" FORCE)
+set(SDL_WASAPI          OFF CACHE BOOL "" FORCE)
+
+####################################### Static Linkage
+
+if(PEACH_PLATFORM_IS_WINDOWS)
+
+    set(SDL_VULKAN      ON  CACHE BOOL "" FORCE)
+    set(SDL_DIRECTX     ON  CACHE BOOL "" FORCE)
+    set(SDL_OPENGL      ON  CACHE BOOL "" FORCE)
+
+    set(SDL_METAL       OFF CACHE BOOL "" FORCE)
+    set(SDL_OPENGLES    OFF CACHE BOOL "" FORCE)
+
+    set(SDL_LIBC        OFF CACHE BOOL "" FORCE)
+
+elseif(PEACH_PLATFORM_IS_MACOS OR PEACH_IOS OR PEACH_TVOS) #peach.toolchain.cmake picks everything properly owo
+
+    set(SDL_METAL       ON  CACHE BOOL "" FORCE)
+
+    set(SDL_OPENGL      OFF CACHE BOOL "" FORCE)
+    set(SDL_OPENGLES    OFF CACHE BOOL "" FORCE)
+    set(SDL_VULKAN      OFF CACHE BOOL "" FORCE)
+    set(SDL_DIRECTX     OFF CACHE BOOL "" FORCE)
+
+elseif(PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
+
+    set(SDL_VULKAN      ON  CACHE BOOL "" FORCE)
+    set(SDL_OPENGL      ON  CACHE BOOL "" FORCE)
+
+    set(SDL_DIRECTX     OFF CACHE BOOL "" FORCE)
+    set(SDL_METAL       OFF CACHE BOOL "" FORCE)
+    set(SDL_OPENGLES    OFF CACHE BOOL "" FORCE)
+
+    set(SDL_LIBC        ON  CACHE BOOL "" FORCE)
+
+endif()
+
+# Inject the subdirectory >O<
+add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL EXCLUDE_FROM_ALL)
+
+# ==============================================================================
+# 🧹 SDL3 TARGET VISUAL DECLUTTER OwO
+# ==============================================================================
+# SDL3's build system creates a few helper targets alongside the main engine library; this loop sweeps them into a clean IDE project subfolder to preserve sanity
+foreach(f_SdlTarget 
+    SDL3-shared 
+    SDL3-static 
+    SDL3_test 
+    uninstall
+)
+    if(TARGET ${f_SdlTarget})
+        set_target_properties(${f_SdlTarget} PROPERTIES FOLDER "third_party/SDL3")
+    endif()
+endforeach()
+
+# ==============================================================================
+# 🚀 ENFORCE MSVC STATIC RUNTIME ON WINDOWS FOR SDL3
+# ==============================================================================
+if(MSVC)
+    if(TARGET SDL3-static)
+        set_property(TARGET SDL3-static PROPERTY MSVC_RUNTIME_LIBRARY
+            "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+        )
+    endif()
+endif()
+
+# ==============================================================================
+# link!
+# ==============================================================================
+target_link_libraries(peach_core PUBLIC
+    SDL3::SDL3
+)
+
 ####################################### helper macro for reducing repeated boiler plate for static linking uwu
 
 macro(STATIC_IMPORT TARGET RELEASE_LIB DEBUG_LIB INCLUDE_DIR)
@@ -266,162 +406,6 @@ macro(STATIC_IMPORT TARGET RELEASE_LIB DEBUG_LIB INCLUDE_DIR)
     )
 endmacro()
 
-####################################### Static Linkage
-
-if(PEACH_WINDOWS_X64)
-    # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64"
-
-    ############ GL extensions for legacy systems
-
-    STATIC_IMPORT(glew 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/win64/release/libglew32.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/win64/debug/libglew32d.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
-    )
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64/release/SDL3-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64/debug/SDL3-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-elseif(PEACH_WINDOWS_ARM64)
-    # AND CMAKE_SYSTEM_PROCESSOR STREQUAL "AMD64"
-
-    ############ GL extensions for legacy systems
-
-    STATIC_IMPORT(glew 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/win64_arm/release/libglew32.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/win64_arm/debug/libglew32d.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
-    )
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64_arm/release/SDL3-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/win64_arm/debug/SDL3-static.lib"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-elseif(PEACH_PLATFORM_IS_MACOS) #everything is a fat binary owo at least the libs
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steve64/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/steve64/debug/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-elseif(PEACH_LINUX_X64) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
-
-    ############ GL extensions for legacy systems
-
-    STATIC_IMPORT(glew 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64/libGLEW.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64/libGLEWd.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
-    )
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64/debug/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-elseif(PEACH_LINUX_ARM64) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
-
-    ############ GL extensions for legacy systems
-
-    STATIC_IMPORT(glew 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64_arm/libGLEW.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/tux64_arm/libGLEWd.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
-    )
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64_arm/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/tux64_arm/debug/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-elseif(PEACH_BSD_X64) #Xxx: doing this took decades off my life ;w;
-
-    ############ GL extensions for legacy systems
-
-    STATIC_IMPORT(glew 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/freebsd64/libGLEW.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/freebsd64/libGLEWd.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
-    )
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/freebsd64/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/freebsd64/debug/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-elseif(PEACH_BSD_ARM64) #Xxx: doing this took decades off my life ;w;
-
-    ############ GL extensions for legacy systems
-
-    STATIC_IMPORT(glew 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/freebsd64/libGLEW.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/freebsd64/libGLEWd.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/include"
-    )
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/freebsd64/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/freebsd64/debug/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-elseif(PEACH_ANDROID) #doesn't need glew owo
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/android/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/android/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-elseif(PEACH_WASM)
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/wasm/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/wasm/debug/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-elseif(PEACH_VITA)
-
-    ############ Windowing and Input
-
-    STATIC_IMPORT(SDL3 
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/psvita/release/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/psvita/debug/libSDL3.a"
-        "${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL3/include"
-    )
-
-else()
-    message(FATAL_ERROR "UNSUPPORTED PLATFORM PEACH_ENGINE IS ONLY SUPPORTED ON WINDOWS/OSX/LINUX SORRY NOT SORRY")
-endif()
-
 ####################################### Dependency Linking
 
 if(PEACH_PLATFORM_IS_LINUX)
@@ -429,7 +413,6 @@ if(PEACH_PLATFORM_IS_LINUX)
     find_package(OpenGL REQUIRED COMPONENTS OpenGL GLX EGL)
     
     target_link_libraries(peach_core PUBLIC
-        glew
         OpenGL::GL
         OpenGL::GLX
         OpenGL::EGL
@@ -442,7 +425,6 @@ elseif(PEACH_PLATFORM_IS_WINDOWS)
     target_link_libraries(peach_core PUBLIC
         #opengl
         opengl32
-        glew    
 
         setupapi 
         version 
@@ -451,62 +433,12 @@ elseif(PEACH_PLATFORM_IS_WINDOWS)
         kernel32
     )
 
-elseif(PEACH_PLATFORM_IS_MACOS) #TODO fix iokit and other frameworks that dont exist on ios ipados or tvos and watchos
-
-    target_link_libraries(peach_core PUBLIC
-        "-framework AVFoundation"
-        "-framework AudioToolbox"
-        "-framework CoreAudio"
-        "-framework CoreHaptics"
-        "-framework CoreVideo"
-        "-framework Metal"
-        "-framework MetalKit"
-        "-framework QuartzCore"
-        "-framework CoreGraphics"
-        "-framework Foundation"
-        "-framework IOKit"
-        "-framework Cocoa"
-        "-framework GameController"
-        "-framework CoreMedia"
-        "-framework ForceFeedback"
-        "-framework Carbon" #wtf sdl3 u still use this garbo
-        "-framework UniformTypeIdentifiers"
-        "-lpthread"
-    ) #needed for statically linking SDL3
-
-elseif(PEACH_IOS OR PEACH_TVOS) #idk ill just link the same, exe compilation on rel will dead code eliminate this shi
-
-    target_link_libraries(peach_core PUBLIC
-        "-framework UIKit"
-        "-framework Foundation"
-        "-framework Metal"
-        "-framework MetalKit"
-        "-framework QuartzCore"
-        "-framework CoreGraphics"
-        "-framework CoreVideo"
-        "-framework AVFoundation"
-        "-framework AudioToolbox"
-        "-framework CoreAudio"
-        "-framework CoreHaptics"  # iOS 13+ for haptics
-        "-framework CoreMotion"   # iOS-specific sensors
-        "-framework GameController"
-        "-framework CoreMedia"
-        "-framework ImageIO"
-        "-framework CoreServices"        # SDL3 uses this for file APIs
-        "-framework MobileCoreServices"  # legacy UTI lookups SDL still references like the carbon shi on macos ;w; >w< owo
-    )
-
 elseif(PEACH_PLATFORM_IS_FREEBSD)
-
-    # Gotta let the linker know where to find GL since bsd is a special little kitty >O<
-    # link_directories(/usr/local/lib)
-    # include_directories(/usr/local/include)
 
     find_package(OpenGL REQUIRED)
 
     target_link_libraries(peach_core PUBLIC
         GL
-        glew
         usbhid # needed for SDL3
         pthread # FreeBSD uses clang by default, pthread is separate
     )
@@ -580,9 +512,6 @@ elseif(PEACH_VITA)
 
     # Vita linker requires -Wl,-q to keep relocations for the .velf tool
     target_link_options(peach_core PRIVATE "-Wl,-q")
-    
-    # Define VITA for your code logic
-    target_compile_definitions(peach_core PUBLIC VITA)
 
     # Create the Vita ELF
     add_custom_command(TARGET peach_core POST_BUILD
@@ -606,12 +535,6 @@ elseif(PEACH_VITA)
 
 endif()
 
-# Peach Core
-target_link_libraries(peach_core PUBLIC
-    #SDL
-    SDL3
-)
-
 ####################################### Master snuggle list for platform detection UwU (my chatgpt is bricked af)
 # daddy guarantees exactly ONE of these is always defined per build so no ambiguity 🍑
 # daddy guaranteed so ig it works OwO
@@ -632,8 +555,10 @@ elseif(PEACH_VITA)
     )
 
 elseif(PEACH_SWITCH)
-    target_compile_definitions(peach_core PUBLIC 
+    target_compile_definitions(peach_core PUBLIC  #dam switch u guys make some amazing hardware full respects o7
         PEACH_RENDERER_OPENGL
+        PEACH_RENDERER_OPENGL_ES
+        PEACH_RENDERER_VULKAN
     )
 
 elseif(PEACH_PLATFORM_IS_MACOS OR PEACH_IOS OR PEACH_TVOS)
@@ -786,7 +711,7 @@ if(BUILD_PEACH_ENGINE)
         target_compile_options(${PROJECT_NAME} PRIVATE
             $<$<CONFIG:Debug>:/MTd>
             $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>,$<CONFIG:MinSizeRel>>:/MT>
-            /Zc:preprocessor
+            /Zc:preprocessor #for va opt owo
         ) 
     endif(MSVC)
 
@@ -924,7 +849,7 @@ if(BUILD_PEACH_EDITOR)
         NightlyMemoryCheck
     )
         if(TARGET ${f_CTestTarget})
-            set_property(TARGET ${f_CTestTarget} PROPERTY FOLDER "other/astenc/ctests")
+            set_property(TARGET ${f_CTestTarget} PROPERTY FOLDER "third_party/astenc/ctests")
         endif()
     endforeach()
 
@@ -937,8 +862,7 @@ if(BUILD_PEACH_EDITOR)
         astcenc-none-static
     )
         if(TARGET ${f_AstcTarget})
-            set_target_properties(${f_AstcTarget} PROPERTIES FOLDER "other/astenc")
-
+            set_target_properties(${f_AstcTarget} PROPERTIES FOLDER "third_party/astenc")
         endif()
     endforeach()
 
@@ -961,7 +885,7 @@ if(BUILD_PEACH_EDITOR)
             endif(TARGET ${f_AstcTarget})
         endforeach()
 
-        # on arm64 — exclude x86 ISA targets from the build entirely, Xcode will still generate them in the project but won't compile them
+        # on arm64 exclude x86 ISA targets from the build entirely, Xcode will still generate them in the project but won't compile them
         if(PEACH_MACOS_ARM64)
             foreach(f_AstcTarget
                 astcenc-avx2-static
@@ -978,7 +902,7 @@ if(BUILD_PEACH_EDITOR)
         
     endif(PEACH_PLATFORM_IS_MACOS)
 
-    if(MSVC)
+    if(MSVC)                                  #XXX: set MT or MTd for the msvc runtime for astenc owo
         foreach(f_AstcTarget 
             astcenc-neon-static
             astcenc-sse4.1-static 
@@ -1005,37 +929,174 @@ if(BUILD_PEACH_EDITOR)
         $<IF:$<BOOL:${PEACH_USING_NEON_ASTCENC}>,astcenc-neon-static,astcenc-sse4.1-static>
     )   
 
+    # ==============================================================================
+    # 🔮 VENDOR SHADERC STATIC BUILD TREE INTEGRATION (these stubs are cute i like them emojis are cool uwu owo)
+    # ==============================================================================
+
+    # Core Shaderc Flag Overrides
+    set(SHADERC_SKIP_TESTS           ON   CACHE BOOL "" FORCE)
+    set(SHADERC_SKIP_EXAMPLES        ON   CACHE BOOL "" FORCE)
+    set(SHADERC_SKIP_COPYRIGHT_CHECK ON   CACHE BOOL "" FORCE)
+    set(SHADERC_ENABLE_SHARED_CRT    OFF  CACHE BOOL "" FORCE) # Enforces static CRT
+    set(SHADERC_ENABLE_HLSL          OFF  CACHE BOOL "" FORCE) # Peach only uses open specs
+    set(SHADERC_SKIP_EXECUTABLES     OFF  CACHE BOOL "" FORCE) # yeah just put the fries in the bag man, no exes 
+    set(BUILD_SHARED_LIBS            OFF  CACHE BOOL "" FORCE)
+
+    # Spirv-Tools and glslang
+    set(ENABLE_GLSLANG_BINARIES      OFF  CACHE BOOL "" FORCE) # no standalone glslang exe
+    set(SPIRV_SKIP_EXECUTABLES       ON   CACHE BOOL "" FORCE) # Kills spirv-dis / spirv-as CLIs
+    set(SPIRV_TOOLS_BUILD_STATIC     ON   CACHE BOOL "" FORCE)
+    set(GLSLANG_TESTS                OFF  CACHE BOOL "" FORCE) # weird they use two opposing option logics but w/e google is beeg 
+    set(SPIRV_SKIP_TESTS             ON   CACHE BOOL "" FORCE)
+    set(SKIP_SPIRV_TOOLS_INSTALL     ON   CACHE BOOL "" FORCE) # uh okay ig i think this'll be fine
+
+    # force static crt, idk i don't trust the enabled shared crt flag idk if it propagates down properly but w/e doesn't hurt
+    if(PEACH_PLATFORM_IS_WINDOWS)
+        set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INTERNAL "")
+    endif()
+
+    # Inject the subdirectory (>O< thanks googy woogy >///<)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc EXCLUDE_FROM_ALL SYSTEM)
+
+    # ==============================================================================
+    # 🧹 SHADERC TARGET EXTINCTION & DE-CLUTTER OwO
+    # ==============================================================================
+    # Shaderc creates ~30 sub-targets; We loop through all known sub-dependency components to SLAM them into a hidden IDE workspace folder and enforce uniform /MT configurations
+    set(f_ShadercInternalTargets
+
+        shaderc shaderc_util shaderc_combined
+        glslang OSDependent 
+        MachineIndependent GenericCodeGen SPIRV
+        SPIRV-Tools SPIRV-Tools-shared SPIRV-Tools-static 
+        SPIRV-Tools-opt SPIRV-Tools-link SPIRV-Tools-reduce
+
+        spirv-tools-tables core_tables extinst_tables
+        spirv-tools-header-DebugInfo spirv-tools-header-OpenCLDebugInfo100
+        spirv-tools-header-NonSemanticShaderDebugInfo100 
+        
+        spirv-tools-header-NonSemanticClspvReflection enum_string_mapping #unsure ab these ones but w/e
+    )
+
+    foreach(f_SubTarget ${f_ShadercInternalTargets})
+
+        if(TARGET ${f_SubTarget}) # sub target :^)
+            
+            get_target_property(f_RealTargetName  ${f_SubTarget} ALIASED_TARGET) # Check if this target name is an ALIAS, idfk im way too lazy to read the 50 cmakelists and .cmake whatever the fucks
+            
+            if(NOT f_RealTargetName )
+
+                set_target_properties(${f_SubTarget} PROPERTIES FOLDER "third_party/shaderc_internals") # Sweeps the project windows completely out of sight into a subfolder
+                get_target_property(f_TargetType ${f_SubTarget} TYPE)
+
+                # Enforce static runtime library link constraints unconditionally on MSVC windows hosts, no universal crt selection flag sadly ;A;
+                if(MSVC AND NOT f_TargetType STREQUAL "UTILITY")
+                    set_property(TARGET ${f_SubTarget} PROPERTY MSVC_RUNTIME_LIBRARY #didn't know i could just do MSVC_RUNTIME_LIBRARY cool
+                        "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+                    )
+                endif()
+            endif()
+        endif()
+
+    endforeach()
+
+    # =================================================================================================
+    # Silence Warnings for shaderc because i trust google they'd never do anything bad right (right?)
+    # =================================================================================================
+
+    foreach(f_Target shaderc_util shaderc_combined shaderc)
+        if(TARGET ${f_Target})
+            if(MSVC)
+                target_compile_options(${f_Target} PRIVATE /W0)
+                target_compile_definitions(${f_Target} PRIVATE _CRT_SECURE_NO_WARNINGS)
+            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+                target_compile_options(${f_Target} PRIVATE -w)
+            endif()
+        endif()
+    endforeach()
+
+    # =================================================================================================
+    # link and find includes for peach editor uwu
+    # =================================================================================================
+
+    target_link_libraries(Peach_Editor PRIVATE
+        shaderc_combined
+    )   
+    # have to manually declare these since it isnt transitively pulled in 
+    target_include_directories(Peach_Editor PRIVATE 
+        ${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc/libshaderc/include
+        ${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc/third_party/spirv-tools/include
+    )
+
+    # ==============================================================================
+    # 🔠 msdfgen, freetype and tinyxml2 so smol >O<
+    # ==============================================================================
+
+    # tinyxml2 overrides
+    set(tinyxml2_BUILD_TESTING    OFF CACHE BOOL "" FORCE)
+    set(tinyxml2_SHARED_LIBS      OFF CACHE BOOL "" FORCE) # just like being explicit idk
+
+    # freetype overrides
+    set(FT_DISABLE_ZLIB           ON CACHE BOOL "" FORCE) # Keep zlib for compressed fonts
+    set(FT_DISABLE_BZIP2          ON  CACHE BOOL "" FORCE) # Kill ancient compression bloat
+    set(FT_DISABLE_PNG            ON  CACHE BOOL "" FORCE) # Kill color emoji font bloat
+    set(FT_DISABLE_HARFBUZZ       ON  CACHE BOOL "" FORCE) # Kill complex layout text bloat
+    set(FT_DISABLE_BROTLI         ON CACHE BOOL "" FORCE)
+    set(FT_DISABLE_HVF            ON CACHE BOOL "" FORCE)
+    set(FT_ENABLE_ERROR_STRINGS   OFF  CACHE BOOL "" FORCE)
+
+    set(SKIP_INSTALL_HEADERS           ON CACHE BOOL "" FORCE) # tell freetype to shut the fuck up about installs uwu
+    set(SKIP_INSTALL_LIBRARIES         ON CACHE BOOL "" FORCE)
+    set(SKIP_INSTALL_ALL               ON CACHE BOOL "" FORCE)
+
+    # msdfgen overrides
+    set(MSDFGEN_CORE_ONLY            OFF  CACHE BOOL "" FORCE) # build ext too, we need font loading
+    set(MSDFGEN_DISABLE_PNG          ON   CACHE BOOL "" FORCE) # drop libpng dep, we use LodePNG ourselves
+    set(MSDFGEN_DISABLE_SVG          OFF  CACHE BOOL "" FORCE) # Keep SVG support active
+    set(MSDFGEN_BUILD_STANDALONE     OFF  CACHE BOOL "" FORCE) # no standalone exe
+    set(MSDFGEN_INSTALL              OFF  CACHE BOOL "" FORCE) # its off by default but y not
+    set(MSDFGEN_USE_SKIA             OFF  CACHE BOOL "" FORCE) # no self-intersection resolution via skia
+    set(MSDFGEN_USE_OPENMP           OFF  CACHE BOOL "" FORCE) # single threaded is fine for offline pipeline
+    set(MSDFGEN_USE_VCPKG            OFF  CACHE BOOL "" FORCE) # Ew, gross
+
+    # Load the dependency tree in order, IMPORTANT: freetype and tinyxml2 must be loaded first so msdfgen can discover their targets since it depends on em owo
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype    EXCLUDE_FROM_ALL SYSTEM)
+
+    add_library(Freetype::Freetype ALIAS freetype) #msdfgen is kinda stupid and looks for a precompiled freetype so needa do this owo
+
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/tinyxml2    EXCLUDE_FROM_ALL SYSTEM)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen     EXCLUDE_FROM_ALL SYSTEM)
+
+    # declutter and set static crt for windows
+    set(f_FontInternalTargets 
+        freetype tinyxml2 msdfgen-core msdfgen-ext
+    )
+
+    foreach(f_FontTarget ${f_FontInternalTargets})
+        if(TARGET ${f_FontTarget})
+            
+            set_target_properties(${f_FontTarget} PROPERTIES FOLDER "third_party/msdfgen_stuff") # Sweep loose targets into an IDE folder view shortcut
+            
+            # Enforce static runtime library link constraints on MSVC windows hosts
+            if(MSVC)
+                set_property(TARGET ${f_FontTarget} PROPERTY MSVC_RUNTIME_LIBRARY
+                    "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+                )
+            endif()
+        endif()
+    endforeach()
+
+    # linky winkys i need my binky ;w;
+    target_link_libraries(Peach_Editor PRIVATE 
+        msdfgen::msdfgen-ext
+        msdfgen::msdfgen-core
+        freetype   
+        tinyxml2
+    )
+
+
     ####################################### Import static libs
 
     if(PEACH_WINDOWS_X64)
-
-        ############ Pretty Fonts
-
-        STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/release/freetype.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64/debug/freetyped.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
-        )
-
-        STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/release/msdfgen-core.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/debug/msdfgen-core.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/release/msdfgen-ext.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64/debug/msdfgen-ext.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        ############# Asset Importing
-
-        STATIC_IMPORT(assimp 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/release_v143/assimp-vc143-mt.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64/debug_v143/assimp-vc143-mtd.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
 
         ############ dotnet stuff
 
@@ -1045,43 +1106,7 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet10"
         )
 
-        ############ shaderc
-
-        STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64/release_v20260330/shaderc_combined.lib" 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64/debug_v20260330/shaderc_combined.lib" 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
-        )
-
     elseif(PEACH_WINDOWS_ARM64)
-
-        ############ Pretty Fonts
-
-        STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64_arm/release/freetype.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/win64_arm/debug/freetyped.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
-        )
-
-        STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64_arm/release/msdfgen-core.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64_arm/debug/msdfgen-core.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64_arm/release/msdfgen-ext.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/win64_arm/debug/msdfgen-ext.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        ############# Asset Importing
-
-        STATIC_IMPORT(assimp 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64_arm/release_v20260430/assimp-vc145-mt.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/win64_arm/debug_v20260430/assimp-vc145-mtd.lib"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
 
         ############ dotnet stuff
 
@@ -1091,136 +1116,28 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet10"
         )
 
-        ############ shaderc
-
-        STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64_arm/release_v20260430/shaderc_combined.lib" 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/win64_arm/debug_v20260430/shaderc_combined.lib" 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
-        )
-
     elseif(PEACH_PLATFORM_IS_MACOS) #all the macos libs are fat and handle x64 and arm but the exec target will be only for 1 arch UwU!
-
-        ############ Pretty Fonts
-
-        STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/steve64/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/steve64/libfreetyped.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
-        )
-
-        STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steve64/release/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steve64/debug/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steve64/release/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/steve64/debug/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        # ############ Asset Importing
-
-        STATIC_IMPORT(assimp 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steve64/libassimp.a" #assimp debug wayyyy too big owo
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/steve64/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
 
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steve64/libnethost_universal.a"
+            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steve64/libnethost_universal.a" #is a fat binary ^O^
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/steve64/libnethost_universal.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet10"
-        )
-
-        ############ Vulkan Specific Imports
-
-        STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/steve64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/steve64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
     elseif(PEACH_LINUX_X64) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
 
-        ############ Pretty Fonts
-
-        STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/tux64/release/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/tux64/debug/libfreetyped.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
-        )
-
-        STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/release/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/debug/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/release/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64/debug/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        # ############ Asset Importing
-
-        STATIC_IMPORT(assimp 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
-
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/tux64/libnethost.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/tux64/libnethost.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet10"
-        )
-
-        ############ Vulkan Specific Imports
-
-        STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/tux64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/tux64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
     elseif(PEACH_LINUX_ARM64) #XXX: doing these later when i compile on my linux machine, future me: WE DID BIIIITCH WE IN IT
 
-        ############ Pretty Fonts
-
-        STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/tux64_arm/release/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/tux64_arm/debug/libfreetyped.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
-        )
-
-        STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64_arm/release/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64_arm/debug/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64_arm/release/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/tux64_arm/debug/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        # ############ Asset Importing
-
-        STATIC_IMPORT(assimp 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64_arm/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/tux64_arm/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
-
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
@@ -1229,44 +1146,8 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet10"
         )
 
-        ############ Vulkan Specific Imports
-
-        STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/tux64_arm/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/tux64_arm/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
-        )
-
     elseif(PEACH_BSD_X64) #XXX: ;A;
 
-        ############ Pretty Fonts
-
-        STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64/libfreetyped.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
-        )
-
-        STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/release/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/debug/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/release/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64/debug/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        # ############ Asset Importing
-
-        STATIC_IMPORT(assimp 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
-
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
@@ -1274,59 +1155,15 @@ if(BUILD_PEACH_EDITOR)
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/freebsd64/libnethost.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet9"
         )
-
-        ############ Vulkan Specific Imports
-
-        STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
-        )
-       
+    
     elseif(PEACH_BSD_ARM64) #XXX: ;A;
 
-        ############ Pretty Fonts
-
-        STATIC_IMPORT(freetype 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64_arm/libfreetype.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/freebsd64_arm/libfreetyped.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype/include/freetype2"
-        )
-
-        STATIC_IMPORT(msdfgen_core 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64_arm/release/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64_arm/debug/libmsdfgen-core.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        STATIC_IMPORT(msdfgen_ext 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64_arm/release/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/freebsd64_arm/debug/libmsdfgen-ext.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen/include"
-        )
-
-        # ############ Asset Importing
-
-        STATIC_IMPORT(assimp 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64_arm/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/freebsd64_arm/libassimp.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/assimp/include"
-        )
-
         ############ dotnet stuff
 
         STATIC_IMPORT(nethost 
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/freebsd64_arm/libnethost.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/freebsd64_arm/libnethost.a"
             "${PROJECT_SOURCE_DIR}/third_party/peach_editor/dotnet/include_dotnet9"
-        )
-
-        ############ Vulkan Specific Imports
-
-        STATIC_IMPORT(shaderc 
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64_arm/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/freebsd64_arm/libshaderc_combined.a"
-            "${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc_combined/include"
         )
 
     else()
@@ -1368,17 +1205,6 @@ if(BUILD_PEACH_EDITOR)
 
         #dotnet
         nethost #used for utilizing the host system's dotnet if it satisfies >=v6.0
-
-        #asset importing, we'll just write an importer for the internal assimp format for modders since assimp isnt fully portable across all targetted platforms
-        assimp
-
-        #font stuff
-        msdfgen_ext
-        msdfgen_core
-        freetype
-
-        #vulkan owo
-        shaderc
     )
 
 endif(BUILD_PEACH_EDITOR)

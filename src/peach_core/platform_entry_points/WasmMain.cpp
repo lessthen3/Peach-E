@@ -19,8 +19,7 @@ int
 {
     auto& f_Engine = PeachCore::GameManager::get_single();
 
-    constexpr PeachCore::ThreadName f_RequiredThreads = PeachCore::ThreadName::AudioThread | PeachCore::ThreadName::PhysicsThread; 
-
+    constexpr uint8_t f_RequiredThreads = (PeachCore::Subsystem::Audio | PeachCore::Subsystem::Physics2D); 
 
     //writable storage on emscripten lives at /home/web_user by default in the IDBFS-mounted
     //virtual filesystem, but for simple cases /persist or just "/" works fine. PhysFS will

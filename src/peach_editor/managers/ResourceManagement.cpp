@@ -16,21 +16,16 @@
 #include <bc7enc_rdo/bc7enc.h>
 #include <astcenc.h>
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-
 #include <filesystem>
 #include <fstream>
 
-namespace PeachEditor::ResourceManagement{
+namespace PeachEditor::ResourceManagement {
 
     //////////////////////////////////////////////
     // Internal linkage
     //////////////////////////////////////////////
 
-     // BC7: all desktop GPUs. 4x4 blocks only, always 16 bytes/block.
-     // output size = ceil(W/4) * ceil(H/4) * 16
+     // BC7: all desktop GPUs. 4x4 blocks only, always 16 bytes/block, output size = ceil(W/4) * ceil(H/4) * 16
     [[nodiscard]] static bool
         EncodeTextureBC7
         (
@@ -45,8 +40,7 @@ namespace PeachEditor::ResourceManagement{
         const uint32_t f_BlocksX = (f_W + 3) / 4;
         const uint32_t f_BlocksY = (f_H + 3) / 4;
 
-        // always cast block counts through uint64_t before multiplying —
-        // a 16k x 16k texture overflows uint32_t here >O<
+        // always cast block counts through uint64_t before multiplying a 16k x 16k texture overflows uint32_t here >O<
         const uint64_t f_OutputBytes = static_cast<uint64_t>(f_BlocksX) * f_BlocksY * 16;
 
         bc7enc_compress_block_params f_Params;
@@ -63,9 +57,7 @@ namespace PeachEditor::ResourceManagement{
         {
             for (uint32_t lv_Bx = 0; lv_Bx < f_BlocksX; lv_Bx++)
             {
-                // extract 4x4 RGBA block with edge clamping so we don't read OOB
-                // on textures where W or H isn't a multiple of 4
-                for (uint32_t lv_Py = 0; lv_Py < 4; lv_Py++)
+                for (uint32_t lv_Py = 0; lv_Py < 4; lv_Py++)  // extract 4x4 RGBA block with edge clamping so we don't read OOB on textures where W or H isn't a multiple of 4
                 {
                     for (uint32_t lv_Px = 0; lv_Px < 4; lv_Px++)
                     {
@@ -82,16 +74,18 @@ namespace PeachEditor::ResourceManagement{
                     }
                 }
 
-                const uint64_t fv_DstOffset = f_StreamOffset +
-                    (static_cast<uint64_t>(lv_By) * f_BlocksX + lv_Bx) * 16;
+                const uint64_t fv_DstOffset = f_StreamOffset + (static_cast<uint64_t>(lv_By) * f_BlocksX + lv_Bx) * 16;
 
                 if (not bc7enc_compress_block(fp_BinaryStream.data() + fv_DstOffset, f_BlockPixels, &f_Params))
                 {
-                    logger->Error(
+                    logger->Error
+                    (
                         fmt::format("bc7enc_compress_block failed at block ({}, {})", lv_Bx, lv_By),
                         "ResourceManagement"
                     );
+
                     fp_BinaryStream.resize(f_StreamOffset); // rollback so stream stays clean
+
                     return false;
                 }
             }

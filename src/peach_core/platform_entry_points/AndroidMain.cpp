@@ -32,7 +32,7 @@ int
 
     auto& f_Engine = PeachCore::GameManager::get_single();
 
-    constexpr PeachCore::ThreadName f_RequiredThreads = ( PeachCore::ThreadName::RenderThread | PeachCore::ThreadName::AudioThread | PeachCore::ThreadName::PhysicsThread ); 
+    constexpr uint8_t f_RequiredThreads = ( PeachCore::Subsystem::Render | PeachCore::Subsystem::Audio | PeachCore::Subsystem::Physics2D); 
 
     if 
     (
