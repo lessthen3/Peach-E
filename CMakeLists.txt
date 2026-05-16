@@ -90,17 +90,21 @@ source_group(
 ####################################### Override build options if we're building for smth weird >///< yes daddy ~~nyah
 
 if(PEACH_ANDROID)
+
     set(BUILD_PEACH_CORE_SHARED ON  CACHE BOOL "" FORCE)
     set(BUILD_PEACH_EDITOR      OFF CACHE BOOL "" FORCE)
     set(BUILD_PEACH_ENGINE      OFF CACHE BOOL "" FORCE)
-elseif(PEACH_IOS OR PEACH_TVOS)
+
+    message(STATUS "android detected and forcing peach shared on and turning peach editor and engine off >w< rawr owo")
+
+elseif(PEACH_IOS OR PEACH_TVOS OR PEACH_WASM OR PEACH_VITA)
+
     set(BUILD_PEACH_CORE_SHARED OFF CACHE BOOL "" FORCE)
     set(BUILD_PEACH_EDITOR      OFF CACHE BOOL "" FORCE)
     set(BUILD_PEACH_ENGINE      ON  CACHE BOOL "" FORCE)
-elseif(PEACH_WASM)
-    set(BUILD_PEACH_CORE_SHARED OFF CACHE BOOL "" FORCE)
-    set(BUILD_PEACH_EDITOR      OFF CACHE BOOL "" FORCE)
-    set(BUILD_PEACH_ENGINE      ON CACHE BOOL "" FORCE)
+
+    message(STATUS "ios, tvos, wasm, or vita detected and forcing peach shared and peach editor off, only engine is valid here uwu~~")
+
 endif()
 
 ####################################### Static/Dynamic Library Target
@@ -358,7 +362,9 @@ elseif(PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD) #XXX: doing these l
 endif()
 
 # Inject the subdirectory >O<
-add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL EXCLUDE_FROM_ALL)
+if(NOT TARGET SDL3-static)
+    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_core/SDL EXCLUDE_FROM_ALL)
+endif()
 
 # ==============================================================================
 # 🧹 SDL3 TARGET VISUAL DECLUTTER OwO
@@ -812,118 +818,65 @@ if(BUILD_PEACH_EDITOR)
 
     ####################################### tell astcenc which ISA to build for based on our platform
 
-    if(PEACH_MACOS_ARM64)
-        set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_SSE41 OFF CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
-    elseif(PEACH_MACOS_X64)
-        set(ASTCENC_ISA_NEON  OFF CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_AVX2  ON  CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_SSE41 ON  CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_SSE2  ON  CACHE BOOL "" FORCE)
-    elseif(PEACH_WINDOWS_X64 OR PEACH_LINUX_X64 OR PEACH_BSD_X64)
-        set(ASTCENC_ISA_NEON  OFF CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_SSE41 ON  CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
-    elseif(PEACH_WINDOWS_ARM64 OR PEACH_LINUX_ARM64 OR PEACH_BSD_ARM64)
-        set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_SSE41 OFF CACHE BOOL "" FORCE)
-        set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
-    endif()
-
-    set(ASTCENC_CLI OFF CACHE BOOL "" FORCE) # dont build the command line tool
-    set(ASTCENC_SHAREDLIB OFF CACHE BOOL "" FORCE)
+    set(ASTCENC_CLI             OFF CACHE BOOL "" FORCE) # dont build the command line tool
+    set(ASTCENC_SHAREDLIB       OFF CACHE BOOL "" FORCE)
     set(ASTCENC_DYNAMIC_RUNTIME OFF CACHE BOOL "" FORCE)
 
-    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/source_include/astcenc)
+    if(PEACH_ARCH_ARM64)
+
+        set(ASTCENC_ISA_NEON  ON  CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE41 OFF CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
+
+        set(PEACH_USING_NEON_ASTCENC TRUE)
+
+    elseif(PEACH_ARCH_X64)
+
+        set(ASTCENC_ISA_NEON  OFF CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_AVX2  OFF CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE41 ON  CACHE BOOL "" FORCE)
+        set(ASTCENC_ISA_SSE2  OFF CACHE BOOL "" FORCE)
+
+        set(PEACH_USING_NEON_ASTCENC FALSE)
+
+    endif()
+
+    if(NOT TARGET astcenc-neon-static AND NOT TARGET astcenc-sse4.1-static)
+        add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/source_include/astcenc)
+    endif()
 
     ####################################### astenc project folder visual declutter OwO UwU
 
-    foreach(f_CTestTarget 
-        Experimental 
-        Nightly 
-        Continuous 
-        NightlyMemoryCheck
-    )
+    foreach(f_CTestTarget Experimental Nightly Continuous NightlyMemoryCheck)
         if(TARGET ${f_CTestTarget})
             set_property(TARGET ${f_CTestTarget} PROPERTY FOLDER "third_party/astenc/ctests")
         endif()
     endforeach()
 
-    foreach(f_AstcTarget 
-        astcenc-neon-static
-        astcenc-sse4.1-static 
-        astcenc-avx2-static 
-        astcenc-sse2-static
-        astcenc-native-static    
-        astcenc-none-static
+    # clean up all possible targets >w<
+    set(f_AstcPossibleTargets
+
+        astcenc-neon-static   astcenc-sse4.1-static 
+        astcenc-avx2-static   astcenc-sse2-static
+        astcenc-native-static astcenc-none-static
     )
+
+    foreach(f_AstcTarget ${f_AstcPossibleTargets})
         if(TARGET ${f_AstcTarget})
-            set_target_properties(${f_AstcTarget} PROPERTIES FOLDER "third_party/astenc")
-        endif()
-    endforeach()
 
-    ####################################### Set astenc target properties
+            set_target_properties(${f_AstcTarget} PROPERTIES FOLDER "third_party/astenc") #shove outta site uwu but thanks for the code ^W^
 
-    if(PEACH_PLATFORM_IS_MACOS)
-        foreach(f_AstcTarget
-            astcenc-neon-static
-            astcenc-avx2-static
-            astcenc-sse4.1-static
-            astcenc-sse2-static
-            astcenc-none-static
-        )
-            if(TARGET ${f_AstcTarget})
-                set_target_properties(${f_AstcTarget} PROPERTIES
-                    XCODE_ATTRIBUTE_ARCHS       "${CMAKE_OSX_ARCHITECTURES}"
-                    XCODE_ATTRIBUTE_VALID_ARCHS "${CMAKE_OSX_ARCHITECTURES}"
-                    OSX_ARCHITECTURES           "${CMAKE_OSX_ARCHITECTURES}"
-                )
-            endif(TARGET ${f_AstcTarget})
-        endforeach()
-
-        # on arm64 exclude x86 ISA targets from the build entirely, Xcode will still generate them in the project but won't compile them
-        if(PEACH_MACOS_ARM64)
-            foreach(f_AstcTarget
-                astcenc-avx2-static
-                astcenc-sse4.1-static
-                astcenc-sse2-static
-            )
-                if(TARGET ${f_AstcTarget})
-                    set_target_properties(${f_AstcTarget} PROPERTIES
-                        EXCLUDE_FROM_ALL TRUE
-                    )
-                endif(TARGET ${f_AstcTarget})
-            endforeach()
-        endif(PEACH_MACOS_ARM64)
-        
-    endif(PEACH_PLATFORM_IS_MACOS)
-
-    if(MSVC)                                  #XXX: set MT or MTd for the msvc runtime for astenc owo
-        foreach(f_AstcTarget 
-            astcenc-neon-static
-            astcenc-sse4.1-static 
-            astcenc-avx2-static 
-            astcenc-sse2-static
-            astcenc-native-static    
-            astcenc-none-static
-        )
-            if(TARGET ${f_AstcTarget})
+            if(MSVC)   #XXX: set MT or MTd for the msvc runtime for astenc owo
                 set_property(TARGET ${f_AstcTarget} PROPERTY MSVC_RUNTIME_LIBRARY
                     MultiThreaded$<$<CONFIG:Debug>:Debug>
                 )
             endif()
-        endforeach()
-    endif()
 
-    if(PEACH_MACOS_ARM64 OR PEACH_WINDOWS_ARM64 OR PEACH_LINUX_ARM64 OR PEACH_BSD_ARM64)
-        set(PEACH_USING_NEON_ASTCENC TRUE)
-    else()
-        set(PEACH_USING_NEON_ASTCENC FALSE)
-    endif()
+        endif()
+    endforeach()
+
+    ####################################### 
 
     target_link_libraries(Peach_Editor PRIVATE
         $<IF:$<BOOL:${PEACH_USING_NEON_ASTCENC}>,astcenc-neon-static,astcenc-sse4.1-static>
@@ -955,8 +908,9 @@ if(BUILD_PEACH_EDITOR)
         set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>" CACHE INTERNAL "")
     endif()
 
-    # Inject the subdirectory (>O< thanks googy woogy >///<)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc EXCLUDE_FROM_ALL SYSTEM)
+    if(NOT TARGET shaderc_combined) # immutable guard so that we don't recompile uwu
+        add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/shaderc EXCLUDE_FROM_ALL SYSTEM) # Inject the subdirectory (>O< thanks googy woogy >///<)
+    endif()
 
     # ==============================================================================
     # 🧹 SHADERC TARGET EXTINCTION & DE-CLUTTER OwO
@@ -1058,20 +1012,22 @@ if(BUILD_PEACH_EDITOR)
     set(MSDFGEN_USE_OPENMP           OFF  CACHE BOOL "" FORCE) # single threaded is fine for offline pipeline
     set(MSDFGEN_USE_VCPKG            OFF  CACHE BOOL "" FORCE) # Ew, gross
 
-    # Load the dependency tree in order, IMPORTANT: freetype and tinyxml2 must be loaded first so msdfgen can discover their targets since it depends on em owo
-    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype    EXCLUDE_FROM_ALL SYSTEM)
+    if(NOT TARGET msdfgen-ext) #probably good enough to guard all its the neediest dep ;w;
+        # Load the dependency tree in order, IMPORTANT: freetype and tinyxml2 must be loaded first so msdfgen can discover their targets since it depends on em owo
+        add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype    EXCLUDE_FROM_ALL SYSTEM)
 
-    add_library(Freetype::Freetype ALIAS freetype) #msdfgen is kinda stupid and looks for a precompiled freetype so needa do this owo
+        add_library(Freetype::Freetype ALIAS freetype) #msdfgen is kinda stupid and looks for a precompiled freetype so needa do this owo
 
-    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/tinyxml2    EXCLUDE_FROM_ALL SYSTEM)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen     EXCLUDE_FROM_ALL SYSTEM)
+        add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/tinyxml2    EXCLUDE_FROM_ALL SYSTEM)
+        add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/msdfgen     EXCLUDE_FROM_ALL SYSTEM)
+    endif()
 
     # declutter and set static crt for windows
-    set(f_FontInternalTargets 
+    set(f_MsdfgenTargets 
         freetype tinyxml2 msdfgen-core msdfgen-ext
     )
 
-    foreach(f_FontTarget ${f_FontInternalTargets})
+    foreach(f_FontTarget ${f_MsdfgenTargets})
         if(TARGET ${f_FontTarget})
             
             set_target_properties(${f_FontTarget} PROPERTIES FOLDER "third_party/msdfgen_stuff") # Sweep loose targets into an IDE folder view shortcut

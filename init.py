@@ -6,8 +6,10 @@ import shutil
 import sys
 import zipfile
 import re
+import glob 
 
 from shutil import which
+from enum import Enum
 
 ############# Pretty Text Utility Function UwU #############
 
@@ -54,7 +56,7 @@ g_CurrentDep: str = "Peach-E"            # this is more for build_deps.py but w/
 _g_ErrorPatterns = [
     re.compile(r':\s*error\b',              re.IGNORECASE), # "error:" / ": error" — GCC, Clang, MSVC
     re.compile(r'\bfatal\s+error\b',        re.IGNORECASE), # "fatal error:" — preprocessor, linker
-    # re.compile(r'\bfailed\b',              re.IGNORECASE),  # ninja "FAILED: CMakeFiles/..." / MSBuild "Build FAILED."
+    re.compile(r'\bfailed:\b',              re.IGNORECASE),  # ninja "FAILED: CMakeFiles/..." / MSBuild "Build FAILED, need the : so func tests dont trigger it ;w;"
 
     re.compile(r'\blnk[12]\d{3}\b',         re.IGNORECASE), # MSVC linker errors: LNK1181, LNK2019 etc
     re.compile(r'\b[Cc][2356789]\d{3}\b',   re.IGNORECASE), # MSVC compiler errors: C2065, C3861 
@@ -337,11 +339,11 @@ def FindAndroidNdk():
     Returns the path string on success, or None if no NDK could be located.
 
     Lookup order:
-      1. ANDROID_NDK_HOME env var (explicit override)
-      2. ANDROID_NDK_ROOT env var (NDK's own scripts use this)
-      3. ANDROID_NDK env var (CMake sometimes sets this internally)
-      4. ANDROID_HOME / ANDROID_SDK_ROOT env vars, then walk into ndk/<version>/
-      5. ANDROID_HOME / ANDROID_SDK_ROOT env vars, then walk into ndk-bundle/
+        1. ANDROID_NDK_HOME env var (explicit override)
+        2. ANDROID_NDK_ROOT env var (NDK's own scripts use this)
+        3. ANDROID_NDK env var (CMake sometimes sets this internally)
+        4. ANDROID_HOME / ANDROID_SDK_ROOT env vars, then walk into ndk/<version>/
+        5. ANDROID_HOME / ANDROID_SDK_ROOT env vars, then walk into ndk-bundle/
     """
 
     ############# direct env vars pointing at the NDK itself #############
@@ -604,14 +606,27 @@ def LaunchAndroidApk():
 
     return True
 
+############################################################################## Build Status Enum >///< ##############################################################################
+
+class ToolStatus(Enum):
+    BUILD_SUCCESS = 1
+    BUILD_FAILED = 2
+    CLEAN_OR_NUKE_REQUESTED = 3
+    CLEAN_FAILED = 4
+    NUKE_FAILED = 5
+    ANDROID_INSTALL_FAILED = 6
+    ANDROID_PACKAGE_FAILED = 7
+    ANDROID_LAUNCH_FAILED = 8
+    MISFORMED_BUILD_ARGUMENTS_PASSED = 9
+
 ############################################################################## Main Function ##############################################################################
 
-def main() -> bool:
+def main() -> ToolStatus:
 
     ############# Check for Required Build Tools in PATH #############
     
     if not ensure_tool_installed("cmake"): 
-        return False
+        return ToolStatus.BUILD_FAILED   
 
     ############# Setup Parser #############
 
@@ -650,7 +665,13 @@ def main() -> bool:
     parser.add_argument(
         '--clean', 
         action='store_true', 
-        help=CreateColouredText('Used to clean build artifacts from a previous run', 'bright magenta')
+        help=CreateColouredText('Used to clean peachy build artifacts from a previous run', 'bright magenta')
+    )
+
+    parser.add_argument(
+        '--nuke', 
+        action='store_true', 
+        help=CreateColouredText('Used to completely wipe the build directory including all compiled dependencies', 'bright magenta')
     )
 
     parser.add_argument(
@@ -764,6 +785,63 @@ def main() -> bool:
 
     args = parser.parse_args()
 
+    ############# KABOOOOOOOOOOOOOOOOOOOOOOOOOOM #############
+
+    if args.nuke and args.clean:
+        print(CreateColouredText("[ERROR]: tried to pass --nuke and --clean, you can only pick one; with great power comes great responsibility einstein said that, are you saying you're smarter than einstein?", "red"))
+        return ToolStatus.MISFORMED_BUILD_ARGUMENTS_PASSED
+
+    if args.nuke:
+        
+        print(CreateColouredText("[THE HORROR]: 3..2..1.. clearance granted, firing 😔", "bright magenta"))
+
+        try:
+            shutil.rmtree('build')
+        except FileNotFoundError:
+            print(CreateColouredText("[INFO]: build directory doesn't exist, just ignoring --nuke call >w<","bright green"))
+        except PermissionError as err:
+            print(CreateColouredText(f"[ERROR]: permission denied for nuking ;w; what am i supposed to do now? what: {err}","red"))
+            return ToolStatus.NUKE_FAILED
+        except Exception as err:
+            print(CreateColouredText(f"[ERROR]: unable to nuke build directory idk y, what: {err}","red"))
+            return ToolStatus.NUKE_FAILED
+
+    elif args.clean:
+
+        print(CreateColouredText("[INFO]: Scraping only peach components... leaving dependencies cozy ~nya~ 🍑✨","bright cyan"))
+
+        f_TargetBaseNames = ["peach_core", "Peach_Editor", "Peach_Engine", "Peach_Tests"]
+
+        # Wipe out standard CMake intermediate directory layout states
+
+        for f_Target in f_TargetBaseNames:
+            shutil.rmtree(f"build/CMakeFiles/{f_Target}.dir", ignore_errors=True) 
+
+        # Recursive Binary Extermination Pass
+
+        for f_Target in f_TargetBaseNames:
+            
+            f_RecursivePattern = f"build/**/{f_Target}*"  # target both exact name matches and variants with extensions (.exe, .lib, .a, .pdb)
+            
+            for f_FilePath in glob.glob(f_RecursivePattern, recursive=True):
+
+                if "third_party" in f_FilePath or "src" in f_FilePath:  # Avoid accidentally nuking live source root folders if something goes wild
+                    continue
+                    
+                if os.path.isdir(f_FilePath): # Catch and delete directory matching artifacts (like target project folders in VS/Xcode)
+                    
+                    if f_FilePath.endswith(".dir") or f_FilePath.endswith(".framework") or f_FilePath.endswith(".bundle"):
+                        shutil.rmtree(f_FilePath, ignore_errors=True)
+                else: # Catch and delete individual binary files (.exe, .a, .lib, .so, .dylib, .pdb, .ninja)
+                    try:
+                        os.remove(f_FilePath)
+                        print(CreateColouredText(f"[INFO]: successfully removed: '{f_FilePath}'", "bright green"))
+                    except OSError:
+                        print(CreateColouredText(f"[ERROR]: failed to remove: '{f_FilePath}' during --clean", "red"))
+                        return ToolStatus.CLEAN_FAILED
+
+        print(CreateColouredText("[SUCCESS]: Clean completed! Peach components completely purged, dependencies preserved.", "green"))
+
     ############# Validate Build Config #############
 
     f_BuildType = "nothing"
@@ -776,15 +854,13 @@ def main() -> bool:
 
     elif(args.both):
         f_BuildType = "Release and Debug"
+    
+    elif args.clean or args.nuke:
+        return ToolStatus.CLEAN_OR_NUKE_REQUESTED #just gonna assume if no build config was passed they just wanted a clean uwu
 
     else:
         print(CreateColouredText("[ERROR]: No valid build type input detected, use -h or --help if you're unfamiliar", "red"))
-        return False
-
-    ############# Check for --clean flag #############
-
-    if args.clean:
-        shutil.rmtree('build', ignore_errors=True)
+        return ToolStatus.MISFORMED_BUILD_ARGUMENTS_PASSED
 
     ############# Detect Platform #############
 
@@ -803,7 +879,7 @@ def main() -> bool:
         
     if(not args.G):
         print(CreateColouredText("[ERROR]: please specify cmake generator using -G [desired_generator] >w<", "red"))
-        return False
+        return ToolStatus.BUILD_FAILED
 
     f_DesiredGenerator = args.G[0].lower() #convert to all lower case for easier handling
 
@@ -840,10 +916,10 @@ def main() -> bool:
                 )
             else:
                 print(CreateColouredText("[TIP]: please make sure you have the llvm toolchain for visual studio installed before using --use_clang on windows owo", "bright cyan"))
-                return False
+                return ToolStatus.BUILD_FAILED
         
         elif not ensure_tool_installed("clang") and not ensure_tool_installed("clang++"):          
-            return False
+            return ToolStatus.BUILD_FAILED
 
         f_ExtraGenerationConfigs.extend(["-DCMAKE_C_COMPILER=clang", "-DCMAKE_CXX_COMPILER=clang++"])
 
@@ -853,7 +929,7 @@ def main() -> bool:
             print(CreateColouredText("[ERROR]: can't use gcc/g++ on windows, aborting build process", "red"))
 
         if not ensure_tool_installed("gcc") and not ensure_tool_installed("g++"):
-            return False
+            return ToolStatus.BUILD_FAILED
 
         f_ExtraGenerationConfigs.extend(["-DCMAKE_C_COMPILER=gcc", "-DCMAKE_CXX_COMPILER=g++"])       
 
@@ -879,7 +955,7 @@ def main() -> bool:
 
         if f_ToolchainKey not in f_ValidToolchainKeys:
             print(CreateColouredText("[ERROR]: invalid toolchain key was detected, please use -h to see the list of valid toolchain keys"))
-            return False
+            return ToolStatus.BUILD_FAILED
         
     else:
         f_MachineArch = platform.machine().lower()
@@ -896,7 +972,7 @@ def main() -> bool:
             f_ToolchainKey = "haiku" #arm64 is experimental atm apparently, also this shi gave my first PC BIOS cancer lmfao wasn't the same after that failed install lol
         else:
             print(CreateColouredText(f"[ERROR]: Could not auto-detect platform: {f_CurrentPlatform}, please specify with -T uwu", "red"))
-            return False
+            return ToolStatus.BUILD_FAILED
 
         print(CreateColouredText(f"[INFO]: Auto-detected platform: {f_ToolchainKey} ~ nya~", "bright cyan"))
 
@@ -908,7 +984,7 @@ def main() -> bool:
         
         if not f_AndroidNdkAbsolutePath:
             print(CreateColouredText("[ERROR]: unable to locate required tools for Android cross compilation >w< stopping build immediately", "red"))
-            return False
+            return ToolStatus.BUILD_FAILED
         
         f_AndroidNdkAbsolutePath = f_AndroidNdkAbsolutePath.replace("\\", "/") #replace chars since on windows cmake is kinda stupid
         
@@ -956,18 +1032,18 @@ def main() -> bool:
 
     if f_ToolchainKey == "android":
         if (args.package_apk or args.install_apk or args.launch_apk) and not PackageAndroidApk(f_BaseDir, f_BuildType):
-            return False
+            return ToolStatus.ANDROID_PACKAGE_FAILED
 
         if (args.install_apk or args.launch_apk) and not InstallAndroidApk(f_BaseDir, f_BuildType):
-            return False
+            return ToolStatus.ANDROID_INSTALL_FAILED
 
         if args.launch_apk and not LaunchAndroidApk():
-            return False
+            return ToolStatus.ANDROID_LAUNCH_FAILED
 
     ############# return false on failed build ;w; #############
 
     if not build_result:
-        return False
+        return ToolStatus.BUILD_FAILED
     
     ############# Report Build Stats #############
 
@@ -976,7 +1052,7 @@ def main() -> bool:
     print(CreateColouredText(f"Build Type: {f_BuildType}", "bright magenta"))
     print(CreateColouredText(f"Platform: {f_ToolchainKey}\n", "bright magenta"))
 
-    return True
+    return ToolStatus.BUILD_SUCCESS
 
 ############# Main Caller #############
 
@@ -985,7 +1061,7 @@ if __name__ == "__main__":
     if platform.system() == "Windows": #enable ANSI colour codes for Windows Console
         os.system('color') 
 
-    if not main():
+    if main() == ToolStatus.BUILD_FAILED:
         print(CreateColouredText("[ERROR]: execution of full build process was unsuccessful\n", "red"))
     else:
         print(CreateColouredText("done!\n", "magenta"))

@@ -48,6 +48,9 @@ set(PEACH_WASM              OFF CACHE BOOL "" FORCE)
 set(PEACH_VITA              OFF CACHE BOOL "" FORCE)
 set(PEACH_SWITCH            OFF CACHE BOOL "" FORCE)
 
+set(PEACH_ARCH_X64          OFF CACHE BOOL "" FORCE)
+set(PEACH_ARCH_ARM64        OFF CACHE BOOL "" FORCE)     
+set(PEACH_ARCH_ARMV7        OFF CACHE BOOL "" FORCE)     
 
 ############# category flags #############
 
@@ -74,6 +77,8 @@ if(PEACH_TARGET_PLATFORM STREQUAL "windows-x64")
     set(PEACH_PLATFORM_IS_DESKTOP    ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_WINDOWS    ON CACHE BOOL "" FORCE)
 
+    set(PEACH_ARCH_X64               ON CACHE BOOL "" FORCE)
+
     message(STATUS "Mmm, Windows detected, kitten! 😏")
 
 ############# windows arm #############
@@ -85,6 +90,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "windows-arm64")
     set(PEACH_WINDOWS_ARM64       ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_WINDOWS ON CACHE BOOL "" FORCE)
+
+    set(PEACH_ARCH_ARM64          ON CACHE BOOL "" FORCE)
 
     message(STATUS "Windows ARM64 detected, kitten on a surface pro~ 💅")
 
@@ -102,6 +109,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "macos-x64")
     set(PEACH_PLATFORM_IS_APPLE   ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_MACOS   ON CACHE BOOL "" FORCE)
 
+    set(PEACH_ARCH_X64            ON CACHE BOOL "" FORCE)
+
     message(STATUS "macOS x86_64, older but golder ^w^ >///< daddy still loves u kitten owo ~~~🍎")
 
 elseif(PEACH_TARGET_PLATFORM STREQUAL "macos-arm64")
@@ -115,6 +124,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "macos-arm64")
     set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_APPLE   ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_MACOS   ON CACHE BOOL "" FORCE)
+
+    set(PEACH_ARCH_ARM64          ON CACHE BOOL "" FORCE)
 
     message(STATUS "macOS MMMMMMMMMM daddy likey >w<, premium fur and silky frameworks for daddy's kitten~ 🍎")
 
@@ -133,6 +144,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "ios")
     set(PEACH_PLATFORM_IS_APPLE   ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
 
+    set(PEACH_ARCH_ARM64          ON CACHE BOOL "" FORCE)
+
     message(STATUS "iOS, purrfect for kitten's paws and paws only~ 🍏🐾")
 
 ############# tvos cross from mac #############
@@ -140,6 +153,7 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "ios")
 elseif(PEACH_TARGET_PLATFORM STREQUAL "tvos")
     set(CMAKE_SYSTEM_NAME tvOS)
     set(CMAKE_SYSTEM_PROCESSOR arm64)
+
     set(CMAKE_OSX_ARCHITECTURES arm64)
     set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0")
     set(CMAKE_OSX_SYSROOT appletvos)
@@ -147,6 +161,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "tvos")
     set(PEACH_TVOS                ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_APPLE   ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
+
+    set(PEACH_ARCH_ARM64          ON CACHE BOOL "" FORCE)
 
     message(STATUS "tvOS, time to get cozy on the big screen, nya~ 📺")
 
@@ -161,6 +177,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "linux-x64")
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_LINUX   ON CACHE BOOL "" FORCE)
 
+    set(PEACH_ARCH_X64            ON CACHE BOOL "" FORCE)
+
     message(STATUS "Nyaa, Linux detected! Flex that Tux, kitten~ 🐧")
 
 elseif(PEACH_TARGET_PLATFORM STREQUAL "linux-arm64")
@@ -171,6 +189,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "linux-arm64")
     set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_LINUX   ON CACHE BOOL "" FORCE)
+
+    set(PEACH_ARCH_ARM64          ON CACHE BOOL "" FORCE)
 
     message(STATUS "Linux ARM64 detected — WSL2 in the streets, ARM64 in the sheets 😉") #holy shit opus is gunnin for the gpt crown rn LMFAO
 
@@ -185,6 +205,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "freebsd-x64")
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_FREEBSD ON CACHE BOOL "" FORCE)
 
+    set(PEACH_ARCH_X64            ON CACHE BOOL "" FORCE)
+
     message(STATUS "FreeBSD... true BSD-babe detected, ready for that zfs cuddles~ 🦀")
 
 elseif(PEACH_TARGET_PLATFORM STREQUAL "freebsd-arm64")
@@ -196,6 +218,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "freebsd-arm64")
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_FREEBSD ON CACHE BOOL "" FORCE)
 
+    set(PEACH_ARCH_ARM64          ON CACHE BOOL "" FORCE)
+
     message(STATUS "FreeBSD ARM64 detected — kitten's all sweaty in this exotic toolchain 💦")
 
 ############# haiku #############
@@ -206,6 +230,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "haiku")
 
     set(PEACH_HAIKU               ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_DESKTOP ON CACHE BOOL "" FORCE)
+
+    set(PEACH_ARCH_X64            ON CACHE BOOL "" FORCE)
     
     message(STATUS "Haiku OS, lightweight and aesthetic, uwu 💐")
 
@@ -257,6 +283,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "android")
     set(PEACH_PLATFORM_IS_MOBILE  ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_UNIX    ON CACHE BOOL "" FORCE)
 
+    set(PEACH_ARCH_ARM64          ON CACHE BOOL "" FORCE)
+
     message(STATUS "Android detected! Purr in my pocket, take me anywhere~ 🤳🐾")
 
 ############# wasm via emscripten #############
@@ -298,6 +326,8 @@ elseif(PEACH_TARGET_PLATFORM STREQUAL "psvita")
     set(PEACH_VITA                  ON CACHE BOOL "" FORCE)
     set(PEACH_PLATFORM_IS_HANDHELD  ON CACHE BOOL "" FORCE)
 
+    set(PEACH_ARCH_ARMV7            ON CACHE BOOL "" FORCE)
+
     message(STATUS "Kitten on the PS Vita, time to go portable, ahh~ 🎮🍑")
 
 else()
@@ -314,7 +344,7 @@ message(STATUS "PeachToolchain: targeting ${PEACH_TARGET_PLATFORM} ~ nya~ ^O^")
 
 function(peach_apply_platform_definitions fp_Target fp_Visibility)
     
-   # validate visibility arg
+    # validate visibility arg
     if(NOT fp_Visibility STREQUAL "PUBLIC" AND NOT fp_Visibility STREQUAL "PRIVATE" AND NOT fp_Visibility STREQUAL "INTERFACE")
         message(FATAL_ERROR "[Peach] peach_apply_platform_definitions: invalid visibility '${fp_Visibility}', must be PUBLIC, PRIVATE, or INTERFACE")
     endif()

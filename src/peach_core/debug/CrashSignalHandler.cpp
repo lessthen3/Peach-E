@@ -15,18 +15,20 @@
 #include "CrashSignalHandler.h"
 
 #include <csignal>
-#include <cstring>      // for strlen — async signal safe aka ass
+#include <cstring>      // for strlen, async signal safe aka ass
 #include <fcntl.h>
 
 #ifdef PEACH_PLATFORM_WINDOWS
 #   include <io.h>
 #   include <process.h>
 #   include <sys/stat.h>
+#   include <share.h>
 #   define STDERR_FILENO 2
 #   define PEACH_CRASH_WRITE ::_write
 #   define PEACH_CRASH_EXIT ::_exit
 #elif defined(PEACH_PLATFORM_LINUX) || defined(PEACH_PLATFORM_APPLE) || defined(PEACH_PLATFORM_FREEBSD) || defined(PEACH_PLATFORM_ANDROID)
 #   include <unistd.h>     // for write, _exit on POSIX
+#   include <stdio.h>
 #   define PEACH_CRASH_WRITE ::write
 #   define PEACH_CRASH_EXIT ::_exit
 #elif defined(PEACH_PLATFORM_WASM)
@@ -63,7 +65,6 @@ namespace PeachCore::Debug {
         {
             return; //idk this is broken
         }
-
 
         // On Windows, use the secure bounds copy, on POSIX, use standard snprintf.
         #ifdef PEACH_PLATFORM_WINDOWS
@@ -147,7 +148,7 @@ namespace PeachCore::Debug {
         /*
             Write a crash flag file so the launcher knows we crashed, using raw open/write/close since it's async signal safe on POSIX
         */ 
-        if (s_CrashFlagPath  and s_CrashFlagPath[0] != '\0') //null check so we dont crash in the crash LMFAO
+        if (s_CrashFlagPath and s_CrashFlagPath[0] != '\0') //null check so we dont crash in the crash LMFAO
         {
             int f_FileDescriptor = -1;
 
@@ -166,7 +167,7 @@ namespace PeachCore::Debug {
                     f_FileDescriptor = -1;
                 }
             #else
-                int f_FileDescriptor = ::open(s_CrashFlagPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+                f_FileDescriptor = ::open(s_CrashFlagPath, O_WRONLY | O_CREAT | O_TRUNC, 0644);
             #endif
 
             if (f_FileDescriptor >= 0)
