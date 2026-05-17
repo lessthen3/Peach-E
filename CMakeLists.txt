@@ -1012,7 +1012,7 @@ if(BUILD_PEACH_EDITOR)
     set(MSDFGEN_USE_OPENMP           OFF  CACHE BOOL "" FORCE) # single threaded is fine for offline pipeline
     set(MSDFGEN_USE_VCPKG            OFF  CACHE BOOL "" FORCE) # Ew, gross
 
-    if(NOT TARGET msdfgen-ext) #probably good enough to guard all its the neediest dep ;w;
+    if(NOT TARGET msdfgen-ext) #probably good enough to guard all, its the neediest dep ;w;
         # Load the dependency tree in order, IMPORTANT: freetype and tinyxml2 must be loaded first so msdfgen can discover their targets since it depends on em owo
         add_subdirectory(${PROJECT_SOURCE_DIR}/third_party/peach_editor/freetype    EXCLUDE_FROM_ALL SYSTEM)
 
