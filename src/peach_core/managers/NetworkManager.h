@@ -14,7 +14,7 @@
 #include <semaphore>
 
 ///PeachCore
-#include "utils/Logger.h" 
+#include "debug/Logger.h" 
 
 ///moodycamel
 #include <moody_camel/readerwriterqueue.h>

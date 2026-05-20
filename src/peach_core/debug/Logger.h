@@ -29,12 +29,10 @@
 #include <mutex>
 
 ///PeachCore
-#include "RingBuffer.h"
+#include "utils/RingBuffer.h"
+#include "utils/PeachForceInline.h"
 #include "peach_api/LoggerFlags.h"
-
-///fmt
 #include "PeachPrint.h"
-#include "PeachForceInline.h"
 
 constexpr int FATAL_SEGMENTATION_FAULT = -6969;
 

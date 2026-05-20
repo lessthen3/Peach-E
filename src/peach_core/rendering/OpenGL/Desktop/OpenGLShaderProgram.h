@@ -13,7 +13,7 @@
 #ifdef PEACH_RENDERER_OPENGL
 
 ///PeachCore
-#include "utils/Logger.h"
+#include "debug/Logger.h"
 #include "rendering/Fog.h"
 #include "rendering/PeachMaterial.h"
 

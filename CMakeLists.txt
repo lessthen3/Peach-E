@@ -178,7 +178,7 @@ endif(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_
 
 ####################################### GLEW include
 
-if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD OR PEACH_HAIKU)
+if(PEACH_PLATFORM_IS_WINDOWS OR PEACH_PLATFORM_IS_LINUX OR PEACH_PLATFORM_IS_FREEBSD OR PEACH_HAIKU) #only platforms where glew makes sense ^O^
 
     file(GLOB GLEW_SOURCES
         ${PROJECT_SOURCE_DIR}/third_party/peach_core/glew/glew.c
@@ -378,6 +378,12 @@ foreach(f_SdlTarget
 )
     if(TARGET ${f_SdlTarget})
         set_target_properties(${f_SdlTarget} PROPERTIES FOLDER "third_party/SDL3")
+
+        target_compile_options(${f_SdlTarget} PRIVATE ${WARNING_OFF_FLAG})
+
+        if(MSVC)
+            target_compile_definitions(${f_SdlTarget} PRIVATE _CRT_SECURE_NO_WARNINGS)
+        endif()
     endif()
 endforeach()
 
@@ -959,11 +965,9 @@ if(BUILD_PEACH_EDITOR)
 
     foreach(f_Target shaderc_util shaderc_combined shaderc)
         if(TARGET ${f_Target})
+            target_compile_options(${f_Target} PRIVATE ${WARNING_OFF_FLAG})
             if(MSVC)
-                target_compile_options(${f_Target} PRIVATE /W0)
                 target_compile_definitions(${f_Target} PRIVATE _CRT_SECURE_NO_WARNINGS)
-            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID MATCHES "GNU")
-                target_compile_options(${f_Target} PRIVATE -w)
             endif()
         endif()
     endforeach()
@@ -1032,9 +1036,12 @@ if(BUILD_PEACH_EDITOR)
             
             set_target_properties(${f_FontTarget} PROPERTIES FOLDER "third_party/msdfgen_stuff") # Sweep loose targets into an IDE folder view shortcut
             
-            # Enforce static runtime library link constraints on MSVC windows hosts
+            target_compile_options(${f_FontTarget} PRIVATE ${WARNING_OFF_FLAG}) #turn off warnings for now >w<
+            
             if(MSVC)
-                set_property(TARGET ${f_FontTarget} PROPERTY MSVC_RUNTIME_LIBRARY
+                target_compile_definitions(${f_FontTarget} PRIVATE _CRT_SECURE_NO_WARNINGS) #turn off warnings nothing im gonna contrib atm until i find some bad errors testing uwu
+
+                set_property(TARGET ${f_FontTarget} PROPERTY MSVC_RUNTIME_LIBRARY # Enforce static runtime library link constraints on MSVC windows hosts
                     "MultiThreaded$<$<CONFIG:Debug>:Debug>"
                 )
             endif()

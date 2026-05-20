@@ -14,7 +14,7 @@
 
 ///PeachCore
 #include "PeachNode.h"
-#include "utils/Logger.h"
+#include "debug/Logger.h"
 
 ///STL
 #include <queue>

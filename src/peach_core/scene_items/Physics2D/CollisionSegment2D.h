@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#include "utils/Logger.h"
+#include "debug/Logger.h"
 #include <box2d/box2d.h>
 
 #include <vector>

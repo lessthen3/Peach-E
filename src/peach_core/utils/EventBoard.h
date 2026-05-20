@@ -10,7 +10,7 @@
 ********************************************************************/
 #pragma once
 
-#include "Logger.h"
+#include "debug/Logger.h"
 
 #include <queue>
 #include <memory>
@@ -82,7 +82,7 @@ namespace PeachCore {
                     handlersList.end(),
                     [&func](const auto& handler)
                     {
-                        //return handler.target<Func>() == func.target<Func>(); NOT SURE WHY THIS IS RETURNING SMTH LMFAO
+                        //return handler.target<Func>() == func.target<Func>(); NOT SURE WHY THIS IS RETURNING SMTH LMFAO, future ryan: cause it's a lambda it's not returning thru the main function owo ur cute o7
                     }
                 ), 
                 handlersList.end()

@@ -12,7 +12,7 @@
 
 ///PeachCore
 #include "utils/PeachForceInline.h"
-#include "utils/PeachPrint.h"
+#include "debug/PeachPrint.h"
 #include "math/DoubleBuffered.h"
 
 ///STL

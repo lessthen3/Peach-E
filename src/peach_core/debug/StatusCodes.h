@@ -98,9 +98,26 @@ extern "C"
 
         PEACH_FATAL_ERROR_FAILED_TO_INITIALIZE_RESOURCE_MANAGER,
 
-        PEACH_FATAL_FAILED_TO_INITIALIZE_RENDERING_LOADING_QUEUE
+        PEACH_FATAL_FAILED_TO_INITIALIZE_RENDERING_LOADING_QUEUE,
 
         //=================================================================================================================================================================//
+
+        //======================================================================= Internal Engine Errors =======================================================================//
+
+        PEACH_INTERNAL_ERROR_PASSED_NULLPTR_REFERENCE_TO_LOGGER,
+
+
+        //======================================================================= Temporary =======================================================================//
+
+        PEACH_ERROR_FAILED_TO_OPEN_OBJ_FILE,
+        PEACH_ERROR_FOUND_INVALID_TOKEN_IN_MISFORMED_OBJ,
+
+        //======================================================================= File I/O =======================================================================//
+
+        PEACH_ERROR_FILE_NOT_FOUND_WHEN_ASKED_TO_LOAD,
+        PEACH_ERROR_FOUND_INVALID_FILE_EXTENSION_FOR_FILE_ASKED_TO_LOAD,
+        PEACH_ERROR_NO_FILE_EXTENSION_FOUND_FOR_FILE_ASKED_TO_LOAD
+
 
     } PEACH_STATUS_CODE;
 

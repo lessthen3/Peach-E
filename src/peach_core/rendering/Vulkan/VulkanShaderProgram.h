@@ -17,7 +17,7 @@
 #include <vk-bootstrap/VkBootstrap.h>
 
 ///PeachCore
-#include "utils/Logger.h"
+#include "debug/Logger.h"
 
 namespace PeachCore::Vulkan { //namespacing this because it doesnt need to be a class, just a file w shader utilization tools
 

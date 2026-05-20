@@ -11,7 +11,7 @@
 #include "GameManager.h"
 #include "InputManager.h"
 #include "debug/CrashSignalHandler.h"
-#include "utils/PeachPrint.h"
+#include "debug/PeachPrint.h"
 
 #include <SDL3/SDL_main.h>
 

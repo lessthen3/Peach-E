@@ -18,58 +18,6 @@
 #include <string>
 #include <vector>
 
-namespace PeachCore::Test {
-    static const std::vector<float> CUBE_VERTICES =
-{
-    // Front face (z = +1, normal = +Z)
-    -1.0f, -1.0f,  1.0f,   0.0f, 0.0f,   0.0f, 0.0f, 1.0f,
-     1.0f, -1.0f,  1.0f,   1.0f, 0.0f,   0.0f, 0.0f, 1.0f,
-     1.0f,  1.0f,  1.0f,   1.0f, 1.0f,   0.0f, 0.0f, 1.0f,
-    -1.0f,  1.0f,  1.0f,   0.0f, 1.0f,   0.0f, 0.0f, 1.0f,
-
-    // Back face (z = -1, normal = -Z)
-     1.0f, -1.0f, -1.0f,   0.0f, 0.0f,   0.0f, 0.0f, -1.0f,
-    -1.0f, -1.0f, -1.0f,   1.0f, 0.0f,   0.0f, 0.0f, -1.0f,
-    -1.0f,  1.0f, -1.0f,   1.0f, 1.0f,   0.0f, 0.0f, -1.0f,
-     1.0f,  1.0f, -1.0f,   0.0f, 1.0f,   0.0f, 0.0f, -1.0f,
-
-    // Left face (x = -1, normal = -X)
-    -1.0f, -1.0f, -1.0f,   0.0f, 0.0f,  -1.0f, 0.0f, 0.0f,
-    -1.0f, -1.0f,  1.0f,   1.0f, 0.0f,  -1.0f, 0.0f, 0.0f,
-    -1.0f,  1.0f,  1.0f,   1.0f, 1.0f,  -1.0f, 0.0f, 0.0f,
-    -1.0f,  1.0f, -1.0f,   0.0f, 1.0f,  -1.0f, 0.0f, 0.0f,
-
-    // Right face (x = +1, normal = +X)
-     1.0f, -1.0f,  1.0f,   0.0f, 0.0f,   1.0f, 0.0f, 0.0f,
-     1.0f, -1.0f, -1.0f,   1.0f, 0.0f,   1.0f, 0.0f, 0.0f,
-     1.0f,  1.0f, -1.0f,   1.0f, 1.0f,   1.0f, 0.0f, 0.0f,
-     1.0f,  1.0f,  1.0f,   0.0f, 1.0f,   1.0f, 0.0f, 0.0f,
-
-    // Top face (y = +1, normal = +Y)
-    -1.0f,  1.0f,  1.0f,   0.0f, 0.0f,   0.0f, 1.0f, 0.0f,
-     1.0f,  1.0f,  1.0f,   1.0f, 0.0f,   0.0f, 1.0f, 0.0f,
-     1.0f,  1.0f, -1.0f,   1.0f, 1.0f,   0.0f, 1.0f, 0.0f,
-    -1.0f,  1.0f, -1.0f,   0.0f, 1.0f,   0.0f, 1.0f, 0.0f,
-
-    // Bottom face (y = -1, normal = -Y)
-    -1.0f, -1.0f, -1.0f,   0.0f, 0.0f,   0.0f, -1.0f, 0.0f,
-     1.0f, -1.0f, -1.0f,   1.0f, 0.0f,   0.0f, -1.0f, 0.0f,
-     1.0f, -1.0f,  1.0f,   1.0f, 1.0f,   0.0f, -1.0f, 0.0f,
-    -1.0f, -1.0f,  1.0f,   0.0f, 1.0f,   0.0f, -1.0f, 0.0f,
-};
-
-// 6 faces × 2 triangles × 3 indices = 36 indices, CCW winding
-static const std::vector<unsigned int> CUBE_INDICES =
-{
-     0,  1,  2,    0,  2,  3,   // Front
-     4,  5,  6,    4,  6,  7,   // Back
-     8,  9, 10,    8, 10, 11,   // Left
-    12, 13, 14,   12, 14, 15,   // Right
-    16, 17, 18,   16, 18, 19,   // Top
-    20, 21, 22,   20, 22, 23,   // Bottom
-};
-}
-
 namespace PeachCore {
     
     struct Vertex

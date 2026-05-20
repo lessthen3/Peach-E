@@ -20,7 +20,7 @@
 //#include "../rendering/VulkanShaderProgram.h"
 #include "utils/DynamicLoader.h"
 #include "utils/NullResources.h"
-#include "utils/Logger.h"
+#include "debug/Logger.h"
 
 //////////////////////////////////////////////
 // Language Support

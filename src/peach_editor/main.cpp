@@ -11,8 +11,8 @@
 #include "managers/PeachEditorManager.h"
 #include "managers/ProjectManager.h"
 
-#include "utils/PeachPanic.h"
-#include "utils/PeachPrint.h"
+#include "debug/PeachPanic.h"
+#include "debug/PeachPrint.h"
 
 //#include <Jolt/Jolt.h>
 //#include <Jolt/RegisterTypes.h>

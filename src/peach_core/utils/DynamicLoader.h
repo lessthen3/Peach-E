@@ -11,7 +11,7 @@
 #pragma once
 
 ///PeachCore
-#include "Logger.h"
+#include "debug/Logger.h"
 
 #ifdef PEACH_PLATFORM_WINDOWS
     struct HINSTANCE__; // forward declare the opaque struct from windef.h, we do this to avoid pulling windows.h into every TU through the include chain

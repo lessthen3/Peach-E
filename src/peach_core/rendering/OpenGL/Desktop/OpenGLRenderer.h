@@ -12,13 +12,14 @@
 
 #ifdef PEACH_RENDERER_OPENGL
 
+///SDL
 #include <SDL3/SDL.h>
 
 ///PeachCore
 #include "OpenGLShaderProgram.h"
 #include "rendering/Camera.h"
 #include "managers/ResourceManager.h"
-#include "peach_api/StatusCodes.h"
+#include "debug/StatusCodes.h"
 
 namespace PeachCore::OpenGL {
 
@@ -45,8 +46,8 @@ namespace PeachCore::OpenGL {
     struct RenderObject //Fits within one cache line >w<
     {
         GLuint VAO = 0;
-        GLuint VBO_Positions = 0;
-        GLuint VBO_Normals = 0;
+        GLuint PositionsVBO = 0;
+        GLuint NormalsVBO = 0;
         GLuint EBO = 0;
         GLsizei IndexCount;
 
@@ -61,17 +62,21 @@ namespace PeachCore::OpenGL {
     class Renderer
     {
     private:
+        unique_ptr<Logger> gl_logger = nullptr;
+
         SDL_Window* pm_MainWindow = nullptr;
-        bool pm_Is3DEnabled = false;
+        SDL_GLContext pm_OpenGLContext;
 
         vector<Camera2D> pm_Camera2Ds; //only the renderer cares about cameras
         vector<ShaderProgram> pm_ShaderPrograms; //keeps track of which visual element uses which OpenGLShaderProgram
+
+        ///unsUre
         vector<TextureSlot> pm_TextureSlots; //indexed via TextureID's, if a script wants to access a texture or remap UV's it'll use the TextureID and ask renderingmanager to do that owo
         vector<MeshSlot> pm_MesheSlots;
 
-        SDL_GLContext pm_OpenGLContext;
+        std::vector<RenderObject> pm_RenderObjects;
 
-        unique_ptr<Logger> gl_logger = nullptr;
+        bool pm_Is3DEnabled = false;
 
     public:
         ~Renderer() = default; //driver + OS will clean things up faster tbh
@@ -123,10 +128,10 @@ namespace PeachCore::OpenGL {
             RegisterTexture
             (
                 const string& fp_PeachObjectID,
-                unsigned char* fp_Data,
-                const unsigned int fp_Width,
-                const unsigned int fp_Height,
-                const unsigned int fp_Channels
+                unique_ptr<uint8_t>&& fp_Data,
+                const uint32_t fp_Width,
+                const uint32_t fp_Height,
+                const uint32_t fp_Channels
             );
 
         void
@@ -148,7 +153,7 @@ namespace PeachCore::OpenGL {
             Generate2DBuffers
             (
                 const vector<float>& fp_Vertices,
-                const vector<unsigned int>& fp_Indices
+                const vector<uint32_t>& fp_Indices
             )
             const;
 
@@ -157,7 +162,7 @@ namespace PeachCore::OpenGL {
             Generate3DBuffers
             (
                 const vector<float>& fp_Vertices,
-                const vector<unsigned int>& fp_Indices
+                const vector<uint32_t>& fp_Indices
             )
             const;
 

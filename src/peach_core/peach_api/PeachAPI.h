@@ -17,7 +17,7 @@
 #include <stddef.h>
 //idrc about supporting C standards from before i was born lmfao, C99+ only fuck you if you use C89 still ISO standard is C11 idgaf ab ur old ahh ABI
 
-#include "StatusCodes.h"
+#include "debug/StatusCodes.h"
 // #include "LoggerFlags.h"
 #include "NodeDef.h"
 
@@ -34,7 +34,7 @@
 #else //being used from C
 #   include <stdbool.h> 
 #   define PEACH_API //leave empty when included in C file
-#endif //C++ detection
+#endif /*__cplusplus*/
 
 //////////////////////////////////////////////////////////// Starting Engine ////////////////////////////////////////////////////////////
 

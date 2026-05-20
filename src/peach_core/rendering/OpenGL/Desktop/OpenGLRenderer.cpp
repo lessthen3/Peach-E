@@ -165,12 +165,18 @@ namespace PeachCore::OpenGL {
         Renderer::RegisterTexture
         (
             const string& fp_PeachObjectID,
-            unsigned char* fp_Data,
-            const unsigned int fp_Width,
-            const unsigned int fp_Height,
-            const unsigned int fp_Channels
+            unique_ptr<uint8_t>&& fp_Data,
+            const uint32_t fp_Width,
+            const uint32_t fp_Height,
+            const uint32_t fp_Channels
         )
     {
+        if (not fp_Data)
+        {
+            gl_logger->Error("Failed to Register Texture, nullptr reference texture data was passed", "OpenGL::Renderer");
+            return 0;
+        }
+
         GLuint f_Texture;
 
         glGenTextures(1, &f_Texture);
@@ -192,16 +198,10 @@ namespace PeachCore::OpenGL {
             f_ColourFormat = GL_RED;
         }
 
-        if (fp_Data)
-        {
-            glTexImage2D(GL_TEXTURE_2D, 0, f_ColourFormat, fp_Width, fp_Height, 0, f_ColourFormat, GL_UNSIGNED_BYTE, fp_Data);
-            glGenerateMipmap(GL_TEXTURE_2D);
-            gl_logger->Info(fmt::format("Successfully freed data from: {}", fp_PeachObjectID), "OpenGL::Renderer");
-        }
-        else
-        {
-            gl_logger->Info("Failed to Register Texture", "OpenGL::Renderer");
-        }
+        glTexImage2D(GL_TEXTURE_2D, 0, f_ColourFormat, fp_Width, fp_Height, 0, f_ColourFormat, GL_UNSIGNED_BYTE, fp_Data.get()); //texture data gets thrown out w unique_ptr scope exit
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        gl_logger->Info(fmt::format("Successfully registered texture data for: {}", fp_PeachObjectID), "OpenGL::Renderer");
 
         glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -259,7 +259,7 @@ namespace PeachCore::OpenGL {
         Renderer::Generate2DBuffers
         (
             const vector<float>& fp_Vertices,
-            const vector<unsigned int>& fp_Indices
+            const vector<uint32_t>& fp_Indices
         )
         const
     {
@@ -275,17 +275,17 @@ namespace PeachCore::OpenGL {
         glBindVertexArray(vao);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * fp_Indices.size(), fp_Indices.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * fp_Indices.size(), fp_Indices.data(), GL_STATIC_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float) * fp_Vertices.size(), fp_Vertices.data(), GL_STATIC_DRAW);
 
         // position coord attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(0));
         glEnableVertexAttribArray(0);
 
         // texture coord attribute
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
 
         glBindVertexArray(0); //IMPORTANT: REMEMBER TO ALWAYS UNBIND VERTEX ARRAY FIRST SINCE UNBINDING ANYTHING INSIDE OF IT BEFOREHAND WILL DE CONFIGURE IT
@@ -300,49 +300,53 @@ namespace PeachCore::OpenGL {
         Renderer::Generate3DBuffers
         (
             const vector<float>& fp_Vertices,
-            const vector<unsigned int>& fp_Indices
+            const vector<uint32_t>& fp_Indices
         )
         const
     {
         GLuint vbo;
         glGenBuffers(1, &vbo);
 
-        GLuint vao;
-        glGenVertexArrays(1, &vao);
+        GLuint f_VAO;
+        glGenVertexArrays(1, &f_VAO);
 
         GLuint ebo;
         glGenBuffers(1, &ebo);
 
-        glBindVertexArray(vao);
+        glBindVertexArray(f_VAO);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * fp_Indices.size(), fp_Indices.data(), GL_STATIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * fp_Indices.size(), fp_Indices.data(), GL_STATIC_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(float) * fp_Vertices.size(), fp_Vertices.data(), GL_STATIC_DRAW);
 
         // position coord attribute
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0); // 0th point start stride by 8, eg 0-3, 8-11, 16-19, . . .
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast <void*>(0)); // 0th point start stride by 8, eg 0-3, 8-11, 16-19, . . .
         glEnableVertexAttribArray(0);
 
         // texture coord attribute
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float))); //3rd point start, stride by 8, eg. 3-5, 11-13, 19-21, . . .
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(3 * sizeof(float))); //3rd point start, stride by 8, eg. 3-5, 11-13, 19-21, . . .
         glEnableVertexAttribArray(1);
 
         // normal coord attribute
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float))); //5th point start, stride by 8, eg. 5-8, 13-16, 21-24, . . .
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), reinterpret_cast<void*>(5 * sizeof(float))); //5th point start, stride by 8, eg. 5-8, 13-16, 21-24, . . .
         glEnableVertexAttribArray(2);
 
         glBindVertexArray(0); //IMPORTANT: REMEMBER TO ALWAYS UNBIND VERTEX ARRAY FIRST SINCE UNBINDING ANYTHING INSIDE OF IT BEFOREHAND WILL DE CONFIGURE IT
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
-        return vao;
+        return f_VAO;
     }
 
     bool
         Renderer::RenderFrame()
     {
+        for (RenderObject& lv_CurrentRenderObject : pm_RenderObjects)
+        {
+            
+        }
 
         return true;
     }

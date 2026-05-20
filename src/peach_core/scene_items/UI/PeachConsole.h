@@ -17,7 +17,7 @@
 #include <unordered_map>
 
 ///PeachCore
-#include "utils/Logger.h"
+#include "debug/Logger.h"
 #include "scene_items/PeachNode.h"
 
 namespace PeachCore::PUI {

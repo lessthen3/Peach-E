@@ -17,7 +17,7 @@
 #include <spirv_glsl.hpp>
 
 ///PeachCore
-#include <utils/Logger.h>
+#include <debug/Logger.h>
 #include <rendering/Vulkan/PipelineFactory.h>
 
 ///STL
