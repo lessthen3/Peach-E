@@ -13,6 +13,9 @@
 ///CSTD
 #include <stdint.h>
 
+///STL
+#include <vector>
+
 ///PeachCore
 #include "debug/StatusCodes.h"
 #include "debug/Logger.h"
@@ -25,7 +28,7 @@ namespace PeachCore::OBJ {
 
     struct InterleavedMesh //interleaved {v3pos, v2uv, v3normals, v4tangent}
     {
-        std::vector<float>    Vertices;
+        std::vector<float>     Vertices;
         std::vector<uint32_t> Indices;
     };
 

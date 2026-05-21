@@ -24,15 +24,19 @@
 // Static Internal Linkage
 namespace PeachCore::OBJ {
 
-    struct IdxGroup
+    struct IndexGroup
     {
-        int32_t Vertex = IDX_NO_VALUE;
+        int32_t Position = IDX_NO_VALUE;
         int32_t TextureCoord = IDX_NO_VALUE;
         int32_t Normal = IDX_NO_VALUE;
     };
 
     static PEACH_FORCEINLINE PEACH_STATUS_CODE
-        ParseVertexTokens(std::string_view fp_VertexToken, IdxGroup& fp_OutIdxGroup)
+        ParseVertexTokens
+        (
+            std::string_view fp_VertexToken, 
+            IndexGroup& fp_OutIdxGroup
+        )
         noexcept//can we really noexcept here idk substr isnt noexcept guaranteed but maybe we do w our structure weoweoweo blitzcrank
     {
         size_t f_FirstSlashIndex = fp_VertexToken.find('/');  // Find the slashes to separate v/vt/vn
@@ -43,8 +47,8 @@ namespace PeachCore::OBJ {
 
         if (not f_PositionToken.empty())
         {
-            std::from_chars(f_PositionToken.data(), f_PositionToken.data() + f_PositionToken.size(), fp_OutIdxGroup.Vertex);
-            fp_OutIdxGroup.Vertex -= 1;
+            std::from_chars(f_PositionToken.data(), f_PositionToken.data() + f_PositionToken.size(), fp_OutIdxGroup.Position);
+            fp_OutIdxGroup.Position -= 1; //convert to 0 based indexing cause wavefront is fucking weird
         }
 
         ////////////////////////////////////////////// Parse Texture Coordinate //////////////////////////////////////////////
@@ -145,8 +149,8 @@ namespace PeachCore::OBJ {
         std::vector<vec3s> f_Positions;
         std::vector<vec2s> f_TextureCoords;
         std::vector<vec3s> f_Normals;
-
-        std::vector<IdxGroup> f_Faces;
+        
+        std::vector<IndexGroup> f_Faces;
 
         std::string f_Prefix;
 
@@ -164,21 +168,21 @@ namespace PeachCore::OBJ {
                     float x, y, z;
                     f_OpenObjFileStream >> x >> y >> z;
 
-                    f_Positions.emplace_back(x, y, z);
+                    f_Positions.emplace_back(vec3s{ x, y, z });
                 }
                 else if (f_Prefix[1] == 't') // "vt"
                 {
                     float u, v;
                     f_OpenObjFileStream >> u >> v;
 
-                    f_TextureCoords.emplace_back(u, 1 - v); //flip v for opengl uwu
+                    f_TextureCoords.emplace_back(vec2s{ u, 1 - v }); //flip v for opengl uwu
                 }
                 else if (f_Prefix[1] == 'n')  // "vn"
                 {
                     float x, y, z;
                     f_OpenObjFileStream >> x >> y >> z;
 
-                    f_Normals.emplace_back(x, y, z);
+                    f_Normals.emplace_back(vec3s{ x, y, z });
                 }
                 else
                 {
@@ -191,7 +195,7 @@ namespace PeachCore::OBJ {
                 std::string t1, t2, t3;
                 f_OpenObjFileStream >> t1 >> t2 >> t3;
 
-                IdxGroup f_IdxGroup;
+                IndexGroup f_IdxGroup;
 
                 PEACH_STATUS_CODE result = ParseVertexTokens(t1, f_IdxGroup);
 
@@ -233,9 +237,54 @@ namespace PeachCore::OBJ {
 
         ////////////////////////////////////////////// Reconcile Faces into Interleaved GPU format //////////////////////////////////////////////
 
-        for (IdxGroup indValue : f_Faces)
+        size_t f_CurrentIndex = 0;
+
+        for (IndexGroup lv_IndexValues : f_Faces)
         {
-            ProcessFaceVertex(indValue, textCoordList, normList, indices, f_TextureCoords, f_Normals);
+            if (static_cast<size_t>(lv_IndexValues.Position) >= f_Positions.size()) 
+            {
+                logger->Error(fmt::format("obj file named: '{}', contains invalid index values for positions, did you edit the .obj file by hand? if not your modeling software generated an invalid obj file ;w;", fp_ObjFilePathOwO), "LoadMesh");
+                return PEACH_ERROR_INVALID_OBJ_REFERENCING_NON_EXISTENT_INDICES;
+            }
+
+            {
+                vec3s f_PositionVector = f_Positions[lv_IndexValues.Position];
+
+                fp_OutMesh.Vertices.push_back(f_PositionVector.x);
+                fp_OutMesh.Vertices.push_back(f_PositionVector.y);
+                fp_OutMesh.Vertices.push_back(f_PositionVector.z);
+            }
+
+            if (static_cast<size_t>(lv_IndexValues.TextureCoord) >= f_TextureCoords.size())
+            { 
+                logger->Error(fmt::format("obj file named: '{}', contains invalid index values for texture uvs, did you edit the .obj file by hand? if not your modeling software generated an invalid obj file ;w;", fp_ObjFilePathOwO), "LoadMesh");
+                return PEACH_ERROR_INVALID_OBJ_REFERENCING_NON_EXISTENT_INDICES;
+            }
+
+            {
+                vec2s f_TextureCoordVector = f_TextureCoords[lv_IndexValues.TextureCoord];
+
+                fp_OutMesh.Vertices.push_back(f_TextureCoordVector.x);
+                fp_OutMesh.Vertices.push_back(f_TextureCoordVector.y);
+            }
+
+            if (static_cast<size_t>(lv_IndexValues.Normal) >= f_Normals.size())
+            {
+                logger->Error(fmt::format("obj file named: '{}', contains invalid index values for normals, did you edit the .obj file by hand? if not your modeling software generated an invalid obj file ;w;", fp_ObjFilePathOwO), "LoadMesh");
+                return PEACH_ERROR_INVALID_OBJ_REFERENCING_NON_EXISTENT_INDICES;
+            }
+
+            {
+                vec3s f_NormalVector = f_Normals[lv_IndexValues.Normal];
+
+                fp_OutMesh.Vertices.push_back(f_NormalVector.x);
+                fp_OutMesh.Vertices.push_back(f_NormalVector.y);
+                fp_OutMesh.Vertices.push_back(f_NormalVector.z);
+            }
+
+            //then calculate 4 float tangent?
+
+            fp_OutMesh.Indices.push_back(++f_CurrentIndex); //wouldn't this be a vector of 0,1 ,2 ,3 ,4 ,5 lmfao idk
         }
 
         ////////////////////////////////////////////// Success! //////////////////////////////////////////////

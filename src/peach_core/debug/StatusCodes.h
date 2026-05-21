@@ -111,6 +111,7 @@ extern "C"
 
         PEACH_ERROR_FAILED_TO_OPEN_OBJ_FILE,
         PEACH_ERROR_FOUND_INVALID_TOKEN_IN_MISFORMED_OBJ,
+        PEACH_ERROR_INVALID_OBJ_REFERENCING_NON_EXISTENT_INDICES, //ur modeling software is cooked af frfr ongodongod iykyk
 
         //======================================================================= File I/O =======================================================================//
 
