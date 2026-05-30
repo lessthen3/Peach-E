@@ -31,9 +31,6 @@
 #possible additions
 /idk maybe
 
-# JSON
-/third_party/peach_core/header_only/spirv-headers/*.json
-
 # individual files
 /TODO.txt
 /CMakeUserPresets.json
@@ -45,21 +42,6 @@
 res/android_project/build
 res/android_project/app/build
 res/android_project/.gradle
-
-
-#Compressed deps
-
-third_party/peach_editor/assimp/win64/release_v*/
-third_party/peach_editor/assimp/win64/debug_v*/
-
-third_party/peach_editor/shaderc_combined/win64/release_v*/
-third_party/peach_editor/shaderc_combined/win64/debug_v*/
-
-third_party/peach_editor/shaderc_combined/win64_arm/release_v*/
-third_party/peach_editor/shaderc_combined/win64_arm/debug_v*/
-
-third_party/peach_editor/assimp/win64_arm/release_v*/
-third_party/peach_editor/assimp/win64_arm/debug_v*/
 
 #build errors
 
