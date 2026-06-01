@@ -9,6 +9,10 @@
 #           Peach-E is a free open source game engine
 ##########################################################################
 
+####################################### Enforce CMake Version
+
+cmake_minimum_required(VERSION 4.2.0) #need this for vs2026
+
 ####################################### Config Options
 
 option(BUILD_PEACH_CORE_SHARED "Builds peach_core as a shared library" OFF) #build peach_core shared by default uwu
@@ -18,10 +22,6 @@ option(BUILD_PEACH_EDITOR "turns on build output for peach editor" ON)
 option(BUILD_PEACH_ENGINE "turns on build output for the executable peach engine, doesn't relate to peach_core" OFF)
 
 option(BUILD_ASSET_CONVERTER_TOOL "builds the asset converter exe for importing assets for things like mods" OFF)
-
-####################################### Enforce CMake Version
-
-cmake_minimum_required(VERSION 4.2.0) #need this for vs2026
 
 ####################################### Project definition
 
