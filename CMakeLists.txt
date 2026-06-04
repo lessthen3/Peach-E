@@ -120,6 +120,12 @@ add_library(peach_core ${PEACH_BUILD_TYPE}
     ${PEACH_CORE_SOURCES}
 )
 
+set_target_properties(peach_core PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/peach_core/$<CONFIG>"
+    LIBRARY_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/peach_core/$<CONFIG>"
+    RUNTIME_OUTPUT_DIRECTORY  "${CMAKE_BINARY_DIR}/peach_core/$<CONFIG>"
+)
+
 target_include_directories(peach_core PUBLIC
     ${PROJECT_SOURCE_DIR}/src/peach_core #because it's prettier and easier for including owo
 )
@@ -459,7 +465,6 @@ elseif(PEACH_HAIKU)
 
     find_package(OpenGL REQUIRED)
 
-    # Haiku has its own GL implementation
     target_link_libraries(peach_core PUBLIC
         GL
         be      # Haiku's core API, SDL3 needs this
@@ -645,12 +650,13 @@ if(PEACH_PLATFORM_IS_WINDOWS)
 endif(PEACH_PLATFORM_IS_WINDOWS)
 
 if(BUILD_PEACH_CORE_SHARED)
-    target_compile_definitions(peach_core PRIVATE
+    target_compile_definitions(peach_core PUBLIC
         PEACH_BUILD_DYNAMIC
     )     
 else()
-    target_compile_definitions(peach_core PRIVATE
+    target_compile_definitions(peach_core PUBLIC
         PEACH_API_STATIC #used for compiling peach_api as a static lib uwu
+        PHYSFS_STATIC  #needed or else physfs will export da symbols owo
     )     
 endif(BUILD_PEACH_CORE_SHARED)
 
@@ -690,6 +696,11 @@ if(BUILD_PEACH_ENGINE)
             ${PEACH_ENGINE_SOURCES}
         )
     endif()
+
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${PROJECT_NAME}/$<CONFIG>"
+        ENABLE_EXPORTS FALSE
+    )
 
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON) #make Peach_Engine PIC friendly UwU
 
@@ -771,11 +782,15 @@ if(BUILD_PEACH_EDITOR)
         )
     endif()
 
+    set_target_properties(Peach_Editor PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Peach_Editor/$<CONFIG>"
+        ENABLE_EXPORTS FALSE
+        POSITION_INDEPENDENT_CODE ON #make Peach_Editor PIC friendly UwU
+    )
+
     target_include_directories(Peach_Editor PRIVATE
         ${PROJECT_SOURCE_DIR}/src/peach_editor/ #again because its prettier owo
     )
-
-    set_target_properties(Peach_Editor PROPERTIES POSITION_INDEPENDENT_CODE ON) #make Peach_Editor PIC friendly UwU
 
     ####################################### pseudo source cmake include owo
 
@@ -1184,11 +1199,15 @@ if(BUILD_PEACH_TESTS)
         ${PROJECT_SOURCE_DIR}/test_suite/cpp/*.hpp
     )
 
-        ####################################### Create executable target
+    ####################################### Create executable target
 
     add_executable( 
         Peach_Tests
         ${PEACH_TEST_SOURCES}
+    )
+
+    set_target_properties(Peach_Tests PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Peach_Tests/$<CONFIG>"
     )
 
     set_target_properties(Peach_Tests PROPERTIES POSITION_INDEPENDENT_CODE ON) #make Peach_Tests PIC friendly UwU

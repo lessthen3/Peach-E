@@ -291,7 +291,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
 
     ############# Run Debug Build #############
 
-    if( fp_BuildType == "Debug" or fp_BuildType == "Release and Debug" ):
+    if(fp_BuildType == "Debug" or fp_BuildType == "Release and Debug"):
         try:
             log_info("Running CMake build for Debug...")
 
@@ -305,7 +305,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
 
     ############# Run Release Build #############
 
-    if( fp_BuildType == "Release" or fp_BuildType == "Release and Debug" ):
+    if(fp_BuildType == "Release" or fp_BuildType == "Release and Debug"):
         try:
             log_info("Running CMake build for Release...")
 
@@ -1074,9 +1074,9 @@ def main() -> ToolStatus:
     ############# Report Build Stats #############
 
     print(CreateColouredText(f"Final Build Summary: \n", "bright green"))
-    print(CreateColouredText(f"\tGenerator: {f_DesiredGenerator}", "bright magenta"))
-    print(CreateColouredText(f"\tBuild Type: {f_BuildType}", "bright magenta"))
-    print(CreateColouredText(f"\tPlatform: {f_ToolchainKey}\n", "bright magenta"))
+    print(CreateColouredText(f"Generator: {f_DesiredGenerator}", "bright magenta"))
+    print(CreateColouredText(f"Build Type: {f_BuildType}", "bright magenta"))
+    print(CreateColouredText(f"Platform: {f_ToolchainKey}\n", "bright magenta"))
 
     return ToolStatus.BUILD_SUCCESS
 
