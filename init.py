@@ -21,7 +21,7 @@ import glob
 from shutil import which
 from enum import Enum
 
-############# Pretty Text Utility Function UwU #############
+#################################################### Pretty Text Utility Function UwU ####################################################
 
 def CreateColouredText(fp_SampleText: str, fp_DesiredColour: str) -> str:
 
@@ -61,7 +61,7 @@ def log_success(fp_Message: str) -> None:
 def print_tip(fp_Message: str) -> None:
     print(CreateColouredText(f"[TIP]: {fp_Message}", "bright cyan"))
 
-############# Utility for Validating Required Build Tools #############
+#################################################### Utility for Validating Required Build Tools ####################################################
 
 def ensure_tool_installed(fp_ToolName: str) -> bool:
 
@@ -71,14 +71,14 @@ def ensure_tool_installed(fp_ToolName: str) -> bool:
     else:
         return True
 
-############# Build Session Accumulators #############
+#################################################### Build Session Accumulators ####################################################
 
 # populated during the build loop, dumped at the end if flags are set
 g_ErrorLog:   dict[str, list[str]] = {}  # dep_name -> [error lines]
 g_WarningLog: dict[str, list[str]] = {}  # dep_name -> [warning lines]
 g_CurrentDep: str = "Peach-E"            # this is more for build_deps.py but w/e
 
-############# Compiled Regex Patterns for Build Output Classification #############
+#################################################### Compiled Regex Patterns for Build Output Classification ####################################################
 
 _g_ErrorPatterns = [
     re.compile(r':\s*error\b',              re.IGNORECASE), # "error:" / ": error" — GCC, Clang, MSVC
@@ -107,7 +107,7 @@ _g_WarningPatterns = [
     re.compile(r'\bcmake\s+warning\b',      re.IGNORECASE), # CMake configure warnings
 ]
 
-############# Run command for live console feed #############
+#################################################### Run command for live console feed ####################################################
 
 """
     Runs a subprocess command and streams stdout live.
@@ -115,7 +115,6 @@ _g_WarningPatterns = [
     Warnings → printed yellow in real time, collected into g_WarningLog
     Raises CalledProcessError if the command fails.
 """
-
 
 def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
 
@@ -165,7 +164,7 @@ def run_command_with_live_output(fp_Command, fp_WorkingDirectory=".") -> None:
     finally:
         f_Process.stdout.close()
 
-############# Markdown Summary Dump #############
+#################################################### Markdown Summary Dump ####################################################
 
 def WriteBuildSummaryMarkdown(fp_BaseDir: str, fp_PrintErrors: bool, fp_PrintWarnings: bool) -> None:
 
@@ -201,7 +200,7 @@ def WriteBuildSummaryMarkdown(fp_BaseDir: str, fp_PrintErrors: bool, fp_PrintWar
 
         log_info(f"Warning summary written to {f_WarnPath}")
 
-############# Main CMake Function #############
+#################################################### Main CMake Function ####################################################
 
 def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_ExtraBuildArgs: list, fp_ExtraConfigs: list) -> bool:
 
@@ -227,13 +226,13 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
         "nmake-jom": "NMake Makefiles JOM"
     }
 
-    ############# Ensure Valid Generator was Selected #############
+    ########################## Ensure Valid Generator was Selected ##########################
 
     if fp_Generator not in f_GeneratorMap:
         log_error("Invalid Generator Selected, use -h to see what generators are available owo")
         return False
     
-    ############# Determine if Generator is Single Config #############
+    ########################## Determine if Generator is Single Config ##########################
     
     f_IsMultiConfig = fp_Generator in ["vs2026", "vs2022", "vs2019", "vs2017", "vs2015", "xcode", "ninja-mc"]
 
@@ -249,7 +248,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
         else:
             f_CMakeConfigCommand += ['-DCMAKE_BUILD_TYPE=' + fp_BuildType.capitalize()]
 
-    ############# Set Target Platform #############
+    ########################## Set Target Platform ##########################
 
     if fp_TargetPlatform == "":
         log_error("No target platform was selected, please specify which platform Peach-E is being built for uwu")
@@ -260,7 +259,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
         f"-DPEACH_TARGET_PLATFORM={fp_TargetPlatform}"
     ]
 
-    ############# Generate CMake Project #############
+    ########################## Generate CMake Project ##########################
 
     try:
         log_info(f"Running CMake project generation for {f_GeneratorMap[fp_Generator]}...")
@@ -273,7 +272,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
 
     log_success("CMake project generation completed!")
 
-    ############# Run CMake Build Process for Single Config #############
+    ########################## Run CMake Build Process for Single Config ##########################
 
     if not f_IsMultiConfig:
         try:
@@ -289,35 +288,28 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
 
         return True #return immediately since we don't need to go through the --config commands for single config generators
 
-    ############# Run Debug Build #############
+    ########################## Determine Configs ##########################
 
-    if(fp_BuildType == "Debug" or fp_BuildType == "Release and Debug"):
+    if fp_BuildType == "Release and Debug":
+        f_BuildConfigs = ["Debug", "Release"]
+    else:
+        f_BuildConfigs = [fp_BuildType]
+
+    ########################## Run Build Process ##########################
+
+    for lv_Config in f_BuildConfigs:
         try:
-            log_info("Running CMake build for Debug...")
+            log_info(f"Running CMake build for {lv_Config}...")
 
-            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Debug'] + fp_ExtraBuildArgs)
+            run_command_with_live_output(['cmake', '--build', 'build', '--config', lv_Config] + fp_ExtraBuildArgs)
 
         except subprocess.CalledProcessError as err:
-            log_error("CMake debug build process failed!")
+            log_error(f"CMake {lv_Config} build process failed!")
             return False
 
-        log_success("Debug build completed!")
+        log_success(f"{lv_Config} build completed!")
 
-    ############# Run Release Build #############
-
-    if(fp_BuildType == "Release" or fp_BuildType == "Release and Debug"):
-        try:
-            log_info("Running CMake build for Release...")
-
-            run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Release'] + fp_ExtraBuildArgs)
-
-        except subprocess.CalledProcessError as err:
-            log_error("CMake release build process failed!")
-            return False
-
-        log_success("Release build completed!")
-
-    ############# Success! #############
+    ########################## Success! ##########################
 
     log_info("Your CMake project should be good to go!")
 
