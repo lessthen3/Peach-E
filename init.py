@@ -38,18 +38,35 @@ def CreateColouredText(fp_SampleText: str, fp_DesiredColour: str) -> str:
     }
 
     if fp_DesiredColour not in f_ListOfColours:
-        print(CreateColouredText("[Warning]: no valid input detected for CreateColouredText, returned original text in all lower-case", "yellow"))
+        log_warning("no valid input detected for CreateColouredText, returned original text in all lower-case")
         return fp_SampleText
     
     else:
         return f"{f_ListOfColours.get(fp_DesiredColour, '')}{fp_SampleText}\033[0m"
+
+############################################################################## Logging functions OwO ##############################################################################
+
+def log_info(fp_Message: str) -> None:
+    print(CreateColouredText(f"[INFO]: {fp_Message}", "bright green"))
+
+def log_warning(fp_Message: str) -> None:
+    print(CreateColouredText(f"[WARNING]: {fp_Message}", "yellow"))
+
+def log_error(fp_Message: str) -> None:
+    print(CreateColouredText(f"[ERROR]: {fp_Message}", "red"))
+
+def log_success(fp_Message: str) -> None:
+    print(CreateColouredText(f"[SUCCESS]: {fp_Message}", "cyan"))
+
+def print_tip(fp_Message: str) -> None:
+    print(CreateColouredText(f"[TIP]: {fp_Message}", "bright cyan"))
 
 ############# Utility for Validating Required Build Tools #############
 
 def ensure_tool_installed(fp_ToolName: str) -> bool:
 
     if which(fp_ToolName) is None:
-        print(CreateColouredText(f"[ERROR]: Required tool '{fp_ToolName}' not found in PATH", "red"))
+        log_error(f"Required tool '{fp_ToolName}' not found in PATH")
         return False
     else:
         return True
@@ -166,7 +183,7 @@ def WriteBuildSummaryMarkdown(fp_BaseDir: str, fp_PrintErrors: bool, fp_PrintWar
                     f_File.write(lv_Line + "\n")
                 f_File.write("```\n\n")
 
-        print(CreateColouredText(f"\n[INFO]: Error summary written to {f_ErrorPath}", "bright cyan"))
+        log_info(f"Error summary written to {f_ErrorPath}")
 
     if fp_PrintWarnings and g_WarningLog:
 
@@ -182,7 +199,7 @@ def WriteBuildSummaryMarkdown(fp_BaseDir: str, fp_PrintErrors: bool, fp_PrintWar
                     f_File.write(lv_Line + "\n")
                 f_File.write("```\n\n")
 
-        print(CreateColouredText(f"[INFO]: Warning summary written to {f_WarnPath}", "bright cyan"))
+        log_info(f"Warning summary written to {f_WarnPath}")
 
 ############# Main CMake Function #############
 
@@ -213,7 +230,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
     ############# Ensure Valid Generator was Selected #############
 
     if fp_Generator not in f_GeneratorMap:
-        print(CreateColouredText("[ERROR]: Invalid Generator Selected, use -h to see what generators are available owo", "red"))
+        log_error("Invalid Generator Selected, use -h to see what generators are available owo")
         return False
     
     ############# Determine if Generator is Single Config #############
@@ -226,7 +243,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
 
         if fp_BuildType == "Release and Debug": #Don't allow "both" configs for single config generators uwu
             
-            print(CreateColouredText("[ERROR]: Invalid build type selected: YOU CANNOT USE BOTH WHEN GENERATING FOR A SINGLE CONFIG GENERATOR", "red"))
+            log_error("Invalid build type selected: YOU CANNOT USE BOTH WHEN GENERATING FOR A SINGLE CONFIG GENERATOR")
             return False
         
         else:
@@ -235,7 +252,7 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
     ############# Set Target Platform #############
 
     if fp_TargetPlatform == "":
-        print(CreateColouredText("[ERROR]: No target platform was selected, please specify which platform Peach-E is being built for uwu"))
+        log_error("No target platform was selected, please specify which platform Peach-E is being built for uwu")
         return False
     
     f_CMakeConfigCommand += [
@@ -246,29 +263,29 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
     ############# Generate CMake Project #############
 
     try:
-        print(CreateColouredText(f"[INFO]: Running CMake project generation for {f_GeneratorMap[fp_Generator]}...", "green"))
+        log_info(f"Running CMake project generation for {f_GeneratorMap[fp_Generator]}...")
 
         run_command_with_live_output(f_CMakeConfigCommand + fp_ExtraConfigs)
 
     except subprocess.CalledProcessError as err:
-        print(CreateColouredText("[ERROR]: CMake project generation failed!", "red"))
+        log_error("CMake project generation failed!")
         return False
 
-    print(CreateColouredText("[SUCCESS]: CMake project generation completed!", "cyan"))
+    log_success("CMake project generation completed!")
 
     ############# Run CMake Build Process for Single Config #############
 
     if not f_IsMultiConfig:
         try:
-            print(CreateColouredText(f"[INFO]: Running CMake single config build for {fp_BuildType}...", "green"))
+            log_info(f"Running CMake single config build for {fp_BuildType}...")
 
             run_command_with_live_output(['cmake', '--build', 'build'] + fp_ExtraBuildArgs)
 
         except subprocess.CalledProcessError as err:
-            print(CreateColouredText(f"[ERROR]: CMake single config {fp_BuildType} build process failed!", "red"))
+            log_error(f"CMake single config {fp_BuildType} build process failed!")
             return False
 
-        print(CreateColouredText(f"\n[SUCCESS]: {fp_BuildType} build completed!", "cyan"))
+        log_success(f"{fp_BuildType} build completed!")
 
         return True #return immediately since we don't need to go through the --config commands for single config generators
 
@@ -276,33 +293,33 @@ def run_cmake(fp_BuildType: str, fp_Generator: str, fp_TargetPlatform: str, fp_E
 
     if( fp_BuildType == "Debug" or fp_BuildType == "Release and Debug" ):
         try:
-            print(CreateColouredText("[INFO]: Running CMake build for Debug...", "green"))
+            log_info("Running CMake build for Debug...")
 
             run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Debug'] + fp_ExtraBuildArgs)
 
         except subprocess.CalledProcessError as err:
-            print(CreateColouredText("[ERROR]: CMake debug build process failed!", "red"))
+            log_error("CMake debug build process failed!")
             return False
 
-        print(CreateColouredText("[SUCCESS]: Debug build completed!", "cyan"))
+        log_success("Debug build completed!")
 
     ############# Run Release Build #############
 
     if( fp_BuildType == "Release" or fp_BuildType == "Release and Debug" ):
         try:
-            print(CreateColouredText("[INFO]: Running CMake build for Release...", "green"))
+            log_info("Running CMake build for Release...")
 
             run_command_with_live_output(['cmake', '--build', 'build', '--config', 'Release'] + fp_ExtraBuildArgs)
 
         except subprocess.CalledProcessError as err:
-            print(CreateColouredText("[ERROR]: CMake release build process failed!", "red"))
+            log_error("CMake release build process failed!")
             return False
 
-        print(CreateColouredText("[SUCCESS]: Release build completed!", "cyan"))
+        log_success("Release build completed!")
 
     ############# Success! #############
 
-    print(CreateColouredText("\n[INFO]: Your CMake project should be good to go!", "green"))
+    log_info("Your CMake project should be good to go!")
 
     return True
 
@@ -318,7 +335,7 @@ def unpack_versioned_dep(fp_WorkingDirectory: str, fp_ArchivePatternName: str) -
         zipped_dep_file = [f for f in os.listdir(fp_WorkingDirectory) if f.startswith(fp_ArchivePatternName) and f.endswith(".zip")]
 
         if not zipped_dep_file:
-            print(CreateColouredText(f"No {fp_ArchivePatternName} found!, Cannot continue with building Peach Engine ;w;", "bright yellow"))
+            log_error(f"No {fp_ArchivePatternName} found!, Cannot continue with building Peach Engine ;w;")
             return False
         
         # Assume only one versioned zip exists at a time
@@ -328,12 +345,12 @@ def unpack_versioned_dep(fp_WorkingDirectory: str, fp_ArchivePatternName: str) -
         # Remove any folder that doesn't match the zip version
         for item in os.listdir(fp_WorkingDirectory):
             if item.startswith(fp_ArchivePatternName) and os.path.isdir(item) and item != expected_folder:
-                print(CreateColouredText(f"[INFO]: Removing stale folder: {item}", "bright yellow"))
+                log_info(f"Removing stale folder: {item}")
                 shutil.rmtree(os.path.join(fp_WorkingDirectory, item))
 
         # Extract the zip if and only if the extracted dep doesn't already exist
         if not os.path.isdir(expected_folder): 
-            print(CreateColouredText(f"[INFO]: Unzipping {latest_zip}", "bright green"))
+            log_info(f"Unzipping {latest_zip}")
             with zipfile.ZipFile(latest_zip, "r") as zip_ref:
                 zip_ref.extractall("./") 
         
@@ -364,25 +381,25 @@ def FindAndroidNdk():
         f_Candidate = os.environ.get(f_EnvVarName)
 
         if not f_Candidate or not os.path.isdir(f_Candidate):
-            print(CreateColouredText(f"[INFO]: android sdk env var: {f_Candidate} not found, continuing search...", "bright green"))
+            log_info(f"android sdk env var: {f_Candidate} not found, continuing search...")
             continue
 
-        print(CreateColouredText(f"[INFO]: found android sdk env var: {f_Candidate}!", "bright green"))
+        log_info(f"found android sdk env var: {f_Candidate}!")
         return f_Candidate
 
     ############# SDK-relative fallbacks via ANDROID_HOME / ANDROID_SDK_ROOT #############
 
-    print(CreateColouredText("[INFO]: could not find ndk, trying ANDROID_HOME...", "bright green"))
+    log_info("could not find ndk, trying ANDROID_HOME...")
 
     f_SdkRoot = os.environ.get("ANDROID_HOME")
 
     if not f_SdkRoot:
-        print(CreateColouredText("[INFO]: ANDROID_HOME not found, trying ANDROID_SDK_ROOT", "bright green"))
+        log_info("ANDROID_HOME not found, trying ANDROID_SDK_ROOT")
 
         f_SdkRoot = os.environ.get("ANDROID_SDK_ROOT")
 
         if not f_SdkRoot or not os.path.isdir(f_SdkRoot):
-            print(CreateColouredText("[ERROR]: ANDROID_SDK_ROOT not found!, could not find suitable tools for cross compiling peachy for android, please install and set env vars for Android Studio", "red"))
+            log_error("ANDROID_SDK_ROOT not found!, could not find suitable tools for cross compiling peachy for android, please install and set env vars for Android Studio")
             return None
 
     ############# modern layout: $SDK/ndk/<version>/ #############
@@ -402,17 +419,17 @@ def FindAndroidNdk():
             f_AvailableVersions.sort(reverse=True) #lexicographic descending picks the highest semver-style version
             f_FullPathToNdk = os.path.join(f_VersionedNdkRoot, f_AvailableVersions[0])
 
-            print(CreateColouredText(f"[INFO]: found a viable NDK, choosing latest version at: {f_FullPathToNdk}", "bright green"))
+            log_info(f"found a viable NDK, choosing latest version at: {f_FullPathToNdk}")
             return f_FullPathToNdk
 
     ############# legacy layout: $SDK/ndk-bundle/ #############
 
-    print(CreateColouredText(f"[INFO]: found {f_SdkRoot}, however unable to find NDK, trying legacy ndk-bundle instead", "bright green"))
+    log_info(f"found {f_SdkRoot}, however unable to find NDK, trying legacy ndk-bundle instead")
 
     f_LegacyNdkBundle = os.path.join(f_SdkRoot, "ndk-bundle")
 
     if not os.path.isdir(f_LegacyNdkBundle):
-        print(CreateColouredText("[ERRROR]: found android sdk, however unable to find suitable NDK, are you sure you've installed the NDK packages?", "red"))
+        log_error("found android sdk, however unable to find suitable NDK, are you sure you've installed the NDK packages?")
         return None
     
     return f_LegacyNdkBundle
@@ -496,7 +513,7 @@ def PackageAndroidApk(fp_BaseDir, fp_BuildType):
                 break
 
         if not f_Found:
-            print(CreateColouredText("[ERROR]: could not find libpeach_core.so in build/ — did the native build actually succeed?", "red"))
+            log_error("could not find libpeach_core.so in build/ — did the native build actually succeed?")
             return False
 
         f_BuiltSo = f_Found
@@ -510,7 +527,7 @@ def PackageAndroidApk(fp_BaseDir, fp_BuildType):
 
     f_DestSo = os.path.join(f_JniLibsDir, "libpeach_core.so")
 
-    print(CreateColouredText(f"[INFO]: copying {f_BuiltSo} -> {f_DestSo}", "bright cyan"))
+    log_info(f"copying {f_BuiltSo} -> {f_DestSo}")
     shutil.copy2(f_BuiltSo, f_DestSo)
 
     ############# invoke gradlew #############
@@ -518,7 +535,7 @@ def PackageAndroidApk(fp_BaseDir, fp_BuildType):
     f_GradlewPath = os.path.join(f_AndroidProjectDir, GetGradlewName())
 
     if not os.path.isfile(f_GradlewPath):
-        print(CreateColouredText(f"[ERROR]: gradlew wrapper not found at {f_GradlewPath} >w<", "red"))
+        log_error(f"gradlew wrapper not found at {f_GradlewPath} >w<")
         return False
 
     ############# Un*x systems need exec bit set on gradlew (lost when copied through windows etc) #############
@@ -529,7 +546,7 @@ def PackageAndroidApk(fp_BaseDir, fp_BuildType):
 
     f_GradleTask = "assembleRelease" if fp_BuildType == "Release" else "assembleDebug"
 
-    print(CreateColouredText(f"[INFO]: running gradlew {f_GradleTask} ~ nya~", "bright cyan"))
+    log_info(f"running gradlew {f_GradleTask} ~ nya~")
 
     f_ExitCode = RunSubprocessLive(
         [f_GradlewPath, f_GradleTask],
@@ -537,7 +554,7 @@ def PackageAndroidApk(fp_BaseDir, fp_BuildType):
     )
 
     if f_ExitCode != 0:
-        print(CreateColouredText(f"[ERROR]: gradlew {f_GradleTask} failed with exit code {f_ExitCode}", "red"))
+        log_error(f"gradlew {f_GradleTask} failed with exit code {f_ExitCode}")
         return False
 
     f_ApkSubdir = "release" if fp_BuildType == "Release" else "debug"
@@ -545,12 +562,11 @@ def PackageAndroidApk(fp_BaseDir, fp_BuildType):
     f_ApkPath = os.path.join(f_AndroidProjectDir, "app", "build", "outputs", "apk", f_ApkSubdir, f_ApkName)
 
     if os.path.isfile(f_ApkPath):
-        print(CreateColouredText(f"[INFO]: APK built successfully at {f_ApkPath}", "bright green"))
+        log_info(f"APK built successfully at {f_ApkPath}")
         return True
     else:
-        print(CreateColouredText(f"[ERROR]: gradlew reported success but APK not found at {f_ApkPath}", "red"))
+        log_error(f"gradlew reported success but APK not found at {f_ApkPath}")
         return False
-
 
 def InstallAndroidApk(fp_BaseDir, fp_BuildType):
     """Install the APK onto whichever device adb sees first."""
@@ -558,23 +574,22 @@ def InstallAndroidApk(fp_BaseDir, fp_BuildType):
     f_Adb = FindAdb()
 
     if not f_Adb:
-        print(CreateColouredText("[ERROR]: adb not found — is the Android SDK platform-tools installed?", "red"))
+        log_error("adb not found — is the Android SDK platform-tools installed?")
         return False
 
     f_ApkSubdir = "release" if fp_BuildType == "Release" else "debug"
     f_ApkName = f"app-{f_ApkSubdir}.apk"
     f_ApkPath = os.path.join(fp_BaseDir, "res", "android_project", "app", "build", "outputs", "apk", f_ApkSubdir, f_ApkName)
 
-    print(CreateColouredText(f"[INFO]: installing {f_ApkName} via adb~", "bright cyan"))
+    log_info(f"installing {f_ApkName} via adb~")
 
     f_ExitCode = RunSubprocessLive([f_Adb, "install", "-r", f_ApkPath])
 
     if f_ExitCode != 0:
-        print(CreateColouredText(f"[ERROR]: adb install failed with exit code {f_ExitCode} — is a device connected? (run `{f_Adb} devices` to check)", "red"))
+        log_error(f"adb install failed with exit code {f_ExitCode} — is a device connected? (run `{f_Adb} devices` to check)")
         return False
 
     return True
-
 
 def LaunchAndroidApk():
     """Launch PeachActivity and tail logcat; Blocks until user kills it (Ctrl+C)"""
@@ -582,7 +597,7 @@ def LaunchAndroidApk():
     f_Adb = FindAdb()
 
     if not f_Adb:
-        print(CreateColouredText("[ERROR]: adb not found", "red"))
+        log_error("adb not found")
         return False
 
     ############# clear stale log buffer first so we only see this run's output #############
@@ -597,10 +612,10 @@ def LaunchAndroidApk():
     ])
 
     if f_LaunchExitCode != 0:
-        print(CreateColouredText("[ERROR]: failed to launch activity", "red"))
+        log_error("failed to launch activity")
         return False
 
-    print(CreateColouredText("[INFO]: tailing logcat — press Ctrl+C to stop ~ nya~", "bright cyan"))
+    log_info("tailing logcat — press Ctrl+C to stop ~ nya~")
 
     ############# tail filtered logcat — blocks until user interrupts #############
 
@@ -612,7 +627,7 @@ def LaunchAndroidApk():
         ])
 
     except KeyboardInterrupt:
-        print(CreateColouredText("\n[INFO]: stopped tailing logcat", "bright cyan"))
+        log_info("stopped tailing logcat")
 
     return True
 
@@ -642,8 +657,9 @@ def main() -> ToolStatus:
 
     usage_message =                                                                                     \
         CreateColouredText("init.py ", 'bright magenta') +                                              \
-        CreateColouredText("--[build_type: release, debug or both] ", "bright blue") +                  \
-        CreateColouredText("-G [desired_generator] ", "blue")
+        CreateColouredText("--[release, debug or both] ", "bright blue") +                              \
+        CreateColouredText("-G [desired_generator] ", "bright green") +                                 \
+        CreateColouredText("...extra flags", "bright cyan")
 
     parser = argparse.ArgumentParser(
         description=CreateColouredText('Used for Building Peach-E from Source', 'bright green'), 
@@ -798,7 +814,7 @@ def main() -> ToolStatus:
     ############# KABOOOOOOOOOOOOOOOOOOOOOOOOOOM #############
 
     if args.nuke and args.clean:
-        print(CreateColouredText("[ERROR]: tried to pass --nuke and --clean, you can only pick one; with great power comes great responsibility einstein said that, are you saying you're smarter than einstein?", "red"))
+        log_error("tried to pass --nuke and --clean, you can only pick one; with great power comes great responsibility einstein said that, are you saying you're smarter than einstein?")
         return ToolStatus.MISFORMED_BUILD_ARGUMENTS_PASSED
 
     if args.nuke:
@@ -808,17 +824,17 @@ def main() -> ToolStatus:
         try:
             shutil.rmtree('build')
         except FileNotFoundError:
-            print(CreateColouredText("[INFO]: build directory doesn't exist, just ignoring --nuke call >w<","bright green"))
-        except PermissionError as err:
-            print(CreateColouredText(f"[ERROR]: permission denied for nuking ;w; what am i supposed to do now? what: {err}","red"))
+            log_info("build directory doesn't exist, just ignoring --nuke call >w<")
+        except PermissionError as f_Exception:
+            log_error(f"permission denied for nuking ;w; what am i supposed to do now? what: {f_Exception}")
             return ToolStatus.NUKE_FAILED
-        except Exception as err:
-            print(CreateColouredText(f"[ERROR]: unable to nuke build directory idk y, what: {err}","red"))
+        except Exception as f_Exception:
+            log_error(f"unable to nuke build directory idk y, what: {f_Exception}")
             return ToolStatus.NUKE_FAILED
 
     elif args.clean:
 
-        print(CreateColouredText("[INFO]: Scraping only peach components... leaving dependencies cozy ~nya~ 🍑✨","bright cyan"))
+        log_info("Scraping only peach components... leaving dependencies cozy ~nya~ 🍑✨")
 
         f_TargetBaseNames = ["peach_core", "Peach_Editor", "Peach_Engine", "Peach_Tests"]
 
@@ -845,12 +861,12 @@ def main() -> ToolStatus:
                 else: # Catch and delete individual binary files (.exe, .a, .lib, .so, .dylib, .pdb, .ninja)
                     try:
                         os.remove(f_FilePath)
-                        print(CreateColouredText(f"[INFO]: successfully removed: '{f_FilePath}'", "bright green"))
+                        log_info(f"successfully removed: '{f_FilePath}'")
                     except OSError:
-                        print(CreateColouredText(f"[ERROR]: failed to remove: '{f_FilePath}' during --clean", "red"))
+                        log_error(f"failed to remove: '{f_FilePath}' during --clean")
                         return ToolStatus.CLEAN_FAILED
 
-        print(CreateColouredText("[SUCCESS]: Clean completed! Peach components completely purged, dependencies preserved.", "green"))
+        log_success("Clean completed! Peach components completely purged, dependencies preserved")
 
     ############# Validate Build Config #############
 
@@ -869,7 +885,7 @@ def main() -> ToolStatus:
         return ToolStatus.CLEAN_OR_NUKE_REQUESTED #just gonna assume if no build config was passed they just wanted a clean uwu
 
     else:
-        print(CreateColouredText("[ERROR]: No valid build type input detected, use -h or --help if you're unfamiliar", "red"))
+        log_error("No valid build type input detected, use -h or --help if you're unfamiliar")
         return ToolStatus.MISFORMED_BUILD_ARGUMENTS_PASSED
 
     ############# Detect Platform #############
@@ -888,7 +904,7 @@ def main() -> ToolStatus:
     ############# Check for Generator #############
         
     if(not args.G):
-        print(CreateColouredText("[ERROR]: please specify cmake generator using -G [desired_generator] >w<", "red"))
+        log_error("please specify cmake generator using -G [desired_generator] >w<")
         return ToolStatus.BUILD_FAILED
 
     f_DesiredGenerator = args.G[0].lower() #convert to all lower case for easier handling
@@ -925,7 +941,7 @@ def main() -> ToolStatus:
                     ]
                 )
             else:
-                print(CreateColouredText("[TIP]: please make sure you have the llvm toolchain for visual studio installed before using --use_clang on windows owo", "bright cyan"))
+                print_tip("please make sure you have the llvm toolchain for visual studio installed before using --use_clang on windows owo")
                 return ToolStatus.BUILD_FAILED
         
         elif not ensure_tool_installed("clang") and not ensure_tool_installed("clang++"):          
@@ -936,7 +952,7 @@ def main() -> ToolStatus:
     elif args.use_gcc:
 
         if f_CurrentPlatform == "Windows":
-            print(CreateColouredText("[ERROR]: can't use gcc/g++ on windows, aborting build process", "red"))
+            log_error("can't use gcc/g++ on windows, aborting build process")
 
         if not ensure_tool_installed("gcc") and not ensure_tool_installed("g++"):
             return ToolStatus.BUILD_FAILED
@@ -964,7 +980,7 @@ def main() -> ToolStatus:
         ]
 
         if f_ToolchainKey not in f_ValidToolchainKeys:
-            print(CreateColouredText("[ERROR]: invalid toolchain key was detected, please use -h to see the list of valid toolchain keys"))
+            log_error("invalid toolchain key was detected, please use -h to see the list of valid toolchain keys")
             return ToolStatus.BUILD_FAILED
         
     else:
@@ -981,10 +997,10 @@ def main() -> ToolStatus:
         elif f_CurrentPlatform == "Haiku":
             f_ToolchainKey = "haiku" #arm64 is experimental atm apparently, also this shi gave my first PC BIOS cancer lmfao wasn't the same after that failed install lol
         else:
-            print(CreateColouredText(f"[ERROR]: Could not auto-detect platform: {f_CurrentPlatform}, please specify with -T uwu", "red"))
+            log_error(f"Could not auto-detect platform: {f_CurrentPlatform}, please specify with -T uwu")
             return ToolStatus.BUILD_FAILED
 
-        print(CreateColouredText(f"[INFO]: Auto-detected platform: {f_ToolchainKey} ~ nya~", "bright cyan"))
+        log_info(f"Auto-detected platform: {f_ToolchainKey} ~ nya~")
 
     ############# Android #############
 
@@ -993,7 +1009,7 @@ def main() -> ToolStatus:
         f_AndroidNdkAbsolutePath = FindAndroidNdk() # Android Studio reliably sets ANDROID_HOME or ANDROID_SDK_ROOT, NDK installs under $SDK/ndk/<version>/ (newer) or $SDK/ndk-bundle/ (old).
         
         if not f_AndroidNdkAbsolutePath:
-            print(CreateColouredText("[ERROR]: unable to locate required tools for Android cross compilation >w< stopping build immediately", "red"))
+            log_error("unable to locate required tools for Android cross compilation >w< stopping build immediately")
             return ToolStatus.BUILD_FAILED
         
         f_AndroidNdkAbsolutePath = f_AndroidNdkAbsolutePath.replace("\\", "/") #replace chars since on windows cmake is kinda stupid
@@ -1007,13 +1023,13 @@ def main() -> ToolStatus:
             ]
         )
 
-        print(CreateColouredText(f"[INFO]: Hooked Android NDK Toolchain at {f_AndroidNdkAbsolutePath} ~ nya~", "bright green"))
+        log_info(f"Hooked Android NDK Toolchain at {f_AndroidNdkAbsolutePath} ~ nya~")
 
     ############# WASM #############
 
     elif f_ToolchainKey == "wasm":
         if not os.environ.get("EMSDK"):
-            print(CreateColouredText("[ERROR]: unable to verify EMSDK env var, please set this environment variable and try again ;w;", "red"))
+            log_error("unable to verify EMSDK env var, please set this environment variable and try again ;w;")
 
     ############# iPhone and iPad #############
 
@@ -1057,10 +1073,10 @@ def main() -> ToolStatus:
     
     ############# Report Build Stats #############
 
-    print(CreateColouredText(f"[INFO]: Final Build Summary: \n", "bright green"))
-    print(CreateColouredText(f"Generator: {f_DesiredGenerator}", "bright magenta"))
-    print(CreateColouredText(f"Build Type: {f_BuildType}", "bright magenta"))
-    print(CreateColouredText(f"Platform: {f_ToolchainKey}\n", "bright magenta"))
+    print(CreateColouredText(f"Final Build Summary: \n", "bright green"))
+    print(CreateColouredText(f"\tGenerator: {f_DesiredGenerator}", "bright magenta"))
+    print(CreateColouredText(f"\tBuild Type: {f_BuildType}", "bright magenta"))
+    print(CreateColouredText(f"\tPlatform: {f_ToolchainKey}\n", "bright magenta"))
 
     return ToolStatus.BUILD_SUCCESS
 
@@ -1072,7 +1088,7 @@ if __name__ == "__main__":
         os.system('color') 
 
     if main() == ToolStatus.BUILD_FAILED:
-        print(CreateColouredText("[ERROR]: execution of full build process was unsuccessful\n", "red"))
+        log_error("execution of full build process was unsuccessful\n")
     else:
         print(CreateColouredText("done!\n", "magenta"))
 
