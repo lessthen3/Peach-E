@@ -460,7 +460,7 @@ namespace PeachCore::Vulkan {
 
         if (not inst_ret)
         {
-            vulkan_logger->Fatal("Failed to create Vulkan instance. Error: " + inst_ret.error().message(), "VulkanRenderer");
+            vulkan_logger->Fatal(fmt::format("Failed to create Vulkan instance. Error: {}", inst_ret.error().message()), "VulkanRenderer");
             return false;
         }
 
@@ -527,7 +527,7 @@ namespace PeachCore::Vulkan {
 
         if (not phys_device_ret)
         {
-            vulkan_logger->Fatal("Failed to select Vulkan Physical Device. Error: " + phys_device_ret.error().message(), "VulkanRenderer");
+            vulkan_logger->Fatal(fmt::format("Failed to select Vulkan Physical Device. Error: {}", phys_device_ret.error().message()), "VulkanRenderer");
             return false;
         }
 
@@ -536,7 +536,7 @@ namespace PeachCore::Vulkan {
 
         if (not device_ret)
         {
-            vulkan_logger->Fatal("Failed to create Vulkan device. Error: " + device_ret.error().message(), "VulkanRenderer");
+            vulkan_logger->Fatal(fmt::format("Failed to create Vulkan device. Error: {}", device_ret.error().message()), "VulkanRenderer");
             return false;
         }
 
